@@ -27,6 +27,8 @@ export function AutoPaidAmountInput(props: NumberInputProps) {
   const rootId    = parentRef?._ref
 
   useEffect(() => {
+    if (props.readOnly) return
+
     // ── Root payment: auto-fill with full obligation ───────────────────────
     if (!rootId) {
       setRemaining(null)
@@ -62,7 +64,7 @@ export function AutoPaidAmountInput(props: NumberInputProps) {
       })
       .catch(() => setRemaining(null))
       .finally(() => setLoading(false))
-  }, [rootId, paymentAmount, currentId]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [rootId, paymentAmount, currentId, props.readOnly]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div data-testid="payment-base-amount-input">

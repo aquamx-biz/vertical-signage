@@ -38,6 +38,7 @@ export function AutoWhtAmountInput(props: any) {
 
   // Auto-apply calculated value whenever rate or amount changes (unless overridden)
   useEffect(() => {
+    if (props.readOnly) return
     if (isOverride) return
     if (!withholdingTaxRate || withholdingTaxRate === 'none' || withholdingTaxRate === '0') {
       onChange(unset())
@@ -46,7 +47,7 @@ export function AutoWhtAmountInput(props: any) {
     if (calcValue !== undefined) {
       onChange(set(calcValue))
     }
-  }, [calcValue, isOverride, withholdingTaxRate, onChange])
+  }, [calcValue, isOverride, withholdingTaxRate, onChange, props.readOnly])
 
   const handleOverride = useCallback(() => setIsOverride(true), [])
 
