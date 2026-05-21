@@ -3,7 +3,19 @@
  *
  * Document action for media documents (kind = "notice").
  * Sends the uploaded poster image to Claude vision via /api/read-notice-image
- * and lets the user apply the extracted title back to the document.
+ * and lets the user opt in to apply any combination of:
+ *   - Title (Thai)             → media.title
+ *   - Title (English)          → media.title (only if Thai not selected)
+ *   - Project                  → media.projects[]  (single ref, replaces array)
+ *   - Provider (juristic)      → media.provider
+ *   - Sub-category             → media.subCategories[] (single string, replaces array)
+ *
+ * Provider candidates are scoped by Claude to the picked project's projectSite,
+ * so a notice for Mahogany will only show juristic providers tied to Mahogany.
+ *
+ * URL conflict guard: if the form's `projects` field is already populated with a
+ * different project than AI's pick, the project card surfaces a warning so the
+ * editor sees both values before applying.
  */
 
 import { useState, useCallback } from 'react'
@@ -31,19 +43,31 @@ function refToUrl(ref: string): string | null {
 }
 
 interface ReadResult {
-  title?:   string | null
-  titleEn?: string | null
-  summary?: string | null
+  title?:            string | null
+  titleEn?:          string | null
+  summary?:          string | null
+  projectId?:        string | null
+  projectName?:      string | null
+  providerId?:       string | null
+  providerName?:     string | null
+  subCategoryId?:    string | null
+  subCategoryLabel?: string | null
 }
 
 export function AINoticeReadAction(props: DocumentActionProps) {
-  const { patch } = useDocumentOperation(props.id, props.type)
+  const { patch }  = useDocumentOperation(props.id, props.type)
   const toast      = useToast()
   const doc        = (props.draft ?? props.published) as any
 
   const isNotice  = doc?.kind === 'notice'
   const imageRef  = doc?.posterImage?.asset?._ref as string | undefined
   const imageUrl  = imageRef ? refToUrl(imageRef) : null
+
+  // Read current doc state for the conflict-warning rendering on the Project card.
+  // NOTE: document actions are rendered outside the FormValueProvider, so we can't
+  // use useFormValue() here — read from props.draft (already available) instead.
+  const currentProjects   = (doc?.projects ?? []) as Array<{ _ref?: string }>
+  const currentProjectRef = currentProjects[0]?._ref
 
   const [dialogOpen, setDialogOpen] = useState(false)
   const [loading,    setLoading]    = useState(false)
@@ -68,10 +92,15 @@ export function AINoticeReadAction(props: DocumentActionProps) {
       const data = await res.json() as ReadResult
       if (!res.ok) throw new Error((data as any).error ?? `HTTP ${res.status}`)
 
-      // Pre-select whichever fields came back with a value
+      // Pre-select whichever fields came back with a value.
+      // English title is OFF by default (editor opts in). All other AI picks
+      // are ON by default since they had to match candidate-list IDs to come back.
       const sel: Record<string, boolean> = {}
-      if (data.title)   sel.title   = true
-      if (data.titleEn) sel.titleEn = false  // English off by default — user can opt-in
+      if (data.title)         sel.title         = true
+      if (data.titleEn)       sel.titleEn       = false
+      if (data.projectId)     sel.projectId     = true
+      if (data.providerId)    sel.providerId    = true
+      if (data.subCategoryId) sel.subCategoryId = true
       setResult(data)
       setSelected(sel)
     } catch (err: any) {
@@ -83,19 +112,37 @@ export function AINoticeReadAction(props: DocumentActionProps) {
 
   const applySelected = useCallback(() => {
     if (!result) return
-    const patches: Record<string, string> = {}
+    const patches: Record<string, any> = {}
 
-    // "title" applies to the Sanity `title` field directly
+    // ── Title ────────────────────────────────────────────────────────────────
     if (selected.title   && result.title)   patches.title = result.title
-    // "titleEn" also writes to `title` only if title wasn't selected — or user can override
     if (selected.titleEn && result.titleEn && !selected.title) patches.title = result.titleEn
+
+    // ── Project (writes single-element projects array — notices target one project) ──
+    if (selected.projectId && result.projectId) {
+      patches.projects = [{
+        _type: 'reference',
+        _ref:  result.projectId,
+        _key:  Math.random().toString(36).slice(2, 10),
+      }]
+    }
+
+    // ── Provider (single reference) ───────────────────────────────────────────
+    if (selected.providerId && result.providerId) {
+      patches.provider = { _type: 'reference', _ref: result.providerId }
+    }
+
+    // ── Sub-category (single-element string array) ───────────────────────────
+    if (selected.subCategoryId && result.subCategoryId) {
+      patches.subCategories = [result.subCategoryId]
+    }
 
     if (Object.keys(patches).length === 0) return
 
     patch.execute([{ set: patches }])
     toast.push({
       status:      'success',
-      title:       '✅ Notice title applied',
+      title:       `✅ ${Object.keys(patches).length} field${Object.keys(patches).length !== 1 ? 's' : ''} applied`,
       description: 'Verify and publish when ready.',
       duration:    5000,
     })
@@ -103,6 +150,9 @@ export function AINoticeReadAction(props: DocumentActionProps) {
   }, [result, selected, patch, toast])
 
   const selectedCount = Object.values(selected).filter(Boolean).length
+
+  const projectConflict =
+    !!(result?.projectId && currentProjectRef && currentProjectRef !== result.projectId)
 
   const disabledReason = !isNotice
     ? 'Only available for Notice (building update) media — change Kind to Notice first'
@@ -112,7 +162,7 @@ export function AINoticeReadAction(props: DocumentActionProps) {
 
   return {
     label:    '🤖 Read Image',
-    title:    disabledReason ?? 'Read the uploaded notice image with AI and fill in the title',
+    title:    disabledReason ?? 'Read the uploaded notice image with AI and fill in fields',
     disabled: !!disabledReason,
     onHandle:  runRead,
 
@@ -143,7 +193,7 @@ export function AINoticeReadAction(props: DocumentActionProps) {
                   Select the fields to apply. <strong>Always verify before publishing.</strong>
                 </Text>
 
-                {/* Thai title */}
+                {/* ── Thai title ─────────────────────────────────────────── */}
                 {result.title && (
                   <Card
                     padding={3}
@@ -171,7 +221,7 @@ export function AINoticeReadAction(props: DocumentActionProps) {
                   </Card>
                 )}
 
-                {/* English title */}
+                {/* ── English title ──────────────────────────────────────── */}
                 {result.titleEn && (
                   <Card
                     padding={3}
@@ -199,7 +249,99 @@ export function AINoticeReadAction(props: DocumentActionProps) {
                   </Card>
                 )}
 
-                {/* Summary (read-only context, not applied) */}
+                {/* ── Project (with conflict warning if form already has a different project) ── */}
+                {result.projectId && result.projectName && (
+                  <Card
+                    padding={3}
+                    radius={2}
+                    border
+                    tone={selected.projectId ? (projectConflict ? 'caution' : 'positive') : 'default'}
+                    style={{ cursor: 'pointer' }}
+                    onClick={() => setSelected(p => ({ ...p, projectId: !p.projectId }))}
+                  >
+                    <Flex align="flex-start" gap={3}>
+                      <input
+                        type="checkbox"
+                        checked={!!selected.projectId}
+                        onChange={() => setSelected(p => ({ ...p, projectId: !p.projectId }))}
+                        style={{ marginTop: 2, width: 16, height: 16, cursor: 'pointer', flexShrink: 0 }}
+                      />
+                      <Stack space={1} style={{ flex: 1 }}>
+                        <Flex align="center" gap={2}>
+                          <Text size={0} weight="semibold" muted>Project</Text>
+                          <Badge tone="primary" mode="outline" fontSize={0}>→ projects field</Badge>
+                          {projectConflict && (
+                            <Badge tone="caution" mode="default" fontSize={0}>⚠ Form has a different project</Badge>
+                          )}
+                        </Flex>
+                        <Text size={1}>{result.projectName}</Text>
+                        {projectConflict && (
+                          <Text size={0} muted style={{ color: 'var(--card-caution-fg-color)' }}>
+                            Applying will overwrite the existing project on this document.
+                          </Text>
+                        )}
+                      </Stack>
+                    </Flex>
+                  </Card>
+                )}
+
+                {/* ── Provider (juristic) ────────────────────────────────── */}
+                {result.providerId && result.providerName && (
+                  <Card
+                    padding={3}
+                    radius={2}
+                    border
+                    tone={selected.providerId ? 'positive' : 'default'}
+                    style={{ cursor: 'pointer' }}
+                    onClick={() => setSelected(p => ({ ...p, providerId: !p.providerId }))}
+                  >
+                    <Flex align="flex-start" gap={3}>
+                      <input
+                        type="checkbox"
+                        checked={!!selected.providerId}
+                        onChange={() => setSelected(p => ({ ...p, providerId: !p.providerId }))}
+                        style={{ marginTop: 2, width: 16, height: 16, cursor: 'pointer', flexShrink: 0 }}
+                      />
+                      <Stack space={1} style={{ flex: 1 }}>
+                        <Flex align="center" gap={2}>
+                          <Text size={0} weight="semibold" muted>Provider (Juristic Office)</Text>
+                          <Badge tone="primary" mode="outline" fontSize={0}>→ provider field</Badge>
+                        </Flex>
+                        <Text size={1}>{result.providerName}</Text>
+                      </Stack>
+                    </Flex>
+                  </Card>
+                )}
+
+                {/* ── Sub-category ───────────────────────────────────────── */}
+                {result.subCategoryId && result.subCategoryLabel && (
+                  <Card
+                    padding={3}
+                    radius={2}
+                    border
+                    tone={selected.subCategoryId ? 'positive' : 'default'}
+                    style={{ cursor: 'pointer' }}
+                    onClick={() => setSelected(p => ({ ...p, subCategoryId: !p.subCategoryId }))}
+                  >
+                    <Flex align="flex-start" gap={3}>
+                      <input
+                        type="checkbox"
+                        checked={!!selected.subCategoryId}
+                        onChange={() => setSelected(p => ({ ...p, subCategoryId: !p.subCategoryId }))}
+                        style={{ marginTop: 2, width: 16, height: 16, cursor: 'pointer', flexShrink: 0 }}
+                      />
+                      <Stack space={1} style={{ flex: 1 }}>
+                        <Flex align="center" gap={2}>
+                          <Text size={0} weight="semibold" muted>Sub-category</Text>
+                          <Badge tone="primary" mode="outline" fontSize={0}>→ subCategories field</Badge>
+                        </Flex>
+                        <Text size={1}>{result.subCategoryLabel}</Text>
+                      </Stack>
+                    </Flex>
+                  </Card>
+                )}
+
+                {/* ── Summary (read-only context, not applied) ─────────── */}
                 {result.summary && (
                   <Card padding={3} radius={2} border tone="transparent">
                     <Stack space={1}>
@@ -227,11 +369,14 @@ export function AINoticeReadAction(props: DocumentActionProps) {
               </Stack>
             )}
 
-            {!loading && !error && result && !result.title && !result.titleEn && (
+            {!loading && !error && result &&
+              !result.title && !result.titleEn &&
+              !result.projectId && !result.providerId && !result.subCategoryId && (
               <Stack space={3}>
                 <Card padding={4} tone="caution" border radius={2}>
                   <Text size={1} muted align="center">
-                    No readable text found in the image. Try a clearer or higher-resolution poster image.
+                    No readable text found in the image, and no project/provider/subcategory could be inferred.
+                    Try a clearer or higher-resolution poster image.
                   </Text>
                 </Card>
                 <Flex justify="flex-end">
