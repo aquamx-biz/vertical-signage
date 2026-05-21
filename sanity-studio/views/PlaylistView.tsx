@@ -29,6 +29,7 @@ import { CSS } from '@dnd-kit/utilities'
 
 interface PlaylistItem {
   _id:              string
+  mediaId?:         string
   order:            number
   enabled:          boolean
   notes?:           string
@@ -97,14 +98,15 @@ async function fetchThumbAsDataUrl(url: string): Promise<string> {
 // ── SortableRow ───────────────────────────────────────────────────────────────
 
 interface SortableRowProps {
-  item:     PlaylistItem
-  idx:      number
-  deleting: boolean
-  onEdit:   () => void
-  onDelete: () => void
+  item:        PlaylistItem
+  idx:         number
+  deleting:    boolean
+  onEdit:      () => void
+  onDelete:    () => void
+  onOpenMedia: () => void
 }
 
-function SortableRow({ item, idx, deleting, onEdit, onDelete }: SortableRowProps) {
+function SortableRow({ item, idx, deleting, onEdit, onDelete, onOpenMedia }: SortableRowProps) {
   const {
     attributes, listeners, setNodeRef,
     transform, transition, isDragging,
@@ -164,11 +166,16 @@ function SortableRow({ item, idx, deleting, onEdit, onDelete }: SortableRowProps
             </Text>
           </Flex>
 
-          {/* Thumbnail */}
-          <Box style={{
-            flexShrink: 0, width: 40, height: 72,
-            borderRadius: 4, overflow: 'hidden', background: '#1a1a2e',
-          }}>
+          {/* Thumbnail — click to open the linked media doc (when one is linked) */}
+          <Box
+            onClick={item.mediaId ? onOpenMedia : undefined}
+            title={item.mediaId ? 'Open media in Media Library' : undefined}
+            style={{
+              flexShrink: 0, width: 40, height: 72,
+              borderRadius: 4, overflow: 'hidden', background: '#1a1a2e',
+              cursor: item.mediaId ? 'pointer' : 'default',
+            }}
+          >
             {item.thumbnail
               ? <img src={`${item.thumbnail}?w=80&h=144&fit=crop`} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               : item.videoUrl
@@ -182,8 +189,17 @@ function SortableRow({ item, idx, deleting, onEdit, onDelete }: SortableRowProps
           <Stack space={3} style={{ flex: 1, minWidth: 0 }}>
 
             <Flex gap={2} align="center" wrap="wrap">
-              <Text size={2} weight="semibold"
-                style={{ textDecoration: off ? 'line-through' : 'none' }}>
+              <Text
+                size={2}
+                weight="semibold"
+                onClick={item.mediaId ? onOpenMedia : undefined}
+                title={item.mediaId ? 'Open media in Media Library' : undefined}
+                style={{
+                  textDecoration: off ? 'line-through' : 'none',
+                  cursor:         item.mediaId ? 'pointer' : 'default',
+                  color:          item.mediaId ? 'var(--card-link-fg-color)' : undefined,
+                }}
+              >
                 {item.mediaTitle ?? '(no media linked)'}
               </Text>
               {item.mediaType && (
@@ -271,6 +287,7 @@ export function PlaylistView({ document: doc }: { document?: { displayed?: any }
     client.fetch<PlaylistItem[]>(
       `*[_type == "playlistItem" && project._ref == $projectId] | order(order asc) {
         _id, order, enabled, notes, startAt, endAt, displayDuration,
+        "mediaId":              media->_id,
         "touchCategory":        touchExploreCategory,
         "touchProvider":        touchExploreDefaultProvider->name_th,
         "mediaTitle":           media->title,
@@ -320,6 +337,12 @@ export function PlaylistView({ document: doc }: { document?: { displayed?: any }
     const base  = window.location.href.split('/intent')[0].split('/structure')[0]
     const clean = id.replace(/^drafts\./, '')
     window.location.href = `${base}/intent/edit/id=${clean};type=playlistItem/`
+  }
+
+  function openMedia(id: string) {
+    const base  = window.location.href.split('/intent')[0].split('/structure')[0]
+    const clean = id.replace(/^drafts\./, '')
+    window.location.href = `${base}/intent/edit/id=${clean};type=media/`
   }
 
   async function deleteItem(item: PlaylistItem, slotNumber: number) {
@@ -719,6 +742,7 @@ export function PlaylistView({ document: doc }: { document?: { displayed?: any }
                 deleting={deleting}
                 onEdit={() => openItem(item._id)}
                 onDelete={() => deleteItem(item, idx + 1)}
+                onOpenMedia={() => item.mediaId && openMedia(item.mediaId)}
               />
             ))}
           </SortableContext>
