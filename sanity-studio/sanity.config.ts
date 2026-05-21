@@ -12,7 +12,6 @@ import { AIPartyLookupAction } from './actions/AIPartyLookupAction'
 import { MarkAsSignedAction }             from './actions/MarkAsSignedAction'
 import { ProtectedProjectDeleteAction }  from './actions/ProtectedProjectDeleteAction'
 import { SuspendProjectAction, ReactivateProjectAction, TerminateProjectAction } from './actions/ProjectStatusActions'
-import { AINoticeReadAction }            from './actions/AINoticeReadAction'
 import { CreatePartyFromContractAction } from './actions/CreatePartyFromContractAction'
 import { ImportFromContractAction }      from './actions/ImportFromContractAction'
 import { GenerateView }         from './views/GenerateView'
@@ -394,9 +393,10 @@ export default defineConfig({
       if (ctx.schemaType === 'media') {
         // Replace default Publish with MediaPublishAction (handles addToPlaylistOnPublish).
         // Keep AddToPlaylistAction as a manual fallback in the ••• menu.
-        // AINoticeReadAction reads a poster image and fills in notice title via Claude vision.
+        // AI poster reading lives in the inline button on the Poster Image field
+        // (PosterImageAIInput) — no document-action entry needed.
         const [_defaultPublish, ...rest] = prev
-        return [MediaPublishAction, ...rest, AddToPlaylistAction, AINoticeReadAction]
+        return [MediaPublishAction, ...rest, AddToPlaylistAction]
       }
       if (ctx.schemaType === 'categoryConfig') {
         // Singleton — block delete and duplicate so it can't be destroyed or duplicated.
