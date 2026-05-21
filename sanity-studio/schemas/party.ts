@@ -144,6 +144,20 @@ export default defineType({
       components:  { input: ManagerFromSiteInput },
     }),
 
+    // Profile picture / logo — applies to both individuals and juristics.
+    // Reconstructed 2026-05-21 from production data (11 party docs already carry
+    // it). The string `profilePicture` has never appeared in this repo's git
+    // history — earlier edit was deployed but never committed. Same loss pattern
+    // as billingPeriods (rentSpace) and the Mini-GL fields (procurement).
+    defineField({
+      group:       'identity',
+      name:        'profilePicture',
+      title:       'Profile Picture / Logo',
+      type:        'image',
+      options:     { hotspot: true },
+      description: 'Optional photo or logo. Helps disambiguate the party in CRM list views.',
+    }),
+
     // Individual fields
     defineField({
       group:       'identity',
