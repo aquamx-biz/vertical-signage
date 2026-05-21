@@ -202,6 +202,17 @@ function SortableRow({ item, idx, deleting, onEdit, onDelete, onOpenMedia }: Sor
               >
                 {item.mediaTitle ?? '(no media linked)'}
               </Text>
+              {item.mediaId && (
+                <Badge
+                  mode="outline"
+                  tone="default"
+                  fontSize={0}
+                  title="Stable last-6 of the media doc ID — same value shown in Media Library"
+                  style={{ fontFamily: 'monospace' }}
+                >
+                  #{item.mediaId.slice(-6)}
+                </Badge>
+              )}
               {item.mediaType && (
                 <Badge mode="outline" tone={item.mediaType === 'video' ? 'primary' : 'default'} fontSize={0}>
                   {item.mediaType === 'video' ? '▶ Video' : '🖼 Image'}

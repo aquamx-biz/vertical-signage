@@ -315,6 +315,7 @@ export default defineType({
 
   preview: {
     select: {
+      id:          '_id',
       title:       'title',
       kind:        'kind',
       type:        'type',
@@ -324,19 +325,22 @@ export default defineType({
       offerTitle:  'offer.title_th',
       projectName: 'projects.0.title',
     },
-    prepare({ title, kind, type, isActive, videoAsset, imageAsset, offerTitle, projectName }) {
+    prepare({ id, title, kind, type, isActive, videoAsset, imageAsset, offerTitle, projectName }) {
       const status = isActive === false ? '  ·  DISABLED' : ''
+      // Stable last-6 of the doc _id — same value shown on PlaylistView rows.
+      // slice(-6) returns the same chars for draft and published forms of the doc.
+      const shortId = id ? `#${(id as string).slice(-6)}` : ''
       if (kind === 'notice') {
         const prefix = projectName ? `[${projectName}]` : '[NOTICE]'
         return {
           title:    `${prefix} ${title ?? '(untitled)'}${status}`,
-          subtitle: projectName ? `Notice  ·  ${projectName}` : 'Notice (no project linked)',
+          subtitle: `${shortId}  ·  ${projectName ? `Notice  ·  ${projectName}` : 'Notice (no project linked)'}`,
         }
       }
       const asset = videoAsset ?? imageAsset ?? '(no file)'
       return {
         title:    `${title ?? '(untitled)'}${status}`,
-        subtitle: `[${kind ?? '?'}/${type ?? '—'}]  ·  ${asset}${offerTitle ? `  ·  ${offerTitle}` : ''}`,
+        subtitle: `${shortId}  ·  [${kind ?? '?'}/${type ?? '—'}]  ·  ${asset}${offerTitle ? `  ·  ${offerTitle}` : ''}`,
       }
     },
   },
