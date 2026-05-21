@@ -16,9 +16,10 @@ const CATEGORY_LIST = [
   { title: 'Building Updates', value: 'buildingUpdates' },
 ]
 
-// Providers are GLOBAL — no project reference.
-// Category and sub-category filtering lives on Offer.
-// Media assets belong to individual Offer documents (media.offer reference).
+// Providers are mostly GLOBAL — category and sub-category filtering lives on Offer,
+// and media assets belong to individual Offer documents (media.offer reference).
+// EXCEPTION: juristic-office providers carry a single `projectSite` reference so
+// notices and AI tagging can route to the correct building's kiosk project.
 
 export default defineType({
   name: 'provider',
@@ -49,6 +50,19 @@ export default defineType({
       },
       validation: Rule => Rule.required(),
     }),
+
+    // ── Juristic-only: which building / property this office serves ───────────
+    // Used by the AI Notice Reader to scope provider candidates after the AI
+    // picks a project. Hidden for non-juristic providers, which stay global.
+    defineField({
+      name:        'projectSite',
+      title:       'Project Site (Juristic Office only)',
+      type:        'reference',
+      to:          [{ type: 'projectSite' }],
+      hidden:      ({ document }) => (document as any)?.providerType !== 'juristicOffice',
+      description: 'The building this juristic office serves. Required so notices linked to this provider can be auto-routed to the correct kiosk project. Leave blank for non-juristic providers.',
+    }),
+
     defineField({
       name: 'category',
       title: 'Category',
