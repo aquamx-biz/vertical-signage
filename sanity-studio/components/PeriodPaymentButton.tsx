@@ -63,11 +63,12 @@ export function PeriodPaymentButton(props: any) {
       const periodDesc = [periodStart, periodEnd].filter(Boolean).join(' – ')
 
       const paymentDoc: Record<string, any> = {
-        _type:         'payment',
-        paymentMode:   'rent_payment',
-        paymentStatus: 'created',
-        paymentAmount: total || rentalAmount,
-        currency:      'THB',
+        _type:             'payment',
+        paymentMode:       'rent_payment',
+        paymentStatus:     'created',
+        paymentAmount:     total || rentalAmount,
+        currency:          'THB',
+        linkedRentContract: { _type: 'reference', _ref: contractId },
       }
       if (partyRef?._ref) {
         paymentDoc.vendor = { _type: 'reference', _ref: partyRef._ref }

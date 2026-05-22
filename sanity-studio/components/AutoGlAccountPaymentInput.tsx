@@ -40,8 +40,8 @@ const PROC_GL_QUERY = `coalesce(
   *[_type == "procurement" && _id == $procId][0].accountCode._ref
 )`
 
-// GL for Rent Payment — always 512100 Rent
-const RENT_GL_QUERY = `*[_type == "accountCode" && code == "512100" && !(_id in path("drafts.**"))][0]._id`
+// GL for Rent Payment — always 513100 Rent Expense
+const RENT_GL_QUERY = `*[_type == "accountCode" && code == "513100" && !(_id in path("drafts.**"))][0]._id`
 
 // GL from Expense Category in Process Setup (draft-first)
 const EXPENSE_CAT_GL_QUERY = `coalesce(
@@ -203,7 +203,7 @@ export function AutoGlAccountPaymentInput(props: any) {
   if (showReadOnly) {
     const selected = options.find(o => o.value === value?._ref)
     const hint = isRentMode
-      ? '512100 Rent account not found — check Chart of Accounts'
+      ? '513100 Rent Expense account not found — check Chart of Accounts'
       : isProcMode
         ? (firstProcRef ? 'No GL account set on linked Procurement' : 'Link a Procurement to auto-fill')
         : (expenseCategoryKey ? 'No GL account configured for this category in Process Setup' : '')
