@@ -3,6 +3,7 @@ import { ExcludedProjectsInput }      from '../components/ExcludedProjectsInput'
 import { NoticeSubcategoryInput }     from '../components/NoticeSubcategoryInput'
 import { VideoCompressInput }         from '../components/VideoCompressInput'
 import { PosterImageAIInput }         from '../components/PosterImageAIInput'
+import { MediaUsageSummary }          from '../components/MediaUsageSummary'
 
 // category field removed from media — category now lives on offer.
 // schedule (startAt/endAt) removed from media — scheduling consolidated on playlistItem.
@@ -269,6 +270,16 @@ export default defineType({
         'The media itself stays in the library — only the rotation slot documents are removed. ' +
         'The checkbox resets to off after a successful publish (one-shot trigger). ' +
         'Takes effect on the kiosk after the next deploy.',
+    }),
+
+    // ── Playlist usage (read-only summary with deep-links) ────────────────────
+    defineField({
+      name:        'playlistUsage',
+      title:       'Used in Playlists',
+      type:        'string',
+      readOnly:    true,
+      components:  { input: MediaUsageSummary },
+      description: 'Every playlist slot this media currently occupies, grouped by project. Click "Open Playlist" to jump to that project\'s Playlist view.',
     }),
 
     // Exclude-based project selector — global promo only.
