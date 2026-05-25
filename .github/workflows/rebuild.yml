@@ -1,8 +1,10 @@
 # Rebuild signage sites
 #
 # Migrated from akeboyz/signage-builder. Pushes to aquamx-biz/* condo repos
-# (the ones Netlify actually deploys from). Now includes noble-be19, which
-# was missing from the legacy akeboyz workflow.
+# (the ones Netlify actually deploys from). Now includes noble-be19.
+#
+# Resilient: skips condos whose folder build.mjs didn't create, so a missing
+# project in Sanity doesn't fail the whole job. Logs what got pushed at the end.
 #
 # Triggers:
 #   - push to master           (manual code change)
@@ -10,7 +12,7 @@
 #   - repository_dispatch      (called by aquamx-handoff /api/sanity-webhook
 #                               when Sanity content is updated)
 #
-# Secrets required (set under repo Settings > Secrets and variables > Actions):
+# Secrets required (Settings > Secrets and variables > Actions):
 #   - SANITY_TOKEN   read token for the awjj9g8u/production dataset
 #   - GH_PAT         fine-grained PAT, contents:read+write on aquamx-biz/*
 
@@ -38,73 +40,70 @@ jobs:
       - name: Run build.mjs
         env:
           SANITY_TOKEN: ${{ secrets.SANITY_TOKEN }}
-        # build.mjs writes per-project output to ../{code}/ (sibling directories of this checkout).
-        run: node build.mjs
+        # build.mjs writes per-project output to ../{code}/ (sibling directories
+        # of this checkout). Print what got produced so we know what to push.
+        run: |
+          node build.mjs
+          echo ""
+          echo "=== Sibling directories produced ==="
+          ls -1 .. | grep -v vertical-signage || true
 
-      - name: Push noble-geo
+      - name: Push all built condos
         env:
           GH_PAT: ${{ secrets.GH_PAT }}
+        # Map Sanity project code (left) → aquamx-biz GitHub repo name (right).
+        # If a project is missing in Sanity, build.mjs simply doesn't create its
+        # folder — we skip the push for that one and keep going.
         run: |
-          cd ../noble-geo
-          git init
-          git config user.email "actions@github.com"
-          git config user.name "GitHub Actions"
-          git remote add origin https://x-access-token:${GH_PAT}@github.com/aquamx-biz/noble-geo.git
-          git add index.html _headers netlify.toml sw.js
-          git commit -m "Auto-rebuild from Sanity update" || echo "Nothing to commit"
-          git push origin HEAD:master --force
+          set +e  # don't abort on individual push failures; we want to try all
+          declare -A REPOS=(
+            ["noble-geo"]="noble-geo"
+            ["lumpini-24"]="lumpini-24"
+            ["mahogany-tower"]="mahogany-tower"
+            ["the-room-skv21"]="the-room-skv21"
+            ["the-room-sukhumvit-21"]="the-room-skv21"
+            ["noble-be19"]="noble-be19"
+          )
 
-      - name: Push lumpini-24
-        env:
-          GH_PAT: ${{ secrets.GH_PAT }}
-        run: |
-          cd ../lumpini-24
-          git init
-          git config user.email "actions@github.com"
-          git config user.name "GitHub Actions"
-          git remote add origin https://x-access-token:${GH_PAT}@github.com/aquamx-biz/lumpini-24.git
-          git add index.html _headers netlify.toml sw.js
-          git commit -m "Auto-rebuild from Sanity update" || echo "Nothing to commit"
-          git push origin HEAD:master --force
+          PUSHED=()
+          SKIPPED=()
+          FAILED=()
 
-      - name: Push mahogany-tower
-        env:
-          GH_PAT: ${{ secrets.GH_PAT }}
-        run: |
-          cd ../mahogany-tower
-          git init
-          git config user.email "actions@github.com"
-          git config user.name "GitHub Actions"
-          git remote add origin https://x-access-token:${GH_PAT}@github.com/aquamx-biz/mahogany-tower.git
-          git add index.html _headers netlify.toml sw.js
-          git commit -m "Auto-rebuild from Sanity update" || echo "Nothing to commit"
-          git push origin HEAD:master --force
+          for CODE in "${!REPOS[@]}"; do
+            REPO="${REPOS[$CODE]}"
+            DIR="../$CODE"
 
-      - name: Push the-room-skv21
-        env:
-          GH_PAT: ${{ secrets.GH_PAT }}
-        # Build output folder name is the Sanity project code "the-room-sukhumvit-21",
-        # but the GitHub repo is named "the-room-skv21" — keep the mapping explicit here.
-        run: |
-          cd ../the-room-sukhumvit-21
-          git init
-          git config user.email "actions@github.com"
-          git config user.name "GitHub Actions"
-          git remote add origin https://x-access-token:${GH_PAT}@github.com/aquamx-biz/the-room-skv21.git
-          git add index.html _headers netlify.toml sw.js
-          git commit -m "Auto-rebuild from Sanity update" || echo "Nothing to commit"
-          git push origin HEAD:master --force
+            if [ ! -d "$DIR" ]; then
+              SKIPPED+=("$CODE (folder not built)")
+              continue
+            fi
 
-      - name: Push noble-be19
-        env:
-          GH_PAT: ${{ secrets.GH_PAT }}
-        # New condo — was not in the legacy akeboyz workflow.
-        run: |
-          cd ../noble-be19
-          git init
-          git config user.email "actions@github.com"
-          git config user.name "GitHub Actions"
-          git remote add origin https://x-access-token:${GH_PAT}@github.com/aquamx-biz/noble-be19.git
-          git add index.html _headers netlify.toml sw.js
-          git commit -m "Auto-rebuild from Sanity update" || echo "Nothing to commit"
-          git push origin HEAD:master --force
+            echo ""
+            echo "── Pushing $CODE → aquamx-biz/$REPO ──"
+            cd "$DIR"
+            git init -q
+            git config user.email "actions@github.com"
+            git config user.name "GitHub Actions"
+            git remote remove origin 2>/dev/null || true
+            git remote add origin "https://x-access-token:${GH_PAT}@github.com/aquamx-biz/${REPO}.git"
+            git add index.html _headers netlify.toml sw.js 2>/dev/null
+            git commit -m "Auto-rebuild from Sanity update" -q || echo "(nothing to commit)"
+            if git push origin HEAD:master --force; then
+              PUSHED+=("$CODE → aquamx-biz/$REPO")
+            else
+              FAILED+=("$CODE → aquamx-biz/$REPO")
+            fi
+            cd "$GITHUB_WORKSPACE"
+          done
+
+          echo ""
+          echo "════════ Rebuild summary ════════"
+          echo "Pushed  (${#PUSHED[@]}):"
+          for x in "${PUSHED[@]}"; do echo "  ✓ $x"; done
+          echo "Skipped (${#SKIPPED[@]}):"
+          for x in "${SKIPPED[@]}"; do echo "  - $x"; done
+          echo "Failed  (${#FAILED[@]}):"
+          for x in "${FAILED[@]}"; do echo "  ✗ $x"; done
+
+          # Fail the job only if any push failed (skip is OK).
+          [ ${#FAILED[@]} -eq 0 ]
