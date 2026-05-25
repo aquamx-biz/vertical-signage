@@ -88,7 +88,20 @@ jobs:
             git remote add origin "https://x-access-token:${GH_PAT}@github.com/aquamx-biz/${REPO}.git"
             git add index.html _headers netlify.toml sw.js 2>/dev/null
             git commit -m "Auto-rebuild from Sanity update" -q || echo "(nothing to commit)"
-            if git push origin HEAD:master --force; then
+
+            # Retry up to 3 times — handles transient 'cannot lock ref' races
+            # that happen when two concurrent dispatches push the same repo.
+            PUSH_OK=0
+            for attempt in 1 2 3; do
+              if git push origin HEAD:master --force; then
+                PUSH_OK=1
+                break
+              fi
+              echo "(push attempt $attempt failed, retrying in 5s…)"
+              sleep 5
+            done
+
+            if [ "$PUSH_OK" = "1" ]; then
               PUSHED+=("$CODE → aquamx-biz/$REPO")
             else
               FAILED+=("$CODE → aquamx-biz/$REPO")
