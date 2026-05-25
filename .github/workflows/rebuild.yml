@@ -1,0 +1,110 @@
+# Rebuild signage sites
+#
+# Migrated from akeboyz/signage-builder. Pushes to aquamx-biz/* condo repos
+# (the ones Netlify actually deploys from). Now includes noble-be19, which
+# was missing from the legacy akeboyz workflow.
+#
+# Triggers:
+#   - push to master           (manual code change)
+#   - workflow_dispatch        (manual trigger from GitHub UI)
+#   - repository_dispatch      (called by aquamx-handoff /api/sanity-webhook
+#                               when Sanity content is updated)
+#
+# Secrets required (set under repo Settings > Secrets and variables > Actions):
+#   - SANITY_TOKEN   read token for the awjj9g8u/production dataset
+#   - GH_PAT         fine-grained PAT, contents:read+write on aquamx-biz/*
+
+name: Rebuild signage sites
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+  repository_dispatch:
+    types: [sanity-update]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout vertical-signage
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run build.mjs
+        env:
+          SANITY_TOKEN: ${{ secrets.SANITY_TOKEN }}
+        # build.mjs writes per-project output to ../{code}/ (sibling directories of this checkout).
+        run: node build.mjs
+
+      - name: Push noble-geo
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+        run: |
+          cd ../noble-geo
+          git init
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+          git remote add origin https://x-access-token:${GH_PAT}@github.com/aquamx-biz/noble-geo.git
+          git add index.html _headers netlify.toml sw.js
+          git commit -m "Auto-rebuild from Sanity update" || echo "Nothing to commit"
+          git push origin HEAD:master --force
+
+      - name: Push lumpini-24
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+        run: |
+          cd ../lumpini-24
+          git init
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+          git remote add origin https://x-access-token:${GH_PAT}@github.com/aquamx-biz/lumpini-24.git
+          git add index.html _headers netlify.toml sw.js
+          git commit -m "Auto-rebuild from Sanity update" || echo "Nothing to commit"
+          git push origin HEAD:master --force
+
+      - name: Push mahogany-tower
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+        run: |
+          cd ../mahogany-tower
+          git init
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+          git remote add origin https://x-access-token:${GH_PAT}@github.com/aquamx-biz/mahogany-tower.git
+          git add index.html _headers netlify.toml sw.js
+          git commit -m "Auto-rebuild from Sanity update" || echo "Nothing to commit"
+          git push origin HEAD:master --force
+
+      - name: Push the-room-skv21
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+        # Build output folder name is the Sanity project code "the-room-sukhumvit-21",
+        # but the GitHub repo is named "the-room-skv21" — keep the mapping explicit here.
+        run: |
+          cd ../the-room-sukhumvit-21
+          git init
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+          git remote add origin https://x-access-token:${GH_PAT}@github.com/aquamx-biz/the-room-skv21.git
+          git add index.html _headers netlify.toml sw.js
+          git commit -m "Auto-rebuild from Sanity update" || echo "Nothing to commit"
+          git push origin HEAD:master --force
+
+      - name: Push noble-be19
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+        # New condo — was not in the legacy akeboyz workflow.
+        run: |
+          cd ../noble-be19
+          git init
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+          git remote add origin https://x-access-token:${GH_PAT}@github.com/aquamx-biz/noble-be19.git
+          git add index.html _headers netlify.toml sw.js
+          git commit -m "Auto-rebuild from Sanity update" || echo "Nothing to commit"
+          git push origin HEAD:master --force
