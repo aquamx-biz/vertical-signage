@@ -11,12 +11,21 @@ const API_BASE =
  * Factory that returns a custom Sanity input component with:
  *  - A "Generate Number" button (global sequence, format PREFIX-yyyy-mm-001)
  *  - Real-time duplicate check with a warning if the number is already in use
- *  - Reads the contractType reference to determine the prefix dynamically
+ *  - Prefix resolution: pass `fixedPrefix` to skip the contractType lookup,
+ *    otherwise the input reads the doc's contractType reference dynamically.
+ *  - Optional `dateField` reads a date from the form and sends it as
+ *    `dateOverride` so the YY-MM segment matches the doc's own date.
  *
  * Usage in schema:
  *   components: { input: createAutoNumberInput('contract') }
+ *   components: { input: createAutoNumberInput('payment', { fixedPrefix: 'PMT' }) }
+ *   components: { input: createAutoNumberInput('journalEntry', { fixedPrefix: 'JE', dateField: 'date' }) }
  */
-export function createAutoNumberInput(docType: string) {
+export function createAutoNumberInput(
+  docType: string,
+  opts: { fixedPrefix?: string; dateField?: string } = {},
+) {
+  const { fixedPrefix, dateField } = opts
   function AutoNumberInput(props: StringInputProps) {
     const [generating, setGenerating] = useState(false)
     const [checking,   setChecking]   = useState(false)
@@ -25,7 +34,12 @@ export function createAutoNumberInput(docType: string) {
 
     const currentDocId      = useFormValue(['_id'])                as string | undefined
     const contractTypeRef   = useFormValue(['contractType', '_ref']) as string | undefined
+    // Always call the hook (Rules of Hooks); ignore the value if dateField wasn't supplied.
+    const dateFieldValue    = useFormValue([dateField ?? '__none__']) as string | undefined
+    const dateOverride      = dateField ? dateFieldValue : undefined
     const currentValue      = (props.value as string | undefined) ?? ''
+
+    const prefixReady = !!fixedPrefix || !!contractTypeRef
 
     // ── Debounced duplicate check ──────────────────────────────────────────────
     const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -73,6 +87,8 @@ export function createAutoNumberInput(docType: string) {
           body:    JSON.stringify({
             docType,
             contractTypeId: contractTypeRef,
+            fixedPrefix,
+            dateOverride,
             currentNumber:  currentValue || undefined,
             currentDocId:   currentDocId?.replace(/^drafts\./, ''),
           }),
@@ -94,7 +110,7 @@ export function createAutoNumberInput(docType: string) {
       <Stack space={2}>
         {props.renderDefault(props)}
 
-        {!contractTypeRef && (
+        {!prefixReady && (
           <Card padding={2} radius={2} tone="caution" border>
             <Text size={1}>Select a Contract Type above before generating a number.</Text>
           </Card>
@@ -112,9 +128,9 @@ export function createAutoNumberInput(docType: string) {
               text={hasValue ? `↺ Regenerate Number` : `🔢 Generate Number`}
               mode="ghost"
               tone={hasValue ? 'caution' : 'primary'}
-              disabled={!contractTypeRef}
+              disabled={!prefixReady}
               title={
-                !contractTypeRef
+                !prefixReady
                   ? 'Select a Contract Type first'
                   : hasValue
                     ? 'Overwrite with the next available number for this month'
