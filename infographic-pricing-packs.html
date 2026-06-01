@@ -1,0 +1,1851 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Advertise on Signage · Pricing</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.5.0/dist/tabler-icons.min.css" />
+<style>
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+:root {
+    /* AQUAMX brand tokens */
+    --navy:          #0E3361;
+    --navy-deep:     #072147;
+    --orange:        #C9864C;
+    --orange-strong: #A36738;
+    --orange-soft:   #F6E5D0;
+    --cream:         #FAF6ED;
+    --ink:           #0B1B33;
+    --muted:         #5C6B82;
+    --line:          #EADFC9;
+    --white:         #ffffff;
+
+    /* Mapped compat tokens (existing styles use these) */
+    --bg-deep:    var(--cream);
+    --bg-card:    var(--white);
+    --bg-card-2:  #FBF7EE;
+    --ink-80:     #2a3a55;
+    --ink-60:     var(--muted);
+    --ink-40:     #8B98AE;
+    --ink-20:     #C5CCD8;
+    --cyan:       var(--orange);
+    --green:      var(--orange-strong);
+    --amber:      var(--orange);
+    --red:        #C73E3E;
+    --purple:     var(--navy);
+    --copper:     var(--orange);
+}
+
+html, body {
+    background: var(--cream);
+    color: var(--ink);
+    font-family: 'IBM Plex Sans Thai', 'Nunito', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+}
+a { color: inherit; text-decoration: none; }
+
+/* ============================================================
+   NAV — replicated 1:1 from aquamx.biz landing header
+============================================================ */
+.container { max-width: 1200px; margin: 0 auto; padding: 0 32px; }
+.nav-wrap {
+    background: var(--white);
+    border-bottom: 1px solid var(--line);
+    position: sticky; top: 0; z-index: 50;
+}
+.nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 76px;
+}
+.brand {
+    display: flex;
+    align-items: baseline;
+    font-weight: 800;
+    font-size: 26px;
+    color: var(--navy);
+    letter-spacing: -0.02em;
+    font-family: 'Nunito', sans-serif;
+}
+.brand img { display: block; height: 72px; width: auto; }
+.brand-text .x-mark { color: var(--orange); }
+.nav-links {
+    display: flex;
+    align-items: center;
+    gap: 32px;
+}
+.nav-links a {
+    color: var(--ink);
+    font-weight: 500;
+    font-size: 15.5px;
+    transition: color .15s;
+}
+.nav-links a:hover { color: var(--orange-strong); }
+.lang-btn {
+    background: none;
+    border: 1.5px solid var(--navy);
+    border-radius: 8px;
+    padding: 5px 13px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--navy);
+    cursor: pointer;
+    letter-spacing: 0.05em;
+    font-family: 'Nunito', sans-serif;
+    transition: background .15s, color .15s;
+    margin-left: 8px;
+}
+.lang-btn:hover { background: var(--navy); color: #fff; }
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 22px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 15px;
+    cursor: pointer;
+    border: none;
+    transition: transform .12s, background .15s, color .15s;
+    font-family: inherit;
+}
+.btn-primary { background: var(--navy); color: var(--white); }
+.btn-primary:hover { background: #001E40; transform: translateY(-1px); }
+
+@media (max-width: 700px) {
+    .container { padding: 0 18px; }
+    .nav { height: 64px; }
+    .brand img { height: 52px; }
+    .nav-links { display: none; }
+}
+
+/* ============================================================
+   FOOTER — minimal, matches site footer feel
+============================================================ */
+.site-footer {
+    background: var(--white);
+    border-top: 1px solid var(--line);
+    padding: 32px 40px;
+    text-align: center;
+}
+.site-footer .footer-inner {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+.site-footer .copy {
+    font-size: 13px;
+    color: var(--muted);
+    font-family: 'IBM Plex Sans Thai', sans-serif;
+}
+.site-footer .footer-links {
+    display: flex; gap: 22px;
+}
+.site-footer .footer-links a {
+    font-size: 13.5px;
+    color: var(--muted);
+    transition: color .15s;
+}
+.site-footer .footer-links a:hover { color: var(--orange-strong); }
+@media (max-width: 600px) {
+    .site-footer { padding: 24px 20px; }
+    .site-footer .footer-inner { flex-direction: column; gap: 12px; text-align: center; }
+}
+.page {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 64px 40px 80px;
+}
+
+/* HEADER */
+.eyebrow {
+    display: inline-flex; align-items: center; gap: 10px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 14px;
+    color: var(--orange-strong);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    font-weight: 700;
+    margin-bottom: 18px;
+}
+.eyebrow::before { content: none; }
+.eyebrow .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--orange);
+    box-shadow: none;
+}
+h1.title {
+    font-family: 'Nunito', sans-serif;
+    font-size: 56px;
+    font-weight: 800;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    text-transform: none;
+    color: var(--navy);
+    margin-bottom: 20px;
+}
+h1.title .accent { color: var(--orange); }
+.lede {
+    font-size: 18px;
+    color: var(--muted);
+    max-width: 720px;
+    line-height: 1.65;
+    margin-bottom: 28px;
+}
+.lede b { color: var(--ink); font-weight: 700; }
+
+/* Hero stats row */
+.hero-stats {
+    display: grid;
+    grid-template-columns: repeat(4, auto);
+    gap: 48px;
+    margin-top: 32px;
+    padding: 28px 36px;
+    background: var(--white);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    width: fit-content;
+    box-shadow: 0 8px 24px -12px rgba(14,51,97,0.12);
+}
+@media (max-width: 700px) { .hero-stats { grid-template-columns: 1fr 1fr; gap: 24px; } }
+.hero-stat .hval {
+    font-family: 'Nunito', sans-serif;
+    font-size: 36px;
+    font-weight: 800;
+    color: var(--navy);
+    line-height: 1;
+    letter-spacing: -0.015em;
+}
+.hero-stat .hlabel {
+    font-family: 'IBM Plex Sans Thai', sans-serif;
+    font-size: 13px;
+    color: var(--muted);
+    letter-spacing: 0.02em;
+    text-transform: none;
+    margin-top: 8px;
+    font-weight: 500;
+}
+
+.divider {
+    display: flex; align-items: center; gap: 16px;
+    margin: 64px 0 32px;
+    color: var(--orange-strong);
+    font-family: 'Nunito', sans-serif;
+    font-size: 14px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    font-weight: 700;
+}
+.divider::before { content: none; }
+.divider::after  { content: ''; flex: 1; height: 1px; background: var(--line); }
+
+/* ============================================================
+   PRICING CARDS
+============================================================ */
+.packs-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    align-items: stretch;
+}
+@media (max-width: 1100px) { .packs-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 600px)  { .packs-grid { grid-template-columns: 1fr; } }
+
+.pack {
+    position: relative;
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 28px 24px;
+    display: flex; flex-direction: column;
+    backdrop-filter: blur(20px);
+    transition: transform 0.25s ease;
+}
+.pack:hover { transform: translateY(-3px); }
+.pack.popular {
+    background: linear-gradient(180deg,
+        rgba(109,213,232,0.10) 0%,
+        rgba(109,213,232,0.03) 30%,
+        var(--bg-card) 100%);
+    border-color: rgba(109,213,232,0.5);
+    box-shadow:
+        0 0 60px rgba(109,213,232,0.15),
+        inset 0 0 0 1px rgba(109,213,232,0.08);
+}
+
+.popular-badge {
+    position: absolute;
+    top: -14px; left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, var(--cyan) 0%, #3a9aaf 100%);
+    color: var(--navy);
+    font-family: 'Anton', sans-serif;
+    font-size: 11px;
+    font-weight: 400;
+    letter-spacing: 0.25em;
+    padding: 5px 14px;
+    border-radius: 50px;
+    text-transform: uppercase;
+    box-shadow: 0 6px 20px rgba(109,213,232,0.4);
+    white-space: nowrap;
+}
+
+.pack-head {
+    margin-bottom: 18px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--line);
+}
+.pack-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-40);
+    letter-spacing: 0.3em;
+    margin-bottom: 4px;
+}
+.pack-name {
+    font-family: 'Anton', sans-serif;
+    font-size: 30px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--ink);
+    line-height: 1;
+}
+.pack.popular .pack-name { color: var(--cyan); }
+
+/* Display time visual */
+.pack-time {
+    display: flex; align-items: center;
+    gap: 12px;
+    margin-bottom: 22px;
+}
+.pack-time-val {
+    font-family: 'Anton', sans-serif;
+    font-size: 40px;
+    color: var(--ink);
+    line-height: 1;
+    letter-spacing: 0.02em;
+}
+.pack-time-unit {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-60);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    line-height: 1.4;
+}
+.pack-time-unit .second { color: var(--ink); font-weight: 700; }
+
+/* Time visualization bar */
+.time-bar {
+    height: 4px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 2px;
+    margin-bottom: 24px;
+    overflow: hidden;
+}
+.time-bar .fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--cyan), #3a9aaf);
+    border-radius: 2px;
+}
+
+/* Price block */
+.pack-price-wrap {
+    margin-bottom: 24px;
+    padding: 18px 20px;
+    background: rgba(255,255,255,0.03);
+    border-radius: 10px;
+    border: 1px solid var(--line);
+}
+.pack.popular .pack-price-wrap {
+    background: rgba(109,213,232,0.06);
+    border-color: rgba(109,213,232,0.25);
+}
+.pack-price-row {
+    display: flex; align-items: baseline;
+    gap: 6px;
+    line-height: 1;
+}
+.pack-price {
+    font-family: 'Anton', sans-serif;
+    font-size: 46px;
+    color: var(--ink);
+    letter-spacing: 0.01em;
+}
+.pack.popular .pack-price { color: var(--cyan); }
+.pack-price-unit {
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    color: var(--ink-60);
+    font-weight: 500;
+}
+.pack-currency {
+    font-family: 'Anton', sans-serif;
+    font-size: 22px;
+    color: var(--ink-60);
+    align-self: start;
+    margin-top: 4px;
+}
+.pack-price-weekly {
+    margin-top: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-60);
+    letter-spacing: 0.08em;
+}
+.pack-price-weekly b { color: var(--ink-80); }
+
+/* Feature list */
+.pack-features {
+    flex: 1;
+    display: flex; flex-direction: column;
+    gap: 11px;
+    margin-bottom: 24px;
+}
+.pf {
+    display: flex; align-items: flex-start;
+    gap: 10px;
+    font-size: 13.5px;
+    line-height: 1.4;
+    color: var(--ink-80);
+}
+.pf-icon {
+    flex-shrink: 0;
+    width: 16px;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 800;
+    line-height: 1.3;
+}
+.pf.yes .pf-icon { color: var(--green); }
+.pf.no  .pf-icon { color: var(--ink-20); }
+.pf.no .pf-text { color: var(--ink-40); text-decoration: line-through; text-decoration-color: rgba(255,255,255,0.15); }
+.pf b { color: var(--ink); font-weight: 600; }
+.pf-count {
+    margin-left: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--cyan);
+    font-weight: 700;
+    padding: 2px 7px;
+    background: rgba(109,213,232,0.12);
+    border-radius: 4px;
+    letter-spacing: 0.05em;
+}
+
+/* CTA button */
+.pack-cta {
+    width: 100%;
+    padding: 14px 18px;
+    background: rgba(8,12,22,0.55);
+    border: 1px solid rgba(255,255,255,0.32);
+    color: var(--ink);
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex; align-items: center; justify-content: space-between;
+    backdrop-filter: blur(8px);
+}
+.pack-cta:hover {
+    background: rgba(255,255,255,0.08);
+    border-color: rgba(255,255,255,0.5);
+}
+.pack-cta::after { content: '→'; font-size: 16px; }
+.pack.popular .pack-cta {
+    background: linear-gradient(135deg, var(--cyan), #3a9aaf);
+    color: var(--navy);
+    border-color: rgba(255,255,255,0.18);
+    box-shadow: 0 8px 24px rgba(109,213,232,0.3);
+}
+.pack.popular .pack-cta:hover {
+    background: linear-gradient(135deg, #7de0f0, #4ab5cc);
+}
+
+/* ============================================================
+   FEATURE COMPARISON TABLE
+============================================================ */
+.compare-wrap {
+    background: var(--white);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 12px 36px -16px rgba(14,51,97,0.12);
+}
+.compare-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+.compare-table th, .compare-table td {
+    padding: 8px 16px;
+    text-align: center;
+    border-bottom: 1px solid var(--line);
+    font-size: 14px;
+    font-family: 'IBM Plex Sans Thai', sans-serif;
+    color: var(--ink);
+}
+.compare-table thead th {
+    background: var(--cream);
+    font-family: 'Nunito', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--navy);
+    text-transform: none;
+    letter-spacing: -0.005em;
+    padding: 22px 16px;
+}
+.compare-table thead th.popular-col {
+    background: var(--orange-soft);
+    color: var(--navy);
+    border-bottom-color: var(--orange);
+}
+.compare-table td.popular-col {
+    background: rgba(246,229,208,0.35);
+}
+.compare-table th:first-child, .compare-table td:first-child {
+    text-align: left;
+    font-family: 'IBM Plex Sans Thai', sans-serif;
+    color: var(--ink);
+    background: transparent;
+    font-weight: 500;
+}
+.compare-table thead th:first-child {
+    color: var(--muted);
+    font-family: 'Nunito', sans-serif;
+    font-size: 13px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    font-weight: 700;
+    background: var(--cream);
+}
+.compare-table .group-label {
+    background: var(--cream);
+    font-family: 'Nunito', sans-serif;
+    font-size: 13px;
+    color: var(--orange-strong);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    text-align: left;
+    padding: 11px 16px;
+    border-bottom: none;
+    font-weight: 700;
+}
+/* Filler cells in group-label row — transparent so only Pro column shows tint */
+.compare-table td.group-fill {
+    background: transparent;
+    border-bottom: none;
+    padding: 0;
+}
+/* Pro column cell in group label row — use the same popular-col tint as other rows */
+.compare-table td.group-fill.popular-col {
+    background: rgba(246,229,208,0.4);
+}
+/* Row labels (first cell of non-group rows) get em-dash prefix.
+   Skip cells marked .empty (no label) and skip .data-row (big headings). */
+.compare-table tbody tr:not(.data-row) td:first-child:not(.group-label):not(.empty)::before {
+    content: '— ';
+    color: var(--muted);
+    margin-right: 4px;
+}
+.compare-table tr:last-child td { border-bottom: none; }
+.compare-table .yes { color: var(--orange-strong); font-size: 18px; font-weight: 800; }
+.compare-table .no  { color: var(--ink-20); font-size: 18px; }
+.compare-table .num {
+    font-family: 'Nunito', sans-serif;
+    font-size: 18px;
+    color: var(--navy);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+}
+.compare-table .price-row td {
+    font-family: 'Anton', sans-serif;
+    font-size: 22px;
+    color: var(--ink);
+    padding: 22px 16px;
+    background: rgba(255,255,255,0.02);
+}
+.compare-table .price-row td.popular-col { color: var(--cyan); background: rgba(109,213,232,0.08); }
+.compare-table .price-row td:first-child {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-40);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    font-weight: 700;
+}
+
+/* ============================================================
+   Merged Plan + Comparison table — rich header rows
+============================================================ */
+.compare-table .row-name th {
+    padding: 28px 14px 18px;
+    background: var(--cream);
+    text-align: center;
+    border-bottom: 1px solid var(--line);
+    font-family: 'Nunito', sans-serif;
+    font-size: 26px;
+    font-weight: 800;
+    text-transform: none;
+    letter-spacing: -0.01em;
+    color: var(--navy);
+    line-height: 1;
+}
+.compare-table .row-name th.popular-col {
+    background: var(--orange-soft);
+    color: var(--navy);
+}
+.compare-table .row-name th .pn {
+    display: block;
+    font-family: 'Nunito', sans-serif;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.12em;
+    margin-bottom: 8px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+.compare-table .row-name th.popular-col .pn {
+    color: var(--orange-strong);
+}
+.compare-table .row-name th .popular-mini {
+    display: inline-block;
+    background: var(--orange);
+    color: var(--white);
+    font-family: 'Nunito', sans-serif;
+    font-size: 11px;
+    font-weight: 800;
+    padding: 4px 10px;
+    border-radius: 999px;
+    letter-spacing: 0.04em;
+    margin-bottom: 10px;
+}
+
+/* Prominent data rows (Display time + Price) */
+.compare-table .data-row td {
+    padding: 12px 16px;
+    text-align: center;
+    background: transparent;
+}
+/* First cell of data-row = left-aligned, uppercase label */
+.compare-table .data-row td:first-child {
+    text-align: left;
+    text-transform: uppercase;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    color: var(--navy);
+    font-size: 14px;
+}
+.compare-table .data-row td.popular-col { background: rgba(246,229,208,0.4); }
+.compare-table .data-row .val-big {
+    display: block;
+    font-family: 'Nunito', sans-serif;
+    font-size: 30px;
+    font-weight: 800;
+    color: var(--navy);
+    letter-spacing: -0.015em;
+    line-height: 1;
+}
+.compare-table .data-row td.popular-col .val-big { color: var(--navy); }
+.compare-table .data-row .val-sub {
+    display: block;
+    font-family: 'IBM Plex Sans Thai', sans-serif;
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 5px;
+    letter-spacing: 0.01em;
+    font-weight: 500;
+}
+
+.compare-table .row-time td {
+    padding: 6px 14px;
+    background: rgba(255,255,255,0.03);
+    text-align: center;
+    border-bottom: none;
+}
+.compare-table .row-time td.popular-col { background: rgba(109,213,232,0.08); }
+.compare-table .row-time td .time-big {
+    font-family: 'Anton', sans-serif;
+    font-size: 32px;
+    color: var(--ink);
+    letter-spacing: 0.02em;
+    line-height: 1;
+}
+.compare-table .row-time td.popular-col .time-big { color: var(--cyan); }
+.compare-table .row-time td .time-label {
+    display: block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: var(--ink-40);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-top: 4px;
+}
+.compare-table .row-time td:first-child,
+.compare-table .row-name th:first-child {
+    background: rgba(255,255,255,0.015);
+}
+
+.compare-table .row-price td {
+    padding: 14px 14px 22px;
+    background: rgba(255,255,255,0.03);
+    text-align: center;
+    border-bottom: 2px solid var(--line);
+}
+.compare-table .row-price td.popular-col { background: rgba(109,213,232,0.08); border-bottom-color: rgba(109,213,232,0.3); }
+.compare-table .row-price td .price-big {
+    font-family: 'Anton', sans-serif;
+    font-size: 36px;
+    color: var(--ink);
+    letter-spacing: 0.01em;
+    line-height: 1;
+}
+.compare-table .row-price td.popular-col .price-big { color: var(--cyan); }
+.compare-table .row-price td .price-currency {
+    font-family: 'Anton', sans-serif;
+    font-size: 18px;
+    color: var(--ink-60);
+    vertical-align: top;
+    margin-right: 2px;
+}
+.compare-table .row-price td .price-unit {
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    color: var(--ink-60);
+    display: block;
+    margin-top: 4px;
+}
+.compare-table .row-price td .price-weekly {
+    display: block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-60);
+    margin-top: 8px;
+    letter-spacing: 0.05em;
+}
+.compare-table .row-price td:first-child {
+    background: rgba(255,255,255,0.015);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-40);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    font-weight: 700;
+    text-align: left;
+}
+
+/* Choose buttons row at table footer */
+.compare-table .row-choose td {
+    padding: 26px 12px 28px;
+    background: var(--cream);
+    border-bottom: none;
+    border-top: 1px solid var(--line);
+    text-align: center;
+    vertical-align: middle;
+}
+.compare-table .row-choose td.popular-col {
+    background: var(--orange-soft);
+    border-top-color: var(--orange);
+}
+.compare-table .row-choose td:first-child { background: var(--cream); }
+
+.choose-btn {
+    width: 100%;
+    padding: 13px 18px;
+    background: var(--white);
+    border: 1.5px solid var(--navy);
+    color: var(--navy);
+    font-family: 'Nunito', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-transform: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.choose-btn:hover {
+    background: var(--cream);
+    transform: translateY(-1px);
+}
+.choose-btn::after { content: '→'; font-size: 14px; }
+.choose-btn.primary {
+    background: var(--navy);
+    color: var(--white);
+    border-color: var(--navy);
+    box-shadow: 0 8px 20px -8px rgba(14,51,97,0.4);
+}
+.choose-btn.primary:hover {
+    background: var(--navy-deep);
+    border-color: var(--navy-deep);
+}
+
+/* ============================================================
+   CTA EXPLAINER
+============================================================ */
+.cta-explainer {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 18px;
+}
+@media (max-width: 1000px) { .cta-explainer { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 600px)  { .cta-explainer { grid-template-columns: 1fr; } }
+
+.cta-type {
+    background: var(--white);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 24px 22px;
+    display: flex; flex-direction: column;
+    gap: 10px;
+    transition: transform .15s, border-color .15s, box-shadow .15s;
+}
+.cta-type:hover {
+    transform: translateY(-3px);
+    border-color: var(--orange);
+    box-shadow: 0 18px 36px -16px rgba(14,51,97,0.15);
+}
+.cta-type-tag {
+    display: inline-block;
+    align-self: flex-start;
+    font-family: 'Nunito', sans-serif;
+    font-size: 11px;
+    padding: 5px 11px;
+    border-radius: 999px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    font-weight: 800;
+    border: 1px solid;
+    margin-bottom: 4px;
+}
+.cta-type.standard .cta-type-tag {
+    color: var(--orange-strong);
+    border-color: var(--orange-soft);
+    background: var(--orange-soft);
+}
+.cta-type.premium .cta-type-tag {
+    color: var(--white);
+    border-color: var(--navy);
+    background: var(--navy);
+}
+.cta-type-name {
+    font-family: 'Nunito', sans-serif;
+    font-size: 22px;
+    font-weight: 800;
+    text-transform: none;
+    letter-spacing: -0.01em;
+    line-height: 1.15;
+    color: var(--navy);
+}
+.cta-type-desc {
+    font-family: 'IBM Plex Sans Thai', sans-serif;
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.65;
+    flex: 1;
+}
+.cta-type-desc b { color: var(--ink); font-weight: 600; }
+.cta-type-avail {
+    margin-top: 8px;
+    padding: 8px 12px;
+    background: rgba(255,255,255,0.04);
+    border-radius: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-60);
+    letter-spacing: 0.1em;
+}
+.cta-type-avail b { color: var(--cyan); }
+
+/* Pack availability ladder — chips for each pack tier */
+.pack-ladder-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: var(--ink-40);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-top: 12px;
+    margin-bottom: 6px;
+}
+.pack-ladder {
+    display: flex;
+    gap: 4px;
+    padding: 8px;
+    background: rgba(255,255,255,0.03);
+    border-radius: 6px;
+    border: 1px solid var(--line);
+}
+.pack-pill {
+    flex: 1;
+    padding: 6px 3px;
+    text-align: center;
+    border-radius: 4px;
+    background: rgba(255,255,255,0.03);
+    border: 1px dashed var(--line);
+    display: flex; flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    min-height: 38px;
+    transition: all 0.2s ease;
+}
+.pack-pill .pname {
+    font-family: 'Inter', sans-serif;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-40);
+    line-height: 1;
+}
+.pack-pill .pqty {
+    font-family: 'Anton', sans-serif;
+    font-size: 13px;
+    color: var(--ink);
+    line-height: 1;
+    letter-spacing: 0.02em;
+}
+.pack-pill.on {
+    background: rgba(109,213,232,0.12);
+    border: 1px solid rgba(109,213,232,0.45);
+}
+.pack-pill.on .pname { color: var(--cyan); }
+.pack-pill.on .pqty { color: white; }
+.pack-pill.off {
+    opacity: 0.3;
+}
+.pack-pill.off .pname {
+    text-decoration: line-through;
+    text-decoration-color: rgba(255,255,255,0.3);
+}
+
+/* ============================================================
+   Signage device frame — shows each popup as it appears
+   on a real vertical (9:16) kiosk screen
+============================================================ */
+.signage-device {
+    width: 100%;
+    max-width: 190px;
+    margin: 0 auto 18px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.sg-screen {
+    width: 100%;
+    aspect-ratio: 9 / 16;
+    position: relative;
+    overflow: hidden;
+    border-radius: 16px;
+    background: #070b14;
+    border: 6px solid #161f30;
+    box-shadow:
+        0 22px 44px -18px rgba(0,0,0,0.55),
+        inset 0 0 0 1px rgba(255,255,255,0.05);
+}
+.sg-content {
+    position: absolute; inset: 0;
+    background-size: cover;
+    background-position: center;
+}
+.sg-scrim {
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(6,10,20,0.42) 0%, rgba(6,10,20,0.62) 100%);
+}
+/* The popup floats centered on the screen, like the real modal */
+.signage-device .cta-mock {
+    position: absolute;
+    left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+    width: 82%;
+    max-width: none;
+    margin: 0;
+}
+/* "Touch to explore" hint pinned to bottom of the screen */
+.sg-hint {
+    position: absolute;
+    left: 50%; bottom: 10px;
+    transform: translateX(-50%);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 6px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.72);
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.18);
+    border-radius: 999px;
+    padding: 4px 9px;
+    white-space: nowrap;
+}
+/* Monitor stand + base — reads as a floor-standing kiosk */
+.sg-stand {
+    width: 12px; height: 18px;
+    background: linear-gradient(180deg, #161f30, #0d1422);
+    border-radius: 0 0 3px 3px;
+}
+.sg-base {
+    width: 46%; height: 7px;
+    background: #161f30;
+    border-radius: 4px;
+    box-shadow: 0 6px 14px -6px rgba(0,0,0,0.5);
+}
+
+/* Mini popup mockups for each CTA type */
+.cta-mock {
+    width: 100%;
+    max-width: 150px;
+    aspect-ratio: 1 / 1;
+    margin: 0 auto 16px;
+    border-radius: 10px;
+    background: rgba(14,18,32,0.95);
+    border: 1px solid rgba(255,255,255,0.14);
+    position: relative;
+    overflow: hidden;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 12px 26px rgba(0,0,0,0.5),
+                inset 0 0 0 1px rgba(255,255,255,0.04);
+}
+
+/* Info popup — info card layout with QR at bottom-left */
+.cta-mock.info {
+    text-align: left;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: 4px;
+    padding: 10px;
+}
+.cta-mock.info .ip-title {
+    font-family: 'Anton', sans-serif;
+    font-size: 11px;
+    color: white;
+    line-height: 1;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.cta-mock.info .ip-sub {
+    font-family: 'Inter', sans-serif;
+    font-size: 5.5px;
+    color: var(--ink-60);
+    line-height: 1.3;
+    margin-bottom: 2px;
+}
+.cta-mock.info .ip-info {
+    display: flex; flex-direction: column;
+    gap: 3px;
+}
+.cta-mock.info .ip-info-line {
+    font-family: 'Inter', sans-serif;
+    font-size: 6px;
+    color: var(--ink-80);
+    letter-spacing: 0.04em;
+    line-height: 1.2;
+}
+.cta-mock.info .ip-scan-row {
+    margin-top: auto;
+    padding-top: 6px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    display: flex; align-items: center; gap: 6px;
+}
+.cta-mock.info .ip-qr {
+    width: 30px; height: 30px;
+    background-image: url('https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=https://aqmx.co&margin=0');
+    background-size: cover;
+    background-position: center;
+    background-color: white;
+    background-repeat: no-repeat;
+    border-radius: 2px;
+    box-shadow: 0 0 0 1.5px white;
+    flex-shrink: 0;
+}
+.cta-mock.info .ip-scan-text {
+    font-family: 'Inter', sans-serif;
+    font-size: 5.5px;
+    color: var(--cyan);
+    letter-spacing: 0.08em;
+    line-height: 1.3;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+/* Gallery popup */
+.cta-mock.gallery {
+    padding: 0;
+}
+.cta-mock.gallery .ig-image {
+    flex: 1;
+    background-size: cover;
+    background-position: center;
+    background-color: #20242c;
+    position: relative;
+}
+.cta-mock.gallery .ig-caption {
+    position: absolute;
+    bottom: 12px; left: 6px; right: 6px;
+    font-family: 'Inter', sans-serif;
+    font-size: 6px;
+    color: white;
+    font-weight: 600;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.7);
+}
+.cta-mock.gallery .ig-dots {
+    position: absolute;
+    bottom: 5px; left: 50%;
+    transform: translateX(-50%);
+    display: flex; gap: 3px;
+}
+.cta-mock.gallery .ig-dot {
+    width: 4px; height: 4px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.4);
+}
+.cta-mock.gallery .ig-dot.active {
+    background: white;
+    box-shadow: 0 0 4px white;
+}
+
+/* Menu popup */
+.cta-mock.menu {
+    gap: 3px;
+    padding: 8px;
+}
+.cta-mock.menu .im-tabs {
+    display: flex; gap: 3px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    margin-bottom: 3px;
+}
+.cta-mock.menu .im-tab {
+    font-family: 'Inter', sans-serif;
+    font-size: 5px;
+    color: var(--ink-60);
+    padding: 2px 5px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    font-weight: 700;
+    border-radius: 2px;
+}
+.cta-mock.menu .im-tab.active {
+    background: rgba(109,213,232,0.18);
+    color: var(--cyan);
+}
+.cta-mock.menu .im-item {
+    display: grid;
+    grid-template-columns: 14px 1fr auto;
+    gap: 4px;
+    align-items: center;
+    padding: 3px;
+    background: rgba(255,255,255,0.03);
+    border-radius: 2px;
+}
+.cta-mock.menu .im-thumb {
+    width: 14px; height: 14px;
+    border-radius: 2px;
+    background-size: cover;
+    background-color: #20242c;
+}
+.cta-mock.menu .im-name {
+    font-family: 'Inter', sans-serif;
+    font-size: 5.5px;
+    color: white;
+    font-weight: 600;
+}
+.cta-mock.menu .im-price {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 5.5px;
+    color: var(--cyan);
+    font-weight: 700;
+}
+
+/* Booking popup */
+.cta-mock.booking {
+    gap: 3px;
+    padding: 8px;
+}
+.cta-mock.booking .ib-step {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 5px;
+    color: var(--cyan);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    font-weight: 700;
+}
+.cta-mock.booking .ib-title {
+    font-family: 'Anton', sans-serif;
+    font-size: 8px;
+    color: white;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 2px;
+}
+.cta-mock.booking .ib-month {
+    font-family: 'Inter', sans-serif;
+    font-size: 5.5px;
+    color: white;
+    text-align: center;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+}
+.cta-mock.booking .ib-cal {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 1px;
+    font-family: 'Inter', sans-serif;
+    font-size: 5px;
+    text-align: center;
+    align-content: start;
+}
+.cta-mock.booking .ib-cal .dn {
+    color: var(--ink-40);
+    padding: 1px 0;
+    font-weight: 700;
+}
+.cta-mock.booking .ib-cal .d {
+    color: var(--ink-60);
+    padding: 1px 0;
+}
+.cta-mock.booking .ib-cal .d.dim { color: var(--ink-20); }
+.cta-mock.booking .ib-cal .d.avail { color: white; font-weight: 600; }
+.cta-mock.booking .ib-cal .d.sel {
+    background: var(--cyan);
+    color: var(--navy);
+    font-weight: 800;
+    border-radius: 50%;
+    box-shadow: 0 0 4px var(--cyan);
+}
+/* Time slot section below calendar */
+.cta-mock.booking .ib-cal {
+    flex: 0 0 auto;
+}
+.cta-mock.booking .ib-time-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 5px;
+    color: var(--cyan);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    font-weight: 700;
+    margin-top: 4px;
+    padding-top: 4px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+}
+.cta-mock.booking .ib-times {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2px;
+}
+.cta-mock.booking .ib-time {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 5px;
+    color: var(--ink-80);
+    padding: 2px 1px;
+    background: rgba(255,255,255,0.04);
+    border-radius: 2px;
+    text-align: center;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+}
+.cta-mock.booking .ib-time.sel {
+    background: var(--cyan);
+    color: var(--navy);
+    font-weight: 800;
+}
+
+/* ============================================================
+   FAQ / NOTES
+============================================================ */
+.faq-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+}
+@media (max-width: 700px) { .faq-grid { grid-template-columns: 1fr; } }
+
+.faq-item {
+    background: var(--white);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 22px 26px;
+    transition: border-color .15s, transform .15s;
+}
+.faq-item:hover {
+    border-color: var(--orange);
+    transform: translateY(-2px);
+}
+.faq-item.warn {
+    background: var(--orange-soft);
+    border-color: var(--orange);
+}
+.faq-item .fq {
+    font-family: 'Nunito', sans-serif;
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--navy);
+    text-transform: none;
+    letter-spacing: -0.005em;
+    margin-bottom: 10px;
+    display: flex; align-items: center; gap: 10px;
+}
+.faq-item.warn .fq { color: var(--orange-strong); }
+.faq-item .fq-icon {
+    font-size: 20px;
+    flex-shrink: 0;
+}
+.faq-item .fa {
+    font-family: 'IBM Plex Sans Thai', sans-serif;
+    font-size: 14.5px;
+    color: var(--muted);
+    line-height: 1.7;
+}
+.faq-item .fa b { color: var(--ink); font-weight: 600; }
+.faq-item.warn .fa b { color: var(--orange-strong); }
+
+/* ============================================================
+   BOTTOM CTA
+============================================================ */
+.final-cta {
+    margin-top: 48px;
+    padding: 64px 48px;
+    background: var(--cream);
+    border: 1px solid var(--line);
+    border-radius: 24px;
+    text-align: center;
+}
+.final-cta h2 {
+    font-family: 'Nunito', sans-serif;
+    font-size: 42px;
+    font-weight: 800;
+    color: var(--navy);
+    text-transform: none;
+    letter-spacing: -0.015em;
+    line-height: 1.2;
+    margin-bottom: 16px;
+}
+.final-cta h2 .accent { color: var(--orange); }
+.final-cta p {
+    font-family: 'IBM Plex Sans Thai', sans-serif;
+    font-size: 17px;
+    color: var(--muted);
+    line-height: 1.65;
+    max-width: 580px;
+    margin: 0 auto 32px;
+}
+.final-buttons {
+    display: flex; gap: 14px; justify-content: center;
+    flex-wrap: wrap;
+}
+.final-btn {
+    padding: 14px 28px;
+    border-radius: 10px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.005em;
+    text-transform: none;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    border: 1.5px solid;
+    display: inline-flex; align-items: center; gap: 10px;
+}
+.final-btn.primary {
+    background: var(--navy);
+    color: var(--white);
+    border-color: var(--navy);
+    box-shadow: 0 10px 24px -10px rgba(14,51,97,0.4);
+}
+.final-btn.primary:hover {
+    background: var(--navy-deep);
+    border-color: var(--navy-deep);
+    transform: translateY(-2px);
+}
+.final-btn.secondary {
+    background: var(--white);
+    color: var(--navy);
+    border-color: var(--navy);
+}
+.final-btn.secondary:hover {
+    background: var(--orange-soft);
+}
+
+/* ============================================================
+   RESPONSIVE — tablet + mobile breakpoints
+============================================================ */
+
+/* Tablet (≤ 900px) */
+@media (max-width: 900px) {
+    .page { padding: 48px 24px 64px; }
+
+    h1.title { font-size: 44px; line-height: 1.18; }
+    .lede { font-size: 16px; }
+    .final-cta h2 { font-size: 34px; }
+    .final-cta { padding: 48px 32px; }
+
+    /* Comparison table — horizontal scroll on smaller screens */
+    .compare-wrap {
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+    }
+    .compare-table { min-width: 760px; }
+
+    .hero-stat .hval { font-size: 30px; }
+}
+
+/* Mobile (≤ 600px) */
+@media (max-width: 600px) {
+    .page { padding: 36px 18px 56px; }
+
+    h1.title { font-size: 34px; margin-bottom: 16px; }
+    .lede { font-size: 15px; line-height: 1.6; margin-bottom: 24px; }
+    .final-cta h2 { font-size: 26px; }
+    .final-cta { padding: 36px 22px; }
+    .final-cta p { font-size: 15px; }
+    .final-btn { padding: 12px 22px; font-size: 14px; }
+
+    .divider { margin: 48px 0 24px; font-size: 12px; }
+
+    .hero-stats {
+        padding: 22px 24px;
+        gap: 20px 28px;
+    }
+    .hero-stat .hval { font-size: 26px; }
+    .hero-stat .hlabel { font-size: 12px; }
+
+    .faq-item { padding: 20px 22px; }
+    .faq-item .fq { font-size: 17px; }
+    .faq-item .fa { font-size: 14px; }
+
+    .cta-type { padding: 22px 20px; }
+    .cta-type-name { font-size: 20px; }
+
+    /* Table cells more compact */
+    .compare-table th, .compare-table td { padding: 12px 12px; font-size: 13px; }
+    .compare-table .data-row td { padding: 14px 12px; }
+    .compare-table .data-row .val-big { font-size: 26px; }
+    .compare-table .data-row td:first-child { font-size: 13px; }
+    .compare-table .row-name th { font-size: 22px; padding: 22px 12px 14px; }
+    .compare-table .row-name th .pn { font-size: 10px; }
+    .compare-table .row-name th .popular-mini { font-size: 10px; }
+    .compare-table { min-width: 680px; }
+
+    .choose-btn { padding: 11px 14px; font-size: 12px; }
+}
+
+/* Very small (≤ 400px) */
+@media (max-width: 400px) {
+    h1.title { font-size: 30px; }
+    .hero-stats { grid-template-columns: 1fr 1fr; gap: 18px; padding: 20px 22px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ============ NAV (links back to aquamx.biz) ============ -->
+<div class="nav-wrap">
+    <div class="container">
+        <nav class="nav">
+            <a href="https://aquamx.biz" class="brand" aria-label="AquaMx">
+                <img src="https://aquamx.biz/img/logo.png" alt="AquaMx" height="72" style="display:block;"
+                     onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-flex';">
+                <span class="brand-text" style="display:none;">Aqua<span class="x-mark">Mx</span></span>
+            </a>
+            <div class="nav-links">
+                <a href="https://aquamx.biz#how">วิธีทำงาน</a>
+                <a href="https://aquamx.biz#network">เครือข่าย</a>
+                <a href="https://aquamx.biz#contact">ติดต่อ</a>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;">
+                <button class="lang-btn" id="langToggle" aria-label="Switch language">EN</button>
+                <a href="https://aquamx.biz#contact" class="btn btn-primary">
+                    <span>นัดเดโม</span>
+                    <i class="ti ti-arrow-right"></i>
+                </a>
+            </div>
+        </nav>
+    </div>
+</div>
+
+<div class="page">
+
+    <!-- ===================== HEADER ===================== -->
+    <div class="eyebrow">
+        <span class="dot"></span>
+        Advertising Packages · For SME
+    </div>
+    <h1 class="title">Reach customers<br>where they <span class="accent">are</span></h1>
+    <p class="lede">
+        ลงโฆษณาบน <b>digital signage ในอาคาร</b> — เลือก pack ที่เหมาะกับ business
+        เริ่มต้นจาก <b>฿55/สัปดาห์</b>
+    </p>
+
+    <div class="hero-stats">
+        <div class="hero-stat">
+            <div class="hval">฿55+</div>
+            <div class="hlabel">Per week</div>
+        </div>
+        <div class="hero-stat">
+            <div class="hval">9:16</div>
+            <div class="hlabel">Vertical · 4K</div>
+        </div>
+        <div class="hero-stat">
+            <div class="hval">24h</div>
+            <div class="hlabel">Setup time</div>
+        </div>
+        <div class="hero-stat">
+            <div class="hval">1k+</div>
+            <div class="hlabel">Daily impressions</div>
+        </div>
+    </div>
+
+    <!-- ===================== MERGED PLANS + COMPARISON ===================== -->
+    <div class="divider">Choose your plan</div>
+
+    <div class="compare-wrap">
+        <table class="compare-table">
+            <thead>
+                <!-- Row: Pack name + Most Popular badge only -->
+                <tr class="row-name">
+                    <th></th>
+                    <th>Starter</th>
+                    <th>Booster</th>
+                    <th class="popular-col"><span class="popular-mini">★ Most Popular</span><br>Pro</th>
+                    <th>Premium</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Price (label in same row as values) -->
+                <tr class="data-row">
+                    <td>Price / week / kiosk</td>
+                    <td><span class="val-big">฿55</span><span class="val-sub">billed ฿220 monthly</span></td>
+                    <td><span class="val-big">฿90</span><span class="val-sub">billed ฿360 monthly</span></td>
+                    <td class="popular-col"><span class="val-big">฿128</span><span class="val-sub">billed ฿510 monthly</span></td>
+                    <td><span class="val-big">฿160</span><span class="val-sub">billed ฿640 monthly</span></td>
+                </tr>
+
+                <!-- Display time (label in same row as values) -->
+                <tr class="data-row">
+                    <td>Display time</td>
+                    <td><span class="val-big">8</span><span class="val-sub">sec</span></td>
+                    <td><span class="val-big">12</span><span class="val-sub">sec</span></td>
+                    <td class="popular-col"><span class="val-big">16</span><span class="val-sub">sec</span></td>
+                    <td><span class="val-big">20</span><span class="val-sub">sec</span></td>
+                </tr>
+
+                <!-- Media type -->
+                <tr>
+                    <td class="group-label">Media type</td>
+                    <td class="group-fill"></td>
+                    <td class="group-fill"></td>
+                    <td class="group-fill popular-col"></td>
+                    <td class="group-fill"></td>
+                </tr>
+                <tr>
+                    <td>Image poster</td>
+                    <td><span class="yes">✓</span></td>
+                    <td><span class="yes">✓</span></td>
+                    <td class="popular-col"><span class="yes">✓</span></td>
+                    <td><span class="yes">✓</span></td>
+                </tr>
+                <tr>
+                    <td>Video</td>
+                    <td><span class="no">—</span></td>
+                    <td><span class="no">—</span></td>
+                    <td class="popular-col"><span class="yes">✓</span></td>
+                    <td><span class="yes">✓</span></td>
+                </tr>
+
+                <!-- Standard CTA -->
+                <tr>
+                    <td class="group-label">Standard CTA</td>
+                    <td class="group-fill"></td>
+                    <td class="group-fill"></td>
+                    <td class="group-fill popular-col"></td>
+                    <td class="group-fill"></td>
+                </tr>
+                <tr>
+                    <td>Info popup</td>
+                    <td><span class="yes">✓</span></td>
+                    <td><span class="yes">✓</span></td>
+                    <td class="popular-col"><span class="yes">✓</span></td>
+                    <td><span class="yes">✓</span></td>
+                </tr>
+
+                <!-- Premium CTA -->
+                <tr>
+                    <td class="group-label">Premium CTA</td>
+                    <td class="group-fill"></td>
+                    <td class="group-fill"></td>
+                    <td class="group-fill popular-col"></td>
+                    <td class="group-fill"></td>
+                </tr>
+                <tr>
+                    <td>Gallery</td>
+                    <td><span class="no">—</span></td>
+                    <td>5 images</td>
+                    <td class="popular-col">10 images</td>
+                    <td>15 images</td>
+                </tr>
+                <tr>
+                    <td>Menu / Package</td>
+                    <td><span class="no">—</span></td>
+                    <td>5 items</td>
+                    <td class="popular-col">10 items</td>
+                    <td>15 items</td>
+                </tr>
+                <tr>
+                    <td>Booking</td>
+                    <td><span class="no">—</span></td>
+                    <td><span class="no">—</span></td>
+                    <td class="popular-col"><span class="yes">✓</span></td>
+                    <td><span class="yes">✓</span></td>
+                </tr>
+            </tbody>
+            <tfoot>
+                <!-- Row: Choose buttons -->
+                <tr class="row-choose">
+                    <td></td>
+                    <td><button class="choose-btn">Choose Starter</button></td>
+                    <td><button class="choose-btn">Choose Booster</button></td>
+                    <td class="popular-col"><button class="choose-btn primary">Choose Pro</button></td>
+                    <td><button class="choose-btn">Choose Premium</button></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+
+    <!-- ===================== BOTTOM CTA — moved here ===================== -->
+    <div class="final-cta">
+        <h2>Not sure which <span class="accent">pack</span> to pick?</h2>
+        <p>
+            ทีม sales ช่วยแนะนำ pack ที่เหมาะกับ business ของคุณ
+            หรือ design service เพิ่ม (สำหรับลูกค้าที่ไม่มี poster พร้อม)
+        </p>
+        <div class="final-buttons">
+            <button class="final-btn primary">Talk to sales</button>
+            <button class="final-btn secondary">See sample posters</button>
+        </div>
+    </div>
+
+    <!-- ===================== CTA EXPLAINER ===================== -->
+    <div class="divider">What is a CTA?</div>
+
+    <div class="cta-explainer">
+
+        <!-- Info Popup -->
+        <div class="cta-type standard">
+            <div class="signage-device">
+              <div class="sg-screen">
+                <div class="sg-content" style="background-image:url('https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=400&q=70');"></div>
+                <div class="sg-scrim"></div>
+            <div class="cta-mock info">
+                <div class="ip-title">Your Product</div>
+                <div class="ip-sub">Short description here</div>
+                <div class="ip-info">
+                    <div class="ip-info-line">📍 Floor 35</div>
+                    <div class="ip-info-line">🕐 10:00 – 22:00</div>
+                    <div class="ip-info-line">📞 02-XXX-XXXX</div>
+                </div>
+                <div class="ip-scan-row">
+                    <div class="ip-qr"></div>
+                    <div class="ip-scan-text">Scan to<br>your mobile</div>
+                </div>
+            </div>
+                <div class="sg-hint">👆 Touch to explore</div>
+              </div>
+              <div class="sg-stand"></div>
+              <div class="sg-base"></div>
+            </div>
+            <div class="cta-type-name">Info Popup</div>
+            <div class="cta-type-desc">
+                ลูกค้ากดดู <b>รายละเอียดสั้น</b> · ชื่อร้าน · ที่ตั้ง · เวลาเปิด · พร้อม QR code สำหรับ scan ไปต่อบนมือถือ
+            </div>
+        </div>
+
+        <!-- Gallery -->
+        <div class="cta-type premium">
+            <div class="signage-device">
+              <div class="sg-screen">
+                <div class="sg-content" style="background-image:url('https://images.unsplash.com/photo-1551024709-8f23befc6f87?auto=format&fit=crop&w=400&q=70');"></div>
+                <div class="sg-scrim"></div>
+            <div class="cta-mock gallery">
+                <div class="ig-image" style="background-image:url('https://images.unsplash.com/photo-1551024709-8f23befc6f87?auto=format&fit=crop&w=300&q=70');">
+                    <div class="ig-caption">Sparkling · Mint</div>
+                    <div class="ig-dots">
+                        <span class="ig-dot"></span>
+                        <span class="ig-dot active"></span>
+                        <span class="ig-dot"></span>
+                        <span class="ig-dot"></span>
+                    </div>
+                </div>
+            </div>
+                <div class="sg-hint">👆 Touch to explore</div>
+              </div>
+              <div class="sg-stand"></div>
+              <div class="sg-base"></div>
+            </div>
+            <div class="cta-type-name">Gallery</div>
+            <div class="cta-type-desc">
+                ลูกค้า <b>swipe ดูรูป</b> หลายมุมบนจอ · ดูบรรยากาศร้าน, สินค้าหลายแบบ, view ของห้อง
+            </div>
+        </div>
+
+        <!-- Menu / Package -->
+        <div class="cta-type premium">
+            <div class="signage-device">
+              <div class="sg-screen">
+                <div class="sg-content" style="background-image:url('https://images.unsplash.com/photo-1559314809-0d155014e29e?auto=format&fit=crop&w=400&q=70');"></div>
+                <div class="sg-scrim"></div>
+            <div class="cta-mock menu">
+                <div class="im-tabs">
+                    <span class="im-tab active">Mains</span>
+                    <span class="im-tab">Drinks</span>
+                </div>
+                <div class="im-item">
+                    <div class="im-thumb" style="background-image:url('https://images.unsplash.com/photo-1559314809-0d155014e29e?auto=format&fit=crop&w=60&q=60');"></div>
+                    <div class="im-name">Pad Thai</div>
+                    <div class="im-price">฿280</div>
+                </div>
+                <div class="im-item">
+                    <div class="im-thumb" style="background-image:url('https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=60&q=60');"></div>
+                    <div class="im-name">Green Curry</div>
+                    <div class="im-price">฿320</div>
+                </div>
+                <div class="im-item">
+                    <div class="im-thumb" style="background-image:url('https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=60&q=60');"></div>
+                    <div class="im-name">Tom Yum</div>
+                    <div class="im-price">฿380</div>
+                </div>
+                <div class="im-item">
+                    <div class="im-thumb" style="background-image:url('https://images.unsplash.com/photo-1574484284002-952d92456975?auto=format&fit=crop&w=60&q=60');"></div>
+                    <div class="im-name">Massaman</div>
+                    <div class="im-price">฿420</div>
+                </div>
+                <div class="im-item">
+                    <div class="im-thumb" style="background-image:url('https://images.unsplash.com/photo-1604329760661-e71dc83f8f26?auto=format&fit=crop&w=60&q=60');"></div>
+                    <div class="im-name">Som Tum</div>
+                    <div class="im-price">฿250</div>
+                </div>
+            </div>
+                <div class="sg-hint">👆 Touch to explore</div>
+              </div>
+              <div class="sg-stand"></div>
+              <div class="sg-base"></div>
+            </div>
+            <div class="cta-type-name">Menu / Package</div>
+            <div class="cta-type-desc">
+                แสดง <b>เมนูอาหาร / package บริการ</b> พร้อมราคา · ลูกค้าเห็นทั้งหมดก่อนตัดสินใจ
+            </div>
+        </div>
+
+        <!-- Booking -->
+        <div class="cta-type premium">
+            <div class="signage-device">
+              <div class="sg-screen">
+                <div class="sg-content" style="background-image:url('https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=400&q=70');"></div>
+                <div class="sg-scrim"></div>
+            <div class="cta-mock booking">
+                <div class="ib-step">Step 1 of 2 · June 2026</div>
+                <div class="ib-cal">
+                    <span class="dn">M</span><span class="dn">T</span><span class="dn">W</span>
+                    <span class="dn">T</span><span class="dn">F</span><span class="dn">S</span><span class="dn">S</span>
+                    <span class="d avail">1</span><span class="d avail">2</span><span class="d avail">3</span>
+                    <span class="d avail">4</span><span class="d avail">5</span><span class="d dim">6</span><span class="d dim">7</span>
+                    <span class="d avail">8</span><span class="d avail">9</span><span class="d avail">10</span>
+                    <span class="d sel">11</span><span class="d avail">12</span><span class="d dim">13</span><span class="d dim">14</span>
+                </div>
+                <div class="ib-time-label">Select time</div>
+                <div class="ib-times">
+                    <span class="ib-time">09:00</span>
+                    <span class="ib-time">10:30</span>
+                    <span class="ib-time sel">13:00</span>
+                    <span class="ib-time">14:30</span>
+                    <span class="ib-time">16:00</span>
+                    <span class="ib-time">17:30</span>
+                </div>
+            </div>
+                <div class="sg-hint">👆 Touch to explore</div>
+              </div>
+              <div class="sg-stand"></div>
+              <div class="sg-base"></div>
+            </div>
+            <div class="cta-type-name">Booking</div>
+            <div class="cta-type-desc">
+                ลูกค้า <b>เลือกวันเวลา</b> บนจอ · ยืนยันการจองผ่านมือถือ · เหมาะกับ <b>จองบริการ</b> เช่น ทำความสะอาด, ล้างแอร์ เป็นต้น
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================== FAQ / NOTES ===================== -->
+    <div class="divider">Important notes</div>
+
+    <div class="faq-grid">
+        <div class="faq-item warn">
+            <div class="fq"><span class="fq-icon">⚠</span> Non-refundable</div>
+            <div class="fa">
+                <b>การจองทุก pack เป็น final</b> — ไม่สามารถยกเลิก, ขอเงินคืน หรือเปลี่ยน
+                pack ระหว่าง period ได้
+                <br>โปรดตรวจสอบ poster + content ให้พร้อมก่อนกด confirm
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="fq"><span class="fq-icon">📅</span> Billing cycle</div>
+            <div class="fa">
+                <b>Monthly</b> = ชำระล่วงหน้า 1 เดือน (4 สัปดาห์)
+                <br>เริ่มเล่นภายใน <b>24 ชม.</b> หลัง content + payment ครบ
+                <br>ราคาต่อ <b>1 kiosk</b> — ถ้าเลือกหลายจอ คูณตามจำนวน
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="fq"><span class="fq-icon">🎨</span> Content submission</div>
+            <div class="fa">
+                ลูกค้าส่ง <b>poster image (9:16, 1080×1920)</b> + ข้อมูล CTA
+                <br>หรือใช้ <b>design service</b> ของเรา (เพิ่มเติม ฿500-1500)
+                <br>Aspect อื่น (1:1, A4) แสดงได้แบบ letterbox
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="fq"><span class="fq-icon">📍</span> Multi-kiosk packs</div>
+            <div class="fa">
+                สำหรับ <b>chain brand / multi-location</b> เรามี pack แยก:
+                <br><b>All Kiosks</b> · <b>Fixed Screens</b> · <b>Custom Building</b>
+                <br>ติดต่อทีม sales เพื่อจัด custom quote
+            </div>
+        </div>
+    </div>
+
+
+</div>
+
+<!-- ============ FOOTER ============ -->
+<footer class="site-footer">
+    <div class="footer-inner">
+        <div class="copy">© 2026 AquaMx · All rights reserved</div>
+        <div class="footer-links">
+            <a href="https://aquamx.biz">หน้าหลัก</a>
+            <a href="https://aquamx.biz#contact">ติดต่อ</a>
+            <a href="https://aquamx.biz">aquamx.biz</a>
+        </div>
+    </div>
+</footer>
+
+</body>
+</html>
