@@ -30,6 +30,7 @@
 import { readFileSync, mkdirSync, writeFileSync, copyFileSync } from 'fs'
 import { join, dirname }                                        from 'path'
 import { fileURLToPath }                                        from 'url'
+import { createHash }                                           from 'crypto'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
@@ -230,12 +231,16 @@ for (const project of projects) {
   const baked = {
     projectCode:    code,
     projectTitle:   title,
-    builtAt:        new Date().toISOString(),
     playlist:       playlist       ?? [],
     providers,
     notices:        notices             ?? [],   // replaces 'updates' — kiosk HTML needs update
     categoryConfig: globalCategoryConfig ?? null,
   }
+  // Content revision hash — deterministic. Identical resolved content → identical
+  // hash → identical index.html → no git diff → that project's Netlify site is NOT
+  // rebuilt. Replaces the old run-time `builtAt` timestamp, which made every build
+  // differ and forced ALL projects to redeploy on any single Sanity change.
+  baked.rev = createHash('sha1').update(JSON.stringify(baked)).digest('hex').slice(0, 8)
 
   // Inject baked data as an inline <script> just before </head>.
   // Also inject the real Sanity token (which is intentionally left blank in the template).
@@ -246,7 +251,7 @@ for (const project of projects) {
     )
     .replace(
       '</head>',
-      `<script>/* baked by build.mjs — ${baked.builtAt} */\nwindow.__BAKED__ = ${JSON.stringify(baked)};\n</script>\n</head>`
+      `<script>/* baked by build.mjs — rev ${baked.rev} */\nwindow.__BAKED__ = ${JSON.stringify(baked)};\n</script>\n</head>`
     )
 
   // Write ../{code}/ — each project gets its own sibling directory (and its own GitHub repo).

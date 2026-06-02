@@ -2311,14 +2311,12 @@ async function init() {
     const stamp = document.getElementById('buildStamp');
     if (stamp) {
         const proj = window.__BAKED__?.projectCode ?? '?';
-        const builtAt = window.__BAKED__?.builtAt
-            ? new Date(window.__BAKED__.builtAt).toISOString().slice(0,16).replace('T',' ')
-            : 'no-baked-data';
+        const rev = window.__BAKED__?.rev ?? 'no-baked-data';
         const sources = [
             `pl:${_ds.playlist  ?? '?'}`,
             `pv:${_ds.providers ?? '?'}`,
         ].join(' ');
-        stamp.textContent = `${proj} · ${builtAt} · ${sources}`;
+        stamp.textContent = `${proj} · rev ${rev} · ${sources}`;
     }
 
     // ── Missing-baked-data warning (always visible, no ?debug needed) ────────
@@ -2343,7 +2341,7 @@ async function init() {
         overlay.textContent =
             `=== DEBUG (remove ?debug=1 for production) ===\n` +
             `project:   ${window.__BAKED__?.projectCode ?? 'MISSING - wrong HTML served'}\n` +
-            `builtAt:   ${window.__BAKED__?.builtAt ?? 'MISSING'}\n` +
+            `rev:       ${window.__BAKED__?.rev ?? 'MISSING'}\n` +
             `playlist:  ${_ds.playlist}  (${playlist.length} items)\n` +
             `providers: ${_ds.providers} (cats: ${Object.keys(MOCK_PROVIDERS).filter(c => MOCK_PROVIDERS[c].length).join(', ') || 'none'})\n` +
             `notices:   ${_ds.notices}\n` +

@@ -69,9 +69,15 @@ jobs:
           SKIPPED=()
           FAILED=()
 
+          # For each project: clone its repo, overlay the freshly built files, and
+          # push ONLY if something actually changed. build.mjs now bakes a content
+          # hash (not a run-time timestamp), so an unchanged project produces byte-
+          # identical files → no diff → no push → that project's Netlify site is NOT
+          # rebuilt. This stops a single Sanity edit from redeploying every project.
           for CODE in "${!REPOS[@]}"; do
             REPO="${REPOS[$CODE]}"
-            DIR="../$CODE"
+            DIR="$GITHUB_WORKSPACE/../$CODE"
+            URL="https://x-access-token:${GH_PAT}@github.com/aquamx-biz/${REPO}.git"
 
             if [ ! -d "$DIR" ]; then
               SKIPPED+=("$CODE (folder not built)")
@@ -79,34 +85,53 @@ jobs:
             fi
 
             echo ""
-            echo "── Pushing $CODE → aquamx-biz/$REPO ──"
-            cd "$DIR"
-            git init -q
-            git config user.email "actions@github.com"
-            git config user.name "GitHub Actions"
-            git remote remove origin 2>/dev/null || true
-            git remote add origin "https://x-access-token:${GH_PAT}@github.com/aquamx-biz/${REPO}.git"
-            git add index.html _headers netlify.toml sw.js 2>/dev/null
-            git commit -m "Auto-rebuild from Sanity update" -q || echo "(nothing to commit)"
+            echo "── $CODE → aquamx-biz/$REPO ──"
 
-            # Retry up to 3 times — handles transient 'cannot lock ref' races
-            # that happen when two concurrent dispatches push the same repo.
-            PUSH_OK=0
+            RESULT="fail"
+            # Retry handles non-fast-forward races between concurrent dispatches.
             for attempt in 1 2 3; do
-              if git push origin HEAD:master --force; then
-                PUSH_OK=1
+              WORK="$(mktemp -d)"
+              if ! git clone --depth 1 "$URL" "$WORK" 2>/dev/null; then
+                # Repo unreachable as a clone (brand new / empty) — start fresh.
+                rm -rf "$WORK"; WORK="$(mktemp -d)"
+                git init -q "$WORK"
+                ( cd "$WORK" && git checkout -q -b master && git remote add origin "$URL" )
+              fi
+
+              # Overlay the freshly built files onto the clone.
+              for f in index.html sw.js _headers netlify.toml; do
+                [ -f "$DIR/$f" ] && cp -f "$DIR/$f" "$WORK/$f"
+              done
+
+              cd "$WORK"
+              git config user.email "actions@github.com"
+              git config user.name  "GitHub Actions"
+
+              # No diff → content identical → skip (do NOT trigger Netlify).
+              if [ -z "$(git status --porcelain)" ]; then
+                RESULT="nochange"
+                cd "$GITHUB_WORKSPACE"; rm -rf "$WORK"
                 break
               fi
-              echo "(push attempt $attempt failed, retrying in 5s…)"
+
+              git add -A
+              git commit -q -m "Auto-rebuild from Sanity update"
+              if git push origin HEAD:master 2>/dev/null; then
+                RESULT="pushed"
+                cd "$GITHUB_WORKSPACE"; rm -rf "$WORK"
+                break
+              fi
+
+              echo "(push attempt $attempt failed — re-syncing & retrying in 5s…)"
+              cd "$GITHUB_WORKSPACE"; rm -rf "$WORK"
               sleep 5
             done
 
-            if [ "$PUSH_OK" = "1" ]; then
-              PUSHED+=("$CODE → aquamx-biz/$REPO")
-            else
-              FAILED+=("$CODE → aquamx-biz/$REPO")
-            fi
-            cd "$GITHUB_WORKSPACE"
+            case "$RESULT" in
+              pushed)   PUSHED+=("$CODE → aquamx-biz/$REPO") ;;
+              nochange) SKIPPED+=("$CODE (no content change — Netlify NOT triggered)") ;;
+              *)        FAILED+=("$CODE → aquamx-biz/$REPO") ;;
+            esac
           done
 
           echo ""
@@ -118,5 +143,5 @@ jobs:
           echo "Failed  (${#FAILED[@]}):"
           for x in "${FAILED[@]}"; do echo "  ✗ $x"; done
 
-          # Fail the job only if any push failed (skip is OK).
+          # Fail the job only if a real push failed (skip / nochange are OK).
           [ ${#FAILED[@]} -eq 0 ]
