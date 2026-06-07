@@ -1,9 +1,11 @@
+import { createElement } from 'react'
 import { defineField, defineType } from 'sanity'
 import { ExcludedProjectsInput }      from '../components/ExcludedProjectsInput'
 import { NoticeSubcategoryInput }     from '../components/NoticeSubcategoryInput'
 import { VideoCompressInput }         from '../components/VideoCompressInput'
 import { PosterImageAIInput }         from '../components/PosterImageAIInput'
 import { MediaUsageSummary }          from '../components/MediaUsageSummary'
+import { PlaylistStatusBadge }        from '../components/PlaylistStatusBadge'
 
 // category field removed from media — category now lives on offer.
 // schedule (startAt/endAt) removed from media — scheduling consolidated on playlistItem.
@@ -341,17 +343,21 @@ export default defineType({
       // Stable last-6 of the doc _id — same value shown on PlaylistView rows.
       // slice(-6) returns the same chars for draft and published forms of the doc.
       const shortId = id ? `#${(id as string).slice(-6)}` : ''
+      // Live playlist status-light in the preview thumbnail slot (see component).
+      const media = id ? createElement(PlaylistStatusBadge, { id: id as string }) : undefined
       if (kind === 'notice') {
         const prefix = projectName ? `[${projectName}]` : '[NOTICE]'
         return {
           title:    `${prefix} ${title ?? '(untitled)'}${status}`,
           subtitle: `${shortId}  ·  ${projectName ? `Notice  ·  ${projectName}` : 'Notice (no project linked)'}`,
+          media,
         }
       }
       const asset = videoAsset ?? imageAsset ?? '(no file)'
       return {
         title:    `${title ?? '(untitled)'}${status}`,
         subtitle: `${shortId}  ·  [${kind ?? '?'}/${type ?? '—'}]  ·  ${asset}${offerTitle ? `  ·  ${offerTitle}` : ''}`,
+        media,
       }
     },
   },
