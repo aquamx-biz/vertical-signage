@@ -11,6 +11,11 @@ const CATEGORY_LIST = [
   { title: 'Food',             value: 'food' },
   { title: 'Groceries',        value: 'groceries' },
   { title: 'Services',         value: 'services' },
+  { title: 'Health & Beauty',  value: 'healthBeauty' },
+  { title: 'Leisure & Travel', value: 'leisureTravel' },
+  { title: 'Shopping',         value: 'shopping' },
+  { title: 'Education',        value: 'education' },
+  { title: 'Events',           value: 'events' },
   { title: 'For Rent',         value: 'forRent' },
   { title: 'For Sale',         value: 'forSale' },
   { title: 'Building Updates', value: 'buildingUpdates' },
@@ -150,6 +155,16 @@ export default defineType({
     defineField({ name: 'lineId',  title: 'LINE ID',  type: 'string', components: { input: createRetrieveFromPartyInput('lineId')  } }),
     defineField({ name: 'website', title: 'Website',  type: 'url',    components: { input: createRetrieveFromPartyInput('website') } }),
     defineField({ name: 'openingHours', title: 'Opening Hours', type: 'string', description: 'e.g. 10:00–22:00' }),
+    defineField({ name: 'amenities', title: 'Amenities / จุดเด่นร้าน', type: 'array', of: [{ type: 'string' }], description: 'Store highlights shown on provider page (parking, wifi, accepts cards, etc.).' }),
+    defineField({ name: 'submittedBy', title: 'Submitted By', type: 'string', readOnly: true, description: 'Most recent auth identity that submitted via /submit (e.g. "line:Uxxx" / "email:foo@bar.com").' }),
+    defineField({
+      name: 'owners',
+      title: 'Owner Logins',
+      type: 'array',
+      of: [{ type: 'string' }],
+      readOnly: true,
+      description: 'All login identities that own/manage this shop (e.g. ["line:Uxxx","email:foo@bar.com"]). A vendor can link both LINE and email to one shop via the dashboard. Used to scope "my shop / my offers".',
+    }),
 
     // ── Handoff ───────────────────────────────────────────────────────────────
     defineField({
