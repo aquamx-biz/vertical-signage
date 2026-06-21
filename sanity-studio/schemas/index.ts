@@ -28,6 +28,7 @@ import emailCampaign      from './emailCampaign'
 import studioAccess       from './studioAccess'
 import party              from './party'
 import lead               from './lead'
+import vendorLogin        from './vendorLogin'
 import saleOpportunity    from './saleOpportunity'
 import serviceContract    from './serviceContract'
 
@@ -62,6 +63,7 @@ export const schemaTypes = [
   studioAccess,
   party,
   lead,
+  vendorLogin,
   saleOpportunity,
   serviceContract,
 ]
