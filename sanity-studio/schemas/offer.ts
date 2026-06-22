@@ -28,6 +28,7 @@ export default defineType({
       title: 'Provider',
       type: 'reference',
       to: [{ type: 'provider' }],
+      weak: true,   // submit สร้าง offer draft ก่อน provider publish → ref ต้อง weak (strong จะถูกปฏิเสธตอน create) · resolve ปกติเมื่อ publish ทั้งคู่
       options: { filter: 'status != false' },
       validation: Rule => Rule.required(),
     }),
