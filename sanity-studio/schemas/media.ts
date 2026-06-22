@@ -159,6 +159,7 @@ export default defineType({
       title: 'Offer',
       type: 'reference',
       to: [{ type: 'offer' }],
+      weak: true,   // media ถูกสร้างคู่กับ offer draft (ก่อน publish) → ref ต้อง weak · resolve ปกติเมื่อ publish
       hidden: ({ document }) => (document as any)?.kind !== 'promo',
       validation: Rule =>
         Rule.custom((value, context) => {
