@@ -163,6 +163,41 @@ export default defineType({
       options: { layout: 'grid' },
     }),
 
+    // ── Property listing specs (For Rent / For Sale · adType "listing") ─────────
+    defineField({
+      name: 'listing',
+      title: 'Property Listing Specs',
+      type: 'object',
+      description: 'Structured specs for property offers (View Listing). Optional — leave empty for non-property offers.',
+      options: { collapsible: true, collapsed: false, columns: 2 },
+      fields: [
+        defineField({ name: 'bed',  title: 'Bedrooms',  type: 'number' }),
+        defineField({ name: 'bath', title: 'Bathrooms', type: 'number' }),
+        defineField({ name: 'area', title: 'Area (sqm)', type: 'number' }),
+        defineField({ name: 'floor', title: 'Floor', type: 'string', description: 'e.g. "39" or "39/43"' }),
+        defineField({ name: 'parking', title: 'Parking', type: 'string', description: 'e.g. "1", "2 cars"' }),
+        defineField({
+          name: 'furnishing',
+          title: 'Furnishing',
+          type: 'string',
+          options: { list: [
+            { title: 'Unfurnished (ห้องเปล่า)',        value: 'unfurnished' },
+            { title: 'Partly furnished (ตกแต่งบางส่วน)', value: 'partial' },
+            { title: 'Fully furnished (ตกแต่งครบ)',     value: 'furnished' },
+            { title: 'Built-in (บิวท์อิน)',             value: 'builtin' },
+          ] },
+        }),
+      ],
+    }),
+    defineField({
+      name: 'listingImages',
+      title: 'Listing Photos',
+      type: 'array',
+      of: [{ type: 'image', options: { hotspot: true } }],
+      options: { layout: 'grid' },
+      description: 'Property photos shown on the listing detail page — separate from the on-screen ad images above.',
+    }),
+
     // ── CTA ──────────────────────────────────────────────────────────────────
     defineField({
       name: 'ctaType',
