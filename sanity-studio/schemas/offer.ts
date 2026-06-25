@@ -198,6 +198,79 @@ export default defineType({
       description: 'Property photos shown on the listing detail page — separate from the on-screen ad images above.',
     }),
 
+    // Menu CTA — itemized menu shown in the kiosk popup
+    defineField({
+      name: 'menuItems',
+      title: 'Menu Items',
+      type: 'array',
+      of: [{
+        type: 'object',
+        fields: [
+          defineField({ name: 'name_th', title: 'Name (TH)', type: 'string' }),
+          defineField({ name: 'name_en', title: 'Name (EN)', type: 'string' }),
+          defineField({ name: 'price', title: 'Price', type: 'string' }),
+          defineField({ name: 'image', title: 'Image', type: 'image', options: { hotspot: true } }),
+        ],
+      }],
+    }),
+
+    // Order CTA — itemized order list shown in the kiosk popup
+    defineField({
+      name: 'orderItems',
+      title: 'Order Items',
+      type: 'array',
+      of: [{
+        type: 'object',
+        fields: [
+          defineField({ name: 'name_th', title: 'Name (TH)', type: 'string' }),
+          defineField({ name: 'name_en', title: 'Name (EN)', type: 'string' }),
+          defineField({ name: 'price', title: 'Price', type: 'string' }),
+          defineField({ name: 'image', title: 'Image', type: 'image', options: { hotspot: true } }),
+        ],
+      }],
+    }),
+    defineField({
+      name: 'fulfillment',
+      title: 'Fulfillment',
+      type: 'array',
+      of: [{ type: 'string' }],
+      options: { list: [
+        { title: 'Dine-in',  value: 'dine_in' },
+        { title: 'Delivery', value: 'delivery' },
+        { title: 'Pickup',   value: 'pickup' },
+      ] },
+    }),
+
+    // Book CTA — booking config used to generate slots in the kiosk popup
+    defineField({
+      name: 'booking',
+      title: 'Booking Config',
+      type: 'object',
+      options: { collapsible: true, collapsed: false, columns: 2 },
+      fields: [
+        defineField({ name: 'openTime', title: 'Open Time', type: 'string', description: 'e.g. "10:00"' }),
+        defineField({ name: 'closeTime', title: 'Close Time', type: 'string', description: 'e.g. "22:00"' }),
+        defineField({ name: 'slotMinutes', title: 'Slot Minutes', type: 'number' }),
+        defineField({ name: 'breakStart', title: 'Break Start', type: 'string', description: 'e.g. "14:00"' }),
+        defineField({ name: 'breakEnd', title: 'Break End', type: 'string', description: 'e.g. "17:00"' }),
+        defineField({ name: 'daysAhead', title: 'Days Ahead', type: 'number' }),
+        defineField({ name: 'capacityPerSlot', title: 'Capacity Per Slot', type: 'number' }),
+      ],
+    }),
+
+    // Event CTA — event details shown in the kiosk popup
+    defineField({
+      name: 'eventInfo',
+      title: 'Event Info',
+      type: 'object',
+      options: { collapsible: true, collapsed: false, columns: 2 },
+      fields: [
+        defineField({ name: 'dates', title: 'Dates', type: 'array', of: [{ type: 'string' }], description: 'e.g. "2026-07-01"' }),
+        defineField({ name: 'place', title: 'Place', type: 'string' }),
+        defineField({ name: 'capacity', title: 'Capacity', type: 'number' }),
+      ],
+    }),
+
     // ── CTA ──────────────────────────────────────────────────────────────────
     defineField({
       name: 'ctaType',
@@ -212,6 +285,7 @@ export default defineType({
           { title: 'View Listing', value: 'viewListing' },
           { title: 'View Store',   value: 'viewStore' },
           { title: 'Sign Up',      value: 'signup' },
+          { title: 'Event',        value: 'event' },
         ],
       },
     }),
@@ -255,6 +329,7 @@ export default defineType({
         { title: 'View Listing', value: 'viewListing' },
         { title: 'View Store',   value: 'viewStore' },
         { title: 'Sign Up',      value: 'signup' },
+        { title: 'Event',        value: 'event' },
       ] },
       description: 'Optional second CTA — Media ads only (Menu ads use a single CTA).',
     }),
