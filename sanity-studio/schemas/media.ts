@@ -39,7 +39,7 @@ export default defineType({
       title:       'Poster Image',
       type:        'image',
       options:     { hotspot: true },
-      description: 'For notices: upload the announcement image here, then click 🤖 Read Image with AI to auto-fill the titles below. For promos: fallback thumbnail shown before video loads.',
+      description: 'Upload the poster/announcement image, then click 🤖 Read Image with AI to auto-fill the titles below — works for both notices and promos. (For promos it is also the fallback thumbnail shown before the video loads.)',
       components:  { input: PosterImageAIInput },
     }),
 
@@ -49,13 +49,13 @@ export default defineType({
       title:       'Title (Thai)',
       type:        'string',
       validation:  Rule => Rule.required(),
-      description: 'Main title shown on screen. For notices: auto-filled by 🤖 Read Image with AI above.',
+      description: 'Main title shown on screen. Can be auto-filled by 🤖 Read Image with AI above (notices + promos).',
     }),
     defineField({
       name:        'altText',
       title:       'Title (English)',
       type:        'string',
-      description: 'English version of the title. For notices: auto-filled by 🤖 Read Image with AI above.',
+      description: 'English version of the title. Can be auto-filled by 🤖 Read Image with AI above (notices + promos).',
     }),
 
     // ── Asset type + files (promo only) ──────────────────────────────────────
