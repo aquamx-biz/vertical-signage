@@ -65,7 +65,9 @@ export function PosterImageAIInput(props: ImageInputProps) {
 
   const imageRef = (props.value as any)?.asset?._ref as string | undefined
   const imageUrl = imageRef ? refToUrl(imageRef) : null
-  const isNotice = kind === 'notice'
+  // Show the AI reader for notices AND promos — a promo's poster (e.g. an
+  // exhibition/event flyer) can auto-fill the title the same way.
+  const showRead = kind === 'notice' || kind === 'promo'
 
   const [loading,  setLoading]  = useState(false)
   const [result,   setResult]   = useState<ReadResult | null>(null)
@@ -145,8 +147,8 @@ export function PosterImageAIInput(props: ImageInputProps) {
       {/* Native image upload */}
       {props.renderDefault(props)}
 
-      {/* AI button — only for notices with an uploaded image */}
-      {isNotice && (
+      {/* AI button — notices + promos with an uploaded image */}
+      {showRead && (
         <Stack space={2}>
           <Button
             text={loading ? 'Reading image…' : '🤖 Read Image with AI'}
