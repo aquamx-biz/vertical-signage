@@ -1,4 +1,5 @@
 import { defineField, defineType } from 'sanity'
+import { RatecardLiveNote } from '../components/RatecardLiveNote'
 
 // Singleton — _id is always "ratecard-sme".
 // Drives the public pricing table at aquamx.biz/ratecard-sme.
@@ -27,6 +28,14 @@ export default defineType({
   title: 'Rate Card',
   type: 'document',
   fields: [
+    // Read-only banner: shows which public page this drives (hardcoded URL).
+    defineField({
+      name: 'liveNote',
+      title: 'Live page',
+      type: 'string',
+      readOnly: true,
+      components: { field: RatecardLiveNote },
+    }),
     defineField({
       name: 'title',
       title: 'Internal Title',
