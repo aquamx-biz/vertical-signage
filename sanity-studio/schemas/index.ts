@@ -31,6 +31,7 @@ import lead               from './lead'
 import vendorLogin        from './vendorLogin'
 import saleOpportunity    from './saleOpportunity'
 import serviceContract    from './serviceContract'
+import ratecard           from './ratecard'
 
 export const schemaTypes = [
   project,
@@ -66,4 +67,5 @@ export const schemaTypes = [
   vendorLogin,
   saleOpportunity,
   serviceContract,
+  ratecard,
 ]

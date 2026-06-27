@@ -82,7 +82,7 @@ export default defineConfig({
       // The user clicks the "Edit" tab to make changes.
       // Exception: the categoryConfig singleton skips Overview and shows the form directly.
       defaultDocumentNode: (S, { schemaType }) => {
-        if (schemaType === 'categoryConfig') {
+        if (schemaType === 'categoryConfig' || schemaType === 'ratecard') {
           return S.document().views([S.view.form().id('edit').title('Edit')])
         }
         if (schemaType === 'contract') {
@@ -194,7 +194,7 @@ export default defineConfig({
         const items = [
 
           // ── Digital Signage ────────────────────────────────────────────────
-          (can('project') || can('playlist') || can('media') || can('offer') || can('provider') || can('categoryConfig')) &&
+          (can('project') || can('playlist') || can('media') || can('offer') || can('provider') || can('categoryConfig') || can('ratecard')) &&
           group('digital-signage', 'Digital Signage', '🖥', [
             can('project')  && S.documentTypeListItem('project').title('Projects'),
             can('playlist') && S.listItem()
@@ -253,6 +253,15 @@ export default defineConfig({
                   .schemaType('categoryConfig')
                   .documentId('categoryConfig-global')
                   .title('Global Category Config')
+              ),
+            can('ratecard') && S.listItem()
+              .title('Rate Card (website)')
+              .id('ratecard-sme')
+              .child(
+                S.document()
+                  .schemaType('ratecard')
+                  .documentId('ratecard-sme')
+                  .title('Rate Card — SME')
               ),
           ]),
 
@@ -398,7 +407,7 @@ export default defineConfig({
         const [_defaultPublish, ...rest] = prev
         return [MediaPublishAction, ...rest, AddToPlaylistAction]
       }
-      if (ctx.schemaType === 'categoryConfig') {
+      if (ctx.schemaType === 'categoryConfig' || ctx.schemaType === 'ratecard') {
         // Singleton — block delete and duplicate so it can't be destroyed or duplicated.
         return prev.filter(a => !['delete', 'duplicate'].includes((a as any).action))
       }
