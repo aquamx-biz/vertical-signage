@@ -353,6 +353,10 @@ body {
     justify-content: start;
     gap: 1vh; z-index: 6;
 }
+/* A lone CTA pinned to the bottom floats away from the content block above it.
+   Raise the single-CTA dock so the button sits just under the text. A 2-CTA
+   dock is tall enough to reach the content on its own, so only adjust count=1. */
+.cta-dock[data-count="1"] { bottom: 8vh; }
 .cta {
     width: 100%;                 /* fill the auto-sized grid column */
     display: flex; align-items: center; justify-content: space-between;
@@ -2269,7 +2273,7 @@ function renderCommercial(s) {
             <div class="slot-title">${titleHTML}</div>
             ${s.sub ? `<div class="slot-sub">${s.sub}</div>` : ''}
         </div>
-        ${ctaHTML ? `<div class="cta-dock">${ctaHTML}</div>` : ''}
+        ${ctaHTML ? `<div class="cta-dock" data-count="${(s.ctas || []).length}">${ctaHTML}</div>` : ''}
         ${(s.stats && s.stats.length) ? `<div class="stat-row">${s.stats.map(st => `<div class="stat-card"><div class="stat-num">${st.num}</div><div class="stat-label">${st.label}</div></div>`).join('')}</div>` : ''}
     `;
 }
