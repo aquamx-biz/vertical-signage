@@ -295,13 +295,17 @@ body {
 .slot.active .slot-logo { opacity: 1; transform: translateY(0); }
 
 /* Intentional EXIT for the main text (v5 only animated CTA/stats out) */
-.slot.exiting .slot-eyebrow,
-.slot.exiting .slot-title,
-.slot.exiting .slot-sub {
+/* Both .exiting (pre-exit fade) AND .leaving (the crossfade itself) must hide
+   the outgoing text immediately — otherwise a leaving slot reverts to the base
+   reveal transition (0.5s delay) and its text lingers, overlapping the incoming
+   slide's text during the change. */
+.slot.exiting .slot-eyebrow, .slot.leaving .slot-eyebrow,
+.slot.exiting .slot-title,   .slot.leaving .slot-title,
+.slot.exiting .slot-sub,     .slot.leaving .slot-sub {
     opacity: 0; transform: translateY(2vh);
     transition-duration: 0.4s; transition-delay: 0s;
 }
-.slot.exiting .slot-logo {
+.slot.exiting .slot-logo, .slot.leaving .slot-logo {
     opacity: 0; transform: translateY(-1.2vh);
     transition-duration: 0.4s; transition-delay: 0s;
 }
@@ -415,7 +419,7 @@ body {
     opacity: 1; transform: translateY(0);
     transition-delay: 1.13s, 1.13s, 0s, 0s;
 }
-.slot.exiting .cta {
+.slot.exiting .cta, .slot.leaving .cta {
     opacity: 0; transform: translateY(3vh);
     transition-delay: 0s !important;
     transition-duration: 0.35s, 0.35s, 0s, 0s;
@@ -457,7 +461,7 @@ body {
 .slot.active .stat-card:nth-child(1) { transition-delay: 1.2s; }
 .slot.active .stat-card:nth-child(2) { transition-delay: 1.32s; }
 .slot.active .stat-card:nth-child(3) { transition-delay: 1.44s; }
-.slot.exiting .stat-card {
+.slot.exiting .stat-card, .slot.leaving .stat-card {
     opacity: 0; transform: translateY(2vh);
     transition-delay: 0s !important;
     transition-duration: 0.35s;
