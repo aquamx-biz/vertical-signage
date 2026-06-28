@@ -1511,8 +1511,8 @@ body {
    CONFIGURATION  (ported from vertical-signage)
 ======================================================== */
 const CONFIG = {
-    WEATHER_API_KEY: '7c215a78c991666a91e771892ee2aaba',
-    NEWS_API_KEY: 'pub_01dc3f585ecf4d3c8a65986f0025f6d4',
+    WEATHER_API_KEY: ''   /* moved server-side → /.netlify/functions/weather */,
+    NEWS_API_KEY: ''      /* moved server-side → /.netlify/functions/news */,
     BANGKOK_LAT: 13.7563,
     BANGKOK_LON: 100.5018,
     CACHE_DURATION: 3600000,        // 1 hour
@@ -2580,7 +2580,7 @@ async function fetchWeather() {
         try { updateWeatherUI(JSON.parse(cd)); return; } catch(e) {}
     }
     try {
-        const r = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${CONFIG.BANGKOK_LAT}&lon=${CONFIG.BANGKOK_LON}&appid=${CONFIG.WEATHER_API_KEY}&units=metric`);
+        const r = await fetch('https://aquamx.biz/.netlify/functions/weather');
         if (!r.ok) throw new Error();
         const d = await r.json();
         if (d.main?.temp && d.weather?.[0]) {
@@ -2632,7 +2632,7 @@ async function fetchNews() {
         try { updateNewsUI(JSON.parse(cd)); return; } catch(e) {}
     }
     try {
-        const r = await fetch(`https://newsdata.io/api/1/news?apikey=${CONFIG.NEWS_API_KEY}&country=th&language=th,en`);
+        const r = await fetch('https://aquamx.biz/.netlify/functions/news');
         if (!r.ok) throw new Error();
         const d = await r.json();
         if (d.results?.length) {
