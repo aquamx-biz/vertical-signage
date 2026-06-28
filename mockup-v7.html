@@ -10,7 +10,7 @@
 <title>Signage Player — v7 · v6 look + live backend</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700;800&family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=Kanit:wght@700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700;800&family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=Mitr:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 /* ============================================================
    RESET + TOKENS · v5
@@ -90,7 +90,7 @@ body {
     justify-self: start; min-width: 0;
 }
 .topbar-project {
-    font-family: 'Kanit', 'IBM Plex Sans Thai', sans-serif;
+    font-family: 'Mitr', 'IBM Plex Sans Thai', sans-serif;
     font-size: 2vh; font-weight: 400;
     color: var(--ink-100);
     letter-spacing: 0.12vh; text-transform: uppercase;
@@ -241,7 +241,7 @@ body {
 /* Title — sized to the /offer .tt-title proportion (≈8.7% of width) so the
    eyebrow+title+sub block stays compact in the bottom-left, not floating up. */
 .slot-title {
-    font-family: 'Kanit', 'IBM Plex Sans Thai', sans-serif;
+    font-family: 'Mitr', 'IBM Plex Sans Thai', sans-serif;
     font-size: 5.5vh; font-weight: 400;  /* Anton is naturally heavy */
     line-height: 1.0;
     letter-spacing: -0.05vh;
@@ -288,7 +288,7 @@ body {
 /* Brand logo on the clean poster (top-left) */
 .slot-logo {
     position: absolute; top: 3vh; left: 3.5vh; z-index: 5;
-    font-family: 'Kanit', 'IBM Plex Sans Thai', sans-serif;
+    font-family: 'Mitr', 'IBM Plex Sans Thai', sans-serif;
     font-size: 2.4vh; letter-spacing: 0.5vh; text-transform: uppercase;
     color: #fff; text-shadow: 0 0.2vh 1.4vh rgba(0,0,0,0.6);
     opacity: 0; transform: translateY(-1.2vh);
@@ -1008,7 +1008,7 @@ body {
 }
 .back-btn:active { background: rgba(8,12,22,0.8); transform: scale(0.95); }
 .cat-screen-title {
-    font-family: 'Kanit', 'IBM Plex Sans Thai', sans-serif;
+    font-family: 'Mitr', 'IBM Plex Sans Thai', sans-serif;
     font-size: 3.4vh; font-weight: 400;
     color: var(--ink-100);
     letter-spacing: 0.15vh; text-transform: uppercase;
@@ -1247,7 +1247,7 @@ body {
 .detail-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.22); border-radius: 1vh; }
 .detail-eyebrow { font-size: 1.2vh; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--dot-cyan); }
 .detail-title {
-    font-family: 'Kanit','IBM Plex Sans Thai',sans-serif; font-size: 2.7vh; line-height: 1.02;
+    font-family: 'Mitr','IBM Plex Sans Thai',sans-serif; font-size: 2.7vh; line-height: 1.02;
     text-transform: uppercase; margin: 0.7vh 0;
     display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3;
     overflow: hidden; word-break: break-word;
@@ -1327,8 +1327,8 @@ body {
     font-size: 1.4vh; font-weight: 600; font-family: 'Prompt', 'IBM Plex Sans Thai', sans-serif; cursor: pointer; touch-action: manipulation;
 }
 
-/* Kanit display tier — match Anton's old blackness so bilingual (TH+EN) titles read as one font */
-.topbar-project, .slot-title, .slot-logo, .cat-screen-title, .cat-card-name { font-weight: 800; }
+/* Mitr display tier — same TH+EN title font as the offer-page preview, so the preview matches the real screen */
+.topbar-project, .slot-title, .slot-logo, .cat-screen-title, .cat-card-name { font-weight: 700; }
 </style>
 </head>
 <body>
