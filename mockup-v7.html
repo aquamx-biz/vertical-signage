@@ -34,6 +34,8 @@ html, body { width:100%; height:100%; overflow:hidden; }
     --cta-border: rgba(255,255,255,0.32);
     --cta-border-hover: rgba(255,255,255,0.6);
     --dot-cyan:  #6dd5e8;       /* eyebrow dot indicator */
+    --bronze:        #C9864C;  /* accent bronze */
+    --bronze-strong: #A36738;  /* darker bronze — AA for white text */
 
     /* Paper notice (unchanged from v4) */
     --paper:        #fafaf6;
@@ -791,11 +793,9 @@ body {
     display: flex; align-items: center;
     gap: 1.4vh;
     padding: 1.7vh 2.2vh;
-    background: var(--cta-bg);
+    background: rgba(8,12,22,0.82);  /* solid — no backdrop blur on an animated node (Pi perf) */
     border: 0.15vh solid var(--cta-border);
     border-radius: 1.4vh;
-    backdrop-filter: blur(14px) saturate(120%);
-    -webkit-backdrop-filter: blur(14px) saturate(120%);
     cursor: pointer;
     touch-action: manipulation; user-select: none;
     font-family: 'Prompt', 'IBM Plex Sans Thai', sans-serif;
@@ -1178,7 +1178,7 @@ body {
 .detail-chip {
     position: absolute; top: 1.4vh; left: 1.4vh; z-index: 3;
     font-size: 1.05vh; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
-    color: #fff; background: var(--orange, #C9864C);
+    color: #fff; background: var(--bronze-strong);
     padding: 0.5vh 1.1vh; border-radius: 0.7vh;
 }
 /* Listing specs — overlaid on the bottom of the image (bed · bath · area · floor) */
@@ -1195,7 +1195,7 @@ body {
 .detail-dyn:empty { display: none; }
 .detail-promo { font-size: 1.2vh; color: #FBD7A8; margin-bottom: 0.8vh; }
 .detail-tabs { display: flex; gap: 1.6vh; padding: 0.2vh 0 0.6vh; }
-.detail-tabs span { font-size: 1.3vh; color: rgba(255,255,255,0.55); padding-bottom: 0.4vh; }
+.detail-tabs span { font-size: 1.3vh; color: rgba(255,255,255,0.8); padding-bottom: 0.4vh; }
 .detail-tabs span.on { color: #fff; border-bottom: 0.2vh solid var(--orange,#C9864C); }
 .detail-mit { display: flex; align-items: center; gap: 1vh; padding: 0.7vh 0; border-top: 0.1vh solid rgba(255,255,255,0.08); }
 .detail-mit .th { width: 3.4vh; height: 3.4vh; border-radius: 0.7vh; background: #11151c; background-size: cover; background-position: center; flex-shrink: 0; }
@@ -1210,16 +1210,16 @@ body {
 .detail-dates::-webkit-scrollbar { display: none; }
 .detail-date { flex: 0 0 auto; min-width: 4.6vh; font-size: 1.1vh; color: #fff; background: rgba(255,255,255,0.08); border: 0.1vh solid rgba(255,255,255,0.18); border-radius: 0.8vh; padding: 0.6vh 0; text-align: center; line-height: 1.3; }
 .detail-date b { display: block; font-size: 1.6vh; }
-.detail-date.on { background: var(--orange,#C9864C); border-color: var(--orange,#C9864C); font-weight: 800; }
+.detail-date.on { background: var(--bronze-strong); border-color: var(--bronze-strong); font-weight: 800; }
 .detail-slots { display: flex; gap: 0.7vh; flex-wrap: wrap; }
 .detail-slot { font-size: 1.3vh; color: #fff; background: rgba(255,255,255,0.1); border: 0.1vh solid rgba(255,255,255,0.22); border-radius: 0.8vh; padding: 0.5vh 1.2vh; }
-.detail-slot.on { background: var(--orange,#C9864C); border-color: var(--orange,#C9864C); font-weight: 800; }
+.detail-slot.on { background: var(--bronze-strong); border-color: var(--bronze-strong); font-weight: 800; }
 .detail-dd { font-size: 1.35vh; color: rgba(255,255,255,0.82); margin: 0.4vh 0; }
 .detail-substore { font-size: 1.3vh; color: rgba(255,255,255,0.72); margin: 0 0 0.6vh; }
 .detail-price { font-family: 'Prompt','IBM Plex Sans Thai',sans-serif; font-weight: 800; font-size: 2vh; color: #FBD7A8; line-height: 1; margin: 0.4vh 0; }
 .detail-meta-row { font-size: 1.3vh; color: rgba(255,255,255,0.82); margin: 0.6vh 0; }
 .detail-store-sub { font-size: 1.3vh; color: rgba(255,255,255,0.7); line-height: 1.45; margin-top: 0.5vh; }
-.detail-hint { font-size: 1.2vh; color: rgba(255,255,255,0.5); margin: 0.5vh 0; }
+.detail-hint { font-size: 1.2vh; color: rgba(255,255,255,0.8); margin: 0.5vh 0; }
 .detail-contact { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.7vh; margin-top: 1vh; }
 .detail-cbtn { aspect-ratio: 1/1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.4vh; background: rgba(255,255,255,0.08); border: 0.1vh solid rgba(255,255,255,0.16); border-radius: 1vh; font-size: 1.1vh; color: #fff; }
 .detail-cbtn .i { font-size: 2.2vh; }
@@ -1254,7 +1254,7 @@ body {
 }
 .detail-sub { font-size: 1.55vh; line-height: 1.45; color: rgba(255,255,255,0.82); margin-bottom: 2vh; }
 /* "View on mobile" button — QR is a later step (matches /offer · /provider) */
-.detail-vm { background: #C9864C; color: #fff; text-align: center; font-family: 'Prompt','IBM Plex Sans Thai',sans-serif; font-weight: 800; letter-spacing: 0.02em; font-size: 1.7vh; padding: 1.5vh; border-radius: 1.4vh; display: flex; align-items: center; justify-content: center; gap: 0.8vh; cursor: pointer; touch-action: manipulation; user-select: none; }
+.detail-vm { background: var(--bronze-strong); color: #fff; text-align: center; font-family: 'Prompt','IBM Plex Sans Thai',sans-serif; font-weight: 800; letter-spacing: 0.02em; font-size: 1.7vh; padding: 1.5vh; border-radius: 1.4vh; display: flex; align-items: center; justify-content: center; gap: 0.8vh; cursor: pointer; touch-action: manipulation; user-select: none; }
 .detail-vm:active { filter: brightness(1.08); }
 
 /* ── v7 HANDOFF (QR + phone) — lives inside the detail card, v6-styled ── */
@@ -1274,7 +1274,7 @@ body {
     width: fit-content; flex-shrink: 0; margin: 0;
 }
 .qr-wrap img { width: 9vh; height: 9vh; display: block; }   /* ≈27% of popup width, like the design */
-.qr-url { font-size: 1.0vh; color: rgba(255,255,255,0.4); word-break: break-all; text-align: left; margin-top: 0.5vh; }
+.qr-url { font-size: 1.0vh; color: rgba(255,255,255,0.8); word-break: break-all; text-align: left; margin-top: 0.5vh; }
 .handoff-unit-ref {
     background: rgba(109,213,232,0.12); border: 0.15vh solid rgba(109,213,232,0.32);
     border-radius: 1.2vh; padding: 1vh 1.6vh; margin-top: 1vh;
@@ -1303,7 +1303,7 @@ body {
 :focus-visible { outline: 0.3vh solid var(--dot-cyan); outline-offset: 0.3vh; }
 .handoff-cta {
     margin-top: 1.2vh; width: 100%;
-    background: #C9864C; color: #fff; border: none; border-radius: 1.4vh;
+    background: var(--bronze-strong); color: #fff; border: none; border-radius: 1.4vh;
     padding: 1.4vh; font-size: 1.6vh; font-weight: 800; font-family: 'Prompt', 'IBM Plex Sans Thai', sans-serif;
     cursor: pointer; touch-action: manipulation;
 }
