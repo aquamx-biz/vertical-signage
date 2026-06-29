@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>AquaMX · ลงโฆษณา (App Prototype)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Mitr:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --navy:#0E3361; --navy-deep:#072147; --bronze:#C9864C; --bronze-strong:#A36738;
+  --cream:#FAF6ED; --ink:#0B1B33; --muted:#5C6B82; --line:#EADFC9; --white:#fff;
+  --cyan:#6DD5E8; --stage:#0a0c10; --ok:#2E9E5B;
+}
+html,body{height:100%;}
+body{
+  font-family:'IBM Plex Sans Thai','Nunito',system-ui,sans-serif;
+  background:var(--cream); color:var(--ink); -webkit-font-smoothing:antialiased;
+  overflow:hidden;            /* app shell — no page scroll */
+}
+button{font-family:inherit;cursor:pointer;}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important;}}
+
+/* ── APP SHELL ─────────────────────────────────────── */
+.app{
+  height:100dvh; max-width:480px; margin:0 auto; background:var(--cream);
+  display:flex; flex-direction:column;
+  box-shadow:0 0 50px -10px rgba(0,0,0,.18);
+}
+/* header */
+.appbar{flex:0 0 auto; padding:14px 18px 10px; background:var(--white); border-bottom:1px solid var(--line);}
+.appbar-top{display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;}
+.brand{font-family:'Nunito','IBM Plex Sans Thai',sans-serif; font-weight:800; font-size:21px; color:var(--navy); letter-spacing:-.02em;}
+.brand .x{color:var(--bronze);}
+.exit{font-size:12px; color:var(--muted); background:none; border:none;}
+/* step rail */
+.rail{display:flex; align-items:center; gap:6px;}
+.rail .seg{flex:1; height:4px; border-radius:3px; background:var(--line); overflow:hidden;}
+.rail .seg.done{background:var(--bronze);} .rail .seg.now{background:var(--bronze);}
+.rail .lbl{font-size:11px; color:var(--muted); white-space:nowrap; margin-left:4px; font-weight:600;}
+
+/* canvas (flexes to fill, never scrolls) */
+.canvas{flex:1 1 auto; min-height:0; position:relative; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:14px 18px; overflow:hidden;}
+.canvas-head{flex:0 0 auto; text-align:center; margin-bottom:10px;}
+.canvas-head h1{font-family:'Mitr','IBM Plex Sans Thai',sans-serif; font-weight:700; font-size:19px; color:var(--navy); line-height:1.15;}
+.canvas-head p{font-size:12.5px; color:var(--muted); margin-top:3px;}
+.canvas-body{flex:1 1 auto; min-height:0; width:100%; display:flex; align-items:center; justify-content:center;}
+
+/* bottom action bar */
+.actions{flex:0 0 auto; padding:12px 18px calc(12px + env(safe-area-inset-bottom)); background:var(--white); border-top:1px solid var(--line); display:flex; gap:10px; align-items:center;}
+.btn{border:none; border-radius:12px; padding:14px 18px; font-weight:700; font-size:15px; font-family:'IBM Plex Sans Thai','Nunito',sans-serif;}
+.btn-primary{flex:1; background:var(--navy); color:#fff; display:inline-flex; align-items:center; justify-content:center; gap:7px;}
+.btn-primary:disabled{opacity:.4;}
+.btn-ghost{background:none; color:var(--muted); border:1.5px solid var(--line); padding:14px 16px;}
+
+/* ── STEP 1: format + package ──────────────────────── */
+.pick-grp{width:100%; max-width:340px;}
+.pick-grp + .pick-grp{margin-top:18px;}
+.pick-lbl{font-size:12px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; margin-bottom:8px;}
+.fmt-row{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+.fmt{background:var(--white); border:2px solid var(--line); border-radius:14px; padding:14px 12px; text-align:center;}
+.fmt.on{border-color:var(--bronze); background:#fff7ee;}
+.fmt .ic{font-size:24px;} .fmt .nm{font-weight:700; font-size:14px; margin-top:4px; color:var(--ink);} .fmt .ds{font-size:11px; color:var(--muted); margin-top:2px;}
+.pkg{display:flex; align-items:center; gap:12px; background:var(--white); border:2px solid var(--line); border-radius:14px; padding:12px 14px; margin-bottom:8px;}
+.pkg.on{border-color:var(--bronze); background:#fff7ee;}
+.pkg .tier{font-family:'Nunito','IBM Plex Sans Thai',sans-serif; font-weight:800; font-size:15px; color:var(--navy); min-width:64px;}
+.pkg .feat{flex:1; font-size:12px; color:var(--muted); line-height:1.35;}
+.pkg .pr{font-family:'Nunito','IBM Plex Sans Thai',sans-serif; font-weight:800; font-size:15px; color:var(--bronze-strong); white-space:nowrap;}
+.pkg .pr small{display:block; font-size:10px; color:var(--muted); font-weight:600;}
+.pkg.pop{position:relative;}
+.pkg.pop::after{content:'นิยม'; position:absolute; top:-8px; right:12px; background:var(--bronze); color:#fff; font-size:10px; font-weight:700; padding:2px 8px; border-radius:8px;}
+
+/* ── KIOSK PREVIEW (totem) — the editable canvas ─────── */
+.totem{height:100%; max-height:100%; aspect-ratio:9/17; display:flex; flex-direction:column;}
+.tt-screen{flex:1; min-height:0; border:3px solid #0c111c; border-radius:14px; position:relative; overflow:hidden; background:var(--stage); display:grid; grid-template-rows:auto 1fr auto;}
+.tt-top{background:var(--navy-deep); display:flex; align-items:center; justify-content:space-between; padding:0 10px; height:26px; font-size:9px; color:#cdd8ea;}
+.tt-top .dot{width:5px;height:5px;border-radius:50%;background:var(--cyan);box-shadow:0 0 5px var(--cyan);}
+.tt-stage{position:relative; overflow:hidden;}
+.tt-bg{position:absolute; inset:0; background-size:cover; background-position:center;}
+.tt-bg.empty{background:repeating-linear-gradient(135deg,#11151c,#11151c 12px,#161b24 12px,#161b24 24px); display:flex; align-items:center; justify-content:center;}
+.tt-bg.empty span{color:#7d8aa0; font-size:11px;}
+.tt-grad{position:absolute; inset:auto 0 0 0; height:62%; background:linear-gradient(0deg,rgba(5,6,8,.92),rgba(5,6,8,.3) 55%,transparent);}
+.tt-menu{position:absolute; top:9px; left:9px; display:flex; align-items:center; gap:4px; background:rgba(8,12,22,.5); border:1px solid rgba(255,255,255,.3); color:#fff; font-size:7px; font-weight:700; letter-spacing:.12em; padding:4px 7px; border-radius:7px; text-transform:uppercase;}
+.tt-content{position:absolute; left:11px; right:11px; bottom:64px; display:flex; flex-direction:column; gap:6px; align-items:flex-start;}
+.tt-eyebrow{display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border:1px solid rgba(255,255,255,.4); border-radius:20px; background:rgba(8,12,22,.4); font-size:8px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:#fff;}
+.tt-eyebrow::before{content:''; width:4px; height:4px; border-radius:50%; background:var(--cyan); box-shadow:0 0 5px var(--cyan);}
+.tt-title{font-family:'Mitr','IBM Plex Sans Thai',sans-serif; font-weight:700; font-size:20px; line-height:1.12; color:#fff; text-shadow:0 1px 6px rgba(0,0,0,.6);}
+.tt-price{font-family:'Nunito','IBM Plex Sans Thai',sans-serif; font-weight:800; font-size:17px; color:#FBD7A8;}
+.tt-sub{font-size:10px; color:rgba(255,255,255,.8); line-height:1.4;}
+.tt-dock{position:absolute; left:11px; right:11px; bottom:12px;}
+.tt-cta{width:100%; display:flex; align-items:center; justify-content:space-between; background:rgba(8,12,22,.5); border:1px solid rgba(255,255,255,.45); color:#fff; font-weight:700; font-size:10px; letter-spacing:.06em; text-transform:uppercase; padding:9px 12px; border-radius:9px;}
+.tt-base{flex:0 0 auto; height:8px; width:64%; margin:0 auto; background:linear-gradient(180deg,#1b2740,#05080d); border-radius:0 0 7px 7px;}
+/* image dots */
+.tt-imgdots{position:absolute; top:9px; right:9px; display:flex; gap:3px;}
+.tt-imgdots i{width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,.4);}
+.tt-imgdots i.on{background:#fff;}
+
+/* tappable hotspots on the preview */
+.hot{position:absolute; cursor:pointer; border-radius:8px; outline:2px dashed transparent; outline-offset:2px; transition:outline-color .15s, background .15s;}
+.hot:hover,.hot:focus-visible{outline-color:var(--cyan); background:rgba(109,213,232,.12);}
+.hot .edit-chip{position:absolute; top:-9px; right:-7px; background:var(--cyan); color:#06222b; font-size:9px; font-weight:800; border-radius:7px; padding:1px 6px; opacity:0; transition:opacity .15s;}
+.hot:hover .edit-chip,.hot:focus-visible .edit-chip{opacity:1;}
+.tap-hint{margin-top:10px; font-size:12px; color:var(--bronze-strong); font-weight:600; display:flex; align-items:center; gap:6px;}
+
+/* ── BOTTOM SHEET ──────────────────────────────────── */
+.scrim{position:fixed; inset:0; background:rgba(8,12,22,.45); opacity:0; pointer-events:none; transition:opacity .2s; z-index:40;}
+.scrim.open{opacity:1; pointer-events:auto;}
+.sheet{position:fixed; left:0; right:0; bottom:0; max-width:480px; margin:0 auto; background:var(--white); border-radius:20px 20px 0 0; padding:8px 18px calc(20px + env(safe-area-inset-bottom)); transform:translateY(100%); transition:transform .26s cubic-bezier(.2,.8,.2,1); z-index:41; max-height:82dvh; overflow-y:auto;}
+.sheet.open{transform:translateY(0);}
+.sheet .grab{width:38px; height:4px; border-radius:3px; background:var(--line); margin:6px auto 14px;}
+.sheet h3{font-family:'Mitr','IBM Plex Sans Thai',sans-serif; font-weight:600; font-size:17px; color:var(--navy); margin-bottom:4px;}
+.sheet .hint{font-size:12.5px; color:var(--muted); margin-bottom:14px;}
+.fld{width:100%; border:1.5px solid var(--line); border-radius:11px; padding:12px 13px; font-size:15px; font-family:inherit; color:var(--ink); background:#fff;}
+.fld:focus{outline:none; border-color:var(--bronze);}
+textarea.fld{resize:none; min-height:80px;}
+.sheet-save{width:100%; margin-top:16px; background:var(--navy); color:#fff; border:none; border-radius:12px; padding:14px; font-weight:700; font-size:15px;}
+/* image grid in sheet */
+.img-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:6px;}
+.img-cell{aspect-ratio:1; border-radius:11px; background-size:cover; background-position:center; position:relative; border:1.5px solid var(--line);}
+.img-cell .rm{position:absolute; top:-6px; right:-6px; width:20px; height:20px; border-radius:50%; background:var(--ink); color:#fff; border:none; font-size:12px; line-height:1;}
+.img-add{aspect-ratio:1; border:1.5px dashed var(--bronze); border-radius:11px; background:#fff7ee; color:var(--bronze-strong); font-size:22px; display:flex; align-items:center; justify-content:center;}
+.img-add:disabled{opacity:.4; border-style:solid; color:var(--muted); border-color:var(--line); background:var(--cream);}
+.cap-note{font-size:12px; color:var(--muted); margin-top:10px; text-align:center;}
+.cap-note b{color:var(--bronze-strong);}
+.upsell{margin-top:10px; background:#fff7ee; border:1px solid var(--line); border-radius:11px; padding:10px 12px; font-size:12.5px; color:var(--ink); display:flex; align-items:center; gap:8px; justify-content:space-between;}
+.upsell button{background:var(--bronze); color:#fff; border:none; border-radius:8px; padding:6px 11px; font-size:12px; font-weight:700;}
+/* CTA choices */
+.cta-opts{display:grid; grid-template-columns:1fr 1fr; gap:8px;}
+.cta-opt{border:1.5px solid var(--line); border-radius:11px; padding:11px; font-size:13px; font-weight:600; color:var(--ink); background:#fff; text-align:left;}
+.cta-opt.on{border-color:var(--bronze); background:#fff7ee;}
+
+/* summary */
+.sum{width:100%; max-width:340px;}
+.sum-row{display:flex; justify-content:space-between; padding:11px 0; border-bottom:1px solid var(--line); font-size:14px;}
+.sum-row .k{color:var(--muted);} .sum-row .v{font-weight:700; color:var(--ink);}
+.sum-total{display:flex; justify-content:space-between; align-items:baseline; margin-top:14px;}
+.sum-total .k{font-weight:700;} .sum-total .v{font-family:'Nunito','IBM Plex Sans Thai',sans-serif; font-weight:800; font-size:26px; color:var(--bronze-strong);}
+.done-card{text-align:center;}
+.done-card .big{width:64px;height:64px;border-radius:50%;background:var(--ok);color:#fff;font-size:32px;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;}
+.proto-tag{position:fixed; top:8px; left:50%; transform:translateX(-50%); background:var(--ink); color:#fff; font-size:10px; padding:3px 10px; border-radius:8px; z-index:50; opacity:.85;}
+</style>
+</head>
+<body>
+<div class="proto-tag">PROTOTYPE · mock data</div>
+<div class="app">
+  <div class="appbar">
+    <div class="appbar-top">
+      <span class="brand">aqua<span class="x">m</span>x</span>
+      <button class="exit">✕ ออก</button>
+    </div>
+    <div class="rail" id="rail"></div>
+  </div>
+
+  <div class="canvas" id="canvas"></div>
+
+  <div class="actions">
+    <button class="btn btn-ghost" id="backBtn" style="display:none;">←</button>
+    <button class="btn btn-primary" id="nextBtn">ถัดไป →</button>
+  </div>
+</div>
+
+<div class="scrim" id="scrim"></div>
+<div class="sheet" id="sheet"></div>
+
+<script>
+const PKGS = [
+  {id:'starter', name:'Starter', price:55,  maxImg:1,  video:false, feat:'รูป 1 ใบ · 8 วิ · 25 ครั้ง/วัน'},
+  {id:'booster', name:'Booster', price:90,  maxImg:5,  video:false, feat:'รูปได้ 5 ใบ · 12 วิ · 50 ครั้ง/วัน'},
+  {id:'pro',     name:'Pro',     price:128, maxImg:10, video:true,  feat:'รูปได้ 10 ใบ · วิดีโอ · 16 วิ · 75 ครั้ง/วัน', pop:true},
+  {id:'premium', name:'Premium', price:160, maxImg:15, video:true,  feat:'รูปได้ 15 ใบ · วิดีโอ · 20 วิ · 100 ครั้ง/วัน'},
+];
+const CTAS = [
+  {id:'viewOffer', label:'View Offer'}, {id:'viewMenu', label:'View Menu'},
+  {id:'book', label:'Book Now'}, {id:'signup', label:'Sign Up'},
+  {id:'viewStore', label:'View Store'}, {id:'contact', label:'Contact'},
+];
+const STOCK = ['#6a8caf','#b06a4f','#5f9e7a','#9a7bb0','#c2a05a','#7a8a99'].map((c,i)=>
+  `data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><rect width='200' height='200' fill='${encodeURIComponent(c)}'/><text x='100' y='110' font-size='20' fill='white' text-anchor='middle' font-family='sans-serif'>รูป ${i+1}</text></svg>`);
+
+const S = {
+  step:1, total:4,
+  format:'media', pkg:'pro', category:'Services',
+  title:'ชื่อโฆษณาของคุณ', sub:'คำบรรยายสั้นๆ', price:'', images:[], cta:'viewOffer',
+};
+const pkg = () => PKGS.find(p=>p.id===S.pkg);
+const ctaLabel = () => (CTAS.find(c=>c.id===S.cta)||{}).label;
+const el = id => document.getElementById(id);
+
+/* ── PREVIEW (the editable kiosk) ── */
+function preview(editable){
+  const p = pkg();
+  const bg = S.images[0]
+    ? `<div class="tt-bg" style="background-image:url('${S.images[0]}')"></div>`
+    : `<div class="tt-bg empty"><span>แตะเพื่อใส่รูป</span></div>`;
+  const dots = S.images.length>1
+    ? `<div class="tt-imgdots">${S.images.map((_,i)=>`<i class="${i===0?'on':''}"></i>`).join('')}</div>` : '';
+  const priceHTML = S.price ? `<div class="tt-price" data-edit="price">฿${S.price}</div>` : '';
+  const H = (sel,cls,style)=> editable ? ` data-edit="${sel}"` : '';
+  return `
+  <div class="totem">
+    <div class="tt-screen">
+      <div class="tt-top"><span>11:33 <span class="dot" style="display:inline-block;margin-left:4px"></span></span><span>☀ 28° Bangkok</span></div>
+      <div class="tt-stage">
+        ${bg}${dots}
+        <div class="tt-grad"></div>
+        <div class="tt-menu">☰ MENU</div>
+        <div class="hot" ${editable?'data-edit="image" tabindex="0" role="button" aria-label="แก้รูป"':''} style="position:absolute; inset:26px 0 50% 0;">${editable?'<span class="edit-chip">รูป ✎</span>':''}</div>
+        <div class="tt-content">
+          <span class="tt-eyebrow">${S.category}</span>
+          <div class="hot" ${editable?'data-edit="title" tabindex="0" role="button" aria-label="แก้หัวข้อ"':''} style="position:relative;">
+            <div class="tt-title">${S.title||'หัวข้อ'}</div>${priceHTML}
+            ${editable?'<span class="edit-chip">หัวข้อ ✎</span>':''}
+          </div>
+          <div class="tt-sub">${S.sub||''}</div>
+        </div>
+        <div class="tt-dock">
+          <div class="hot" ${editable?'data-edit="cta" tabindex="0" role="button" aria-label="แก้ปุ่ม"':''} style="position:relative;">
+            <span class="tt-cta"><span>${ctaLabel()}</span><span>→</span></span>
+            ${editable?'<span class="edit-chip">ปุ่ม ✎</span>':''}
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="tt-base"></div>
+  </div>`;
+}
+
+/* ── STEP RENDERERS ── */
+function renderStep(){
+  // rail
+  el('rail').innerHTML = Array.from({length:S.total},(_,i)=>
+    `<div class="seg ${i<S.step?'done':''} ${i===S.step-1?'now':''}"></div>`).join('') +
+    `<span class="lbl">${S.step}/${S.total}</span>`;
+  el('backBtn').style.display = S.step>1 ? 'inline-flex' : 'none';
+  const c = el('canvas');
+  const nb = el('nextBtn');
+
+  if(S.step===1){
+    nb.textContent='ถัดไป →'; nb.disabled=false;
+    c.innerHTML = `
+      <div class="canvas-head"><h1>เลือกรูปแบบ & แพ็กเกจ</h1><p>แพ็กเกจกำหนดจำนวนรูป + ฟีเจอร์ที่ใช้ได้</p></div>
+      <div class="canvas-body" style="align-items:flex-start; overflow-y:auto;">
+       <div style="width:100%; max-width:340px;">
+        <div class="pick-grp"><div class="pick-lbl">รูปแบบโฆษณา</div>
+          <div class="fmt-row">
+            <div class="fmt ${S.format==='media'?'on':''}" data-fmt="media"><div class="ic">📺</div><div class="nm">Media Ad</div><div class="ds">รูป/วิดีโอ หมุนโชว์</div></div>
+            <div class="fmt ${S.format==='catalog'?'on':''}" data-fmt="catalog"><div class="ic">📋</div><div class="nm">Catalog Ad</div><div class="ds">รายการ/เมนู</div></div>
+          </div>
+        </div>
+        <div class="pick-grp"><div class="pick-lbl">แพ็กเกจ</div>
+          ${PKGS.map(p=>`<div class="pkg ${S.pkg===p.id?'on':''} ${p.pop?'pop':''}" data-pkg="${p.id}">
+            <span class="tier">${p.name}</span><span class="feat">${p.feat}</span>
+            <span class="pr">฿${p.price}<small>/สัปดาห์</small></span></div>`).join('')}
+        </div>
+       </div>
+      </div>`;
+  }
+  else if(S.step===2){
+    nb.textContent='ถัดไป →'; nb.disabled=false;
+    c.innerHTML = `
+      <div class="canvas-head"><h1>รายละเอียดโฆษณา</h1><p>แตะส่วนไหนบนจอ เพื่อแก้ส่วนนั้น</p></div>
+      <div class="canvas-body">${preview(true)}</div>
+      <div class="tap-hint">👆 แตะ รูป · หัวข้อ · ปุ่ม บนจอได้เลย</div>`;
+    bindHotspots();
+  }
+  else if(S.step===3){
+    nb.textContent='ถัดไป →'; nb.disabled=false;
+    c.innerHTML = `
+      <div class="canvas-head"><h1>ปุ่มคำสั่ง</h1><p>ปุ่มที่ลูกค้าแตะบนจอ — แตะปุ่มบนจอเพื่อเปลี่ยน</p></div>
+      <div class="canvas-body">${preview(true)}</div>
+      <div class="tap-hint">👆 แตะปุ่มล่างสุดบนจอ เพื่อเลือกชนิดปุ่ม</div>`;
+    bindHotspots();
+  }
+  else if(S.step===4){
+    const p=pkg();
+    nb.textContent='✓ ยืนยัน & จ่าย'; nb.disabled=false;
+    c.innerHTML = `
+      <div class="canvas-head"><h1>สรุป & ชำระเงิน</h1><p>ตรวจดูก่อนเผยแพร่</p></div>
+      <div class="canvas-body" style="align-items:flex-start;">
+        <div class="sum">
+          <div style="display:flex; gap:14px; align-items:center; margin-bottom:14px;">
+            <div style="width:74px; flex:0 0 auto;">${preview(false)}</div>
+            <div><div style="font-family:'Mitr';font-weight:700;font-size:16px;color:var(--navy)">${S.title}</div>
+            <div style="font-size:12px;color:var(--muted)">${S.category} · ${S.format==='media'?'Media Ad':'Catalog Ad'}</div></div>
+          </div>
+          <div class="sum-row"><span class="k">แพ็กเกจ</span><span class="v">${p.name}</span></div>
+          <div class="sum-row"><span class="k">รูปภาพ</span><span class="v">${S.images.length} / ${p.maxImg} ใบ</span></div>
+          <div class="sum-row"><span class="k">ปุ่มคำสั่ง</span><span class="v">${ctaLabel()}</span></div>
+          <div class="sum-total"><span class="k">รวม</span><span class="v">฿${p.price}<span style="font-size:13px;color:var(--muted);font-weight:600">/สัปดาห์</span></span></div>
+        </div>
+      </div>`;
+  }
+  bindPicks();
+}
+
+function bindPicks(){
+  document.querySelectorAll('[data-fmt]').forEach(b=>b.onclick=()=>{S.format=b.dataset.fmt; renderStep();});
+  document.querySelectorAll('[data-pkg]').forEach(b=>b.onclick=()=>{
+    S.pkg=b.dataset.pkg;
+    if(S.images.length>pkg().maxImg) S.images=S.images.slice(0,pkg().maxImg);
+    renderStep();
+  });
+}
+function bindHotspots(){
+  document.querySelectorAll('.hot[data-edit]').forEach(h=>{
+    const open=()=>openSheet(h.dataset.edit);
+    h.onclick=open;
+    h.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();open();}};
+  });
+}
+
+/* ── BOTTOM SHEETS ── */
+function openSheet(kind){
+  const sh=el('sheet'); let html='';
+  if(kind==='title'){
+    html=`<h3>หัวข้อ & ราคา</h3><p class="hint">ข้อความใหญ่ที่ขึ้นบนจอ</p>
+      <input class="fld" id="fTitle" value="${esc(S.title)}" placeholder="ชื่อโฆษณา">
+      <input class="fld" id="fSub" value="${esc(S.sub)}" placeholder="คำบรรยายสั้น" style="margin-top:10px;">
+      <input class="fld" id="fPrice" value="${esc(S.price)}" placeholder="ราคา (เช่น 59) — ไม่ใส่ก็ได้" inputmode="numeric" style="margin-top:10px;">
+      <button class="sheet-save" onclick="saveTitle()">บันทึก</button>`;
+  } else if(kind==='image'){
+    const p=pkg(); const full=S.images.length>=p.maxImg;
+    html=`<h3>รูปภาพ</h3><p class="hint">แพ็ก ${p.name} ใส่ได้สูงสุด ${p.maxImg} ใบ</p>
+      <div class="img-grid">
+        ${S.images.map((u,i)=>`<div class="img-cell" style="background-image:url('${u}')"><button class="rm" onclick="rmImg(${i})">✕</button></div>`).join('')}
+        <button class="img-add" onclick="addImg()" ${full?'disabled':''}>＋</button>
+      </div>
+      <div class="cap-note">ใส่แล้ว <b>${S.images.length}</b> / ${p.maxImg} ใบ</div>
+      ${full && p.id!=='premium' ? `<div class="upsell"><span>อยากใส่รูปเพิ่ม?</span><button onclick="upgrade()">อัปเกรด →</button></div>`:''}`;
+  } else if(kind==='cta'){
+    html=`<h3>ปุ่มคำสั่ง</h3><p class="hint">ปุ่มที่ลูกค้าแตะบนจอ</p>
+      <div class="cta-opts">${CTAS.map(c=>`<button class="cta-opt ${S.cta===c.id?'on':''}" onclick="setCta('${c.id}')">${c.label}</button>`).join('')}</div>`;
+  } else if(kind==='price'){ return openSheet('title'); }
+  sh.innerHTML=`<div class="grab"></div>`+html;
+  sh.classList.add('open'); el('scrim').classList.add('open');
+}
+function closeSheet(){el('sheet').classList.remove('open'); el('scrim').classList.remove('open');}
+function esc(s){return String(s==null?'':s).replace(/"/g,'&quot;').replace(/</g,'&lt;');}
+
+function saveTitle(){S.title=el('fTitle').value||'หัวข้อ'; S.sub=el('fSub').value; S.price=el('fPrice').value.replace(/[^0-9]/g,''); closeSheet(); renderStep();}
+function addImg(){const p=pkg(); if(S.images.length>=p.maxImg)return; S.images.push(STOCK[S.images.length%STOCK.length]); openSheet('image'); renderStep();}
+function rmImg(i){S.images.splice(i,1); openSheet('image'); renderStep();}
+function setCta(id){S.cta=id; closeSheet(); renderStep();}
+function upgrade(){const i=PKGS.findIndex(p=>p.id===S.pkg); if(i<PKGS.length-1){S.pkg=PKGS[i+1].id;} openSheet('image'); renderStep();}
+
+/* ── NAV ── */
+el('nextBtn').onclick=()=>{
+  if(S.step<S.total){S.step++; renderStep();}
+  else{ // mock pay
+    el('canvas').innerHTML=`<div class="canvas-body"><div class="done-card">
+      <div class="big">✓</div>
+      <div style="font-family:'Mitr';font-weight:700;font-size:20px;color:var(--navy)">ส่งโฆษณาแล้ว!</div>
+      <p style="font-size:13px;color:var(--muted);margin-top:8px;max-width:260px">(prototype) ของจริงจะชำระเงิน ฿${pkg().price} แล้วส่งเข้าระบบรออนุมัติ</p>
+    </div></div>`;
+    el('rail').innerHTML=''; document.querySelector('.actions').style.display='none';
+  }
+};
+el('backBtn').onclick=()=>{if(S.step>1){S.step--; renderStep();}};
+el('scrim').onclick=closeSheet;
+
+renderStep();
+</script>
+</body>
+</html>
