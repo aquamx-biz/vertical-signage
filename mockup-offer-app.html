@@ -276,8 +276,7 @@ function renderStep(){
         </div></div>`;
     }
   } else if(S.step===3){
-    c.innerHTML=`<div class="canvas-head"><h1>รายละเอียด</h1><p>เลือกหมวด แล้วแตะแก้บนจอ</p></div>
-      <div class="cats">${CATS.map(ct=>`<button class="cat ${S.category===ct.id?'on':''}" data-cat="${ct.id}">${ct.th}</button>`).join('')}</div>
+    c.innerHTML=`<div class="canvas-head" style="display:flex;align-items:center;gap:10px;margin-bottom:8px;"><h1 style="flex:0 0 auto;">รายละเอียด</h1><div class="cats" style="margin:0;flex:1;min-width:0;padding:2px 0;">${CATS.map(ct=>`<button class="cat ${S.category===ct.id?'on':''}" data-cat="${ct.id}">${ct.th}</button>`).join('')}</div></div>
       <div class="canvas-body">${editPreview()}</div>
       <div class="tap-hint">👆 แตะ รูป · หัวข้อ · ปุ่ม บนจอ</div>`;
     bindHot();
