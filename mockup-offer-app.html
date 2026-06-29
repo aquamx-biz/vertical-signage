@@ -249,8 +249,7 @@ function editMedia(){
     <div class="tt-stage">${bg}${dots}<div class="tt-grad"></div><div class="tt-menu"><span class="tt-burger"></span>MENU</div>
       <div class="hot" data-edit="image" tabindex="0" role="button" style="position:absolute;inset:23px 0 55% 0;"><span class="chip">รูป ✎</span></div>
       <div class="tt-content"><span class="tt-eyebrow">${S.category}</span>
-        <div class="hot" data-edit="title" tabindex="0" role="button"><div class="tt-title">${S.title}</div>${price}<span class="chip">หัวข้อ ✎</span></div>
-        <div class="tt-sub">${S.sub||''}</div>
+        <div class="hot" data-edit="title" tabindex="0" role="button"><div class="tt-title">${S.title}</div>${price}<div class="tt-sub">${S.sub||'คำบรรยายสั้นๆ'}</div><span class="chip">ข้อความ ✎</span></div>
         <div class="hot tt-cta-wrap" data-edit="cta" tabindex="0" role="button"><span class="tt-cta"><span>${lbl(S.cta)}</span><span>→</span></span><span class="chip">ปุ่ม ✎</span></div>
         ${cta2}
       </div></div>${MARQ}</div><div class="tt-base"></div></div>`;
