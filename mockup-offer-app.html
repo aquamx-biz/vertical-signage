@@ -143,6 +143,9 @@ button{font-family:inherit;cursor:pointer;}
 .hot .chip{position:absolute;top:-9px;right:-6px;background:#6DD5E8;color:#06222b;font-size:8.5px;font-weight:800;border-radius:6px;padding:1px 5px;opacity:0;transition:opacity .15s;}
 .hot:hover .chip,.hot:focus-visible .chip{opacity:1;}
 .tap-hint{flex:0 0 auto;margin-top:8px;font-size:12px;color:var(--orange-strong);font-weight:600;}
+.v3seg{flex:0 0 auto;align-self:center;display:inline-flex;gap:4px;background:#eef0f4;border-radius:11px;padding:3px;margin-bottom:8px;}
+.v3chip{border:none;background:none;font-family:'IBM Plex Sans Thai','Nunito',sans-serif;font-weight:800;font-size:12px;color:var(--muted);padding:6px 16px;border-radius:8px;cursor:pointer;}
+.v3chip.on{background:#fff;color:var(--navy);box-shadow:0 1px 5px rgba(16,24,40,.14);}
 
 /* sheet */
 .scrim{position:fixed;inset:0;background:rgba(8,12,22,.45);opacity:0;pointer-events:none;transition:opacity .2s;z-index:40;}
@@ -219,7 +222,7 @@ const MENUIMG=['scissor','blowdry','haircolor','spa'].map(s=>'https://picsum.pho
 const DESC={media:'แสดงเป็นสื่อบนจอ signage แบบหมุนวนเป็นรอบ ๆ · ลูกค้าที่สนใจกดปุ่มคำสั่งบนจอเพื่อทำรายการต่อได้',catalog:'แสดงเป็นรายการ (directory) บนจอ จัดตามหมวดที่เลือก · ลูกค้ากดเลือกจากเมนู แล้วกดปุ่มคำสั่งทำรายการได้'};
 const MIMG=['#6a8caf','#b06a4f','#5f9e7a','#c2a05a'].map(c=>`data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='80'><rect width='120' height='80' fill='${encodeURIComponent(c)}'/></svg>`);
 
-const S={step:1,total:4,format:null,pkg:'pro',category:'Services',title:'ชื่อโฆษณาของคุณ',sub:'คำบรรยายสั้นๆ',price:'',images:[],cta:'viewOffer',cta2:null};
+const S={step:1,total:4,format:null,pkg:'pro',category:'Services',title:'ชื่อโฆษณาของคุณ',sub:'คำบรรยายสั้นๆ',price:'',images:[],cta:'viewOffer',cta2:null,view3:'mine'};
 const pkg=()=>PKGS.find(p=>p.id===S.pkg);
 const lbl=id=>(CTAS.find(c=>c.id===id)||{}).label;
 const el=id=>document.getElementById(id);
@@ -292,10 +295,14 @@ function renderStep(){
         </div></div>`;
     }
   } else if(S.step===3){
+    const mine=S.view3!=='sample';
     c.innerHTML=`<div class="canvas-head" style="display:flex;align-items:center;gap:10px;margin-bottom:8px;"><h1 style="flex:0 0 auto;">รายละเอียด</h1><div class="cats" style="margin:0;flex:1;min-width:0;padding:2px 0;">${CATS.map(ct=>`<button class="cat ${S.category===ct.en?'on':''}" data-cat="${ct.en}">${ct.th}</button>`).join('')}</div></div>
-      <div class="canvas-body">${editPreview()}</div>
-      <div class="tap-hint">👆 แตะ รูป · หัวข้อ · ปุ่ม บนจอ</div>`;
-    bindHot(); bindCats();
+      <div class="v3seg"><button class="v3chip ${mine?'on':''}" data-v3="mine">ของฉัน</button><button class="v3chip ${!mine?'on':''}" data-v3="sample">ตัวอย่าง</button></div>
+      <div class="canvas-body">${mine?editPreview():(isFree()?sampleCatalog():sampleMedia())}</div>
+      ${mine?'<div class="tap-hint">👆 แตะ รูป · หัวข้อ · ปุ่ม บนจอ</div>':'<div class="tap-hint" style="color:var(--muted)">นี่คือ<b>ตัวอย่าง</b> · สลับ "ของฉัน" เพื่อแก้</div>'}`;
+    if(mine) bindHot();
+    bindCats();
+    document.querySelectorAll('[data-v3]').forEach(b=>b.onclick=()=>{S.view3=b.dataset.v3;renderStep();});
   } else if(S.step===4){
     const p=pkg();
     c.innerHTML=`<div class="canvas-head"><h1>สรุป${isFree()?'':' & ชำระเงิน'}</h1><p>ตรวจก่อนเผยแพร่</p></div>
