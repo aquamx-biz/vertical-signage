@@ -194,7 +194,19 @@ const PKGS=[
   {id:'premium',name:'Premium',price:160,maxImg:15,feat:'รูป 15 ใบ · วิดีโอ · 20 วิ · 100 ครั้ง/วัน'},
 ];
 const CTAS=[{id:'viewOffer',label:'View Offer'},{id:'viewMenu',label:'View Menu'},{id:'book',label:'Book Now'},{id:'signup',label:'Sign Up'},{id:'viewStore',label:'View Store'},{id:'viewListing',label:'View Listing'}];
-const CATS=[{id:'Dining',th:'ร้านอาหาร',cta:'viewMenu',cta2:'book'},{id:'Groceries',th:'ของชำ',cta:'viewStore',cta2:null},{id:'Services',th:'บริการ',cta:'viewOffer',cta2:'book'},{id:'Health & Beauty',th:'สุขภาพ&ความงาม',cta:'book',cta2:null},{id:'Property',th:'อสังหาฯ',cta:'viewListing',cta2:'book'}];
+const CATS=[
+  {en:'Food',th:'อาหาร',cta:'viewMenu',cta2:'book'},
+  {en:'Groceries',th:'ของใช้/ของชำ',cta:'viewStore',cta2:null},
+  {en:'Services',th:'บริการ',cta:'viewOffer',cta2:'book'},
+  {en:'For Rent',th:'ให้เช่า',cta:'viewListing',cta2:'book'},
+  {en:'For Sale',th:'ขาย',cta:'viewListing',cta2:'book'},
+  {en:'Health & Beauty',th:'สุขภาพ & ความงาม',cta:'book',cta2:null},
+  {en:'Leisure & Travel',th:'ท่องเที่ยว & พักผ่อน',cta:'book',cta2:null},
+  {en:'Shopping',th:'ช้อปปิ้ง',cta:'viewStore',cta2:null},
+  {en:'Education',th:'การศึกษา',cta:'signup',cta2:null},
+  {en:'Events',th:'อีเวนต์',cta:'signup',cta2:null},
+  {en:'Building Updates',th:'ประกาศอาคาร',cta:'viewOffer',cta2:null},
+];
 const PHOTO='https://picsum.photos/seed/aqsalon/360/640';
 const STOCK=['hair','salon','style','barber','beauty','spa'].map(s=>'https://picsum.photos/seed/aq'+s+'/320/560');
 const MENU=[['ตัดผม','฿250'],['สระไดร์','฿180'],['ทำสีผม','฿1,200'],['ทรีตเมนต์','฿600']];
@@ -276,7 +288,7 @@ function renderStep(){
         </div></div>`;
     }
   } else if(S.step===3){
-    c.innerHTML=`<div class="canvas-head" style="display:flex;align-items:center;gap:10px;margin-bottom:8px;"><h1 style="flex:0 0 auto;">รายละเอียด</h1><div class="cats" style="margin:0;flex:1;min-width:0;padding:2px 0;">${CATS.map(ct=>`<button class="cat ${S.category===ct.id?'on':''}" data-cat="${ct.id}">${ct.th}</button>`).join('')}</div></div>
+    c.innerHTML=`<div class="canvas-head" style="display:flex;align-items:center;gap:10px;margin-bottom:8px;"><h1 style="flex:0 0 auto;">รายละเอียด</h1><div class="cats" style="margin:0;flex:1;min-width:0;padding:2px 0;">${CATS.map(ct=>`<button class="cat ${S.category===ct.en?'on':''}" data-cat="${ct.en}">${ct.th}</button>`).join('')}</div></div>
       <div class="canvas-body">${editPreview()}</div>
       <div class="tap-hint">👆 แตะ รูป · หัวข้อ · ปุ่ม บนจอ</div>`;
     bindHot();
@@ -297,7 +309,7 @@ function renderStep(){
 function bindPicks(){
   document.querySelectorAll('[data-fmt]').forEach(b=>b.onclick=()=>{S.format=b.dataset.fmt;renderStep();});
   document.querySelectorAll('[data-pkg]').forEach(b=>b.onclick=()=>{S.pkg=b.dataset.pkg;if(S.images.length>pkg().maxImg)S.images=S.images.slice(0,pkg().maxImg);renderStep();});
-  document.querySelectorAll('[data-cat]').forEach(b=>b.onclick=()=>{const ct=CATS.find(x=>x.id===b.dataset.cat);S.category=ct.id;S.cta=ct.cta;S.cta2=ct.cta2;renderStep();});
+  document.querySelectorAll('[data-cat]').forEach(b=>b.onclick=()=>{const ct=CATS.find(x=>x.en===b.dataset.cat);S.category=ct.en;S.cta=ct.cta;S.cta2=ct.cta2;renderStep();});
 }
 function bindHot(){document.querySelectorAll('.hot[data-edit]').forEach(h=>{const o=()=>openSheet(h.dataset.edit);h.onclick=o;h.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();o();}};});}
 
