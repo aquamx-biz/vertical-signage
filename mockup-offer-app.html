@@ -75,8 +75,13 @@ button{font-family:inherit;cursor:pointer;}
 .free-card p{font-size:13px;color:var(--muted);margin-top:8px;line-height:1.5;}
 .free-card .until{margin-top:12px;background:#e9f7ef;color:var(--green);font-weight:700;font-size:13px;padding:8px 14px;border-radius:10px;display:inline-block;}
 
-.cats{display:flex;gap:7px;overflow-x:auto;padding:2px 0 8px;flex:0 0 auto;width:100%;scrollbar-width:none;}
-.cats::-webkit-scrollbar{display:none;}
+.cats{display:flex;gap:7px;overflow-x:auto;padding:2px 0 8px;flex:0 0 auto;width:100%;scrollbar-width:thin;scrollbar-color:var(--orange-soft) transparent;}
+.cats::-webkit-scrollbar{height:5px;}
+.cats::-webkit-scrollbar-thumb{background:var(--orange-soft);border-radius:3px;}
+.cats::-webkit-scrollbar-track{background:transparent;}
+.cats[data-sx="r"]{-webkit-mask-image:linear-gradient(90deg,#000 80%,transparent);mask-image:linear-gradient(90deg,#000 80%,transparent);}
+.cats[data-sx="l"]{-webkit-mask-image:linear-gradient(90deg,transparent,#000 20%);mask-image:linear-gradient(90deg,transparent,#000 20%);}
+.cats[data-sx="lr"]{-webkit-mask-image:linear-gradient(90deg,transparent,#000 14%,#000 86%,transparent);mask-image:linear-gradient(90deg,transparent,#000 14%,#000 86%,transparent);}
 .cat{flex:0 0 auto;border:1.5px solid var(--line);background:#fff;border-radius:20px;padding:7px 13px;font-size:12.5px;font-weight:600;color:var(--muted);white-space:nowrap;}
 .cat.on{border-color:var(--orange);background:var(--orange);color:#fff;}
 
@@ -290,7 +295,7 @@ function renderStep(){
     c.innerHTML=`<div class="canvas-head" style="display:flex;align-items:center;gap:10px;margin-bottom:8px;"><h1 style="flex:0 0 auto;">รายละเอียด</h1><div class="cats" style="margin:0;flex:1;min-width:0;padding:2px 0;">${CATS.map(ct=>`<button class="cat ${S.category===ct.en?'on':''}" data-cat="${ct.en}">${ct.th}</button>`).join('')}</div></div>
       <div class="canvas-body">${editPreview()}</div>
       <div class="tap-hint">👆 แตะ รูป · หัวข้อ · ปุ่ม บนจอ</div>`;
-    bindHot();
+    bindHot(); bindCats();
   } else if(S.step===4){
     const p=pkg();
     c.innerHTML=`<div class="canvas-head"><h1>สรุป${isFree()?'':' & ชำระเงิน'}</h1><p>ตรวจก่อนเผยแพร่</p></div>
@@ -311,6 +316,7 @@ function bindPicks(){
   document.querySelectorAll('[data-cat]').forEach(b=>b.onclick=()=>{const ct=CATS.find(x=>x.en===b.dataset.cat);S.category=ct.en;S.cta=ct.cta;S.cta2=ct.cta2;renderStep();});
 }
 function bindHot(){document.querySelectorAll('.hot[data-edit]').forEach(h=>{const o=()=>openSheet(h.dataset.edit);h.onclick=o;h.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();o();}};});}
+function bindCats(){const c=document.querySelector('.cats');if(!c)return;const upd=()=>{const l=c.scrollLeft>4,r=c.scrollLeft+c.clientWidth<c.scrollWidth-4;c.dataset.sx=(l&&r)?'lr':l?'l':r?'r':'';};upd();c.onscroll=upd;requestAnimationFrame(upd);}
 
 function openSheet(kind){
   const sh=el('sheet');let html='';
