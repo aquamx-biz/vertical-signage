@@ -61,6 +61,7 @@ button{font-family:inherit;cursor:pointer;}
 .fmt-card .nm{font-weight:700;font-size:14px;color:var(--ink);}
 .fmt-card .ds{font-size:11px;color:var(--muted);margin-top:1px;line-height:1.3;}
 .fmt-card .free{display:inline-block;margin-top:5px;background:#e9f7ef;color:var(--green);font-size:10px;font-weight:700;padding:2px 9px;border-radius:7px;}
+.af-note{font-size:12.5px;color:var(--ink-40);line-height:1.55;margin-top:16px;max-width:380px;width:100%;align-self:center;text-align:left;}   /* real /offer format description, switches per selection */
 
 .pkg{display:flex;align-items:center;gap:12px;background:var(--white);border:2px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:8px;}
 .pkg.on{border-color:var(--orange);background:#fffdf8;box-shadow:0 3px 12px -5px rgba(201,134,76,0.5);}
@@ -198,6 +199,7 @@ const PHOTO='https://picsum.photos/seed/aqsalon/360/640';
 const STOCK=['hair','salon','style','barber','beauty','spa'].map(s=>'https://picsum.photos/seed/aq'+s+'/320/560');
 const MENU=[['ตัดผม','฿250'],['สระไดร์','฿180'],['ทำสีผม','฿1,200'],['ทรีตเมนต์','฿600']];
 const MENUIMG=['scissor','blowdry','haircolor','spa'].map(s=>'https://picsum.photos/seed/aqm'+s+'/200/140');
+const DESC={media:'แสดงเป็นสื่อบนจอ signage แบบหมุนวนเป็นรอบ ๆ · ลูกค้าที่สนใจกดปุ่มคำสั่งบนจอเพื่อทำรายการต่อได้',catalog:'แสดงเป็นรายการ (directory) บนจอ จัดตามหมวดที่เลือก · ลูกค้ากดเลือกจากเมนู แล้วกดปุ่มคำสั่งทำรายการได้'};
 const MIMG=['#6a8caf','#b06a4f','#5f9e7a','#c2a05a'].map(c=>`data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='80'><rect width='120' height='80' fill='${encodeURIComponent(c)}'/></svg>`);
 
 const S={step:1,total:4,format:null,pkg:'pro',category:'Services',title:'ชื่อโฆษณาของคุณ',sub:'คำบรรยายสั้นๆ',price:'',images:[],cta:'viewOffer',cta2:null};
@@ -258,10 +260,11 @@ function renderStep(){
 
   if(S.step===1){
     c.innerHTML=`<div class="canvas-head"><h1>เลือกรูปแบบโฆษณา</h1><p>นี่คือตัวอย่างจริงของแต่ละแบบ</p></div>
-      <div class="canvas-body"><div class="fmt-pick">
-        <div class="fmt-card ${S.format==='media'?'on':''}" data-fmt="media"><div class="mini"><div class="tmini">${sampleMedia()}</div></div><div class="nm">📺 Media Ad</div><div class="ds">รูป/วิดีโอ หมุนโชว์</div></div>
-        <div class="fmt-card ${S.format==='catalog'?'on':''}" data-fmt="catalog"><div class="mini"><div class="tmini">${sampleCatalog()}</div></div><div class="nm">📋 Catalog Ad</div><div class="ds">เมนู/รายการ</div><span class="free">ฟรี</span></div>
-      </div></div>`;
+      <div class="canvas-body" style="flex-direction:column;justify-content:center;"><div class="fmt-pick">
+        <div class="fmt-card ${S.format==='media'?'on':''}" data-fmt="media"><div class="mini"><div class="tmini">${sampleMedia()}</div></div><div class="nm">📺 Media Ad</div></div>
+        <div class="fmt-card ${S.format==='catalog'?'on':''}" data-fmt="catalog"><div class="mini"><div class="tmini">${sampleCatalog()}</div></div><div class="nm">📋 Catalog Ad</div><span class="free">ฟรี</span></div>
+      </div>
+      <div class="af-note">${S.format?DESC[S.format]:'แตะเลือกรูปแบบด้านบนเพื่อดูรายละเอียด'}</div></div>`;
   } else if(S.step===2){
     if(isFree()){
       c.innerHTML=`<div class="canvas-head"><h1>แพ็กเกจ</h1><p>Catalog Ad ช่วงนี้ใช้ฟรี</p></div>
