@@ -100,7 +100,10 @@ button{font-family:inherit;cursor:pointer;}
 .tt-bg.empty::after{content:'แตะเพื่อใส่รูป';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#3a4456;font-size:9px;}
 .tt-grad{position:absolute;inset:auto 0 0 0;height:72%;background:linear-gradient(0deg,rgba(5,6,8,0.92) 0%,rgba(5,6,8,0.35) 50%,transparent 100%);}
 .tt-menu{position:absolute;top:12px;left:12px;z-index:6;display:flex;align-items:center;gap:6px;background:rgba(8,12,22,0.55);border:1px solid rgba(255,255,255,0.42);color:#fff;font-size:8.5px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;padding:7px 11px;border-radius:9px;box-shadow:0 0 0 2px rgba(109,213,232,0.4), 0 6px 14px rgba(0,0,0,0.45);backdrop-filter:blur(8px);}
-.tt-content{position:absolute;left:12px;right:12px;bottom:78px;z-index:5;display:flex;flex-direction:column;align-items:flex-start;gap:7px;}
+.tt-content{position:absolute;left:12px;right:12px;bottom:12px;z-index:5;display:flex;flex-direction:column;align-items:stretch;gap:7px;}
+.tt-content .tt-eyebrow{align-self:flex-start;}
+.tt-content .hot:first-of-type{margin-top:0;}
+.tt-content .tt-cta-wrap{margin-top:4px;}
 .tt-eyebrow{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border:1px solid rgba(255,255,255,0.4);border-radius:20px;background:rgba(8,12,22,0.35);font-size:7px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#fff;}
 .tt-eyebrow::before{content:'';width:4px;height:4px;border-radius:50%;background:#6DD5E8;box-shadow:0 0 5px #6DD5E8;animation:tt-eb-pulse 2.2s ease-in-out infinite;}
 .tt-title{font-family:'Mitr',sans-serif;font-weight:600;font-size:20px;line-height:1.12;text-transform:uppercase;color:#fff;text-shadow:0 1px 6px rgba(0,0,0,0.5);}
@@ -191,7 +194,8 @@ const PKGS=[
 ];
 const CTAS=[{id:'viewOffer',label:'View Offer'},{id:'viewMenu',label:'View Menu'},{id:'book',label:'Book Now'},{id:'signup',label:'Sign Up'},{id:'viewStore',label:'View Store'},{id:'viewListing',label:'View Listing'}];
 const CATS=[{id:'Dining',th:'ร้านอาหาร',cta:'viewMenu',cta2:'book'},{id:'Groceries',th:'ของชำ',cta:'viewStore',cta2:null},{id:'Services',th:'บริการ',cta:'viewOffer',cta2:'book'},{id:'Health & Beauty',th:'สุขภาพ&ความงาม',cta:'book',cta2:null},{id:'Property',th:'อสังหาฯ',cta:'viewListing',cta2:'book'}];
-const STOCK=['#6a8caf','#b06a4f','#5f9e7a','#9a7bb0','#c2a05a','#7a8a99'].map((c,i)=>`data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><rect width='200' height='200' fill='${encodeURIComponent(c)}'/><text x='100' y='110' font-size='20' fill='white' text-anchor='middle' font-family='sans-serif'>รูป ${i+1}</text></svg>`);
+const PHOTO='https://picsum.photos/seed/aqsalon/360/640';
+const STOCK=['hair','salon','style','barber','beauty','spa'].map(s=>'https://picsum.photos/seed/aq'+s+'/320/560');
 const MENU=[['ตัดผม','฿250'],['สระไดร์','฿180'],['ทำสีผม','฿1,200'],['ทรีตเมนต์','฿600']];
 const MIMG=['#6a8caf','#b06a4f','#5f9e7a','#c2a05a'].map(c=>`data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='80'><rect width='120' height='80' fill='${encodeURIComponent(c)}'/></svg>`);
 
@@ -207,10 +211,10 @@ const MARQ=`<div class="tt-bottombar"><div class="tt-marq"><span>Touch to explor
 function sampleMedia(){
   return `<div class="totem"><div class="tt-screen">${TOPBAR}
     <div class="tt-stage">
-      <div class="tt-bg" style="background:linear-gradient(150deg,#7a5a86,#3a4a63 60%,#1a2230)"></div><div class="tt-grad"></div>
+      <div class="tt-bg" style="background-image:url('${PHOTO}')"></div><div class="tt-grad"></div>
       <div class="tt-menu"><span class="tt-burger"></span>MENU</div>
-      <div class="tt-content"><span class="tt-eyebrow">บริการ</span><div class="tt-title">DE ICON SALON</div><div class="tt-sub">ตัดและจัดแต่งทรงผม</div></div>
-      <div class="tt-dock"><span class="tt-cta"><span>View Offer</span><span>→</span></span></div>
+      <div class="tt-content"><span class="tt-eyebrow">บริการ</span><div class="tt-title">DE ICON SALON</div><div class="tt-sub">ตัดและจัดแต่งทรงผม</div>
+        <span class="tt-cta tt-cta-wrap"><span>View Offer</span><span>→</span></span></div>
     </div>${MARQ}</div><div class="tt-base"></div></div>`;
 }
 function sampleCatalog(){
@@ -224,16 +228,15 @@ function editMedia(){
   const bg=S.images[0]?`<div class="tt-bg" style="background-image:url('${S.images[0]}')"></div>`:`<div class="tt-bg empty"></div>`;
   const dots=S.images.length>1?`<div class="tt-imgdots">${S.images.map((_,i)=>`<i class="${i?'':'on'}"></i>`).join('')}</div>`:'';
   const price=S.price?`<div class="tt-price">฿${S.price}</div>`:'';
-  const cta2=S.cta2?`<div class="hot" data-edit="cta2" tabindex="0" role="button"><span class="tt-cta sec"><span>${lbl(S.cta2)}</span><span>↗</span></span><span class="chip">ปุ่ม2 ✎</span></div>`
-    :`<div class="hot" data-edit="cta2add" tabindex="0" role="button"><span class="tt-cta add">+ เพิ่มปุ่มที่ 2</span></div>`;
+  const cta2=S.cta2?`<div class="hot tt-cta-wrap" data-edit="cta2" tabindex="0" role="button"><span class="tt-cta sec"><span>${lbl(S.cta2)}</span><span>↗</span></span><span class="chip">ปุ่ม2 ✎</span></div>`
+    :`<div class="hot tt-cta-wrap" data-edit="cta2add" tabindex="0" role="button"><span class="tt-cta add">+ เพิ่มปุ่มที่ 2</span></div>`;
   return `<div class="totem"><div class="tt-screen">${TOPBAR}
     <div class="tt-stage">${bg}${dots}<div class="tt-grad"></div><div class="tt-menu"><span class="tt-burger"></span>MENU</div>
-      <div class="hot" data-edit="image" tabindex="0" role="button" style="position:absolute;inset:23px 0 48% 0;"><span class="chip">รูป ✎</span></div>
+      <div class="hot" data-edit="image" tabindex="0" role="button" style="position:absolute;inset:23px 0 55% 0;"><span class="chip">รูป ✎</span></div>
       <div class="tt-content"><span class="tt-eyebrow">${S.category}</span>
         <div class="hot" data-edit="title" tabindex="0" role="button"><div class="tt-title">${S.title}</div>${price}<span class="chip">หัวข้อ ✎</span></div>
-        <div class="tt-sub">${S.sub||''}</div></div>
-      <div class="tt-dock">
-        <div class="hot" data-edit="cta" tabindex="0" role="button"><span class="tt-cta"><span>${lbl(S.cta)}</span><span>→</span></span><span class="chip">ปุ่ม ✎</span></div>
+        <div class="tt-sub">${S.sub||''}</div>
+        <div class="hot tt-cta-wrap" data-edit="cta" tabindex="0" role="button"><span class="tt-cta"><span>${lbl(S.cta)}</span><span>→</span></span><span class="chip">ปุ่ม ✎</span></div>
         ${cta2}
       </div></div>${MARQ}</div><div class="tt-base"></div></div>`;
 }
