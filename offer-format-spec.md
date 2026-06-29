@@ -32,6 +32,7 @@ Load: `Nunito:400;600;700;800` + `IBM Plex Sans Thai:400;500;600;700` + `Mitr:50
 - **Catalog/Menu** = `.pm-*` screen (offer/index.html ~214–229): `.pm-head`(back · title · lang) + `.pm-body` → `.pm-grid` of `.pm-card`(img · name · meta).
 - **Thumbnails / scaled previews**: the preview text is absolute + fixed-px, so it can NOT reflow at a smaller width. Scale the WHOLE totem with `transform:scale()` inside a sized, `overflow:hidden` wrapper — never just shrink `width`.
 - **CTA continuity**: the CTA reads as part of the content block (eyebrow → title → sub → CTA), not pinned far below with a gap.
+- **Catalog sits in the same signage totem as Media** (user override of /offer, where `.pm-screen` is standalone): wrap `.pm-screen` in `.totem` with the `.tt-base` stand + top-only rounded screen + bottom marquee, so both ad types read as the same device.
 
 ## Buttons / controls
 - Primary: `--navy` bg, white, radius 12, weight 800 (`.btn-submit`).

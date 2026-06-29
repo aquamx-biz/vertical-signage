@@ -117,7 +117,7 @@ button{font-family:inherit;cursor:pointer;}
 .tt-imgdots{position:absolute;top:9px;right:11px;z-index:6;display:flex;gap:3px;}
 .tt-imgdots i{width:4px;height:4px;border-radius:50%;background:rgba(255,255,255,.45);} .tt-imgdots i.on{background:#fff;}
 /* menu-ad (catalog) preview — copied from /offer .pm-* */
-.pm-screen{width:100%;aspect-ratio:9/16;border:3px solid #0c111c;border-radius:9px;overflow:hidden;background:linear-gradient(165deg,#050608,#0e1d3a);display:flex;flex-direction:column;}
+.pm-screen{width:100%;aspect-ratio:9/16;border:3px solid #0c111c;border-bottom:none;border-radius:9px 9px 0 0;overflow:hidden;background:linear-gradient(165deg,#050608,#0e1d3a);display:flex;flex-direction:column;}
 .pm-head{flex-shrink:0;display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:8px;padding:11px 11px 9px;border-bottom:1px solid rgba(255,255,255,.08);}
 .pm-back{width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);color:#fff;font-size:11px;display:flex;align-items:center;justify-content:center;}
 .pm-title{font-family:'Anton',sans-serif;font-weight:400;font-size:15px;color:#fff;letter-spacing:.5px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -222,7 +222,7 @@ function sampleCatalog(){
   return `<div class="totem"><div class="pm-screen">
     <div class="pm-head"><span class="pm-back">‹</span><span class="pm-title">DE ICON SALON</span><span class="pm-lang">TH</span></div>
     <div class="pm-body"><div class="pm-grid">${MENU.map((m,i)=>`<div class="pm-card"><div class="pm-card-img" style="background-image:url('${MENUIMG[i%MENUIMG.length]}')"></div><div class="pm-card-info"><div class="pm-card-name">${m[0]}</div><div class="pm-card-meta">${m[1]}</div></div></div>`).join('')}</div></div>
-  </div></div>`;
+  ${MARQ}</div><div class="tt-base"></div></div>`;
 }
 /* EDITABLE media (step 3) */
 function editMedia(){
@@ -245,7 +245,7 @@ function editCatalog(){
   return `<div class="totem"><div class="pm-screen">
     <div class="pm-head"><span class="pm-back">‹</span><div class="hot" data-edit="title" tabindex="0" role="button"><span class="pm-title">${S.title}</span><span class="chip">ชื่อ ✎</span></div><span class="pm-lang">TH</span></div>
     <div class="pm-body"><div class="pm-grid">${MENU.map((m,i)=>`<div class="pm-card"><div class="pm-card-img" style="background-image:url('${MENUIMG[i%MENUIMG.length]}')"></div><div class="pm-card-info"><div class="pm-card-name">${m[0]}</div><div class="pm-card-meta">${m[1]}</div></div></div>`).join('')}</div></div>
-  </div></div>`;
+  ${MARQ}</div><div class="tt-base"></div></div>`;
 }
 const editPreview=()=>isFree()?editCatalog():editMedia();
 
