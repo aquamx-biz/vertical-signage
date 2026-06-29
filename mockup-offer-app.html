@@ -197,6 +197,7 @@ const CATS=[{id:'Dining',th:'ร้านอาหาร',cta:'viewMenu',cta2:'b
 const PHOTO='https://picsum.photos/seed/aqsalon/360/640';
 const STOCK=['hair','salon','style','barber','beauty','spa'].map(s=>'https://picsum.photos/seed/aq'+s+'/320/560');
 const MENU=[['ตัดผม','฿250'],['สระไดร์','฿180'],['ทำสีผม','฿1,200'],['ทรีตเมนต์','฿600']];
+const MENUIMG=['scissor','blowdry','haircolor','spa'].map(s=>'https://picsum.photos/seed/aqm'+s+'/200/140');
 const MIMG=['#6a8caf','#b06a4f','#5f9e7a','#c2a05a'].map(c=>`data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='80'><rect width='120' height='80' fill='${encodeURIComponent(c)}'/></svg>`);
 
 const S={step:1,total:4,format:null,pkg:'pro',category:'Services',title:'ชื่อโฆษณาของคุณ',sub:'คำบรรยายสั้นๆ',price:'',images:[],cta:'viewOffer',cta2:null};
@@ -220,7 +221,7 @@ function sampleMedia(){
 function sampleCatalog(){
   return `<div class="totem"><div class="pm-screen">
     <div class="pm-head"><span class="pm-back">‹</span><span class="pm-title">DE ICON SALON</span><span class="pm-lang">TH</span></div>
-    <div class="pm-body"><div class="pm-grid">${MENU.map((m,i)=>`<div class="pm-card"><div class="pm-card-img" style="background:${['#6a8caf','#b06a4f','#5f9e7a','#c2a05a'][i]}"></div><div class="pm-card-info"><div class="pm-card-name">${m[0]}</div><div class="pm-card-meta">${m[1]}</div></div></div>`).join('')}</div></div>
+    <div class="pm-body"><div class="pm-grid">${MENU.map((m,i)=>`<div class="pm-card"><div class="pm-card-img" style="background-image:url('${MENUIMG[i%MENUIMG.length]}')"></div><div class="pm-card-info"><div class="pm-card-name">${m[0]}</div><div class="pm-card-meta">${m[1]}</div></div></div>`).join('')}</div></div>
   </div></div>`;
 }
 /* EDITABLE media (step 3) */
@@ -243,7 +244,7 @@ function editMedia(){
 function editCatalog(){
   return `<div class="totem"><div class="pm-screen">
     <div class="pm-head"><span class="pm-back">‹</span><div class="hot" data-edit="title" tabindex="0" role="button"><span class="pm-title">${S.title}</span><span class="chip">ชื่อ ✎</span></div><span class="pm-lang">TH</span></div>
-    <div class="pm-body"><div class="pm-grid">${MENU.map((m,i)=>`<div class="pm-card"><div class="pm-card-img" style="background:${['#6a8caf','#b06a4f','#5f9e7a','#c2a05a'][i]}"></div><div class="pm-card-info"><div class="pm-card-name">${m[0]}</div><div class="pm-card-meta">${m[1]}</div></div></div>`).join('')}</div></div>
+    <div class="pm-body"><div class="pm-grid">${MENU.map((m,i)=>`<div class="pm-card"><div class="pm-card-img" style="background-image:url('${MENUIMG[i%MENUIMG.length]}')"></div><div class="pm-card-info"><div class="pm-card-name">${m[0]}</div><div class="pm-card-meta">${m[1]}</div></div></div>`).join('')}</div></div>
   </div></div>`;
 }
 const editPreview=()=>isFree()?editCatalog():editMedia();
