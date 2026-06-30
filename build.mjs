@@ -76,6 +76,86 @@ const swSource = readFileSync(join(__dirname, 'sw.js'), 'utf8')
 const PLAYER_BY_CODE = { '39-by-sansiri': 'mockup-v7.html' }
 const DEFAULT_PLAYER = 'vertical-signage.html'
 
+// Playlist projections. vertical-signage uses the minimal set; mockup-v7 needs the
+// rich set (provider object/logo, eyebrow, sub, CTAs, menu/order items). The rich
+// projection is copied verbatim from mockup-v7's own runtime query so the baked
+// data matches exactly what that player reads. Keyed per project so switching only
+// 39-by-sansiri to mockup-v7 doesn't change every other project's baked output.
+const PLAYLIST_PROJ_MIN = `
+        "kind":            media->kind,
+        "title":           media->title,
+        "mediaType":       select(
+                             defined(media->type)                 => media->type,
+                             defined(media->videoFile.asset)      => "video",
+                             count(media->imageFiles) > 0         => "image",
+                             defined(media->imageFile.asset)      => "image",
+                             defined(media->posterImage.asset)    => "image"
+                           ),
+        "url":             coalesce(media->videoFile.asset->url, media->imageFiles[0].asset->url, media->imageFile.asset->url, media->posterImage.asset->url),
+        "images":          media->imageFiles[].asset->url,
+        "category":        coalesce(touchExploreCategory, media->offer->category),
+        "defaultDuration": media->defaultImageDuration,
+        "displayDuration": displayDuration,
+        "offerSlug":       media->offer->slug.current,
+        "providerSlug":    coalesce(touchExploreDefaultProvider->slug.current, media->offer->provider->slug.current),
+        touchExploreCategory,
+        notes`
+const PLAYLIST_PROJ_V7 = `
+        "kind":               media->kind,
+        "title":              media->title,
+        "title_en":           media->offer->title_en,
+        "eyebrow":            media->offer->category,
+        "sub_th":             media->offer->shortDesc_th,
+        "sub_en":             media->offer->shortDesc_en,
+        "mediaType":          select(
+                                defined(media->type)              => media->type,
+                                defined(media->videoFile.asset)   => "video",
+                                defined(media->imageFile.asset)   => "image",
+                                defined(media->posterImage.asset) => "image"
+                              ),
+        "url":                coalesce(media->videoFile.asset->url, media->imageFile.asset->url, media->imageFiles[0].asset->url, media->posterImage.asset->url),
+        "images":             media->imageFiles[].asset->url,
+        "poster":             media->posterImage.asset->url,
+        "category":           coalesce(touchExploreCategory, media->offer->category),
+        "defaultDuration":    media->defaultImageDuration,
+        "defaultImageDuration": media->defaultImageDuration,
+        "imageDurationOverride": displayDuration,
+        "displayDuration":    displayDuration,
+        "offerSlug":          media->offer->slug.current,
+        "providerSlug":       coalesce(touchExploreDefaultProvider->slug.current, media->offer->provider->slug.current),
+        "providerImage":      coalesce(media->offer->provider->coverImage.asset->url, media->offer->provider->logo.asset->url),
+        "listing":            media->offer->listing,
+        "price":              media->offer->price,
+        "availability":       media->offer->availability,
+        "listingImages":      media->offer->listingImages[].asset->url,
+        "ctaType":            media->offer->ctaType,
+        "ctaLabel":           media->offer->ctaLabel,
+        "ctaURL":             media->offer->ctaURL,
+        "ctaType2":           media->offer->ctaType2,
+        "ctaLabel2":          media->offer->ctaLabel2,
+        "ctaURL2":            media->offer->ctaURL2,
+        "deepLink":           media->offer->deepLink,
+        "displayMode":        media->offer->displayMode,
+        "validFrom":          media->offer->validFrom,
+        "validTo":            media->offer->validTo,
+        "menuItems":          media->offer->menuItems[]{ name_th, name_en, price, "image": image.asset->url },
+        "orderItems":         media->offer->orderItems[]{ name_th, name_en, price, "image": image.asset->url },
+        "fulfillment":        media->offer->fulfillment,
+        "booking":            media->offer->booking,
+        "eventInfo":          media->offer->eventInfo,
+        "provider":           media->offer->provider->{
+                                "slug": slug.current, name_th, name_en, displayName, category,
+                                locationText, mapUrl, phone, lineId, website, openingHours, amenities,
+                                description_th, description_en, defaultHandoffType, unitRef,
+                                "logo": logo.asset->url, "coverImage": coverImage.asset->url,
+                                "offers": *[_type=="offer" && provider._ref == ^._id && status == true][0...8]{
+                                    "slug": slug.current, title_th, title_en, price,
+                                    "img": coalesce(primaryImage.asset->url, images[0].asset->url, listingImages[0].asset->url)
+                                }
+                              },
+        touchExploreCategory,
+        notes`
+
 // ── 2b. Fetch global category config once (singleton, shared by all projects) ─
 console.log('Fetching global category config…')
 const globalCategoryConfig = await sanityFetch(`
@@ -95,6 +175,7 @@ for (const project of projects) {
   const { _id: projectId, code, title } = project
   const tplFile = PLAYER_BY_CODE[code] || DEFAULT_PLAYER
   const templateHtml = readFileSync(join(__dirname, tplFile), 'utf8')
+  const playlistProjection = tplFile === 'mockup-v7.html' ? PLAYLIST_PROJ_V7 : PLAYLIST_PROJ_MIN
   console.log(`\nBuilding [${code}] ${title}…  (player: ${tplFile})`)
 
   // Fetch all project-scoped data in parallel
@@ -113,29 +194,7 @@ for (const project of projects) {
         media->isActive == true &&
         media->kind in ["promo", "notice"] &&
         (media->scope == "global" || "${projectId}" in media->projects[]._ref)
-      ] | order(order asc){
-        "kind":            media->kind,
-        "title":           media->title,
-        "mediaType":       select(
-                             defined(media->type)                 => media->type,
-                             defined(media->videoFile.asset)      => "video",
-                             count(media->imageFiles) > 0         => "image",
-                             defined(media->imageFile.asset)      => "image",
-                             defined(media->posterImage.asset)    => "image"
-                           ),
-        "url":             coalesce(media->videoFile.asset->url, media->imageFiles[0].asset->url, media->imageFile.asset->url, media->posterImage.asset->url),
-        "images":          media->imageFiles[].asset->url,
-        "category":        coalesce(touchExploreCategory, media->offer->category),
-        "defaultDuration": media->defaultImageDuration,
-        "displayDuration": displayDuration,
-        "offerSlug":       media->offer->slug.current,
-        "providerSlug":    coalesce(
-                             touchExploreDefaultProvider->slug.current,
-                             media->offer->provider->slug.current
-                           ),
-        touchExploreCategory,
-        notes
-      }
+      ] | order(order asc){ ${playlistProjection} }
     `),
 
     // ── Providers (global; scoped via their offers) ───────────────────────────
