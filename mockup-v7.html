@@ -165,16 +165,18 @@ body {
    object-fit here is just the pre-load default; fitMedia(this) sets the real value
    on load from the image's ratio: ~9:16 → cover (full-bleed), other → contain (bars). */
 .slot-media-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; transition: opacity 0.6s ease; }
-/* Ken-Burns zoom stays disabled — full-bleed cover already fills the frame. */
-.slot[data-kind="commercial"].active .slot-media {
-    animation: none;
+/* Ken-Burns drift (like v6) — ONLY for cover (9:16) media. fitMedia adds
+   .media-zoom to the .slot-media when the image fills the frame; a letterboxed
+   (contain) image gets no class → stays still so its edges aren't cropped. */
+.slot[data-kind="commercial"].active .slot-media.media-zoom {
+    animation: ken-burns 14s ease-out forwards;
 }
 /* While the outgoing slide fades out, HOLD its zoomed transform instead of
    letting it snap back to scale 1 (which happens when .active is removed and
    the animation rule disappears). This keeps the crossfade smooth. */
-.slot[data-kind="commercial"].leaving .slot-media {
+.slot[data-kind="commercial"].leaving .slot-media.media-zoom {
     animation: none;
-    transform: none;   /* no zoom — keep the full image visible */
+    transform: scale(1.14) translate(-2.5%, 2%);   /* hold at the zoomed end — no snap back */
 }
 @keyframes ken-burns {
     0%   { transform: scale(1.05) translate(0, 0); }
@@ -205,7 +207,7 @@ body {
 .slot-content {
     position: absolute;
     left: 3.5vh; right: 3.5vh;
-    bottom: 21vh;       /* base; NOTE the real slots are pos="bl" → overridden below */
+    bottom: 4vh;        /* base; NOTE the real slots are pos="bl" → overridden below */
     display: flex; flex-direction: column;
     gap: 1.6vh; z-index: 5;
     /* per-element opacity is set in the .slot.active rules (title 0.65, rest 0.75) */
@@ -242,11 +244,13 @@ body {
 /* Title — sized to the /offer .tt-title proportion (≈8.7% of width) so the
    eyebrow+title+sub block stays compact in the bottom-left, not floating up. */
 .slot-title {
-    font-family: 'Mitr', 'IBM Plex Sans Thai', sans-serif;
-    font-size: 5.5vh; font-weight: 400;  /* Anton is naturally heavy */
+    /* Prompt — narrower & lighter than Mitr (was rounded/wide), so more text fits
+       per line. Thai+Latin, already loaded, part of the design system. */
+    font-family: 'Prompt', 'IBM Plex Sans Thai', sans-serif;
+    font-size: 5.5vh; font-weight: 600;
     line-height: 1.3;   /* Thai needs room for stacked vowels/tone marks — 1.0 made the
                            bottom line collide with the sub line below */
-    letter-spacing: -0.05vh;
+    letter-spacing: -0.04vh;
     color: var(--ink-100);
     text-transform: uppercase;
     opacity: 0; transform: translateY(2.2vh);
@@ -256,6 +260,8 @@ body {
 /* Each title line clamps to max 2 visual lines + ellipsis, so a long
    vendor-set title can never balloon and bury the media (we keep the v6
    hero size; only overflow is trimmed). */
+/* Per-word unit for Thai line-breaking (see thaiBreakHTML) — wrap only between words. */
+.nb { white-space: nowrap; }
 .slot-title .br {
     display: -webkit-box;
     -webkit-box-orient: vertical;
@@ -278,10 +284,22 @@ body {
     text-shadow: 0 0.15vh 0.8vh rgba(0,0,0,0.6);
 }
 
+/* Price on the slide (like /offer's .tt-price) — bronze-gold, sits under the title.
+   Was missing entirely: price was baked but only shown in the tap-through popup. */
+.slot-price {
+    font-family: 'Prompt','IBM Plex Sans Thai',sans-serif;
+    font-weight: 700; font-size: 2.6vh; line-height: 1;
+    color: #FBD7A8;
+    opacity: 0; transform: translateY(1.5vh);
+    transition: opacity 0.6s var(--ease-out) 0.6s, transform 0.6s var(--ease-out) 0.6s;
+    text-shadow: 0 0.15vh 0.9vh rgba(0,0,0,0.65);
+}
+
 /* Settled opacities let the background photo read through. The title is the
    biggest mass of ink, so it goes more transparent (0.65) than the rest (0.75). */
 .slot.active .slot-eyebrow,
 .slot.active .slot-sub { opacity: 0.75; transform: translateY(0); }
+.slot.active .slot-price { opacity: 0.85; transform: translateY(0); }  /* key selling info — a touch more visible */
 .slot.active .slot-title { opacity: 0.65; transform: translateY(0); }
 
 /* ============================================================
@@ -307,6 +325,7 @@ body {
    slide's text during the change. */
 .slot.exiting .slot-eyebrow, .slot.leaving .slot-eyebrow,
 .slot.exiting .slot-title,   .slot.leaving .slot-title,
+.slot.exiting .slot-price,   .slot.leaving .slot-price,
 .slot.exiting .slot-sub,     .slot.leaving .slot-sub {
     opacity: 0; transform: translateY(2vh);
     transition-duration: 0.4s; transition-delay: 0s;
@@ -350,8 +369,11 @@ body {
    Snug fit (sized to content), but both buttons match widest one
 ============================================================ */
 .cta-dock {
-    position: absolute;
-    left: 3.5vh; bottom: 3.5vh;
+    /* In normal flow as the LAST child of .slot-content, so the CTA always sits a
+       fixed gap under the text — no matter the CTA count or whether a sub exists.
+       (Was absolute + floor-pinned, which left a big gap above a lone CTA / when
+       there was no description.) An extra margin-top lifts it slightly off the sub. */
+    margin-top: 0.8vh;
     /* Grid sizes its column to the widest CTA's content;
        each CTA fills the column via width:100% — so both end up equal width. */
     display: grid;
@@ -360,9 +382,6 @@ body {
     gap: 1vh; z-index: 6;
     opacity: 0.75;      /* CTAs at 75% to match the text (background reads through) */
 }
-/* A lone CTA pinned to the bottom floats away from the content block above it.
-   Raise the single-CTA dock so the button sits just under the text. */
-.cta-dock[data-count="1"] { bottom: 8vh; }
 .cta {
     width: 100%;                 /* fill the auto-sized grid column */
     display: flex; align-items: center; justify-content: space-between;
@@ -419,6 +438,32 @@ body {
 }
 .cta-secondary .arrow { font-size: 1.85vh; }
 .cta:active .arrow { transform: translateX(0.4vh); }
+
+/* ── CTA "น่ากด" motion ─────────────────────────────────────────────
+   1) Shimmer: a bronze highlight sweeps across the label text, then rests.
+   2) Breathe: the whole button gently scales. Both start AFTER the entrance
+   transition (delay ~1.6s) so they don't fight the slide-up reveal. Scoped to
+   .slot.active so off-screen slides don't animate. */
+.cta-label {
+    color: var(--ink-100);                         /* fallback if background-clip:text unsupported */
+    background: linear-gradient(105deg, #fff 0%, #fff 38%, #FBD7A8 50%, #fff 62%, #fff 100%);
+    background-size: 250% 100%;
+    background-position: 130% 0;
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+.slot.active .cta-label { animation: cta-shimmer 3.6s ease-in-out 1.6s infinite; }
+@keyframes cta-shimmer {
+    0%        { background-position: 130% 0; }
+    55%, 100% { background-position: -30% 0; }     /* sweep, then hold before repeating */
+}
+.slot.active .cta { animation: cta-breathe 3s ease-in-out 1.6s infinite; }
+@keyframes cta-breathe {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50%      { transform: translateY(0) scale(1.03); }
+}
+/* press feedback still wins while held */
+.cta:active { animation: none; transform: translateY(0) scale(0.98); }
 
 /* Stagger enter */
 .slot.active .cta:nth-child(1) {
@@ -487,10 +532,10 @@ body {
 ============================================================ */
 /* Bottom-left (Hanuman default) */
 .slot[data-pos="bl"] .slot-content {
-    /* bottom must clear the 2-CTA dock (which reaches ~20vh). 16vh let the sub
-       sit inside the dock → overlap. This is the rule that actually governs the
-       real slots (they all render pos="bl"), NOT the base .slot-content. */
-    left: 3.5vh; right: 3.5vh; bottom: 21vh; top: auto;
+    /* The CTA now lives INSIDE this block (in flow), so anchor the whole cohesive
+       unit (eyebrow→title→sub→CTA) low so the text covers as little of the photo as
+       possible. This is the rule that actually governs the real slots (all pos="bl"). */
+    left: 3.5vh; right: 3.5vh; bottom: 4vh; top: auto;
     align-items: flex-start; text-align: left;
 }
 .slot[data-pos="bl"][data-has-stats="true"] .slot-content { right: 32vh; } /* clear stat cluster */
@@ -813,6 +858,7 @@ body {
     box-shadow: 0 1.2vh 3vh rgba(0,0,0,0.45),
                 inset 0 0 0 0.05vh rgba(255,255,255,0.04);
     overflow: visible;
+    opacity: 0.75;   /* match the bottom CTA buttons' transparency */
 }
 .menu-btn:active {
     background: rgba(8,12,22,0.75);
@@ -885,7 +931,7 @@ body {
 }
 
 /* When menu opens, stop the dynamic noise — user is now in control */
-.menu-btn.open { animation: none; transform: none; }
+.menu-btn.open { animation: none; transform: none; opacity: 1; }  /* full when it's the close (X) */
 .menu-btn.open::before,
 .menu-btn.open::after { animation: none; opacity: 0; }
 .menu-btn.open .hamburger span { animation: none; width: 2.2vh; }
@@ -1337,7 +1383,8 @@ body {
 }
 
 /* Mitr display tier — same TH+EN title font as the offer-page preview, so the preview matches the real screen */
-.topbar-project, .slot-title, .slot-logo, .cat-screen-title, .cat-card-name { font-weight: 700; }
+.topbar-project, .slot-logo, .cat-screen-title, .cat-card-name { font-weight: 700; }
+/* .slot-title weight is controlled in its own rule (Prompt 600 — slimmer) */
 </style>
 </head>
 <body>
@@ -2267,8 +2314,30 @@ if (new URLSearchParams(location.search).has('debug')) {
    Re-runs on every src change, so multi-image slideshows re-fit each frame. */
 function fitMedia(img) {
     if (!img || !img.naturalWidth || !img.naturalHeight) return;
-    const r = img.naturalWidth / img.naturalHeight;       // 9:16 = 0.5625
-    img.style.objectFit = Math.abs(r - 0.5625) <= 0.04 ? 'cover' : 'contain';
+    const isCover = Math.abs(img.naturalWidth / img.naturalHeight - 0.5625) <= 0.04;  // 9:16
+    img.style.objectFit = isCover ? 'cover' : 'contain';
+    // Ken-Burns drift only when the image fills the frame (cover). A letterboxed
+    // (contain) image must NOT zoom — that would crop the edges we deliberately show.
+    const media = img.closest('.slot-media');
+    if (media) media.classList.toggle('media-zoom', isCover);
+}
+
+/* Thai line-breaking. Thai has no spaces, so the browser breaks mid-word — and
+   Chromium's dictionary even splits loanwords wrongly (แอชวูด → แอ/ชวูด). Neither
+   word-break:keep-all nor ZWSP stops it. The only reliable fix: make each word an
+   UNBREAKABLE unit (white-space:nowrap span) so wrapping happens only between words.
+   Units come from the author's '|' hint when present (full control for loanwords,
+   e.g. "ไม้|แอชวูด|พรีเมียม"), otherwise from Intl.Segmenter. Latin (has spaces)
+   still wraps naturally. */
+function thaiBreakHTML(t) {
+    t = (t == null) ? '' : String(t);
+    if (!t) return '';
+    const units = t.includes('|')
+        ? t.split('|')
+        : ('Segmenter' in Intl
+            ? [...new Intl.Segmenter('th', { granularity: 'word' }).segment(t)].map(s => s.segment)
+            : [t]);
+    return units.map(u => `<span class="nb">${u}</span>`).join('​');
 }
 
 /* In-slot image change (multi-image ad): cross-dissolve to `url` instead of a hard
@@ -2294,10 +2363,10 @@ function crossfadeMedia(media, url) {
 }
 
 function renderCommercial(s) {
-    const titleHTML = (s.titleLines || [s.title]).map(line => `<span class="br">${line}</span>`).join('');
+    const titleHTML = (s.titleLines || [s.title]).map(line => `<span class="br">${thaiBreakHTML(line)}</span>`).join('');
     const ctaHTML = (s.ctas || []).map(c =>
         `<button class="cta cta-${c.kind}">
-            <span>${c.label}</span>
+            <span class="cta-label">${c.label}</span>
             <span class="arrow">${c.icon}</span>
         </button>`
     ).join('');
@@ -2325,9 +2394,10 @@ function renderCommercial(s) {
         <div class="slot-content">
             ${s.eyebrow ? `<div class="slot-eyebrow">${s.eyebrow}</div>` : ''}
             <div class="slot-title">${titleHTML}</div>
-            ${s.sub ? `<div class="slot-sub">${s.sub}</div>` : ''}
+            ${(s._price && (typeof s._price === 'string' || typeof s._price === 'number')) ? `<div class="slot-price">${s._price}</div>` : ''}
+            ${s.sub ? `<div class="slot-sub">${thaiBreakHTML(s.sub)}</div>` : ''}
+            ${ctaHTML ? `<div class="cta-dock" data-count="${(s.ctas || []).length}">${ctaHTML}</div>` : ''}
         </div>
-        ${ctaHTML ? `<div class="cta-dock" data-count="${(s.ctas || []).length}">${ctaHTML}</div>` : ''}
         ${(s.stats && s.stats.length) ? `<div class="stat-row">${s.stats.map(st => `<div class="stat-card"><div class="stat-num">${st.num}</div><div class="stat-label">${st.label}</div></div>`).join('')}</div>` : ''}
     `;
 }
