@@ -204,7 +204,7 @@ body {
 .slot-content {
     position: absolute;
     left: 3.5vh; right: 3.5vh;
-    bottom: 6vh;        /* whole block (eyebrow→title→sub→CTAs) anchored near the bottom */
+    bottom: 21vh;       /* sits just above the CTA dock (like /offer's tt-content at ~19%) */
     display: flex; flex-direction: column;
     gap: 1.6vh; z-index: 5;
 }
@@ -346,9 +346,8 @@ body {
    Snug fit (sized to content), but both buttons match widest one
 ============================================================ */
 .cta-dock {
-    /* In normal flow inside .slot-content — stacks under the sub with the column
-       gap, so CTAs can never overlap the text regardless of how many there are. */
-    margin-top: 0.6vh;
+    position: absolute;
+    left: 3.5vh; bottom: 3.5vh;
     /* Grid sizes its column to the widest CTA's content;
        each CTA fills the column via width:100% — so both end up equal width. */
     display: grid;
@@ -356,6 +355,9 @@ body {
     justify-content: start;
     gap: 1vh; z-index: 6;
 }
+/* A lone CTA pinned to the bottom floats away from the content block above it.
+   Raise the single-CTA dock so the button sits just under the text. */
+.cta-dock[data-count="1"] { bottom: 8vh; }
 .cta {
     width: 100%;                 /* fill the auto-sized grid column */
     display: flex; align-items: center; justify-content: space-between;
@@ -2279,8 +2281,8 @@ function renderCommercial(s) {
             ${s.eyebrow ? `<div class="slot-eyebrow">${s.eyebrow}</div>` : ''}
             <div class="slot-title">${titleHTML}</div>
             ${s.sub ? `<div class="slot-sub">${s.sub}</div>` : ''}
-            ${ctaHTML ? `<div class="cta-dock" data-count="${(s.ctas || []).length}">${ctaHTML}</div>` : ''}
         </div>
+        ${ctaHTML ? `<div class="cta-dock" data-count="${(s.ctas || []).length}">${ctaHTML}</div>` : ''}
         ${(s.stats && s.stats.length) ? `<div class="stat-row">${s.stats.map(st => `<div class="stat-card"><div class="stat-num">${st.num}</div><div class="stat-label">${st.label}</div></div>`).join('')}</div>` : ''}
     `;
 }
