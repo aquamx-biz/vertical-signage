@@ -164,7 +164,7 @@ body {
 /* Hero image as a real <img> (CSS background-image didn't paint on Edge).
    object-fit here is just the pre-load default; fitMedia(this) sets the real value
    on load from the image's ratio: ~9:16 → cover (full-bleed), other → contain (bars). */
-.slot-media-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.slot-media-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; transition: opacity 0.6s ease; }
 /* Ken-Burns zoom stays disabled — full-bleed cover already fills the frame. */
 .slot[data-kind="commercial"].active .slot-media {
     animation: none;
@@ -208,8 +208,7 @@ body {
     bottom: 21vh;       /* base; NOTE the real slots are pos="bl" → overridden below */
     display: flex; flex-direction: column;
     gap: 1.6vh; z-index: 5;
-    opacity: 0.75;      /* eyebrow+title+sub at 75% so the background photo reads through
-                           (children animate 0→1; ×0.75 parent = effective 0→0.75) */
+    /* per-element opacity is set in the .slot.active rules (title 0.65, rest 0.75) */
 }
 
 /* Eyebrow pill — outlined, with cyan dot */
@@ -279,9 +278,11 @@ body {
     text-shadow: 0 0.15vh 0.8vh rgba(0,0,0,0.6);
 }
 
+/* Settled opacities let the background photo read through. The title is the
+   biggest mass of ink, so it goes more transparent (0.65) than the rest (0.75). */
 .slot.active .slot-eyebrow,
-.slot.active .slot-title,
-.slot.active .slot-sub { opacity: 1; transform: translateY(0); }
+.slot.active .slot-sub { opacity: 0.75; transform: translateY(0); }
+.slot.active .slot-title { opacity: 0.65; transform: translateY(0); }
 
 /* ============================================================
    v6 — Dynamic text-overlay upgrades
@@ -2270,6 +2271,28 @@ function fitMedia(img) {
     img.style.objectFit = Math.abs(r - 0.5625) <= 0.04 ? 'cover' : 'contain';
 }
 
+/* In-slot image change (multi-image ad): cross-dissolve to `url` instead of a hard
+   cut. Stacks a fresh <img> on top at opacity 0, fades it in (CSS transition on
+   .slot-media-img), runs the same fit rule, then drops the older image(s). */
+function crossfadeMedia(media, url) {
+    if (!media || !url) return;
+    const next = document.createElement('img');
+    next.className = 'slot-media-img';
+    next.alt = '';
+    next.style.opacity = '0';
+    next.addEventListener('load', function onLoad() {
+        next.removeEventListener('load', onLoad);
+        fitMedia(next);
+        void next.offsetWidth;                              // commit the opacity:0 frame…
+        next.style.opacity = '1';                           // …then transition to 1 (CSS handles the fade)
+        setTimeout(() => {                                  // after the fade, drop the old frame(s)
+            media.querySelectorAll('.slot-media-img').forEach(im => { if (im !== next) im.remove(); });
+        }, 700);
+    });
+    media.appendChild(next);
+    next.src = url;
+}
+
 function renderCommercial(s) {
     const titleHTML = (s.titleLines || [s.title]).map(line => `<span class="br">${line}</span>`).join('');
     const ctaHTML = (s.ctas || []).map(c =>
@@ -2472,26 +2495,29 @@ function manageSlotVideo(idx) {
         return;
     }
 
-    // IMAGE slot — multi-image slideshow or single still.
+    // IMAGE slot — multi-image slideshow or single still. Media is a real
+    // <img class="slot-media-img"> (CSS background-image broke under the Sanity-CDN
+    // CORS service worker). Each image change cross-dissolves (crossfadeMedia).
     if (s.mediaType === 'image' && Array.isArray(s.images) && s.images.length > 1) {
         const media = el && el.querySelector('.slot-media');
-        // Media is rendered as an <img class="slot-media-img"> (not a CSS
-        // background-image — that broke under the Sanity-CDN CORS service worker).
-        // So the slideshow must swap the <img>'s src, not the div's backgroundImage.
-        const imgEl = media && media.querySelector('.slot-media-img');
         const perMs = s.durationMs || 10000;
-        let imgIdx = 0;
+        if (media) {
+            // Reset to the first image — a previous cycle may have left a later frame
+            // showing (and stacked crossfade layers); collapse back to one at image[0].
+            const layers = media.querySelectorAll('.slot-media-img');
+            layers.forEach((im, i) => { if (i > 0) im.remove(); });
+            const base = media.querySelector('.slot-media-img');
+            if (base) { base.style.opacity = '1'; if (base.getAttribute('src') !== s.images[0]) base.src = s.images[0]; }
+        }
+        let imgIdx = 0;   // image[0] is already on screen from the initial render
         const step = () => {
             if (myToken !== advanceToken) return;
-            if (imgIdx >= s.images.length) { advanceFromMedia(); return; }
-            const url = s.images[imgIdx++];
-            if (url) {
-                if (imgEl) imgEl.src = url;                              // real <img> swap
-                else if (media) media.style.backgroundImage = `url('${url}')`;  // legacy fallback
-            }
+            imgIdx++;
+            if (imgIdx >= s.images.length) { advanceFromMedia(); return; }  // shown all → next slot
+            crossfadeMedia(media, s.images[imgIdx]);
             imageCycleTimer = setTimeout(step, perMs);
         };
-        step();
+        imageCycleTimer = setTimeout(step, perMs);   // hold image[0], then dissolve to [1], [2]…
         return;
     }
     // Single-image / fallback: scheduleNext() (called by showSlot's caller) drives dwell.
