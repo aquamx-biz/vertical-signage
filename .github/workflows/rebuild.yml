@@ -63,6 +63,7 @@ jobs:
             ["the-room-skv21"]="the-room-skv21"
             ["the-room-sukhumvit-21"]="the-room-skv21"
             ["noble-be19"]="noble-be19"
+            ["39-by-sansiri"]="39-by-sansiri"
           )
 
           PUSHED=()

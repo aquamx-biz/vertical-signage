@@ -27,7 +27,7 @@
  * Requirements:  Node.js 18+ (uses native fetch, fs/path/url built-ins)
  */
 
-import { readFileSync, mkdirSync, writeFileSync, copyFileSync } from 'fs'
+import { readFileSync, mkdirSync, writeFileSync, copyFileSync, cpSync, existsSync } from 'fs'
 import { join, dirname }                                        from 'path'
 import { fileURLToPath }                                        from 'url'
 import { createHash }                                           from 'crypto'
@@ -67,9 +67,14 @@ if (!projects?.length) {
 }
 console.log(`Found ${projects.length} active project(s): ${projects.map(p => p.code).join(', ')}`)
 
-// ── 2. Read the HTML template and SW once ────────────────────────────────────
-const templateHtml = readFileSync(join(__dirname, 'vertical-signage.html'), 'utf8')
-const swSource     = readFileSync(join(__dirname, 'sw.js'), 'utf8')
+// ── 2. Read the SW once; the HTML player template is chosen per project below ──
+const swSource = readFileSync(join(__dirname, 'sw.js'), 'utf8')
+
+// Per-project player template. Most projects use the proven vertical-signage.html.
+// 39-by-sansiri uses the newer mockup-v7 player. Keeping others on the proven one
+// means this change does NOT silently switch every live kiosk to mockup-v7.
+const PLAYER_BY_CODE = { '39-by-sansiri': 'mockup-v7.html' }
+const DEFAULT_PLAYER = 'vertical-signage.html'
 
 // ── 2b. Fetch global category config once (singleton, shared by all projects) ─
 console.log('Fetching global category config…')
@@ -88,7 +93,9 @@ const globalCategoryConfig = await sanityFetch(`
 // ── 3. Build a deploy folder for each project ─────────────────────────────────
 for (const project of projects) {
   const { _id: projectId, code, title } = project
-  console.log(`\nBuilding [${code}] ${title}…`)
+  const tplFile = PLAYER_BY_CODE[code] || DEFAULT_PLAYER
+  const templateHtml = readFileSync(join(__dirname, tplFile), 'utf8')
+  console.log(`\nBuilding [${code}] ${title}…  (player: ${tplFile})`)
 
   // Fetch all project-scoped data in parallel
   const [playlist, rawProviders, notices] = await Promise.all([
@@ -259,6 +266,12 @@ for (const project of projects) {
   mkdirSync(outDir, { recursive: true })
   writeFileSync(join(outDir, 'index.html'), injectedHtml, 'utf8')
   writeFileSync(join(outDir, 'sw.js'),     swSource,     'utf8')
+
+  // Category icons are referenced only by the mockup-v7 player (icons/*.svg) —
+  // copy the folder for those projects so they aren't 404. Skip for others so
+  // they don't get a spurious icons/ diff that redeploys them.
+  const iconsDir = join(__dirname, 'icons')
+  if (tplFile === 'mockup-v7.html' && existsSync(iconsDir)) cpSync(iconsDir, join(outDir, 'icons'), { recursive: true })
 
   // _headers: Netlify reads this from the publish directory unconditionally.
   // More reliable than netlify.toml when the site uses a repo subdirectory as publish dir.

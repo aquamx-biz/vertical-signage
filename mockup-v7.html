@@ -158,12 +158,11 @@ body {
 ============================================================ */
 .slot[data-kind="commercial"] .slot-media {
     position: absolute; inset: 0;
-    background-size: contain;   /* show the WHOLE file — never crop/squeeze non-9:16 */
-    background-repeat: no-repeat;
-    background-position: center;
     background-color: #000;      /* letterbox bars = black */
     transform-origin: center;
 }
+/* Hero image as a real <img> (CSS background-image didn't paint on Edge). contain = show whole file. */
+.slot-media-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; display: block; }
 /* Ken-Burns zoom disabled: scaling would crop the letterboxed image, defeating
    "show the full file". Slides hold at native size with black bars. */
 .slot[data-kind="commercial"].active .slot-media {
@@ -1031,7 +1030,7 @@ body {
 .slot-plogo {
     position: absolute; top: 2.4vh; right: 2.7vh; z-index: 6;
     width: 6.85vh; height: 6.85vh; border-radius: 2vh;
-    background: #fff center/contain no-repeat;
+    background: #fff; object-fit: contain; display: block;
     box-shadow: 0 0.3vh 1.4vh rgba(0,0,0,0.35);
 }
 /* Lang toggle inside the detail popup — top-left, opposite the close button */
@@ -1060,9 +1059,11 @@ body {
 }
 .cat-card-img {
     width: 100%; height: 18vh;
-    background-size: cover; background-position: center;
     background-color: #0a0c10;
 }
+/* Main image as a real <img> (matches vertical-signage .offer-card-img — CSS
+   background-image failed to paint on Edge/Yodeck; <img> is the proven approach). */
+.cat-card-img-el { width: 100%; height: 100%; object-fit: cover; display: block; }
 .cat-card-info { padding: 1.4vh 1.5vh 1.6vh; }
 .cat-card-name {
     font-size: 1.55vh; font-weight: 700;
@@ -2263,14 +2264,16 @@ function renderCommercial(s) {
     // no still, fall through to the .slot-media background-color (#0a0c10) and
     // let the <video> layer cover it.
     const bgUrl = s.image || s.videoPoster || '';
-    const mediaStyle = bgUrl ? ` style="background-image:url('${bgUrl}');"` : '';
+    // Use a real <img> (like vertical-signage's #imageSlide). CSS background-image
+    // failed to paint on the user's Edge; <img> renders reliably.
+    const mediaImg = bgUrl ? `<img class="slot-media-img" src="${bgUrl}" alt="">` : '';
     return `
-        <div class="slot-media"${mediaStyle}></div>
+        <div class="slot-media">${mediaImg}</div>
         ${videoHTML}
         <div class="slot-grad-top"></div>
         <div class="slot-grad-bot"></div>
         ${s.logo ? `<div class="slot-logo">${s.logo}</div>` : ''}
-        ${s.providerLogo ? `<div class="slot-plogo" style="background-image:url('${s.providerLogo}')"></div>` : ''}
+        ${s.providerLogo ? `<img class="slot-plogo" src="${s.providerLogo}" alt="">` : ''}
         <div class="slot-content">
             ${s.eyebrow ? `<div class="slot-eyebrow">${s.eyebrow}</div>` : ''}
             <div class="slot-title">${titleHTML}</div>
@@ -2547,6 +2550,7 @@ function autoAdvance() {
    showSlot calls just before this), so we leave their timers alone. */
 function scheduleNext() {
     if (isMenuOpen) return;       // auto-advance paused while menu open
+    if (SLOTS.length <= 1) return;  // only one slide — hold it static (no self-crossfade flash)
     if (slotSelfAdvances()) return; // video / multi-image owns its own advance
     clearTimeout(advanceTimer);
     advanceTimer = setTimeout(autoAdvance, dwellMs());
@@ -2776,19 +2780,37 @@ function buildCatCard(it, idx) {
     const provName = p
         ? (uiLang === 'th' ? (p.name_th || p.name_en || '') : (p.name_en || p.name_th || ''))
         : '';
-    const logoHTML = (p && p.logo)
-        ? `<img class="cat-card-logo" src="${p.logo}" alt="" loading="lazy">` : '';
-    const provHTML = provName
-        ? `<div class="cat-card-provider">${provName}</div>` : '';
-    card.innerHTML = `
-        <div class="cat-card-img" style="background-image:url('${it.img || ''}');">
-            ${logoHTML}${provHTML}
-        </div>
-        <div class="cat-card-info">
-            <div class="cat-card-name">${it.name || ''}</div>
-            <div class="cat-card-sub">${it.sub || ''}</div>
-            ${it.meta ? `<div class="cat-card-meta">${it.meta}</div>` : ''}
-        </div>`;
+    // Image wrapper — main image as a real <img> (proven in vertical-signage's
+    // makeOfferCard; CSS background-image didn't paint on Edge/Yodeck). Eager load.
+    const imgWrap = document.createElement('div');
+    imgWrap.className = 'cat-card-img';
+    if (it.img) {
+        const img = document.createElement('img');
+        img.className = 'cat-card-img-el';
+        img.src = it.img; img.alt = '';
+        imgWrap.appendChild(img);
+    }
+    if (p && p.logo) {
+        const logo = document.createElement('img');
+        logo.className = 'cat-card-logo';
+        logo.src = p.logo; logo.alt = '';
+        imgWrap.appendChild(logo);
+    }
+    if (provName) {
+        const pn = document.createElement('div');
+        pn.className = 'cat-card-provider';
+        pn.textContent = provName;
+        imgWrap.appendChild(pn);
+    }
+    card.appendChild(imgWrap);
+
+    const info = document.createElement('div');
+    info.className = 'cat-card-info';
+    info.innerHTML = `<div class="cat-card-name">${it.name || ''}</div>`
+                   + `<div class="cat-card-sub">${it.sub || ''}</div>`
+                   + (it.meta ? `<div class="cat-card-meta">${it.meta}</div>` : '');
+    card.appendChild(info);
+
     addTap(card, () => openCardDetail(idx));   // reliable tap on Android WebView (C)
     return card;
 }
