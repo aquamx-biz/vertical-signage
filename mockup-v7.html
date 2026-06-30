@@ -208,6 +208,8 @@ body {
     bottom: 21vh;       /* base; NOTE the real slots are pos="bl" → overridden below */
     display: flex; flex-direction: column;
     gap: 1.6vh; z-index: 5;
+    opacity: 0.75;      /* eyebrow+title+sub at 75% so the background photo reads through
+                           (children animate 0→1; ×0.75 parent = effective 0→0.75) */
 }
 
 /* Eyebrow pill — outlined, with cyan dot */
@@ -355,6 +357,7 @@ body {
     grid-template-columns: max-content;
     justify-content: start;
     gap: 1vh; z-index: 6;
+    opacity: 0.75;      /* CTAs at 75% to match the text (background reads through) */
 }
 /* A lone CTA pinned to the bottom floats away from the content block above it.
    Raise the single-CTA dock so the button sits just under the text. */
