@@ -162,8 +162,8 @@ body {
     transform-origin: center;
 }
 /* Hero image as a real <img> (CSS background-image didn't paint on Edge).
-   cover = fill the whole 9:16 stage edge-to-edge (no black side bars). Vendors
-   prepare 9:16 art knowing the header/footer crop the very top/bottom. */
+   object-fit here is just the pre-load default; fitMedia(this) sets the real value
+   on load from the image's ratio: ~9:16 → cover (full-bleed), other → contain (bars). */
 .slot-media-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
 /* Ken-Burns zoom stays disabled — full-bleed cover already fills the frame. */
 .slot[data-kind="commercial"].active .slot-media {
@@ -2256,6 +2256,20 @@ if (new URLSearchParams(location.search).has('debug')) {
     if (_db) _db.style.display = 'block';
 }
 
+/* Hero media fit rule (per the vendor brief: vendors prepare 9:16 art):
+   - image whose own ratio is ~9:16  → object-fit: cover  → fills the stage edge-to-
+     edge (the header/footer crop a little off the top/bottom, which is expected).
+   - any other ratio (A4, landscape, square, …) → object-fit: contain → the whole
+     image shows with bars; it is NEVER stretched or hard-cropped.
+   NOTE the player area = stage − header − footer, so it is WIDER than 9:16 — which is
+   exactly why a 9:16 image needs cover (contain would letterbox it with side bars).
+   Re-runs on every src change, so multi-image slideshows re-fit each frame. */
+function fitMedia(img) {
+    if (!img || !img.naturalWidth || !img.naturalHeight) return;
+    const r = img.naturalWidth / img.naturalHeight;       // 9:16 = 0.5625
+    img.style.objectFit = Math.abs(r - 0.5625) <= 0.04 ? 'cover' : 'contain';
+}
+
 function renderCommercial(s) {
     const titleHTML = (s.titleLines || [s.title]).map(line => `<span class="br">${line}</span>`).join('');
     const ctaHTML = (s.ctas || []).map(c =>
@@ -2276,7 +2290,8 @@ function renderCommercial(s) {
     const bgUrl = s.image || s.videoPoster || '';
     // Use a real <img> (like vertical-signage's #imageSlide). CSS background-image
     // failed to paint on the user's Edge; <img> renders reliably.
-    const mediaImg = bgUrl ? `<img class="slot-media-img" src="${bgUrl}" alt="">` : '';
+    // onload=fitMedia → decide cover vs contain from the IMAGE's own ratio (see fitMedia).
+    const mediaImg = bgUrl ? `<img class="slot-media-img" src="${bgUrl}" alt="" onload="fitMedia(this)">` : '';
     return `
         <div class="slot-media">${mediaImg}</div>
         ${videoHTML}
