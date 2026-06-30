@@ -1762,9 +1762,12 @@ async function loadBuildingUpdates() {
         };
     }
     const bakedNotices = window.__BAKED__?.notices ?? window.__BAKED__?.updates;
-    if (bakedNotices?.length) {
+    // On a baked deploy the notices array is authoritative — even when EMPTY it
+    // means "this project has no notices". Don't fall through to a runtime Sanity
+    // fetch: cross-origin Sanity API requests are CORS-blocked from the kiosk.
+    if (window.__BAKED__ && Array.isArray(bakedNotices)) {
         MOCK_UPDATES.splice(0, MOCK_UPDATES.length, ...bakedNotices.map(normaliseNotice));
-        _ds.notices = 'baked';
+        _ds.notices = bakedNotices.length ? 'baked' : 'baked-empty';
         return;
     }
     try {
