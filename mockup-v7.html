@@ -204,7 +204,7 @@ body {
 .slot-content {
     position: absolute;
     left: 3.5vh; right: 3.5vh;
-    bottom: 21vh;       /* sits just above the CTA dock (like /offer's tt-content at ~19%) */
+    bottom: 21vh;       /* base; NOTE the real slots are pos="bl" → overridden below */
     display: flex; flex-direction: column;
     gap: 1.6vh; z-index: 5;
 }
@@ -482,7 +482,10 @@ body {
 ============================================================ */
 /* Bottom-left (Hanuman default) */
 .slot[data-pos="bl"] .slot-content {
-    left: 3.5vh; right: 3.5vh; bottom: 16vh; top: auto;
+    /* bottom must clear the 2-CTA dock (which reaches ~20vh). 16vh let the sub
+       sit inside the dock → overlap. This is the rule that actually governs the
+       real slots (they all render pos="bl"), NOT the base .slot-content. */
+    left: 3.5vh; right: 3.5vh; bottom: 21vh; top: auto;
     align-items: flex-start; text-align: left;
 }
 .slot[data-pos="bl"][data-has-stats="true"] .slot-content { right: 32vh; } /* clear stat cluster */
