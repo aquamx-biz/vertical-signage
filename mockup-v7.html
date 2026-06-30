@@ -2453,13 +2453,20 @@ function manageSlotVideo(idx) {
     // IMAGE slot — multi-image slideshow or single still.
     if (s.mediaType === 'image' && Array.isArray(s.images) && s.images.length > 1) {
         const media = el && el.querySelector('.slot-media');
+        // Media is rendered as an <img class="slot-media-img"> (not a CSS
+        // background-image — that broke under the Sanity-CDN CORS service worker).
+        // So the slideshow must swap the <img>'s src, not the div's backgroundImage.
+        const imgEl = media && media.querySelector('.slot-media-img');
         const perMs = s.durationMs || 10000;
         let imgIdx = 0;
         const step = () => {
             if (myToken !== advanceToken) return;
             if (imgIdx >= s.images.length) { advanceFromMedia(); return; }
             const url = s.images[imgIdx++];
-            if (media && url) media.style.backgroundImage = `url('${url}')`;
+            if (url) {
+                if (imgEl) imgEl.src = url;                              // real <img> swap
+                else if (media) media.style.backgroundImage = `url('${url}')`;  // legacy fallback
+            }
             imageCycleTimer = setTimeout(step, perMs);
         };
         step();
