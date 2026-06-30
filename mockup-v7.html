@@ -161,10 +161,11 @@ body {
     background-color: #000;      /* letterbox bars = black */
     transform-origin: center;
 }
-/* Hero image as a real <img> (CSS background-image didn't paint on Edge). contain = show whole file. */
-.slot-media-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; display: block; }
-/* Ken-Burns zoom disabled: scaling would crop the letterboxed image, defeating
-   "show the full file". Slides hold at native size with black bars. */
+/* Hero image as a real <img> (CSS background-image didn't paint on Edge).
+   cover = fill the whole 9:16 stage edge-to-edge (no black side bars). Vendors
+   prepare 9:16 art knowing the header/footer crop the very top/bottom. */
+.slot-media-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+/* Ken-Burns zoom stays disabled — full-bleed cover already fills the frame. */
 .slot[data-kind="commercial"].active .slot-media {
     animation: none;
 }
