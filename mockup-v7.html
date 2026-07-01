@@ -160,7 +160,13 @@ body {
     position: absolute; inset: 0;
     background-color: #000;      /* letterbox bars = black */
     transform-origin: center;
+    /* Promote to its own GPU layer so the Ken-Burns transform just moves a texture
+       instead of re-rasterizing the full-screen image every frame. Without this,
+       Android WebView re-paints per frame and shows a half-loaded image mid-zoom. */
+    will-change: transform;
+    backface-visibility: hidden;
 }
+.slot-media-img { backface-visibility: hidden; }
 /* Hero image as a real <img> (CSS background-image didn't paint on Edge).
    object-fit here is just the pre-load default; fitMedia(this) sets the real value
    on load from the image's ratio: ~9:16 → cover (full-bleed), other → contain (bars). */
@@ -2324,6 +2330,17 @@ function fitMedia(img) {
     if (media) media.classList.toggle('media-zoom', isCover);
 }
 
+/* Ask Sanity's image CDN for a display-sized, format-optimised copy. The kiosk is
+   ~1080px wide, so serving the full-resolution original just makes Android WebView
+   decode a giant bitmap every display (→ momentary half-painted image). fit=max keeps
+   the aspect ratio (so fitMedia's 9:16 detection is unchanged); auto=format = webp. */
+function sizedImg(url, w, h) {
+    if (!url || !/:\/\/cdn\.sanity\.io\/images\//.test(url)) return url;   // only Sanity images
+    if (/[?&](w|h|rect|fit)=/.test(url)) return url;                        // already sized
+    const sep = url.includes('?') ? '&' : '?';
+    return `${url}${sep}w=${w || 1080}${h ? `&h=${h}` : ''}&fit=max&q=75&auto=format`;
+}
+
 /* Thai line-breaking. Thai has no spaces, so the browser breaks mid-word — and
    Chromium's dictionary even splits loanwords wrongly (แอชวูด → แอ/ชวูด). Neither
    word-break:keep-all nor ZWSP stops it. The only reliable fix: make each word an
@@ -2361,7 +2378,7 @@ function crossfadeMedia(media, url) {
         }, 700);
     });
     media.appendChild(next);
-    next.src = url;
+    next.src = sizedImg(url, 1080, 1920);
 }
 
 function renderCommercial(s) {
@@ -2385,14 +2402,14 @@ function renderCommercial(s) {
     // Use a real <img> (like vertical-signage's #imageSlide). CSS background-image
     // failed to paint on the user's Edge; <img> renders reliably.
     // onload=fitMedia → decide cover vs contain from the IMAGE's own ratio (see fitMedia).
-    const mediaImg = bgUrl ? `<img class="slot-media-img" src="${bgUrl}" alt="" onload="fitMedia(this)">` : '';
+    const mediaImg = bgUrl ? `<img class="slot-media-img" src="${sizedImg(bgUrl, 1080, 1920)}" alt="" onload="fitMedia(this)">` : '';
     return `
         <div class="slot-media">${mediaImg}</div>
         ${videoHTML}
         <div class="slot-grad-top"></div>
         <div class="slot-grad-bot"></div>
         ${s.logo ? `<div class="slot-logo">${s.logo}</div>` : ''}
-        ${s.providerLogo ? `<img class="slot-plogo" src="${s.providerLogo}" alt="">` : ''}
+        ${s.providerLogo ? `<img class="slot-plogo" src="${sizedImg(s.providerLogo, 240, 240)}" alt="">` : ''}
         <div class="slot-content">
             ${s.eyebrow ? `<div class="slot-eyebrow">${s.eyebrow}</div>` : ''}
             <div class="slot-title">${titleHTML}</div>
@@ -3107,7 +3124,7 @@ function showGalleryImage(i) {
     if (!_galleryImgs.length) return;
     _galleryIdx = ((i % _galleryImgs.length) + _galleryImgs.length) % _galleryImgs.length;
     const di = document.getElementById('detailImg');
-    if (di) di.style.backgroundImage = `url('${_galleryImgs[_galleryIdx]}')`;
+    if (di) di.style.backgroundImage = `url('${sizedImg(_galleryImgs[_galleryIdx], 1080, 1920)}')`;
     const dots = document.getElementById('detailGalleryDots');
     if (dots) [...dots.children].forEach((d, idx) => d.classList.toggle('active', idx === _galleryIdx));
 }
@@ -3123,7 +3140,7 @@ function setDetailGallery(imgs) {
         if (dots) dots.style.display = 'none';
         return;
     }
-    if (di) di.style.backgroundImage = `url('${_galleryImgs[0]}')`;
+    if (di) di.style.backgroundImage = `url('${sizedImg(_galleryImgs[0], 1080, 1920)}')`;
     if (_galleryImgs.length > 1 && dots) {
         dots.style.display = 'flex';
         _galleryImgs.forEach((_, i) => {
