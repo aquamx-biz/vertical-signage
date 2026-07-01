@@ -103,6 +103,9 @@ jobs:
               for f in index.html sw.js _headers netlify.toml; do
                 [ -f "$DIR/$f" ] && cp -f "$DIR/$f" "$WORK/$f"
               done
+              # Category-screen icons (mockup-v7). build.mjs copies icons/ into $DIR;
+              # push the whole folder so every project's kiosk can load them.
+              [ -d "$DIR/icons" ] && cp -rf "$DIR/icons" "$WORK/"
 
               cd "$WORK"
               git config user.email "actions@github.com"

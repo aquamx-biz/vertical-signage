@@ -1,0 +1,31 @@
+CATEGORY ICONS — ATTRIBUTION
+============================
+
+The category icons in this folder are from Twemoji.
+
+  Twemoji
+  Copyright Twitter, Inc. and other contributors
+  Graphics licensed under CC-BY 4.0
+  https://creativecommons.org/licenses/by/4.0/
+  Source: https://github.com/twitter/twemoji  (v14.0.2)
+
+CC-BY 4.0 requires that attribution be given. Keep this credit with the
+files, and show a visible credit somewhere reasonable for the medium
+(e.g. an "About / Credits" screen on the kiosk, or the project docs).
+
+Files (renamed by category, original Unicode codepoint in brackets):
+  dining.svg          🍽  [1f37d]
+  groceries.svg       🛒  [1f6d2]
+  health-beauty.svg   💆  [1f486]
+  leisure-travel.svg  🏖  [1f3d6]
+  shopping.svg        🛍  [1f6cd]
+  services.svg        🛠  [1f6e0]
+  education.svg       🎓  [1f393]
+  events.svg          🎉  [1f389]
+  for-rent.svg        🔑  [1f511]
+  for-sale.svg        🏷  [1f3f7]
+  notices.svg         📢  [1f4e2]
+
+If you prefer not to display attribution at all, swap to a set under a
+no-attribution licence (e.g. OpenMoji CC-BY-SA still needs credit; for
+zero-attribution use an MIT/CC0 set such as Material Symbols).
