@@ -3499,18 +3499,28 @@ if (sendConfirmOk) sendConfirmOk.addEventListener('click', function() {
 stage.addEventListener('click', e => {
     const btn = e.target.closest('.cta');
     if (!btn) return;
-    const s = SLOTS[cur];
+    // Use the slot the tapped button ACTUALLY belongs to — NOT SLOTS[cur]. During a
+    // crossfade the outgoing slide is still in the DOM and clickable while `cur` has
+    // already advanced, so SLOTS[cur] opened the wrong offer's detail.
+    const slotEl = btn.closest('.slot');
+    const idx = (slotEl && slotEl.dataset.index != null) ? +slotEl.dataset.index : cur;
+    const s = SLOTS[idx];
     if (!s) return;
     // Which dock button was tapped → carry its (already form-matched) label so the
     // detail/handoff CTA reads identically. Falls back to the slot's primary CTA.
     const tappedKind = btn.classList.contains('cta-secondary') ? 'secondary' : 'primary';
     const tappedCta = (s.ctas || []).find(c => c.kind === tappedKind) || (s.ctas || [])[0] || null;
     // For a property listing, prefer its own photo gallery over the slide still.
+    // Fallback chain so a video offer (no still) still shows something: listing photos
+    // → slide images → still → video poster → provider cover/logo.
+    // s.image already coalesces poster → providerImage (provider cover/logo) for video
+    // offers with no still; providerLogo is a final guarantee so the box is never empty.
+    const _fallbackImg = s.image || s.videoPoster || s.providerLogo || '';
     const galleryImgs = (Array.isArray(s._listingImages) && s._listingImages.length)
         ? s._listingImages
-        : ((Array.isArray(s.images) && s.images.length) ? s.images : (s.image ? [s.image] : []));
+        : ((Array.isArray(s.images) && s.images.length) ? s.images : (_fallbackImg ? [_fallbackImg] : []));
     openDetail({
-        img: s.image || s.videoPoster,
+        img: _fallbackImg,
         images: galleryImgs,
         eyebrow: s.eyebrow || (s._category ? eyebrowLabel(s._category) : 'Offering'),
         title: s.titleLines ? s.titleLines.join(' ') : (s.title || ''),

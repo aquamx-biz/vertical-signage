@@ -71,10 +71,11 @@ console.log(`Found ${projects.length} active project(s): ${projects.map(p => p.c
 const swSource = readFileSync(join(__dirname, 'sw.js'), 'utf8')
 
 // Per-project player template. Most projects use the proven vertical-signage.html.
-// 39-by-sansiri uses the newer mockup-v7 player. Keeping others on the proven one
-// means this change does NOT silently switch every live kiosk to mockup-v7.
-const PLAYER_BY_CODE = { '39-by-sansiri': 'mockup-v7.html' }
-const DEFAULT_PLAYER = 'vertical-signage.html'
+// ALL projects now use the mockup-v7 player (with the rich playlist projection).
+// PLAYER_BY_CODE is a per-project override map — empty means everyone gets the default.
+// Rollback: set DEFAULT_PLAYER back to 'vertical-signage.html' and push.
+const PLAYER_BY_CODE = { }
+const DEFAULT_PLAYER = 'mockup-v7.html'
 
 // Playlist projections. vertical-signage uses the minimal set; mockup-v7 needs the
 // rich set (provider object/logo, eyebrow, sub, CTAs, menu/order items). The rich
