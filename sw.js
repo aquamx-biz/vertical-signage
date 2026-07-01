@@ -1,31 +1,84 @@
 /**
- * sw.js — Signage Service Worker (NEUTERED)
+ * sw.js — Signage Service Worker (media offline cache)
  *
- * Why this is empty of media logic:
- *   The previous version did cache-first interception of cross-origin media and
- *   re-fetched it in CORS mode ("CORS mode; Sanity CDN allows it"). That was
- *   WRONG — Sanity's image/file CDN FORBIDS CORS: any request carrying an Origin
- *   header gets 403 Forbidden. So whenever this SW was active (e.g. on Edge), the
- *   re-fetch 403'd and every image/video broke. Browsers normally load <img> /
- *   <video> in *no-cors* mode, which Sanity allows (200) — which is exactly why
- *   the proven projects (lumpini-24, no active SW) display media fine.
+ * Goal: the kiosk keeps showing images even if the network blips, WITHOUT
+ * re-introducing the old CORS-403 bug.
  *
- *   This SW therefore intercepts NOTHING: with no 'fetch' listener the browser
- *   fetches all media natively (no-cors → 200). On activate it purges the old
- *   broken cache so any previously-stored 403/failed responses are removed.
+ * The bug we must never repeat: a previous version cached media then re-fetched it
+ * with `new Request(url)` (default = CORS mode). Sanity's image CDN FORBIDS CORS
+ * (any request carrying an Origin header → 403), so every image broke.
  *
- *   Kept (instead of deleting the file) so an already-installed old SW updates to
- *   this harmless version and stops breaking media.
+ * How this version stays safe:
+ *   - It ONLY touches image GETs to cdn.sanity.io. Everything else (HTML, Sanity
+ *     API, the weather/news proxies, and crucially VIDEO) passes straight through.
+ *   - It fetches with the ORIGINAL request (an <img> request is already no-cors) or,
+ *     for prewarm, with an explicit { mode: 'no-cors' } fetch → an *opaque* response.
+ *     Opaque = no CORS enforcement → 200, never 403. Opaque responses render fine in
+ *     <img>/CSS backgrounds and are cacheable.
+ *
+ * Why images only (not video): opaque responses can't be range-served, and <video>
+ * needs range requests to play/seek. Caching video opaque would break playback, so
+ * video is left to the browser's native HTTP cache.
  */
+
+const MEDIA_CACHE = 'aquamx-media-v1';
+
+// Sanity CDN images only. Video (.mp4/.webm/.mov) is deliberately excluded.
+function isCacheableImage(url) {
+  return /:\/\/cdn\.sanity\.io\//.test(url) &&
+         /\.(jpe?g|png|webp|gif|avif)(\?|$)/i.test(url);
+}
 
 self.addEventListener('install', () => self.skipWaiting());
 
 self.addEventListener('activate', (event) => {
   event.waitUntil((async () => {
+    // Drop any OTHER cache (old broken CORS caches / previous versions); keep ours.
     const keys = await caches.keys();
-    await Promise.all(keys.map((k) => caches.delete(k))); // purge old broken media cache
+    await Promise.all(keys.filter((k) => k !== MEDIA_CACHE).map((k) => caches.delete(k)));
     await self.clients.claim();
   })());
 });
 
-// No 'fetch' listener on purpose — media loads natively (no-cors) via the browser.
+// Cache-first for Sanity images; network fills the cache. Never intercepts anything
+// else, so a bug here can't break HTML, video, or the weather/news proxies.
+self.addEventListener('fetch', (event) => {
+  const req = event.request;
+  if (req.method !== 'GET' || !isCacheableImage(req.url)) return;   // pass through
+
+  event.respondWith((async () => {
+    const cache = await caches.open(MEDIA_CACHE);
+    const cached = await cache.match(req);
+    if (cached) return cached;                       // offline-safe: serve stored copy
+    try {
+      const resp = await fetch(req);                 // img req is no-cors → opaque, no 403
+      if (resp && (resp.ok || resp.type === 'opaque')) {
+        cache.put(req, resp.clone()).catch(() => {});
+      }
+      return resp;
+    } catch (err) {
+      const fallback = await cache.match(req);
+      if (fallback) return fallback;
+      throw err;
+    }
+  })());
+});
+
+// Prewarm: the player posts its playlist media URLs on load. Pre-fetch the IMAGE
+// ones (no-cors → opaque) so they're cached before the network is ever needed.
+self.addEventListener('message', (event) => {
+  const data = event.data || {};
+  if (data.action !== 'prewarm' || !Array.isArray(data.urls)) return;
+  event.waitUntil((async () => {
+    const cache = await caches.open(MEDIA_CACHE);
+    await Promise.all(
+      data.urls.filter(isCacheableImage).map(async (url) => {
+        if (await cache.match(url)) return;          // already cached
+        try {
+          const resp = await fetch(url, { mode: 'no-cors' });   // opaque — never CORS
+          if (resp) await cache.put(url, resp.clone());
+        } catch (_) { /* offline / transient — skip */ }
+      })
+    );
+  })());
+});
