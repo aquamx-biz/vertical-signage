@@ -231,9 +231,11 @@ body {
     font-size: 1.3vh; font-weight: 600;
     letter-spacing: 0.45vh; text-transform: uppercase;
     color: var(--ink-100);
+    cursor: pointer;   /* tappable → opens this category's combined screen */
     opacity: 0; transform: translateY(1.5vh);
     transition: opacity 0.6s var(--ease-out) 0.3s, transform 0.6s var(--ease-out) 0.3s;
 }
+.slot-eyebrow:active { transform: scale(0.95); }
 .slot-eyebrow::before {
     content: ''; width: 0.7vh; height: 0.7vh;
     border-radius: 50%;
@@ -241,10 +243,11 @@ body {
     box-shadow: 0 0 1.2vh var(--dot-cyan);
 }
 .slot-eyebrow::after {
-    content: ''; width: 0.7vh; height: 0.7vh;
-    border-radius: 50%;
-    background: rgba(109,213,232,0.25);
+    content: '›';               /* signals the pill is tappable → category screen */
     margin-left: auto;
+    font-size: 2vh; line-height: 1; font-weight: 700;
+    color: rgba(255,255,255,0.6);
+    transform: translateY(-0.15vh);
 }
 
 /* Title — sized to the /offer .tt-title proportion (≈8.7% of width) so the
@@ -295,7 +298,7 @@ body {
 .slot-price {
     font-family: 'Prompt','IBM Plex Sans Thai',sans-serif;
     font-weight: 700; font-size: 2.6vh; line-height: 1;
-    color: #FBD7A8;
+    color: var(--bronze);
     opacity: 0; transform: translateY(1.5vh);
     transition: opacity 0.6s var(--ease-out) 0.6s, transform 0.6s var(--ease-out) 0.6s;
     text-shadow: 0 0.15vh 0.9vh rgba(0,0,0,0.65);
@@ -452,7 +455,7 @@ body {
    .slot.active so off-screen slides don't animate. */
 .cta-label {
     color: var(--ink-100);                         /* fallback if background-clip:text unsupported */
-    background: linear-gradient(105deg, #fff 0%, #fff 38%, #FBD7A8 50%, #fff 62%, #fff 100%);
+    background: linear-gradient(105deg, #fff 0%, #fff 38%, var(--bronze) 50%, #fff 62%, #fff 100%);
     background-size: 250% 100%;
     background-position: 130% 0;
     -webkit-background-clip: text; background-clip: text;
@@ -1251,17 +1254,17 @@ body {
 }
 .detail-specs .sp { font-size: 1.25vh; color: rgba(255,255,255,0.82); line-height: 1.2; }
 .detail-specs .sp b { display: block; font-size: 1.85vh; font-weight: 800; color: #fff; }
-.detail-specs .sp.price b { color: #FBD7A8; }
+.detail-specs .sp.price b { color: var(--bronze); }
 /* Per-CTA dynamic popup body — ported from the /offer form's .pop-* styles (vh) */
 .detail-dyn:empty { display: none; }
-.detail-promo { font-size: 1.2vh; color: #FBD7A8; margin-bottom: 0.8vh; }
+.detail-promo { font-size: 1.2vh; color: var(--bronze); margin-bottom: 0.8vh; }
 .detail-tabs { display: flex; gap: 1.6vh; padding: 0.2vh 0 0.6vh; }
 .detail-tabs span { font-size: 1.3vh; color: rgba(255,255,255,0.8); padding-bottom: 0.4vh; }
 .detail-tabs span.on { color: #fff; border-bottom: 0.2vh solid var(--orange,#C9864C); }
 .detail-mit { display: flex; align-items: center; gap: 1vh; padding: 0.7vh 0; border-top: 0.1vh solid rgba(255,255,255,0.08); }
 .detail-mit .th { width: 3.4vh; height: 3.4vh; border-radius: 0.7vh; background: #11151c; background-size: cover; background-position: center; flex-shrink: 0; }
 .detail-mit .nm { flex: 1; font-size: 1.4vh; color: rgba(255,255,255,0.88); }
-.detail-mit .pr { font-size: 1.4vh; color: #FBD7A8; font-weight: 700; white-space: nowrap; }
+.detail-mit .pr { font-size: 1.4vh; color: var(--bronze); font-weight: 700; white-space: nowrap; }
 .detail-qty { display: inline-flex; align-items: center; gap: 0.8vh; flex-shrink: 0; margin-left: 0.8vh; font-size: 1.3vh; color: #fff; background: rgba(255,255,255,0.1); border: 0.1vh solid rgba(255,255,255,0.2); border-radius: 0.7vh; padding: 0.2vh 0.8vh; }
 .detail-qty b { min-width: 1vh; text-align: center; font-weight: 700; }
 .detail-tags { display: flex; flex-wrap: wrap; gap: 0.7vh; margin: 0.6vh 0; }
@@ -1277,7 +1280,7 @@ body {
 .detail-slot.on { background: var(--bronze-strong); border-color: var(--bronze-strong); font-weight: 800; }
 .detail-dd { font-size: 1.35vh; color: rgba(255,255,255,0.82); margin: 0.4vh 0; }
 .detail-substore { font-size: 1.3vh; color: rgba(255,255,255,0.72); margin: 0 0 0.6vh; }
-.detail-price { font-family: 'Prompt','IBM Plex Sans Thai',sans-serif; font-weight: 800; font-size: 2vh; color: #FBD7A8; line-height: 1; margin: 0.4vh 0; }
+.detail-price { font-family: 'Prompt','IBM Plex Sans Thai',sans-serif; font-weight: 800; font-size: 2vh; color: var(--bronze); line-height: 1; margin: 0.4vh 0; }
 .detail-meta-row { font-size: 1.3vh; color: rgba(255,255,255,0.82); margin: 0.6vh 0; }
 .detail-store-sub { font-size: 1.3vh; color: rgba(255,255,255,0.7); line-height: 1.45; margin-top: 0.5vh; }
 .detail-hint { font-size: 1.2vh; color: rgba(255,255,255,0.8); margin: 0.5vh 0; }
@@ -1289,7 +1292,7 @@ body {
 .detail-oc { background: rgba(255,255,255,0.04); border: 0.1vh solid rgba(255,255,255,0.1); border-radius: 1vh; overflow: hidden; }
 .detail-oc .oi { display: block; width: 100%; height: 7vh; background: #11151c; background-size: cover; background-position: center; }
 .detail-oc .on { display: block; font-size: 1.2vh; color: rgba(255,255,255,0.9); font-weight: 600; line-height: 1.25; padding: 0.6vh 0.8vh 0; max-height: 3.2vh; overflow: hidden; }
-.detail-oc .op { display: block; font-size: 1.25vh; color: #FBD7A8; font-weight: 800; padding: 0.2vh 0.8vh 0.7vh; }
+.detail-oc .op { display: block; font-size: 1.25vh; color: var(--bronze); font-weight: 800; padding: 0.2vh 0.8vh 0.7vh; }
 /* Multi-image gallery dot indicators (F) — only shown when >1 image */
 .detail-gallery-dots {
     position: absolute; left: 0; right: 0; bottom: 1.2vh;
@@ -1621,6 +1624,23 @@ const CAT_CTA = {
 // Maps panel cat IDs → category-config id / provider-store key where they differ
 const CAT_ID_MAP    = { 'building-updates': 'updates' };        // → categoryConfig id
 const CAT_STORE_MAP = { 'building-updates': 'buildingUpdates' };// → MOCK_PROVIDERS key
+
+/* Map a slide/item _category (Sanity values) to the openCategory() key used by
+   CATEGORIES / the menu (data-cat). Handles the naming mismatches: forSale→sale,
+   buildingUpdates→building-updates, etc. */
+function catKeyFor(cat) {
+    if (!cat) return '';
+    const m = {
+        forsale: 'sale', sale: 'sale', forrent: 'rent', rent: 'rent',
+        buildingupdates: 'building-updates', 'building-updates': 'building-updates',
+        notice: 'building-updates', notices: 'building-updates',
+        food: 'food', restaurant: 'food', dining: 'food',
+        groceries: 'groceries', services: 'services',
+        healthbeauty: 'healthBeauty', leisuretravel: 'leisureTravel',
+        shopping: 'shopping', education: 'education', events: 'events'
+    };
+    return m[String(cat).toLowerCase()] || cat;
+}
 
 /* ── CTA button labels — MUST mirror form-submit-v2.html exactly ──
    The vendor form (form-submit-v2.html) renders the live CTA-button preview the
@@ -3510,6 +3530,22 @@ const sendConfirmOk = document.getElementById('sendConfirmOk');
 if (sendConfirmOk) sendConfirmOk.addEventListener('click', function() {
     document.getElementById('sendConfirmPanel').style.display = 'none';
     document.getElementById('sendLinkBtn').style.display = '';
+});
+
+/* Tap the category eyebrow pill (e.g. "บริการ", "ข่าวสารอาคาร") → open that
+   category's combined screen. Resolve the slot from the tapped pill, not SLOTS[cur]. */
+stage.addEventListener('click', e => {
+    const eb = e.target.closest('.slot-eyebrow');
+    if (!eb) return;
+    e.stopPropagation();
+    const slotEl = eb.closest('.slot');
+    const idx = (slotEl && slotEl.dataset.index != null) ? +slotEl.dataset.index : cur;
+    const s = SLOTS[idx];
+    if (!s) return;
+    const key = catKeyFor(s._category);
+    const cat = (typeof CATEGORIES !== 'undefined') ? CATEGORIES[key] : null;
+    // Only navigate when the category actually has items — never open an empty screen.
+    if (typeof openCategory === 'function' && cat && (cat.items || []).length) openCategory(key);
 });
 
 /* CTA on the current commercial slide → detail of that offer/slot */
