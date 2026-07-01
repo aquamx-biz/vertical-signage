@@ -2152,7 +2152,9 @@ function adaptPlaylistToSlots(pl) {
         const ctas = [];
         if (item.ctaType) {
             ctas.push({ kind: 'primary', label: item.ctaLabel || ctaLabelFor(item.ctaType, slotCat), icon: '→', ctaType: item.ctaType, url: item.ctaURL || '' });
-        } else {
+        } else if (item.kind !== 'notice') {
+            // Building notices (No Smoking, water bill, mourning…) are informational —
+            // NO offer-style CTA. Only add the generic "View" fallback for real promos.
             ctas.push({ kind: 'primary', label: uiLang === 'th' ? 'ดูเพิ่มเติม' : 'View', icon: '→' });
         }
         if (item.ctaType2) {
