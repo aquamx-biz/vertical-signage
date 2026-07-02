@@ -160,13 +160,10 @@ body {
     position: absolute; inset: 0;
     background-color: #000;      /* letterbox bars = black */
     transform-origin: center;
-    /* Promote to its own GPU layer so the Ken-Burns transform just moves a texture
-       instead of re-rasterizing the full-screen image every frame. Without this,
-       Android WebView re-paints per frame and shows a half-loaded image mid-zoom. */
-    will-change: transform;
-    backface-visibility: hidden;
+    /* No will-change / GPU promotion: Ken-Burns is disabled, and forcing the
+       full-screen image into a single composited layer was itself causing the
+       half-painted image on weak Android WebView (layer > GPU texture limit). */
 }
-.slot-media-img { backface-visibility: hidden; }
 /* Hero image as a real <img> (CSS background-image didn't paint on Edge).
    object-fit here is just the pre-load default; fitMedia(this) sets the real value
    on load from the image's ratio: ~9:16 → cover (full-bleed), other → contain (bars). */
@@ -175,14 +172,14 @@ body {
    .media-zoom to the .slot-media when the image fills the frame; a letterboxed
    (contain) image gets no class → stays still so its edges aren't cropped. */
 .slot[data-kind="commercial"].active .slot-media.media-zoom {
-    animation: ken-burns 14s ease-out forwards;
+    /* Ken-Burns DISABLED — animating a full-screen image layer overwhelmed the weak
+       Android WebView GPU (composited only the top, rest black until it caught up).
+       Static images render fully. Re-enable only on GPU-capable players. */
+    animation: none;
 }
-/* While the outgoing slide fades out, HOLD its zoomed transform instead of
-   letting it snap back to scale 1 (which happens when .active is removed and
-   the animation rule disappears). This keeps the crossfade smooth. */
 .slot[data-kind="commercial"].leaving .slot-media.media-zoom {
     animation: none;
-    transform: scale(1.14) translate(-2.5%, 2%);   /* hold at the zoomed end — no snap back */
+    transform: none;
 }
 @keyframes ken-burns {
     0%   { transform: scale(1.05) translate(0, 0); }
