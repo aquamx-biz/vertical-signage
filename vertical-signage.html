@@ -3861,14 +3861,22 @@ async function init() {
     // showing demo (Aurora/Mahogany) content as if it were live.
     maybeShowNoLiveDataBanner();
 
-    // Pre-warm SW cache with playlist media URLs.
+    // Pre-warm the SW cache with the DISPLAY image URLs (sized, exactly what the
+    // player requests) so every slide's image is cached right after load — not only
+    // after it cycles into view once. Every image in a multi-image ad is included.
+    // Videos are skipped (the SW caches images only).
     if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-        const mediaUrls = playlist
-            .map(item => item.url)
-            .filter(url => url && /\.(mp4|webm|mov|jpg|jpeg|png|webp)(\?.*)?$/i.test(url));
+        const isVid = u => /\.(mp4|webm|mov)(\?.*)?$/i.test(u);
+        const mediaUrls = [];
+        playlist.forEach(item => {
+            const imgs = (Array.isArray(item.images) && item.images.length)
+                ? item.images
+                : (item.url && !isVid(item.url) ? [item.url] : []);
+            imgs.forEach(u => { if (u && !isVid(u)) mediaUrls.push(sizedImg(u, 1080, 1920)); });
+        });
         if (mediaUrls.length) {
             navigator.serviceWorker.controller.postMessage({ action: 'prewarm', urls: mediaUrls });
-            console.log('[SW] Prewarm sent for', mediaUrls.length, 'media URLs');
+            console.log('[SW] Prewarm sent for', mediaUrls.length, 'image URLs (sized)');
         }
     }
 
