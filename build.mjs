@@ -71,11 +71,11 @@ console.log(`Found ${projects.length} active project(s): ${projects.map(p => p.c
 const swSource = readFileSync(join(__dirname, 'sw.js'), 'utf8')
 
 // Per-project player template. Most projects use the proven vertical-signage.html.
-// ALL projects now use the mockup-v7 player (with the rich playlist projection).
+// The kiosk player is vertical-signage.html (formerly mockup-v7.html — renamed once it
+// became the player for every project; the previous player is preserved in git history).
 // PLAYER_BY_CODE is a per-project override map — empty means everyone gets the default.
-// Rollback: set DEFAULT_PLAYER back to 'vertical-signage.html' and push.
 const PLAYER_BY_CODE = { }
-const DEFAULT_PLAYER = 'mockup-v7.html'
+const DEFAULT_PLAYER = 'vertical-signage.html'
 
 // Playlist projections. vertical-signage uses the minimal set; mockup-v7 needs the
 // rich set (provider object/logo, eyebrow, sub, CTAs, menu/order items). The rich
@@ -176,7 +176,7 @@ for (const project of projects) {
   const { _id: projectId, code, title } = project
   const tplFile = PLAYER_BY_CODE[code] || DEFAULT_PLAYER
   const templateHtml = readFileSync(join(__dirname, tplFile), 'utf8')
-  const playlistProjection = tplFile === 'mockup-v7.html' ? PLAYLIST_PROJ_V7 : PLAYLIST_PROJ_MIN
+  const playlistProjection = PLAYLIST_PROJ_V7   // single player → always the rich projection
   console.log(`\nBuilding [${code}] ${title}…  (player: ${tplFile})`)
 
   // Fetch all project-scoped data in parallel
@@ -327,11 +327,11 @@ for (const project of projects) {
   writeFileSync(join(outDir, 'index.html'), injectedHtml, 'utf8')
   writeFileSync(join(outDir, 'sw.js'),     swSource,     'utf8')
 
-  // Category icons are referenced only by the mockup-v7 player (icons/*.svg) —
+  // Category icons are referenced by the kiosk player (icons/*.svg) —
   // copy the folder for those projects so they aren't 404. Skip for others so
   // they don't get a spurious icons/ diff that redeploys them.
   const iconsDir = join(__dirname, 'icons')
-  if (tplFile === 'mockup-v7.html' && existsSync(iconsDir)) cpSync(iconsDir, join(outDir, 'icons'), { recursive: true })
+  if (existsSync(iconsDir)) cpSync(iconsDir, join(outDir, 'icons'), { recursive: true })
 
   // _headers: Netlify reads this from the publish directory unconditionally.
   // More reliable than netlify.toml when the site uses a repo subdirectory as publish dir.

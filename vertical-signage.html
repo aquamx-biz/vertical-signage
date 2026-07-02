@@ -2387,18 +2387,26 @@ function crossfadeMedia(media, url) {
     const next = document.createElement('img');
     next.className = 'slot-media-img';
     next.alt = '';
+    next.decoding = 'async';
     next.style.opacity = '0';
-    next.addEventListener('load', function onLoad() {
-        next.removeEventListener('load', onLoad);
+    const reveal = () => {
+        if (!next.isConnected) media.appendChild(next);
         fitMedia(next);
         void next.offsetWidth;                              // commit the opacity:0 frame…
         next.style.opacity = '1';                           // …then transition to 1 (CSS handles the fade)
         setTimeout(() => {                                  // after the fade, drop the old frame(s)
             media.querySelectorAll('.slot-media-img').forEach(im => { if (im !== next) im.remove(); });
         }, 700);
-    });
-    media.appendChild(next);
+    };
     next.src = sizedImg(url, 1080, 1920);
+    // Decode the FULL image off-thread before revealing it — on weak Android WebView
+    // a not-yet-decoded image paints top-first (half-loaded) mid-crossfade. decode()
+    // guarantees we only ever fade in a fully-painted frame.
+    if (next.decode) {
+        next.decode().then(reveal).catch(() => { next.addEventListener('load', reveal, { once: true }); });
+    } else {
+        next.addEventListener('load', reveal, { once: true });
+    }
 }
 
 function renderCommercial(s) {
@@ -2422,7 +2430,7 @@ function renderCommercial(s) {
     // Use a real <img> (like vertical-signage's #imageSlide). CSS background-image
     // failed to paint on the user's Edge; <img> renders reliably.
     // onload=fitMedia → decide cover vs contain from the IMAGE's own ratio (see fitMedia).
-    const mediaImg = bgUrl ? `<img class="slot-media-img" src="${sizedImg(bgUrl, 1080, 1920)}" alt="" onload="fitMedia(this)">` : '';
+    const mediaImg = bgUrl ? `<img class="slot-media-img" src="${sizedImg(bgUrl, 1080, 1920)}" alt="" decoding="async" onload="fitMedia(this)">` : '';
     return `
         <div class="slot-media">${mediaImg}</div>
         ${videoHTML}
@@ -2616,7 +2624,7 @@ function manageSlotVideo(idx) {
             const layers = media.querySelectorAll('.slot-media-img');
             layers.forEach((im, i) => { if (i > 0) im.remove(); });
             const base = media.querySelector('.slot-media-img');
-            if (base) { base.style.opacity = '1'; if (base.getAttribute('src') !== s.images[0]) base.src = s.images[0]; }
+            if (base) { base.style.opacity = '1'; const first = sizedImg(s.images[0], 1080, 1920); if (base.getAttribute('src') !== first) base.src = first; }
         }
         let imgIdx = 0;   // image[0] is already on screen from the initial render
         const step = () => {
