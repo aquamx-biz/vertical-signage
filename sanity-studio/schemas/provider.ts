@@ -137,8 +137,14 @@ export default defineType({
     }),
 
     // ── Branding ─────────────────────────────────────────────────────────────
-    defineField({ name: 'logo',       title: 'Logo',        type: 'image', options: { hotspot: true } }),
-    defineField({ name: 'coverImage', title: 'Cover Image', type: 'image', options: { hotspot: true } }),
+    defineField({
+      name: 'logo', title: 'Logo', type: 'image', options: { hotspot: true },
+      description: 'ตราร้านแบบจัตุรัส (แนะนำ PNG พื้นโปร่งใส) — ใช้เป็นโลโก้มุมขวาบนของโปสเตอร์บนจอ และไอคอนข้างชื่อร้านในแอป (หน้าร้าน + หน้าโปรโมชั่น). Square brand mark — shown top-right on the on-screen poster and as the store icon in the app.',
+    }),
+    defineField({
+      name: 'coverImage', title: 'Cover Image', type: 'image', options: { hotspot: true },
+      description: 'รูปปกแนวนอน (รูปร้าน / บรรยากาศ) — ใช้เป็นภาพใหญ่ส่วนหัวหน้าร้านในแอป, ภาพในป๊อปอัปรายละเอียดบนจอ และภาพพรีวิวตอนแชร์ลิงก์. Wide cover photo — the hero at the top of the store page, the detail image on-screen, and the link-share preview.',
+    }),
 
     // ── Description ───────────────────────────────────────────────────────────
     defineField({ name: 'description_th', title: 'Description (Thai)',    type: 'text', rows: 3,

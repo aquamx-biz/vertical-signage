@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ตั้งค่าร้าน Provider · Submit Form</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=Anton&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+:root {
+    --navy:#0E3361; --navy-deep:#072147;
+    --orange:#C9864C; --orange-strong:#A36738; --orange-soft:#F6E5D0;
+    --cream:#FAF6ED; --ink:#0B1B33; --muted:#5C6B82; --white:#fff;
+    --line:#EADFC9; --ink-40:#8B98AE; --green:#2E9E5B;
+}
+html, body { background:var(--cream); color:var(--ink); font-family:'IBM Plex Sans Thai','Nunito',system-ui,sans-serif; -webkit-font-smoothing:antialiased; min-height:100vh; }
+a { color:inherit; text-decoration:none; }
+
+/* NAV */
+.container { max-width:1200px; margin:0 auto; padding:0 32px; }
+.nav-wrap { background:var(--white); border-bottom:1px solid var(--line); position:sticky; top:0; z-index:50; }
+.nav { height:76px; display:flex; align-items:center; justify-content:space-between; }
+.brand { font-family:'Nunito',sans-serif; font-weight:800; font-size:26px; color:var(--navy); letter-spacing:-0.02em; }
+.brand .x { color:var(--orange); }
+.nav-links { display:flex; gap:34px; }
+.nav-links a { color:var(--ink); font-weight:500; font-size:15.5px; }
+.nav-right { display:flex; align-items:center; gap:10px; }
+.lang-btn { background:none; border:1.5px solid var(--navy); border-radius:8px; padding:7px 14px; font-size:13px; font-weight:700; color:var(--navy); font-family:'Nunito',sans-serif; cursor:pointer; }
+
+/* HEADER */
+.page { max-width:1180px; margin:0 auto; padding:48px 40px 80px; }
+.eyebrow { display:inline-flex; align-items:center; gap:10px; font-family:'Nunito',sans-serif; font-size:14px; color:var(--orange-strong); letter-spacing:0.06em; text-transform:uppercase; font-weight:700; margin-bottom:14px; }
+.eyebrow .dot { width:8px; height:8px; border-radius:50%; background:var(--orange); }
+h1.title { font-family:'Nunito',sans-serif; font-size:42px; font-weight:800; line-height:1.15; color:var(--navy); margin-bottom:14px; }
+h1.title .accent { color:var(--orange); }
+.lede { font-size:16px; color:var(--muted); max-width:700px; line-height:1.6; }
+
+/* context banner */
+.who { display:flex; align-items:center; gap:14px; background:#fcf6ee; border:1.5px solid var(--orange-soft); border-radius:14px; padding:14px 18px; margin:24px 0 6px; }
+.who .ic { font-size:26px; flex-shrink:0; }
+.who .tx { font-size:14px; color:var(--muted); line-height:1.45; }
+.who .tx b { color:var(--orange-strong); font-weight:800; }
+
+/* layout */
+.wrap { display:grid; grid-template-columns:1.4fr 1fr; gap:34px; margin-top:26px; align-items:start; }
+
+/* FORM */
+.form-card { background:var(--white); border:1px solid var(--line); border-radius:20px; padding:28px 26px; }
+.sec-h { font-family:'Nunito',sans-serif; font-weight:800; font-size:13px; text-transform:uppercase; letter-spacing:0.05em; color:var(--orange-strong); margin:22px 0 12px; padding-bottom:7px; border-bottom:1px solid var(--line); }
+.sec-h:first-child { margin-top:0; }
+.fld { margin-bottom:16px; }
+.row { display:flex; gap:14px; }
+.row .fld { flex:1; }
+label { display:flex; justify-content:space-between; align-items:baseline; gap:8px; font-size:12px; font-weight:700; color:var(--ink); margin-bottom:6px; }
+label .req { color:var(--orange); }
+label .cnt { font-size:11px; font-weight:600; color:var(--ink-40); }
+.lico { display:inline-flex; align-items:center; gap:5px; }
+input[type=text], input[type=url], input[type=tel], select, textarea {
+    width:100%; border:1.5px solid var(--line); border-radius:10px; padding:11px 13px;
+    font-family:inherit; font-size:14px; color:var(--ink); background:#fff; transition:border-color 0.15s;
+}
+input:focus, select:focus, textarea:focus { outline:none; border-color:var(--orange); }
+input::placeholder, textarea::placeholder { color:#bcc4d0; }
+textarea { resize:vertical; min-height:84px; line-height:1.5; }
+select { cursor:pointer; appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%235C6B82' d='M6 8 0 0h12z'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 14px center; padding-right:34px; }
+.hint { font-size:11.5px; color:var(--muted); margin-top:5px; }
+
+/* upload */
+.up { border:1.5px dashed var(--line); border-radius:12px; padding:16px; text-align:center; cursor:pointer; transition:border-color 0.15s, background 0.15s; }
+.up:hover { border-color:var(--orange); background:#fffdf8; }
+.up .ic { font-size:22px; }
+.up .t { font-size:13px; color:var(--muted); margin-top:4px; }
+.up .t b { color:var(--orange-strong); }
+.up input { display:none; }
+.thumb { width:72px; height:72px; border-radius:11px; background-size:cover; background-position:center; border:1px solid var(--line); margin-top:10px; }
+.thumb.wide { width:120px; height:72px; }
+
+/* locked auto */
+.locked { margin-top:8px; background:#f3faf5; border:1.5px solid #cfe9d8; border-radius:14px; padding:16px 18px; }
+.locked .lh { display:flex; align-items:center; gap:8px; font-weight:800; font-size:12.5px; color:#1f7a45; margin-bottom:10px; }
+.locked .chips { display:flex; flex-wrap:wrap; gap:7px; }
+.locked .chip { font-size:12px; color:#5b7a66; background:#fff; border:1px solid #cfe9d8; border-radius:8px; padding:5px 10px; }
+.locked .note { font-size:12px; color:var(--muted); margin-top:9px; line-height:1.45; }
+
+/* submit */
+.submit-row { margin-top:24px; display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+.btn-submit { background:var(--navy); color:#fff; border:none; border-radius:12px; padding:15px 32px; font-family:'Nunito',sans-serif; font-weight:800; font-size:16px; cursor:pointer; transition:background 0.15s, transform 0.1s; }
+.btn-submit:hover { background:var(--navy-deep); }
+.btn-submit:active { transform:scale(0.98); }
+.submit-note { font-size:12.5px; color:var(--muted); }
+.submit-note b { color:#1f7a45; }
+.ok { display:none; align-items:center; gap:12px; background:#f3faf5; border:1.5px solid #9fd9b4; border-radius:14px; padding:18px 22px; margin-top:20px; }
+.ok.show { display:flex; }
+.ok .em { font-size:30px; }
+.ok .tx b { display:block; font-family:'Nunito',sans-serif; font-weight:800; font-size:17px; color:#1f7a45; }
+.ok .tx span { font-size:13px; color:var(--muted); }
+
+/* ===== LIVE PREVIEW (signage totem v6 — provider) ===== */
+.preview { position:sticky; top:100px; }
+.pv-label { display:flex; align-items:center; gap:8px; font-family:'Nunito',sans-serif; font-weight:800; font-size:12px; text-transform:uppercase; letter-spacing:0.05em; color:var(--muted); margin-bottom:12px; justify-content:center; }
+.pv-label .live { display:inline-flex; align-items:center; gap:5px; color:var(--green); }
+.pv-label .live::before { content:''; width:7px; height:7px; border-radius:50%; background:var(--green); animation:blink 1.4s ease-in-out infinite; }
+@keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+.totem-wrap { display:flex; justify-content:center; }
+.totem { width:230px; }
+.tt-screen { width:100%; aspect-ratio:9/16; border:3px solid #0c111c; border-bottom:none; border-radius:9px 9px 0 0; position:relative; overflow:hidden; background:#0a0c10; }
+.tt-base { width:100%; height:26px; background:linear-gradient(180deg,#1b2740 0%,#05080d 100%); border-top:2px solid #36486a; border-radius:0 0 9px 9px; box-shadow:inset 0 2px 5px -1px rgba(0,0,0,0.5), 0 14px 24px -8px rgba(0,0,0,0.5); }
+.tt-bg { position:absolute; inset:0; background-size:cover; background-position:center; background-color:#11151c; }
+.tt-bg.empty::after { content:'รูปปก (cover) จะขึ้นตรงนี้'; position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:#3a4456; font-size:9px; }
+.tt-grad { position:absolute; inset:auto 0 0 0; height:72%; background:linear-gradient(0deg,rgba(5,6,8,0.92) 0%,rgba(5,6,8,0.35) 50%,transparent 100%); }
+.tt-menu { position:absolute; top:10px; left:10px; z-index:6; display:flex; align-items:center; gap:4px; background:rgba(8,12,22,0.5); border:1px solid rgba(255,255,255,0.32); color:#fff; font-size:7px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; padding:5px 8px; border-radius:6px; }
+.tt-logo { position:absolute; top:10px; right:11px; z-index:6; width:30px; height:30px; border-radius:9px; background:#fff; background-size:cover; background-position:center; box-shadow:0 2px 7px rgba(0,0,0,0.35); display:flex; align-items:center; justify-content:center; font-family:'Anton',sans-serif; font-size:16px; color:var(--navy); }
+.tt-content { position:absolute; left:12px; right:12px; bottom:78px; z-index:5; display:flex; flex-direction:column; align-items:flex-start; gap:7px; }
+.tt-eyebrow { display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border:1px solid rgba(255,255,255,0.4); border-radius:20px; background:rgba(8,12,22,0.35); font-size:7px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:#fff; }
+.tt-eyebrow::before { content:''; width:4px; height:4px; border-radius:50%; background:#6DD5E8; box-shadow:0 0 5px #6DD5E8; }
+.tt-title { font-family:'Anton',sans-serif; font-size:20px; line-height:0.95; text-transform:uppercase; color:#fff; text-shadow:0 1px 6px rgba(0,0,0,0.5); }
+.tt-sub { font-size:9px; line-height:1.4; color:rgba(255,255,255,0.88); text-shadow:0 1px 4px rgba(0,0,0,0.55); }
+.tt-dock { position:absolute; left:12px; bottom:12px; z-index:6; display:grid; grid-template-columns:max-content; gap:5px; }
+.tt-cta { width:100%; display:flex; align-items:center; justify-content:space-between; gap:16px; background:rgba(8,12,22,0.5); border:1px solid rgba(255,255,255,0.4); color:#fff; font-family:'Nunito',sans-serif; font-weight:700; font-size:8.5px; letter-spacing:0.08em; text-transform:uppercase; padding:7px 11px; border-radius:8px; backdrop-filter:blur(4px); }
+.tt-cta.sec { font-weight:600; border-color:rgba(255,255,255,0.26); }
+.prov-link { display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap; background:#f6f8fb; border:1px solid var(--line); border-radius:12px; padding:13px 16px; margin-top:8px; }
+.prov-link .t { font-size:13px; color:var(--muted); }
+.prov-link a { font-family:'Nunito',sans-serif; font-weight:700; font-size:13px; color:var(--navy); white-space:nowrap; }
+.prov-link a:hover { color:var(--orange-strong); }
+.pv-foot { text-align:center; font-size:11.5px; color:var(--ink-40); margin-top:16px; line-height:1.5; }
+/* toggle */
+.pv-toggle-wrap { display:flex; justify-content:center; margin-bottom:16px; }
+.pv-toggle { display:inline-flex; background:#eef0f4; border-radius:11px; padding:3px; gap:3px; }
+.pv-toggle button { border:none; background:none; font-family:'Nunito',sans-serif; font-weight:700; font-size:12.5px; color:var(--muted); padding:8px 18px; border-radius:8px; cursor:pointer; transition:all 0.15s; }
+.pv-toggle button.on { background:#fff; color:var(--navy); box-shadow:0 1px 4px rgba(0,0,0,0.12); }
+/* web phone (provider page) */
+.webphone { display:flex; justify-content:center; }
+.wp-frame { width:230px; background:#0c111c; border-radius:28px; padding:8px; box-shadow:0 18px 36px -14px rgba(0,0,0,0.5); }
+.wp-scr { background:#fff; border-radius:22px; overflow:hidden; }
+.wp-bar { height:24px; display:flex; align-items:center; justify-content:space-between; padding:0 11px; font-size:8px; color:var(--muted); font-weight:600; }
+.wp-bar b { color:var(--orange); font-weight:800; }
+.wp-cover { position:relative; aspect-ratio:16/10; background-size:cover; background-position:center; background-color:#11151c; }
+.wp-cover::after { content:''; position:absolute; inset:0; background:linear-gradient(180deg,rgba(8,12,22,0) 35%,rgba(8,12,22,0.82)); }
+.wp-cover.empty::before { content:'รูปปก'; position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:#3a4456; font-size:10px; z-index:1; }
+.wp-cid { position:absolute; left:10px; bottom:9px; z-index:2; display:flex; align-items:center; gap:7px; }
+.wp-cid .lg { width:28px; height:28px; border-radius:8px; background:#fff; background-size:cover; background-position:center; color:var(--navy); display:flex; align-items:center; justify-content:center; font-family:'Anton',sans-serif; font-size:15px; box-shadow:0 2px 7px rgba(0,0,0,0.3); }
+.wp-cid .nm { color:#fff; }
+.wp-cid .nm b { display:block; font-family:'Nunito',sans-serif; font-weight:800; font-size:11px; line-height:1.1; }
+.wp-cid .nm span { font-size:6.5px; opacity:0.88; }
+.wp-body { padding:10px 11px 12px; }
+.wp-h { font-size:7px; font-weight:800; text-transform:uppercase; letter-spacing:0.06em; color:var(--orange-strong); margin-bottom:3px; }
+.wp-about { font-size:8.5px; line-height:1.5; color:var(--muted); margin-bottom:9px; }
+.wp-contact { display:flex; gap:4px; }
+.wp-contact .wcb { flex:1; border:1px solid var(--line); border-radius:8px; padding:6px 0; display:flex; flex-direction:column; align-items:center; gap:2px; font-size:6px; color:var(--muted); font-weight:600; }
+.wp-contact .wcb span { font-size:11px; }
+.wp-info { border-top:1px solid #f0f0f0; padding-top:6px; margin-top:7px; }
+.wp-info .h { font-size:7px; font-weight:800; text-transform:uppercase; letter-spacing:0.05em; color:var(--navy); margin-bottom:2px; }
+.wp-info .t { font-size:8px; color:var(--muted); }
+.wp-gh { font-size:7.5px; font-weight:800; text-transform:uppercase; letter-spacing:0.05em; color:var(--navy); margin:10px 0 6px; }
+.wp-grid { display:grid; grid-template-columns:1fr 1fr; gap:5px; }
+.wp-gc { border:1px solid var(--line); border-radius:8px; overflow:hidden; }
+.wp-gc .gi { aspect-ratio:1/1; background:#e7ecf2; }
+.wp-gc .gt { padding:3px 5px 4px; }
+.wp-gc .gt .n { font-size:6.5px; font-weight:700; color:var(--ink); line-height:1.2; }
+.wp-gc .gt .p { font-size:7px; font-weight:800; color:var(--orange-strong); margin-top:1px; }
+.wp-gc .gt .muted { color:var(--ink-40); font-weight:400; }
+
+@media (max-width:900px){ .wrap{ grid-template-columns:1fr; } .preview{ position:static; order:-1; margin-bottom:10px; } }
+@media (max-width:600px){ .page{ padding:32px 18px 56px; } .container{ padding:0 18px; } .nav-links{ display:none; } .row{ flex-direction:column; gap:0; } }
+</style>
+</head>
+<body>
+
+<div class="nav-wrap"><div class="container"><nav class="nav">
+    <a href="https://aquamx.biz" class="brand">aqua<span class="x">mx</span></a>
+    <div class="nav-links"><a href="https://aquamx.biz#how">วิธีทำงาน</a><a href="https://aquamx.biz#network">เครือข่าย</a><a href="https://aquamx.biz#contact">ติดต่อ</a></div>
+    <div class="nav-right"><button class="lang-btn">EN</button></div>
+</nav></div></div>
+
+<div class="page">
+
+    <div class="eyebrow"><span class="dot"></span>Provider Profile · ตั้งค่าร้าน</div>
+    <h1 class="title">ตั้งค่า <span class="accent">ร้าน</span> ของคุณ</h1>
+    <p class="lede">กรอกข้อมูลร้านครั้งเดียว — ทุก Offer ของร้านนี้จะดึงข้อมูลติดต่อ/เวลา/ที่ตั้งไปใช้ร่วมกันอัตโนมัติ ไม่ต้องกรอกซ้ำต่อโปร</p>
+
+    <div class="who">
+        <div class="ic">🏪</div>
+        <div class="tx">นี่คือ <b>โปรไฟล์ร้าน</b> — กรอกครั้งเดียว ใช้ได้ทุก Offer · ตั้งเสร็จแล้วค่อยไปลง Offer แต่ละชิ้นทีหลัง</div>
+    </div>
+
+    <div class="wrap">
+
+        <!-- ===== FORM ===== -->
+        <form class="form-card" id="provForm" autocomplete="off">
+
+            <div class="sec-h">ข้อมูลร้าน</div>
+
+            <div class="fld">
+                <label>ชื่อร้าน <span class="req">*</span><span class="cnt"><span id="cName">0</span>/40</span></label>
+                <input type="text" id="fName" maxlength="40" placeholder="เช่น Aurora Bistro">
+            </div>
+
+            <div class="fld">
+                <label>ประเภทร้าน <span class="req">*</span> <span style="font-weight:400;color:var(--muted);font-size:11px;">แตะเลือก · หมวดเดียวกับหน้า offer</span></label>
+                <style>
+                  .cat-chips { display:flex; flex-wrap:wrap; gap:8px; }
+                  .cat-chip { display:inline-flex; align-items:center; gap:5px; padding:8px 14px; border:1.5px solid var(--line); border-radius:20px; font-size:14px; font-weight:600; color:var(--ink); background:#fff; cursor:pointer; transition:background .15s,border-color .15s,color .15s; user-select:none; }
+                  .cat-chip:hover { border-color:var(--orange); }
+                  .cat-chip.on { background:var(--orange); border-color:var(--orange); color:#fff; box-shadow:0 3px 9px rgba(201,134,76,0.3); }
+                </style>
+                <div class="cat-chips" id="fCatChips">
+                    <span class="cat-chip" data-cat="Dining">🍽️ Dining</span>
+                    <span class="cat-chip" data-cat="Groceries">🛒 Groceries</span>
+                    <span class="cat-chip" data-cat="Health & Beauty">💆 Health &amp; Beauty</span>
+                    <span class="cat-chip" data-cat="Leisure & Travel">🏖️ Leisure &amp; Travel</span>
+                    <span class="cat-chip" data-cat="Shopping">🛍️ Shopping</span>
+                    <span class="cat-chip" data-cat="Services">🔧 Services</span>
+                    <span class="cat-chip" data-cat="Education">🎓 Education</span>
+                    <span class="cat-chip" data-cat="Events">🎉 Events</span>
+                    <span class="cat-chip" data-cat="For Rent">🏠 For Rent</span>
+                    <span class="cat-chip" data-cat="For Sale">🏷️ For Sale</span>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="fld">
+                    <label>โลโก้ร้าน <span class="cnt">PNG โปร่งใส · จัตุรัส</span></label>
+                    <label class="up" for="fLogo"><div class="ic">🅰️</div><div class="t"><b>อัปโหลดโลโก้</b></div><input type="file" id="fLogo" accept="image/png,image/svg+xml,image/jpeg,image/webp"></label>
+                    <div class="thumb" id="logoThumb" style="display:none;"></div>
+                    <div class="hint" style="margin-top:5px;"><b>ใช้ทำอะไร:</b> ตราร้านมุมขวาบนของโปสเตอร์บนจอ + ไอคอนข้างชื่อร้านในแอป<br>แนะนำ <b>PNG พื้นหลังโปร่งใส</b> (หรือ SVG) · จัตุรัส 1:1 · ≥ 512×512px · เลี่ยง JPG พื้นขาว (จะเป็นกล่องขาวบนจอเข้ม)</div>
+                </div>
+                <div class="fld">
+                    <label>รูปปก (cover) <span class="cnt">แนวนอน 16:9</span></label>
+                    <label class="up" for="fCover"><div class="ic">🖼️</div><div class="t"><b>อัปโหลดรูปปก</b></div><input type="file" id="fCover" accept="image/jpeg,image/png,image/webp"></label>
+                    <div class="thumb wide" id="coverThumb" style="display:none;"></div>
+                    <div class="hint" style="margin-top:5px;"><b>ใช้ทำอะไร:</b> ภาพใหญ่ส่วนหัวหน้าร้านในแอป + ภาพในป๊อปอัปรายละเอียดบนจอ + พรีวิวตอนแชร์ลิงก์<br>JPG/PNG · แนวนอน 16:9 · ≥ 1280×720px · ภาพคมชัด ไม่เบลอ</div>
+                </div>
+            </div>
+
+            <div class="fld">
+                <label>แนะนำร้าน <span class="cnt"><span id="cDesc">0</span>/140</span></label>
+                <textarea id="fDesc" maxlength="140" placeholder="เกี่ยวกับร้าน บรรยากาศ จุดเด่น สั้น ๆ"></textarea>
+            </div>
+
+            <div class="sec-h">ช่องทางติดต่อ <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted);font-size:11px;">→ ปุ่ม Call · LINE · Map · Web</span></div>
+
+            <div class="row">
+                <div class="fld"><label><span class="lico">📞 เบอร์โทร</span></label><input type="tel" id="fPhone" placeholder="02-123-4567"></div>
+                <div class="fld"><label><span class="lico">💬 LINE</span></label><input type="text" id="fLine" placeholder="@aurorabistro หรือลิงก์ LINE"></div>
+            </div>
+            <div class="row">
+                <div class="fld"><label><span class="lico">🌐 เว็บไซต์</span></label><input type="url" id="fWeb" placeholder="aurorabistro.com"></div>
+                <div class="fld"><label><span class="lico">📍 ที่ตั้ง / ลิงก์แผนที่</span></label><input type="text" id="fLoc" placeholder="ชั้น 2, Mahogany Tower"></div>
+            </div>
+            <div class="fld"><label><span class="lico">🕐 เวลาเปิด-ปิด</span></label><input type="text" id="fHours" placeholder="จันทร์–อาทิตย์ 08:00–22:00"></div>
+
+            <!-- offers link (offers grid auto-builds from the offers you add) -->
+            <div class="prov-link">
+                <span class="t">🎟️ โปร/เมนูทั้งหมดจะรวมในหน้าร้านอัตโนมัติ</span>
+                <a href="form-offer-submit.html">＋ ลง Offer ใต้ร้านนี้ →</a>
+            </div>
+
+            <div class="submit-row">
+                <button type="submit" class="btn-submit">บันทึกร้าน →</button>
+                <div class="submit-note">ตั้งเสร็จแล้ว <b>พร้อมให้ลง Offer</b> ใต้ร้านนี้ได้เลย</div>
+            </div>
+
+            <div class="ok" id="ok">
+                <span class="em">✅</span>
+                <div class="tx"><b>บันทึกร้านเรียบร้อย</b><span>พร้อมใช้กับทุก Offer · นี่คือฟอร์มตัวอย่าง (ยังไม่เชื่อม Sanity จริง)</span></div>
+            </div>
+
+        </form>
+
+        <!-- ===== LIVE PREVIEW ===== -->
+        <div class="preview">
+            <div class="pv-label">ตัวอย่าง · <span class="live">LIVE</span></div>
+            <div class="pv-toggle-wrap">
+                <div class="pv-toggle">
+                    <button type="button" class="on" data-view="sign">📺 จอป้าย</button>
+                    <button type="button" data-view="web">📱 มือถือ</button>
+                </div>
+            </div>
+
+            <!-- SIGNAGE -->
+            <div id="pvSign">
+                <div class="totem-wrap"><div class="totem">
+                    <div class="tt-screen">
+                        <div class="tt-bg empty" id="pvBg"></div>
+                        <div class="tt-grad"></div>
+                        <div class="tt-menu">☰ Menu</div>
+                        <div class="tt-logo" id="pvLogo" style="display:none;"></div>
+                        <div class="tt-content">
+                            <div class="tt-eyebrow" id="pvEyebrow">ประเภทร้าน</div>
+                            <div class="tt-title" id="pvTitle">ชื่อร้านของคุณ</div>
+                            <div class="tt-sub" id="pvSub"></div>
+                        </div>
+                        <div class="tt-dock">
+                            <span class="tt-cta"><span>View Store</span><span>→</span></span>
+                            <span class="tt-cta sec"><span>All Offers</span><span>↗</span></span>
+                        </div>
+                    </div>
+                    <div class="tt-base"></div>
+                </div></div>
+                <div class="pv-foot">จอร้าน = แบรนด์ · <b>ไม่มีราคา</b> · กดสแกนไปต่อบนมือถือ</div>
+            </div>
+
+            <!-- WEB (provider page after scan) -->
+            <div id="pvWeb" style="display:none;">
+                <div class="webphone"><div class="wp-frame"><div class="wp-scr">
+                    <div class="wp-bar"><span>📍 Mahogany Tower</span><span>aqua<b>mx</b></span></div>
+                    <div class="wp-cover empty" id="wpCover">
+                        <div class="wp-cid"><span class="lg" id="wpLogo">?</span><span class="nm"><b id="wpName">ชื่อร้านของคุณ</b><span id="wpCat">ประเภทร้าน</span></span></div>
+                    </div>
+                    <div class="wp-body">
+                        <div class="wp-h">เกี่ยวกับร้าน</div>
+                        <div class="wp-about" id="wpAbout">แนะนำร้านจะขึ้นตรงนี้</div>
+                        <div class="wp-contact">
+                            <div class="wcb"><span>📞</span>Call</div>
+                            <div class="wcb"><span>💬</span>LINE</div>
+                            <div class="wcb"><span>📍</span>Map</div>
+                            <div class="wcb"><span>🌐</span>Web</div>
+                        </div>
+                        <div class="wp-info"><div class="h">เวลาเปิด-ปิด</div><div class="t" id="wpHours">—</div></div>
+                        <div class="wp-info"><div class="h">ที่ตั้ง</div><div class="t" id="wpLoc">—</div></div>
+                        <div class="wp-gh">โปร/เมนูทั้งหมด</div>
+                        <div class="wp-grid">
+                            <div class="wp-gc"><div class="gi"></div><div class="gt"><div class="n">Offer ของร้าน</div><div class="p">฿—</div></div></div>
+                            <div class="wp-gc"><div class="gi"></div><div class="gt"><div class="n muted">ขึ้นเองเมื่อลง Offer</div></div></div>
+                        </div>
+                    </div>
+                </div></div></div>
+                <div class="pv-foot">หน้าร้าน = แบรนด์ + ติดต่อ + โปรทั้งหมด · โปรมาจาก Offer อัตโนมัติ</div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+// shared store profile — Offer form reads this (set once per store)
+function saveProv(patch) {
+    let p = {};
+    try { p = JSON.parse(localStorage.getItem('aqProvider') || '{}'); } catch (e) {}
+    Object.assign(p, patch);
+    localStorage.setItem('aqProvider', JSON.stringify(p));
+}
+
+// preview toggle (signage / web)
+document.querySelectorAll('.pv-toggle button').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.pv-toggle button').forEach(b => b.classList.remove('on'));
+        btn.classList.add('on');
+        const web = btn.dataset.view === 'web';
+        $('pvWeb').style.display  = web ? 'block' : 'none';
+        $('pvSign').style.display = web ? 'none'  : 'block';
+    });
+});
+
+let hasLogo = false;
+$('fName').addEventListener('input', e => {
+    $('cName').textContent = e.target.value.length;
+    const v = e.target.value;
+    $('pvTitle').textContent = v || 'ชื่อร้านของคุณ';
+    $('wpName').textContent = v || 'ชื่อร้านของคุณ';
+    if (!hasLogo) $('wpLogo').textContent = (v.trim()[0] || '?').toUpperCase();  // monogram from name until logo uploaded
+    saveProv({ name: v });
+});
+document.querySelectorAll('#fCatChips .cat-chip').forEach(c => c.addEventListener('click', () => {
+    document.querySelectorAll('#fCatChips .cat-chip').forEach(x => x.classList.remove('on'));
+    c.classList.add('on');
+    const v = c.dataset.cat;
+    $('pvEyebrow').textContent = v; $('wpCat').textContent = v;
+    saveProv({ cat: v });
+});
+$('fDesc').addEventListener('input', e => {
+    $('cDesc').textContent = e.target.value.length;
+    $('pvSub').textContent = e.target.value;
+    $('wpAbout').textContent = e.target.value || 'แนะนำร้านจะขึ้นตรงนี้';
+});
+$('fHours').addEventListener('input', e => { $('wpHours').textContent = e.target.value || '—'; });
+$('fLoc').addEventListener('input', e => { $('wpLoc').textContent = e.target.value || '—'; });
+
+// logo — read as data URL so it persists for the Offer form · shows only after upload
+$('fLogo').addEventListener('change', e => {
+    const f = e.target.files[0]; if (!f) return;
+    const r = new FileReader();
+    r.onload = () => {
+        const url = r.result; hasLogo = true;
+        $('logoThumb').style.display = 'block'; $('logoThumb').style.backgroundImage = `url('${url}')`;
+        $('pvLogo').style.display = 'block'; $('pvLogo').style.backgroundImage = `url('${url}')`;
+        $('wpLogo').textContent = ''; $('wpLogo').style.backgroundImage = `url('${url}')`;
+        saveProv({ logo: url });
+    };
+    r.readAsDataURL(f);
+});
+
+// cover — preview only (not shared to Offer)
+$('fCover').addEventListener('change', e => {
+    const f = e.target.files[0]; if (!f) return;
+    const url = URL.createObjectURL(f);
+    $('coverThumb').style.display = 'block'; $('coverThumb').style.backgroundImage = `url('${url}')`;
+    $('pvBg').style.backgroundImage = `url('${url}')`; $('pvBg').classList.remove('empty');
+    $('wpCover').style.backgroundImage = `url('${url}')`; $('wpCover').classList.remove('empty');
+});
+
+$('provForm').addEventListener('submit', e => {
+    e.preventDefault();
+    $('ok').classList.add('show');
+    $('ok').scrollIntoView({ behavior:'smooth', block:'center' });
+});
+</script>
+</body>
+</html>
