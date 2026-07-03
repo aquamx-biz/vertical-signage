@@ -69,14 +69,9 @@ export default defineType({
       description: 'The building this juristic office serves. Required so notices linked to this provider can be auto-routed to the correct kiosk project. Leave blank for non-juristic providers.',
     }),
 
-    defineField({
-      name: 'category',
-      title: 'Category',
-      type: 'string',
-      options: { list: CATEGORY_LIST },
-      validation: Rule => Rule.required(),
-      description: 'Primary category for this provider.',
-    }),
+    // Category lives on each OFFER (offer.category) — the single source of truth for
+    // which kiosk category screen the offer appears under. A provider is grouped by
+    // its offers' categories, so it no longer carries its own category field.
 
     // ── Identity ─────────────────────────────────────────────────────────────
     defineField({
@@ -148,9 +143,11 @@ export default defineType({
 
     // ── Description ───────────────────────────────────────────────────────────
     defineField({ name: 'description_th', title: 'Description (Thai)',    type: 'text', rows: 3,
+      description: 'คำแนะนำร้าน/บริการสั้นๆ (2–4 บรรทัด) — แสดงเป็นย่อหน้า "เกี่ยวกับร้าน" ใต้รูปปกในหน้าร้านบนแอป และในหน้ารายละเอียดร้านบนจอ. Short "about" blurb — shown on the store page in the app and in the store detail on-screen.',
       components: { input: createTranslateInput({ sourceField: 'description_en', sourceLang: 'English', targetLang: 'Thai', buttonLabel: '✨ Translate from English' }) },
     }),
     defineField({ name: 'description_en', title: 'Description (English)', type: 'text', rows: 3,
+      description: 'English version of the store "about" blurb — shown to English-language viewers in the same places (store page in the app + store detail on-screen).',
       components: { input: createTranslateInput({ sourceField: 'description_th', sourceLang: 'Thai', targetLang: 'English', buttonLabel: '✨ Translate from Thai' }) },
     }),
 

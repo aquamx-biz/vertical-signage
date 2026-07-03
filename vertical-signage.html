@@ -1789,7 +1789,7 @@ async function loadProviders() {
                   ?? '';
         const q = `*[_type == "provider" && status == true]{
             "slug":          slug.current,
-            name_th, name_en, category, displayName,
+            name_th, name_en, displayName,
             locationText, mapUrl, phone, lineId, website, openingHours, amenities,
             "logo":          logo.asset->url,
             "coverImage":    coverImage.asset->url,
@@ -1813,9 +1813,15 @@ async function loadProviders() {
         if (!results?.length) { _ds.providers = 'mock'; return; }
         const grouped = {};
         results.forEach(p => {
-            const k = storeKeyFor(p.category);
-            if (!grouped[k]) grouped[k] = [];
-            grouped[k].push(normaliseProvider(p));
+            // Bucket the provider into each of its offers' categories (offer.category
+            // is the source of truth); each bucket carries only that category's offers.
+            const byCat = {};
+            (p.offers || []).forEach(o => { if (o.category) { (byCat[o.category] = byCat[o.category] || []).push(o); } });
+            Object.keys(byCat).forEach(cat => {
+                const k = storeKeyFor(cat);
+                if (!grouped[k]) grouped[k] = [];
+                grouped[k].push(normaliseProvider({ ...p, offers: byCat[cat] }));
+            });
         });
         Object.keys(grouped).forEach(cat => { MOCK_PROVIDERS[cat] = grouped[cat]; });
         _ds.providers = 'live';

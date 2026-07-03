@@ -209,7 +209,6 @@ for (const project of projects) {
         "slug":          slug.current,
         name_th,
         name_en,
-        category,
         providerType,
         displayName,
         locationText,
@@ -279,18 +278,28 @@ for (const project of projects) {
 
   ])
 
-  // Group providers by category (mirrors the kiosk's MOCK_PROVIDERS shape)
-  // Deduplicate offers by slug within each provider
+  // Group providers by their OFFERS' categories (offer.category is the single source
+  // of truth — providers no longer carry their own category). A provider with offers
+  // in several categories appears in each bucket, carrying only that bucket's offers.
+  // Baked shape stays { category: [providers] } so the kiosk needs no changes.
   const providers = {}
   ;(rawProviders ?? []).forEach(p => {
     const seen = new Set()
-    p.offers = (p.offers ?? []).filter(o => {
-      if (seen.has(o.slug)) return false
+    const offers = (p.offers ?? []).filter(o => {
+      if (!o.slug || seen.has(o.slug)) return false
       seen.add(o.slug)
       return true
     })
-    if (!providers[p.category]) providers[p.category] = []
-    providers[p.category].push(p)
+    const byCat = {}
+    offers.forEach(o => {
+      if (!o.category) return
+      if (!byCat[o.category]) byCat[o.category] = []
+      byCat[o.category].push(o)
+    })
+    Object.keys(byCat).forEach(cat => {
+      if (!providers[cat]) providers[cat] = []
+      providers[cat].push({ ...p, offers: byCat[cat] })
+    })
   })
 
   // Assemble the baked data object

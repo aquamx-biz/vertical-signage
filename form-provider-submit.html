@@ -197,27 +197,9 @@ select { cursor:pointer; appearance:none; background-image:url("data:image/svg+x
                 <input type="text" id="fName" maxlength="40" placeholder="เช่น Aurora Bistro">
             </div>
 
-            <div class="fld">
-                <label>ประเภทร้าน <span class="req">*</span> <span style="font-weight:400;color:var(--muted);font-size:11px;">แตะเลือก · หมวดเดียวกับหน้า offer</span></label>
-                <style>
-                  .cat-chips { display:flex; flex-wrap:wrap; gap:8px; }
-                  .cat-chip { display:inline-flex; align-items:center; gap:5px; padding:8px 14px; border:1.5px solid var(--line); border-radius:20px; font-size:14px; font-weight:600; color:var(--ink); background:#fff; cursor:pointer; transition:background .15s,border-color .15s,color .15s; user-select:none; }
-                  .cat-chip:hover { border-color:var(--orange); }
-                  .cat-chip.on { background:var(--orange); border-color:var(--orange); color:#fff; box-shadow:0 3px 9px rgba(201,134,76,0.3); }
-                </style>
-                <div class="cat-chips" id="fCatChips">
-                    <span class="cat-chip" data-cat="Dining">🍽️ Dining</span>
-                    <span class="cat-chip" data-cat="Groceries">🛒 Groceries</span>
-                    <span class="cat-chip" data-cat="Health & Beauty">💆 Health &amp; Beauty</span>
-                    <span class="cat-chip" data-cat="Leisure & Travel">🏖️ Leisure &amp; Travel</span>
-                    <span class="cat-chip" data-cat="Shopping">🛍️ Shopping</span>
-                    <span class="cat-chip" data-cat="Services">🔧 Services</span>
-                    <span class="cat-chip" data-cat="Education">🎓 Education</span>
-                    <span class="cat-chip" data-cat="Events">🎉 Events</span>
-                    <span class="cat-chip" data-cat="For Rent">🏠 For Rent</span>
-                    <span class="cat-chip" data-cat="For Sale">🏷️ For Sale</span>
-                </div>
-            </div>
+            <!-- Provider category removed — a store's category now comes from its Offers
+                 (offer.category). Pick the category when creating each Offer instead. -->
+
 
             <div class="row">
                 <div class="fld">
@@ -365,13 +347,7 @@ $('fName').addEventListener('input', e => {
     if (!hasLogo) $('wpLogo').textContent = (v.trim()[0] || '?').toUpperCase();  // monogram from name until logo uploaded
     saveProv({ name: v });
 });
-document.querySelectorAll('#fCatChips .cat-chip').forEach(c => c.addEventListener('click', () => {
-    document.querySelectorAll('#fCatChips .cat-chip').forEach(x => x.classList.remove('on'));
-    c.classList.add('on');
-    const v = c.dataset.cat;
-    $('pvEyebrow').textContent = v; $('wpCat').textContent = v;
-    saveProv({ cat: v });
-});
+// Provider category removed — category is chosen per Offer now (offer.category).
 $('fDesc').addEventListener('input', e => {
     $('cDesc').textContent = e.target.value.length;
     $('pvSub').textContent = e.target.value;
