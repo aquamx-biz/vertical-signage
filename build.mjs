@@ -235,7 +235,7 @@ for (const project of projects) {
           subCategories,
           description_th,
           description_en,
-          "primaryImage": primaryImage.asset->url,
+          "primaryImage": coalesce(primaryImage.asset->url, images[0].asset->url),
           "images":       images[].asset->url,
           ctaType,
           ctaURL,

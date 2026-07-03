@@ -2,6 +2,15 @@ import { defineField, defineType } from 'sanity'
 import { SubCategoriesInput }  from '../components/SubCategoriesInput'
 import { createTranslateInput } from '../components/TranslateInput'
 
+// Conditional visibility: show a CTA-specific field only when its CTA is picked
+// (primary OR secondary), and property specs only for property offers. Keeps the
+// Offer form short — vendors see just the fields their offer type needs.
+const ctaGate = (...types: string[]) => ({ document }: any) =>
+  !types.includes(document?.ctaType) && !types.includes(document?.ctaType2)
+const propertyGate = ({ document }: any) =>
+  !['forSale', 'forRent'].includes(document?.category) &&
+  document?.ctaType !== 'viewListing' && document?.ctaType2 !== 'viewListing'
+
 // Must stay in sync with provider.ts, media.ts, playlistItem.ts, categoryConfig.ts
 const CATEGORY_LIST = [
   { title: 'Food',             value: 'food' },
@@ -153,13 +162,17 @@ export default defineType({
       type: 'string',
       description: 'e.g. "150", "150–300", "Free", "From ฿99"',
     }),
-    defineField({ name: 'primaryImage', title: 'Primary Image', type: 'image', options: { hotspot: true } }),
+    // One image field — the FIRST image is the hero/primary (card thumbnail, ad first
+    // frame, popup/gallery lead); the rest form the gallery. Replaces the old separate
+    // Primary Image + Gallery Images. Consumers read coalesce(primaryImage, images[0])
+    // so existing docs (which still carry a separate primaryImage) keep working.
     defineField({
       name: 'images',
-      title: 'Gallery Images',
+      title: 'Images',
       type: 'array',
       of: [{ type: 'image', options: { hotspot: true } }],
       options: { layout: 'grid' },
+      description: 'รูปแรก = รูปหลัก (Hero) · รูปที่เหลือ = แกลเลอรี. First image is the main/hero; the rest are the gallery.',
     }),
 
     // ── Property listing specs (For Rent / For Sale · adType "listing") ─────────
@@ -167,7 +180,8 @@ export default defineType({
       name: 'listing',
       title: 'Property Listing Specs',
       type: 'object',
-      description: 'Structured specs for property offers (View Listing). Optional — leave empty for non-property offers.',
+      hidden: propertyGate,
+      description: 'Structured specs for property offers — shown only for For Sale / For Rent (or the View Listing CTA).',
       options: { collapsible: true, collapsed: false, columns: 2 },
       fields: [
         defineField({ name: 'bed',  title: 'Bedrooms',  type: 'number' }),
@@ -192,6 +206,7 @@ export default defineType({
       name: 'listingImages',
       title: 'Listing Photos',
       type: 'array',
+      hidden: propertyGate,
       of: [{ type: 'image', options: { hotspot: true } }],
       options: { layout: 'grid' },
       description: 'Property photos shown on the listing detail page — separate from the on-screen ad images above.',
@@ -202,6 +217,7 @@ export default defineType({
       name: 'menuItems',
       title: 'Menu Items',
       type: 'array',
+      hidden: ctaGate('viewMenu'),
       of: [{
         type: 'object',
         fields: [
@@ -218,6 +234,7 @@ export default defineType({
       name: 'orderItems',
       title: 'Order Items',
       type: 'array',
+      hidden: ctaGate('order'),
       of: [{
         type: 'object',
         fields: [
@@ -232,6 +249,7 @@ export default defineType({
       name: 'fulfillment',
       title: 'Fulfillment',
       type: 'array',
+      hidden: ctaGate('order'),
       of: [{ type: 'string' }],
       options: { list: [
         { title: 'Dine-in',  value: 'dine_in' },
@@ -245,6 +263,7 @@ export default defineType({
       name: 'booking',
       title: 'Booking Config',
       type: 'object',
+      hidden: ctaGate('book'),
       options: { collapsible: true, collapsed: false, columns: 2 },
       fields: [
         defineField({ name: 'openTime', title: 'Open Time', type: 'string', description: 'e.g. "10:00"' }),
@@ -262,6 +281,7 @@ export default defineType({
       name: 'eventInfo',
       title: 'Event Info',
       type: 'object',
+      hidden: ({ document }: any) => document?.ctaType !== 'event' && document?.ctaType2 !== 'event' && document?.category !== 'events',
       options: { collapsible: true, collapsed: false, columns: 2 },
       fields: [
         defineField({ name: 'dates', title: 'Dates', type: 'array', of: [{ type: 'string' }], description: 'e.g. "2026-07-01"' }),

@@ -1801,7 +1801,7 @@ async function loadProviders() {
                 description_th, description_en, price, availability, category, subCategories,
                 displayMode, validFrom, validTo, deepLink,
                 listing, "listingImages": listingImages[].asset->url,
-                "primaryImage": primaryImage.asset->url,
+                "primaryImage": coalesce(primaryImage.asset->url, images[0].asset->url),
                 "images": images[].asset->url,
                 ctaType, ctaLabel, ctaURL, ctaType2, ctaLabel2, ctaURL2,
                 "menuItems":  menuItems[]{ name_th, name_en, price, "image": image.asset->url },
