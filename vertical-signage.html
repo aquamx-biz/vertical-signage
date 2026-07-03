@@ -3858,10 +3858,13 @@ async function init() {
     // showing demo (Aurora/Mahogany) content as if it were live.
     maybeShowNoLiveDataBanner();
 
-    // Pre-warm the SW cache with the DISPLAY image URLs (sized, exactly what the
-    // player requests) so every slide's image is cached right after load — not only
-    // after it cycles into view once. Every image in a multi-image ad is included.
-    // Videos are skipped (the SW caches images only).
+    // Pre-warm the SW cache with the DISPLAY media URLs so every slide is cached
+    // right after load — not only after it cycles into view once.
+    //   • Images → the SIZED url the player actually requests (every image in a
+    //     multi-image ad included).
+    //   • Videos → the RAW file url (not sized). The Sanity file CDN allows CORS +
+    //     range, so the SW stores the whole file and serves <video> range requests
+    //     offline. See sw.js serveVideo().
     if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
         const isVid = u => /\.(mp4|webm|mov)(\?.*)?$/i.test(u);
         const mediaUrls = [];
@@ -3870,10 +3873,13 @@ async function init() {
                 ? item.images
                 : (item.url && !isVid(item.url) ? [item.url] : []);
             imgs.forEach(u => { if (u && !isVid(u)) mediaUrls.push(sizedImg(u, 1080, 1920)); });
+            // Video: cache the raw file url exactly as <video src> will request it.
+            const vid = item.url && (isVid(item.url) || item.mediaType === 'video') ? item.url : null;
+            if (vid) mediaUrls.push(vid);
         });
         if (mediaUrls.length) {
             navigator.serviceWorker.controller.postMessage({ action: 'prewarm', urls: mediaUrls });
-            console.log('[SW] Prewarm sent for', mediaUrls.length, 'image URLs (sized)');
+            console.log('[SW] Prewarm sent for', mediaUrls.length, 'media URLs (images sized + videos)');
         }
     }
 
