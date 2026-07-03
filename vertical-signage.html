@@ -1755,7 +1755,6 @@ async function loadProviders() {
             displayName:        p.displayName ?? 'th',
             logo:               p.logo ?? '',
             coverImage:         p.coverImage ?? '',
-            thumbnail:          p.thumbnail ?? '',
             location:           p.locationText ?? p.location ?? '',
             mapUrl:             p.mapUrl ?? '',
             hours:              p.openingHours ?? p.hours ?? '',
@@ -1794,7 +1793,6 @@ async function loadProviders() {
             locationText, mapUrl, phone, lineId, website, openingHours, amenities,
             "logo":          logo.asset->url,
             "coverImage":    coverImage.asset->url,
-            "thumbnail":     thumbnail.asset->url,
             description_th, description_en,
             defaultHandoffType, unitRef,
             "offers": *[_type == "offer" && provider._ref == ^._id && status == true &&

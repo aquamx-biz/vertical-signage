@@ -219,7 +219,6 @@ for (const project of projects) {
         openingHours,
         "logo":          logo.asset->url,
         "coverImage":    coverImage.asset->url,
-        "thumbnail":     thumbnail.asset->url,
         description_th,
         description_en,
         defaultHandoffType,

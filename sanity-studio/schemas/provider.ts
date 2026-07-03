@@ -47,9 +47,10 @@ export default defineType({
       type: 'string',
       options: {
         list: [
-          { title: 'Shop / Restaurant',   value: 'shop' },
-          { title: 'Unit Owner or Agent', value: 'unitOwnerOrAgent' },
-          { title: 'Juristic Office',     value: 'juristicOffice' },
+          { title: 'Shop / Restaurant (ร้านค้า / ร้านอาหาร)', value: 'shop' },
+          { title: 'Service / Business (บริการ / ธุรกิจ)',     value: 'service' },
+          { title: 'Unit Owner or Agent (เจ้าของ / นายหน้า)',  value: 'unitOwnerOrAgent' },
+          { title: 'Juristic Office (นิติบุคคลอาคาร)',         value: 'juristicOffice' },
         ],
         layout: 'radio',
       },
@@ -138,7 +139,6 @@ export default defineType({
     // ── Branding ─────────────────────────────────────────────────────────────
     defineField({ name: 'logo',       title: 'Logo',        type: 'image', options: { hotspot: true } }),
     defineField({ name: 'coverImage', title: 'Cover Image', type: 'image', options: { hotspot: true } }),
-    defineField({ name: 'thumbnail',  title: 'Thumbnail',   type: 'image', options: { hotspot: true } }),
 
     // ── Description ───────────────────────────────────────────────────────────
     defineField({ name: 'description_th', title: 'Description (Thai)',    type: 'text', rows: 3,
