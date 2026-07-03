@@ -509,6 +509,98 @@ function BankEvidenceImage({ doc }: { doc: Record<string, any> }) {
   )
 }
 
+// ── Linked Providers (signage profiles that reference this party) ─────────────
+
+interface ProviderSummary {
+  _id:          string
+  name:         string | null
+  providerType: string | null
+  category:     string | null
+  active:       boolean | null
+}
+
+const PROVIDER_TYPE_LABEL: Record<string, string> = {
+  shop:             '🏪 Shop / Restaurant',
+  service:          '🔧 Service / Business',
+  unitOwnerOrAgent: '🏠 Unit Owner / Agent',
+  juristicOffice:   '🏛️ Juristic Office',
+}
+
+function LinkedProviders({ partyId }: { partyId: string }) {
+  const client = useClient({ apiVersion: '2024-01-01' })
+  const [providers, setProviders] = useState<ProviderSummary[] | null>(null)
+
+  useEffect(() => {
+    client
+      .fetch<ProviderSummary[]>(
+        `*[_type == "provider" && party._ref == $id] | order(_createdAt asc) {
+          _id, "name": coalesce(name_th, name_en), providerType, category, "active": status
+        }`,
+        { id: partyId },
+      )
+      .then(results => {
+        // Collapse each provider's draft + published into one row (prefer draft).
+        const seen = new Map<string, ProviderSummary>()
+        for (const p of results ?? []) {
+          const baseId = p._id.replace(/^drafts\./, '')
+          if (!seen.has(baseId) || p._id.startsWith('drafts.')) seen.set(baseId, { ...p, _id: baseId })
+        }
+        setProviders(Array.from(seen.values()))
+      })
+      .catch(() => setProviders([]))
+  }, [partyId]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  return (
+    <Stack space={3}>
+      <Flex align="center" gap={2}>
+        <Text size={1} weight="semibold" style={{ color: '#374151' }}>Providers (โปรไฟล์บนจอ)</Text>
+        {providers !== null && (
+          <Badge tone={providers.length ? 'primary' : 'default'} mode="outline" fontSize={0}>
+            {providers.length}
+          </Badge>
+        )}
+      </Flex>
+
+      {providers === null ? (
+        <Flex align="center" gap={2}><Spinner muted /><Text size={1} muted>Loading providers…</Text></Flex>
+      ) : providers.length === 0 ? (
+        <Card padding={3} border radius={2} tone="transparent">
+          <Text size={1} muted>No providers linked to this party yet.</Text>
+        </Card>
+      ) : (
+        <Stack space={2}>
+          {providers.map(p => (
+            <IntentLink key={p._id} intent="edit" params={{ id: p._id, type: 'provider' }} style={{ textDecoration: 'none' }}>
+              <Card padding={3} border radius={2} tone="default" style={{ cursor: 'pointer' }}>
+                <Flex align="center" justify="space-between" gap={3}>
+                  <Stack space={1}>
+                    <Text size={1} weight="semibold">{p.name ?? '(unnamed provider)'}</Text>
+                    <Text size={0} muted>
+                      {[PROVIDER_TYPE_LABEL[p.providerType ?? ''] ?? p.providerType, p.category].filter(Boolean).join('  ·  ')}
+                    </Text>
+                  </Stack>
+                  <Box
+                    padding={2}
+                    style={{
+                      background:   (p.active ? '#22C55E' : '#9CA3AF') + '1A',
+                      border:       `1px solid ${(p.active ? '#22C55E' : '#9CA3AF')}40`,
+                      borderRadius: 6, whiteSpace: 'nowrap', flexShrink: 0,
+                    }}
+                  >
+                    <Text size={0} weight="semibold" style={{ color: p.active ? '#22C55E' : '#9CA3AF' }}>
+                      {p.active ? 'Active' : 'Inactive'}
+                    </Text>
+                  </Box>
+                </Flex>
+              </Card>
+            </IntentLink>
+          ))}
+        </Stack>
+      )}
+    </Stack>
+  )
+}
+
 // ── Main component ────────────────────────────────────────────────────────────
 
 export function PartyOverview({ document: { displayed: doc } }: Props) {
@@ -579,8 +671,7 @@ export function PartyOverview({ document: { displayed: doc } }: Props) {
           rows={isCorporate ? [
             { label: 'Legal Name (TH)',      value: doc.legalName_th ?? doc.legalName },
             { label: 'Legal Name (EN)',      value: doc.legalName_en       },
-            { label: 'Tax ID',              value: doc.taxId              },
-            { label: 'Registration No.',    value: doc.registrationNo     },
+            { label: 'Tax ID / เลขนิติบุคคล', value: doc.taxId             },
             { label: 'Juristic Manager',    value: doc.juristicManager    },
           ] : [
             { label: 'First Name',          value: doc.firstName          },
@@ -727,6 +818,9 @@ export function PartyOverview({ document: { displayed: doc } }: Props) {
             />
           </Stack>
         )}
+
+        {/* Linked Providers (signage profiles) */}
+        <LinkedProviders partyId={doc._id?.replace(/^drafts\./, '')} />
 
         {/* Related Contracts */}
         <Stack space={3}>

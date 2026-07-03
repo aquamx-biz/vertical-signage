@@ -106,8 +106,8 @@ const PLAYLIST_PROJ_V7 = `
         "title":              media->title,
         "title_en":           media->offer->title_en,
         "eyebrow":            media->offer->category,
-        "sub_th":             media->offer->shortDesc_th,
-        "sub_en":             media->offer->shortDesc_en,
+        "sub_th":             media->offer->description_th,
+        "sub_en":             media->offer->description_en,
         "mediaType":          select(
                                 defined(media->type)              => media->type,
                                 defined(media->videoFile.asset)   => "video",
@@ -233,8 +233,8 @@ for (const project of projects) {
           title_en,
           category,
           subCategories,
-          shortDesc_th,
-          shortDesc_en,
+          description_th,
+          description_en,
           "primaryImage": primaryImage.asset->url,
           "images":       images[].asset->url,
           ctaType,
@@ -270,7 +270,6 @@ for (const project of projects) {
           title_en,
           category,
           subCategories,
-          shortDesc_th,
           description_th
         }
       }

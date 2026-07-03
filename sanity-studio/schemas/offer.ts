@@ -136,13 +136,12 @@ export default defineType({
     }),
 
     // ── Content ───────────────────────────────────────────────────────────────
-    defineField({ name: 'shortDesc_th', title: 'Short Description (Thai)',    type: 'string',
-      components: { input: createTranslateInput({ sourceField: 'shortDesc_en', sourceLang: 'English', targetLang: 'Thai',    buttonLabel: '✨ Translate from English' }) },
-    }),
-    defineField({ name: 'shortDesc_en', title: 'Short Description (English)', type: 'string',
-      components: { input: createTranslateInput({ sourceField: 'shortDesc_th', sourceLang: 'Thai',    targetLang: 'English', buttonLabel: '✨ Translate from Thai'    }) },
-    }),
+    // One description per language (the old Short Description was dropped — it was
+    // redundant and the web form only ever collected one). Shown as the subtitle
+    // under the ad on the kiosk (clamped to ~2 lines) AND as the full detail on the
+    // offer page in the app. The web form auto-fills TH/EN from a single input.
     defineField({ name: 'description_th', title: 'Description (Thai)',    type: 'text', rows: 3,
+      description: 'ป้ายใต้โฆษณาบนจอ (ตัด ~2 บรรทัด) + รายละเอียดเต็มในหน้า offer บนแอป. Ad subtitle on-screen + full detail on the app offer page.',
       components: { input: createTranslateInput({ sourceField: 'description_en', sourceLang: 'English', targetLang: 'Thai',    buttonLabel: '✨ Translate from English' }) },
     }),
     defineField({ name: 'description_en', title: 'Description (English)', type: 'text', rows: 3,

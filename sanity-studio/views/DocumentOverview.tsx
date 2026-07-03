@@ -610,6 +610,80 @@ function PaymentProcurementStatusBar({ contractTypeRef, procurementStatus }: { c
   )
 }
 
+// ── Related Offers section (provider only) ───────────────────────────────────
+
+interface OfferSummary {
+  _id:      string
+  title:    string | null
+  price:    string | null
+  category: string | null
+}
+
+function ProviderOffers({ providerId }: { providerId: string }) {
+  const client = useClient({ apiVersion: '2024-01-01' })
+  const [offers, setOffers] = useState<OfferSummary[] | null>(null)
+
+  useEffect(() => {
+    const baseId = providerId.replace(/^drafts\./, '')
+    client
+      .fetch<OfferSummary[]>(
+        `*[_type == "offer" && provider._ref == $id] | order(_createdAt asc) {
+          _id, "title": coalesce(title_th, title_en), price, category
+        }`,
+        { id: baseId },
+      )
+      .then(docs => {
+        // Collapse each offer's draft + published into one row (prefer draft).
+        const seen = new Map<string, OfferSummary>()
+        for (const d of docs ?? []) {
+          const key = d._id.replace(/^drafts\./, '')
+          if (!seen.has(key) || d._id.startsWith('drafts.')) {
+            seen.set(key, { ...d, _id: key })
+          }
+        }
+        setOffers(Array.from(seen.values()))
+      })
+      .catch(() => setOffers([]))
+  }, [providerId]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  return (
+    <Stack space={3}>
+      <Flex align="center" gap={2}>
+        <Text size={1} weight="semibold" style={{ color: '#374151' }}>Offers</Text>
+        {offers !== null && (
+          <Badge tone={offers.length ? 'primary' : 'default'} mode="outline" fontSize={0}>
+            {offers.length}
+          </Badge>
+        )}
+      </Flex>
+
+      {offers === null ? (
+        <Flex align="center" gap={2}><Spinner muted /><Text size={1} muted>Loading offers…</Text></Flex>
+      ) : offers.length === 0 ? (
+        <Card padding={3} border radius={2} tone="transparent">
+          <Text size={1} muted>No offers linked to this provider yet.</Text>
+        </Card>
+      ) : (
+        <Stack space={2}>
+          {offers.map(o => (
+            <IntentLink key={o._id} intent="edit" params={{ id: o._id, type: 'offer' }} style={{ textDecoration: 'none' }}>
+              <Card padding={3} border radius={2} tone="default" style={{ cursor: 'pointer' }}>
+                <Flex align="center" justify="space-between" gap={3}>
+                  <Stack space={1}>
+                    <Text size={1} weight="semibold">{o.title ?? '(untitled offer)'}</Text>
+                    {o.category && <Text size={0} muted>{o.category}</Text>}
+                  </Stack>
+                  {o.price && <Text size={1} weight="semibold" style={{ color: '#C9864C', flexShrink: 0 }}>฿ {o.price}</Text>}
+                </Flex>
+              </Card>
+            </IntentLink>
+          ))}
+        </Stack>
+      )}
+    </Stack>
+  )
+}
+
 // ── Main component ────────────────────────────────────────────────────────────
 
 export function DocumentOverview({ document: { draft, published, displayed: doc }, schemaType }: Props) {
@@ -795,6 +869,10 @@ export function DocumentOverview({ document: { draft, published, displayed: doc 
             </Text>
             <RelatedContracts projectSiteId={doc._id} />
           </Stack>
+        )}
+
+        {schemaType.name === 'provider' && (
+          <ProviderOffers providerId={doc._id} />
         )}
 
         {rows.length > 0 ? (

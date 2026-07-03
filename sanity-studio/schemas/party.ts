@@ -118,20 +118,37 @@ export default defineType({
     // Legacy — kept hidden so old records (stored as `legalName`) still resolve correctly
     defineField({ group: 'identity', name: 'legalName', title: 'Legal Name (legacy)', type: 'string', hidden: true }),
 
+    // A Thai juristic person's DBD registration number and tax ID are the SAME
+    // 13-digit number (unified since 2012). `idKind` records what the single number
+    // below represents; the value always lives in `taxId` (read across the app for
+    // POs, PromptPay, and party de-dup). Foreign entities whose home registration
+    // number differs from their Thai tax ID: keep the Thai tax ID here and note the
+    // foreign number in Internal Notes.
     defineField({
-      group:  'identity',
-      name:   'taxId',
-      title:  'Tax ID / เลขผู้เสียภาษี',
-      type:   'string',
-      hidden: ({ document }: any) => document?.identityType !== 'corporate',
+      group:        'identity',
+      name:         'idKind',
+      title:        'เลข 13 หลักนี้คือ / This number is',
+      type:         'string',
+      options: {
+        list: [
+          { title: 'ทั้งสอง — เลขเดียวกัน (Tax ID = Company Registration)',    value: 'both' },
+          { title: 'เลขผู้เสียภาษี เท่านั้น (Tax ID only)',                     value: 'taxId' },
+          { title: 'เลขทะเบียนนิติบุคคล เท่านั้น (Company Registration only)',  value: 'registration' },
+        ],
+        layout: 'radio',
+      },
+      initialValue: 'both',
+      description:  'บริษัทไทยใช้เลขเดียวกัน — เลือก "ทั้งสอง" แล้วกรอกเลขครั้งเดียวด้านล่าง.',
+      hidden:       ({ document }: any) => document?.identityType !== 'corporate',
     }),
 
     defineField({
-      group:  'identity',
-      name:   'registrationNo',
-      title:  'Company Registration Number',
-      type:   'string',
-      hidden: ({ document }: any) => document?.identityType !== 'corporate',
+      group:        'identity',
+      name:         'taxId',
+      title:        'เลขนิติบุคคล 13 หลัก / Company ID No.',
+      type:         'string',
+      description:  'กรอกเลข 13 หลักครั้งเดียว (เลือกประเภทด้านบน). บริษัทไทยใช้เลขเดียวเป็นทั้งเลขผู้เสียภาษีและเลขทะเบียนนิติบุคคล.',
+      hidden:       ({ document }: any) => document?.identityType !== 'corporate',
     }),
 
     defineField({

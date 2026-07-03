@@ -1797,7 +1797,7 @@ async function loadProviders() {
             defaultHandoffType, unitRef,
             "offers": *[_type == "offer" && provider._ref == ^._id && status == true &&
                         (scope == "global" || "${code}" in (projects[]->code.current))]{
-                "slug": slug.current, title_th, title_en, shortDesc_th, shortDesc_en,
+                "slug": slug.current, title_th, title_en,
                 description_th, description_en, price, availability, category, subCategories,
                 displayMode, validFrom, validTo, deepLink,
                 listing, "listingImages": listingImages[].asset->url,
@@ -1834,7 +1834,7 @@ async function loadBuildingUpdates() {
         return {
             slug:          n.offer?.slug  ?? n.slug  ?? (n.title ?? '').toLowerCase().replace(/\s+/g, '-'),
             title:         n.offer?.title_th ?? n.title ?? '',
-            subtitle:      n.offer?.shortDesc_th ?? n.subtitle ?? '',
+            subtitle:      n.offer?.description_th ?? n.subtitle ?? '',
             icon:          n.icon  ?? '📢',
             bgColor:       n.bgColor ?? '#141A08',
             description:   n.offer?.description_th ?? n.description ?? '',
@@ -1863,7 +1863,7 @@ async function loadBuildingUpdates() {
             title,
             "url": coalesce(videoFile.asset->url, imageFile.asset->url),
             "posterImage": posterImage.asset->url,
-            "offer": offer->{ "slug": slug.current, title_th, subCategories, shortDesc_th, description_th }
+            "offer": offer->{ "slug": slug.current, title_th, subCategories, description_th }
         }`;
         const results = await sanityFetch(q);
         if (!results?.length) { _ds.notices = 'mock'; return; }
@@ -1927,8 +1927,8 @@ async function loadPlaylist() {
             "title":              media->title,
             "title_en":           media->offer->title_en,
             "eyebrow":            media->offer->category,
-            "sub_th":             media->offer->shortDesc_th,
-            "sub_en":             media->offer->shortDesc_en,
+            "sub_th":             media->offer->description_th,
+            "sub_en":             media->offer->description_en,
             "mediaType":          select(
                                     defined(media->type)              => media->type,
                                     defined(media->videoFile.asset)   => "video",
@@ -2262,7 +2262,7 @@ function adaptToCategories() {
             (p.offers || []).forEach(o => {
                 const name = cleanTitle(isTH ? (o.title_th || o.title_en || p.name_th) : (o.title_en || o.title_th || p.name_en));
                 const provName = isTH ? (p.name_th || p.name_en) : (p.name_en || p.name_th);
-                const desc = isTH ? (o.shortDesc_th || o.shortDesc_en) : (o.shortDesc_en || o.shortDesc_th);
+                const desc = isTH ? (o.description_th || o.description_en) : (o.description_en || o.description_th);
                 const img = o.primaryImage || p.coverImage || p.thumbnail || '';
                 items.push({
                     name: name || provName || '',
