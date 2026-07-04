@@ -3416,9 +3416,11 @@ function showHandoff() {
         ? (handoffCtx.offerTitleTH || (handoffCtx.provider && (handoffCtx.provider.nameTH || handoffCtx.provider.nameEN)) || '')
         : (handoffCtx.offerTitleEN || (handoffCtx.provider && (handoffCtx.provider.nameEN || handoffCtx.provider.nameTH)) || '');
 
+    // QR ALWAYS lands on OUR handoff page first (tracking + brand + confirm step).
+    // The vendor's external link (ctaURL) is the continue-button ON that page —
+    // never the QR target directly. (Changed from "vendor's real link wins".)
     let deepLink;
-    if (handoffCtx.ctaURL)            deepLink = handoffCtx.ctaURL;          // A4: vendor's real link wins
-    else if (handoffCtx.offerSlug)    deepLink = `${CONFIG.HANDOFF_BASE}/o/${handoffCtx.offerSlug}`;
+    if (handoffCtx.offerSlug)         deepLink = `${CONFIG.HANDOFF_BASE}/o/${handoffCtx.offerSlug}`;
     else if (handoffCtx.providerSlug) deepLink = `${CONFIG.HANDOFF_BASE}/p/${handoffCtx.providerSlug}`;
     else                              deepLink = `${CONFIG.HANDOFF_BASE}`;
 
