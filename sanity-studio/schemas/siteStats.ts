@@ -30,18 +30,25 @@ export default defineType({
       validation: Rule => Rule.required(),
     }),
     defineField({
-      name: 'measurable',
-      title: 'วัดผลได้ทุกการสัมผัส',
+      name: 'residents',
+      title: 'ผู้พักอาศัย',
       type: 'string',
-      description: 'เช่น "100%"',
+      description: 'เช่น "18,000+"',
+      validation: Rule => Rule.required(),
+    }),
+    defineField({
+      name: 'impressions',
+      title: 'Impressions / เดือน',
+      type: 'string',
+      description: 'เช่น "2.4M" — รองรับทศนิยม',
       validation: Rule => Rule.required(),
     }),
   ],
   preview: {
-    select: { buildings: 'buildings', units: 'units', measurable: 'measurable' },
-    prepare: ({ buildings, units, measurable }) => ({
+    select: { buildings: 'buildings', units: 'units', residents: 'residents', impressions: 'impressions' },
+    prepare: ({ buildings, units, residents, impressions }) => ({
       title: 'Site Stats (หน้าแรก)',
-      subtitle: `${buildings || '—'} · ${units || '—'} · ${measurable || '—'}`,
+      subtitle: `${buildings || '—'} · ${units || '—'} · ${residents || '—'} · ${impressions || '—'}`,
     }),
   },
 })
