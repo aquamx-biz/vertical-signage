@@ -116,6 +116,19 @@ export default defineType({
       initialValue: true,
       description: 'Disable to hide this provider from all kiosk views.',
     }),
+    // ── Public web listing (Showcase) ─────────────────────────────────────────
+    // OFF by default: listings live only on the in-building kiosks. Tick to also
+    // publish a public, AI-discoverable web page for this shop at /l/{slug}.
+    // A deploy build (aquamx-landing/scripts/build-listings.js) reads this flag
+    // and only bakes pages for ticked providers — so the full client roster is
+    // never enumerable. Use for hand-picked showcase shops.
+    defineField({
+      name: 'showcaseWeb',
+      title: 'แสดงหน้าเว็บสาธารณะ (Showcase on web)',
+      type: 'boolean',
+      initialValue: false,
+      description: 'ติ๊ก = สร้างหน้าเว็บสาธารณะให้ร้านนี้ (Google/AI ค้นเจอได้ ที่ /l/{slug}) · ไม่ติ๊ก = แสดงแค่บนจอ kiosk เท่านั้น',
+    }),
     defineField({
       name: 'displayName',
       title: 'Display Name Language',
