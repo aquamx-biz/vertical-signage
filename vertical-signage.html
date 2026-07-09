@@ -763,6 +763,64 @@ body {
 .stage[data-tx="push"] .slot.entering { transform: translateX(35%) scale(0.92); opacity: 0; filter: blur(0.6vh); }
 .stage[data-tx="push"] .slot.active { transform: translateX(0) scale(1); opacity: 1; filter: blur(0); }
 
+/* PUSH-R — mirrored push, used by swipe-RIGHT (previous slide): new slides in from the LEFT */
+.stage[data-tx="push-r"] .slot.leaving { transform: translateX(35%) scale(0.92); opacity: 0; filter: blur(0.6vh); }
+.stage[data-tx="push-r"] .slot.entering { transform: translateX(-35%) scale(0.92); opacity: 0; filter: blur(0.6vh); }
+.stage[data-tx="push-r"] .slot.active { transform: translateX(0) scale(1); opacity: 1; filter: blur(0); }
+
+/* BOOK — Honor-style page turn: the OLD page folds over around its LEFT edge
+   (on top, z-index 3) revealing the new page waiting flat beneath. backface-
+   visibility (base .slot) hides the page naturally once it passes 90°. */
+.stage[data-tx="book"] .slot {
+    transition: transform 1.05s cubic-bezier(0.55, 0.06, 0.35, 0.99),
+                opacity 0.15s linear 0.9s;
+}
+.stage[data-tx="book"] .slot.leaving {
+    z-index: 3;
+    transform-origin: left center;
+    transform: rotateY(-180deg);
+    opacity: 1;                        /* stays fully visible — backface hides it mid-turn */
+}
+.stage[data-tx="book"] .slot.entering { transform: none; opacity: 1; z-index: 1; }
+.stage[data-tx="book"] .slot.active   { transform: none; opacity: 1; }
+
+/* ============================================================
+   SWIPE HINT — small hand + chevrons. A hint, not chrome:
+   visible ~2.8s, hidden far longer (min 15s gap, ~every 4 slides),
+   gone for good once the visitor swipes (relearns after idle).
+============================================================ */
+.swipe-hint {
+    position: absolute; inset: 0; z-index: 40;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.6s ease;
+}
+.swipe-hint.show { opacity: 1; }
+/* chevrons pinned to the screen edges — "more content beyond this edge".
+   Sits at 44% height: clearly ABOVE the title/price text block (bottom zone),
+   so the hint never mixes into the reading area. */
+.swipe-hint .ch {
+    position: absolute; top: 44%; transform: translateY(-50%);
+    font-family: 'Prompt', sans-serif; font-size: 3.6vh; line-height: 1;
+    color: rgba(255,255,255,0.5);
+    text-shadow: 0 0.2vh 1vh rgba(0,0,0,0.65);
+}
+.swipe-hint .ch.l { left: 1.6vh; }
+.swipe-hint .ch.r { right: 1.6vh; }
+/* hand — hugs the chevron on a randomly chosen side (they read as one pair) */
+.swipe-hint .hand { position: absolute; top: 44%; transform: translateY(-50%); }
+.swipe-hint.hand-l .hand { left: 7.5vh; right: auto; }
+.swipe-hint.hand-r .hand { right: 7.5vh; left: auto; }
+.swipe-hint svg {
+    width: 5.6vh; height: 5.6vh; display: block;
+    filter: drop-shadow(0 0.3vh 1.2vh rgba(0,0,0,0.7));
+    animation: hint-sway 1.7s ease-in-out infinite;
+}
+@keyframes hint-sway {
+    0%, 100% { transform: translateX(-2.4vh) rotate(-9deg); }
+    50%      { transform: translateX(2.4vh) rotate(9deg); }
+}
+@media (prefers-reduced-motion: reduce) { .swipe-hint svg { animation: none; } }
+
 /* ============================================================
    BOTTOM TAGLINE / NEWS TICKER
 ============================================================ */
@@ -1506,6 +1564,17 @@ body {
         <!-- Idle countdown badge (top-right) -->
         <div id="idleCountdown">Returning to Main in 30s</div>
 
+    </div>
+
+    <!-- SWIPE HINT — hand + chevrons, briefly shown; controller in JS decides when -->
+    <div class="swipe-hint" id="swipeHint" aria-hidden="true">
+        <span class="ch l">&#8249;</span>
+        <span class="hand">
+            <svg viewBox="0 0 32 32" fill="none" stroke="rgba(255,255,255,0.92)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M13 18V7.5a2 2 0 0 1 4 0V16l4.6 1.4c1.4.4 2.4 1.7 2.4 3.2v.9c0 .8-.2 1.6-.5 2.3l-1.3 2.9a3.5 3.5 0 0 1-3.2 2.1h-4.8c-1 0-2-.5-2.7-1.3l-4-4.8a1.9 1.9 0 0 1 2.7-2.6l2.8 2.3z"/>
+            </svg>
+        </span>
+        <span class="ch r">&#8250;</span>
     </div>
 
     <!-- DETAIL POPUP — opens on CTA / category-card tap (v6 look + live handoff) -->
@@ -2361,7 +2430,7 @@ function eyebrowLabel(catId) {
 let SLOTS = DEMO_SLOTS;            // replaced by adapter once live data loads
 let CATEGORIES = DEMO_CATEGORIES;  // replaced by adapter once live data loads
 
-const TRANSITIONS = ['cube', 'flip', 'zoom', 'push'];
+const TRANSITIONS = ['cube', 'flip', 'zoom', 'push', 'book'];
 
 const stage = document.getElementById('stage');
 const devTx = document.getElementById('devTx');
@@ -2691,6 +2760,7 @@ function showSlot(idx, isFirst = false) {
     if (devTx) devTx.textContent = tx;
     if (devKind) devKind.textContent = SLOTS[idx].kind;
     if (devIdx) devIdx.textContent = idx + 1;
+    if (window.__swipeHintOnSlide) window.__swipeHintOnSlide();   // periodic swipe-hint pacing
 
     slots.forEach((el, i) => {
         el.classList.remove('active', 'leaving', 'entering', 'exiting');
@@ -2913,7 +2983,7 @@ function mockNews() {
 /* ============================================================
    KEYBOARD (v6 dev helpers)
 ============================================================ */
-const TX_KEYS = { '1': 'cube', '2': 'flip', '3': 'zoom', '4': 'push' };
+const TX_KEYS = { '1': 'cube', '2': 'flip', '3': 'zoom', '4': 'push', '5': 'book' };
 document.addEventListener('keydown', e => {
     if (!SLOTS.length) return;
     if (e.key === 'ArrowRight') { preExitCurrent(); setTimeout(() => showSlot((cur + 1) % SLOTS.length), PRE_EXIT_MS); }
@@ -2930,6 +3000,91 @@ document.addEventListener('keydown', e => {
     }
     if (e.key === 'Escape') closeAll();
 });
+
+/* ============================================================
+   SWIPE — phone-style left/right swipe on the stage
+   Swipe LEFT = next slide (push, new slides in from the right)
+   Swipe RIGHT = previous slide (push-r, new slides in from the left)
+   The random-effect pool stays for AUTO rotation only.
+============================================================ */
+(function () {
+    if (!stage) return;
+    let sx = 0, sy = 0, st = 0, tracking = false;
+    // Never hijack gestures while an overlay is up (menu / category / detail popup —
+    // their own scroll/tap must win; they also sit over the stage).
+    const overlayOpen = () =>
+        (typeof isMenuOpen !== 'undefined' && isMenuOpen) ||
+        (typeof detailOverlay !== 'undefined' && detailOverlay && detailOverlay.classList.contains('open'));
+    const start = e => {
+        if (overlayOpen() || SLOTS.length <= 1) { tracking = false; return; }
+        const t = e.touches ? e.touches[0] : e;
+        sx = t.clientX; sy = t.clientY; st = Date.now(); tracking = true;
+    };
+    const end = e => {
+        if (!tracking) return;
+        tracking = false;
+        if (overlayOpen()) return;
+        const t = e.changedTouches ? e.changedTouches[0] : e;
+        const dx = t.clientX - sx, dy = t.clientY - sy, dt = Date.now() - st;
+        // real swipe only: fast, mostly horizontal, far enough — a tap (dx≈0) falls through to CTAs
+        if (dt > 700 || Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.4) return;
+        swipeAdvance(dx < 0 ? 1 : -1);
+    };
+    stage.addEventListener('touchstart', start, { passive: true });
+    stage.addEventListener('touchend',   end,   { passive: true });
+    stage.addEventListener('mousedown',  start);
+    stage.addEventListener('mouseup',    end);
+    function swipeAdvance(dir) {
+        clearTimeout(advanceTimer);            // cancel the pending auto-advance
+        if (window.__swipeHintLearned) window.__swipeHintLearned();   // they know now — stop hinting
+        forcedTx = dir > 0 ? 'push' : 'push-r';
+        preExitCurrent();
+        setTimeout(() => {                     // snappier than auto's 600ms pre-exit
+            showSlot((cur + dir + SLOTS.length) % SLOTS.length);
+            scheduleNext();                    // re-arm dwell (video/multi-image re-arm via showSlot)
+        }, 150);
+    }
+})();
+
+/* ============================================================
+   SWIPE HINT controller — when to show the hand
+   · brief (2.8s) and rare (≥15s apart, ~every 4th slide) — hidden ≫ visible
+   · also right after a plain tap (someone is standing there, trying)
+   · gone after a successful swipe; forgets after 90s idle (next visitor)
+============================================================ */
+(function () {
+    const hint = document.getElementById('swipeHint');
+    if (!hint || !stage) return;
+    const SHOW_MS = 2800, MIN_GAP_MS = 15000, EVERY_N_SLIDES = 4, RELEARN_MS = 90000;
+    let learned = false, hideTimer = null, learnTimer = null, lastShown = 0, slideCount = 0;
+    const overlayUp = () =>
+        (typeof isMenuOpen !== 'undefined' && isMenuOpen) ||
+        (typeof detailOverlay !== 'undefined' && detailOverlay && detailOverlay.classList.contains('open'));
+    function show() {
+        if (learned || overlayUp() || SLOTS.length <= 1) return;
+        if (Date.now() - lastShown < MIN_GAP_MS) return;   // never nag
+        lastShown = Date.now();
+        // hand appears on a random side — hints both directions, never burns the same ad spot
+        hint.classList.remove('hand-l', 'hand-r');
+        hint.classList.add(Math.random() < 0.5 ? 'hand-l' : 'hand-r');
+        hint.classList.add('show');
+        clearTimeout(hideTimer);
+        hideTimer = setTimeout(() => hint.classList.remove('show'), SHOW_MS);
+    }
+    function hide() { hint.classList.remove('show'); clearTimeout(hideTimer); }
+    // teachable moment: a plain tap on the stage (a swipe sets `learned` first, so no hint)
+    const onTap = () => setTimeout(() => { if (overlayUp()) hide(); else show(); }, 350);
+    stage.addEventListener('touchend', onTap, { passive: true });
+    stage.addEventListener('mouseup', onTap);
+    // periodic nudge — called from showSlot on every slide change
+    window.__swipeHintOnSlide = function () { slideCount++; if (slideCount % EVERY_N_SLIDES === 0) show(); };
+    // learned — called from swipeAdvance; forget after a quiet spell so the next visitor gets hints
+    window.__swipeHintLearned = function () {
+        learned = true; hide();
+        clearTimeout(learnTimer);
+        learnTimer = setTimeout(() => { learned = false; }, RELEARN_MS);
+    };
+})();
 
 /* ============================================================
    MENU + CATEGORY interactions (v6 look · live CATEGORIES data)
