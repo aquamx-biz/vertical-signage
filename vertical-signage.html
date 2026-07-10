@@ -772,14 +772,20 @@ body {
    (on top, z-index 3) revealing the new page waiting flat beneath. backface-
    visibility (base .slot) hides the page naturally once it passes 90°. */
 .stage[data-tx="book"] .slot {
+    /* opacity must be INSTANT here: the incoming page has to be fully visible
+       beneath the fold from frame 1. (A 0.9s opacity delay on all slots caused
+       intermittent blank-stage flashes — the fold passed 90° and vanished while
+       the next slide was still transparent. Delay now lives on .leaving only.) */
     transition: transform 1.05s cubic-bezier(0.55, 0.06, 0.35, 0.99),
-                opacity 0.15s linear 0.9s;
+                opacity 0.01s linear;
 }
 .stage[data-tx="book"] .slot.leaving {
     z-index: 3;
     transform-origin: left center;
     transform: rotateY(-180deg);
     opacity: 1;                        /* stays fully visible — backface hides it mid-turn */
+    transition: transform 1.05s cubic-bezier(0.55, 0.06, 0.35, 0.99),
+                opacity 0.15s linear 0.9s;
 }
 .stage[data-tx="book"] .slot.entering { transform: none; opacity: 1; z-index: 1; }
 .stage[data-tx="book"] .slot.active   { transform: none; opacity: 1; }
@@ -814,7 +820,9 @@ body {
     width: 5.6vh; height: 5.6vh; display: block;
     filter: drop-shadow(0 0.3vh 1.2vh rgba(0,0,0,0.7));
     animation: hint-sway 1.7s ease-in-out infinite;
+    animation-play-state: paused;              /* don't burn weak kiosk GPUs while hidden */
 }
+.swipe-hint.show svg { animation-play-state: running; }
 @keyframes hint-sway {
     0%, 100% { transform: translateX(-2.4vh) rotate(-9deg); }
     50%      { transform: translateX(2.4vh) rotate(9deg); }
