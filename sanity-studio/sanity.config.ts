@@ -74,7 +74,7 @@ const dashboardPlugin = definePlugin({
     },
     {
       name:      'pending-changes',
-      title:     'รอปล่อยขึ้นจอ',
+      title:     'Pending Publish',
       component: PendingChangesTool,
     },
   ],

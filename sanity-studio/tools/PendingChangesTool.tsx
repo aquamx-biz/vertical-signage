@@ -185,7 +185,7 @@ export function PendingChangesTool() {
   return (
     <Box padding={4} style={{ maxWidth: 860, margin: '0 auto' }}>
       <Stack space={4}>
-        <Heading size={3}>🗂 รอปล่อยขึ้นจอ (Pending Changes)</Heading>
+        <Heading size={3}>🗂 Pending Publish — รอปล่อยขึ้นจอ</Heading>
 
         <Card padding={3} radius={3} tone="primary">
           <Text size={1}>
