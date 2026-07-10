@@ -66,7 +66,8 @@ export function AddToPlaylistAction(props: DocumentActionProps) {
       const next = (orders.length ? Math.max(...orders) : 0) + 10
 
       await client.create({
-        _id:     `drafts.${crypto.randomUUID()}`,
+        // published directly — the kiosk build reads published-only; a draft slot never airs
+        _id:     crypto.randomUUID(),
         _type:   'playlistItem',
         project: { _type: 'reference', _ref: projectId },
         media:   { _type: 'reference', _ref: props.id },

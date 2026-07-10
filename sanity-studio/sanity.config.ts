@@ -39,6 +39,7 @@ import { HowToTool }            from './tools/HowToTool'
 import { DashboardTool }        from './tools/DashboardTool'
 import { PartyMigrationTool }   from './tools/PartyMigrationTool'
 import { ScreenHealthTool }     from './tools/ScreenHealthTool'
+import { PendingChangesTool }   from './tools/PendingChangesTool'
 import { accessControlPlugin, accessStore } from './plugins/accessControl'
 import { paneWidthOverride }               from './plugins/paneWidthOverride'
 
@@ -70,6 +71,11 @@ const dashboardPlugin = definePlugin({
       name:      'screen-health',
       title:     'Screen Health',
       component: ScreenHealthTool,
+    },
+    {
+      name:      'pending-changes',
+      title:     'รอปล่อยขึ้นจอ',
+      component: PendingChangesTool,
     },
   ],
 })

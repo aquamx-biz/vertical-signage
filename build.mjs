@@ -46,10 +46,14 @@ if (!SANITY_TOKEN) { console.error('ERROR: SANITY_TOKEN env var is not set.'); p
 
 // ── GROQ helper ───────────────────────────────────────────────────────────────
 async function sanityFetch(query) {
+  // perspective=published is LOAD-BEARING for the Pending-Changes workflow:
+  // with an authorized token the default (raw) perspective ALSO returns
+  // drafts.* documents, so unreviewed drafts could leak onto screens.
+  // Published-only keeps the pipeline invariant: "draft never airs".
   const url =
     `https://${SANITY_PROJECT_ID}.api.sanity.io` +
     `/v${SANITY_API_VER}/data/query/${SANITY_DATASET}` +
-    `?query=${encodeURIComponent(query)}`
+    `?query=${encodeURIComponent(query)}&perspective=published`
   const r = await fetch(url, { headers: { Authorization: `Bearer ${SANITY_TOKEN}` } })
   if (!r.ok) throw new Error(`Sanity ${r.status}: ${await r.text()}`)
   return (await r.json()).result

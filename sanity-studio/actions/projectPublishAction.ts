@@ -36,7 +36,8 @@ export function ProjectPublishAction(props: DocumentActionProps) {
         try {
           const publishedId = props.id.replace(/^drafts\./, '')
           await client.create({
-            _id:     `drafts.${crypto.randomUUID()}`,
+            // published directly — the kiosk build reads published-only; a draft slot never airs
+            _id:     crypto.randomUUID(),
             _type:   'playlistItem',
             project: { _type: 'reference', _ref: publishedId },
             order:   1,

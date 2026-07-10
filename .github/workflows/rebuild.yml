@@ -25,6 +25,13 @@ on:
   repository_dispatch:
     types: [sanity-update]
 
+# Batch-publish sends one webhook per published doc → one dispatch each.
+# Collapse the burst: newest run wins, in-flight duplicates are cancelled,
+# so a review session costs ~one rebuild instead of N.
+concurrency:
+  group: rebuild-signage
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest

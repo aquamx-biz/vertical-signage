@@ -42,7 +42,8 @@ export function initPlaylistAction(props: DocumentActionProps) {
 
         // Create a draft playlist item pre-filled with this project
         await client.create({
-          _id:     `drafts.${crypto.randomUUID()}`,
+          // published directly — the kiosk build reads published-only; a draft slot never airs
+          _id:     crypto.randomUUID(),
           _type:   'playlistItem',
           project: { _type: 'reference', _ref: props.id },
           order:   1,
