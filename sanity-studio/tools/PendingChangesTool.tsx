@@ -185,7 +185,8 @@ export function PendingChangesTool() {
         fail++
       }
     }
-    pushLog(`— เสร็จ: สำเร็จ ${ok} · พลาด ${fail} — ระบบจะ rebuild อัตโนมัติ (ยุบเหลือรอบเดียว) —`)
+    pushLog(`— เสร็จ: สำเร็จ ${ok} · พลาด ${fail} —`)
+    if (ok > 0) pushLog(`✅ ไม่ต้องกดอะไรต่อ — ระบบกำลังส่งขึ้นจออัตโนมัติ จอทุกตึกได้ของใหม่ภายใน ~5 นาที`)
     setBusy(false)
     load()
   }
@@ -212,11 +213,17 @@ export function PendingChangesTool() {
         <Heading size={3}>🗂 Pending Publish — รอปล่อยขึ้นจอ</Heading>
 
         <Card padding={3} radius={3} tone="primary">
-          <Text size={1}>
-            กติกา: แก้เนื้อหาแล้ว<b>ปล่อยเป็น Draft ไว้</b> (ยังไม่ขึ้นจอ ไม่เปลือง build) →
-            มารีวิวรวมที่หน้านี้ → กด <b>Publish ที่เลือก</b> ทีเดียว → ระบบ rebuild จอรอบเดียว ·
-            ของด่วนใช้ <b>Deploy Now</b>
-          </Text>
+          <Stack space={3}>
+            <Text size={1}>
+              <b>วิธีใช้:</b> ① แก้เนื้อหาแล้ว<b>ปล่อยเป็น Draft ไว้</b> (ยังไม่ขึ้นจอ ไม่เปลือง build) →
+              ② มารีวิวรวมที่หน้านี้ → ③ ติ๊กเลือกแล้วกด <b>🚀 Publish ที่เลือก</b> — <b>จบแค่นี้</b>
+              ระบบจะส่งขึ้นจอทุกตึกให้เอง ภายใน ~5 นาที <b>ไม่ต้องกดปุ่มอื่นต่อ</b>
+            </Text>
+            <Text size={1} muted>
+              📡 Deploy Now = <b>ปุ่มสำรอง</b> — ใช้เฉพาะเมื่อ publish ไปแล้วเกิน ~10 นาทีจอยังไม่อัปเดต
+              (บังคับส่งขึ้นจอรอบใหม่ · ไม่ได้ publish อะไรให้ · วันปกติไม่ต้องใช้เลย)
+            </Text>
+          </Stack>
         </Card>
 
         <Flex gap={2} align="center" wrap="wrap">
@@ -225,7 +232,8 @@ export function PendingChangesTool() {
             onClick={() => setSelected(nSel === total ? new Set() : new Set((rows || []).map(r => r._id)))} />
           <Box flex={1} />
           <Button text={`🚀 Publish ที่เลือก (${nSel})`} tone="positive" disabled={busy || nSel === 0} onClick={publishSelected} />
-          <Button text="📡 Deploy Now" mode="ghost" tone="caution" disabled={busy} onClick={deployNow} />
+          <Button text="📡 Deploy Now (ปุ่มสำรอง)" mode="ghost" tone="caution" disabled={busy} onClick={deployNow}
+            title="บังคับส่งขึ้นจอรอบใหม่ — ใช้เมื่อ publish แล้วจอไม่อัปเดตใน ~10 นาที · ไม่ได้ publish อะไรให้" />
         </Flex>
         {deployMsg && <Text size={1} muted>{deployMsg}</Text>}
 
