@@ -783,9 +783,16 @@ body {
     z-index: 3;
     transform-origin: left center;
     transform: rotateY(-180deg);
-    opacity: 1;                        /* stays fully visible — backface hides it mid-turn */
-    transition: transform 1.05s cubic-bezier(0.55, 0.06, 0.35, 0.99),
-                opacity 0.15s linear 0.9s;
+    transition: transform 1.05s cubic-bezier(0.55, 0.06, 0.35, 0.99);
+    /* NEVER rely on backface-visibility to hide the old page — kiosk-box GPUs
+       composite 3D unreliably and the "hidden" side ghosts through (seen live).
+       Hard-fade it out at the end of the fold instead (same trick as cube),
+       which also kills the un-rotate ghost when classes are stripped later. */
+    animation: book-page-fade 1.05s linear forwards;
+}
+@keyframes book-page-fade {
+    0%, 70% { opacity: 1; }
+    100%    { opacity: 0; }
 }
 .stage[data-tx="book"] .slot.entering { transform: none; opacity: 1; z-index: 1; }
 .stage[data-tx="book"] .slot.active   { transform: none; opacity: 1; }
@@ -2438,7 +2445,12 @@ function eyebrowLabel(catId) {
 let SLOTS = DEMO_SLOTS;            // replaced by adapter once live data loads
 let CATEGORIES = DEMO_CATEGORIES;  // replaced by adapter once live data loads
 
-const TRANSITIONS = ['cube', 'flip', 'zoom', 'push', 'book'];
+// 'book' is OUT of the auto pool: it parks the old slide at rotateY(-180°) and
+// leaned on backface-visibility to hide it — kiosk-box GPUs/WebViews composite
+// 3D unreliably, so the old slide ghosted through the next one (seen live on
+// Mahogany). Hardened CSS keeps it available for manual testing (dev key 5);
+// re-add here only after it proves clean on a real box.
+const TRANSITIONS = ['cube', 'flip', 'zoom', 'push'];
 
 const stage = document.getElementById('stage');
 const devTx = document.getElementById('devTx');
