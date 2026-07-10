@@ -266,8 +266,8 @@ export function PendingChangesTool() {
                     </Box>
                     <Flex gap={2} align="center" wrap="wrap" justify="flex-end">
                       {(() => { const s = scopeBadge(r); return s ? <Badge tone={s.tone} mode="outline" fontSize={0}>{s.label}</Badge> : null })()}
-                      {r.addFlag && <Badge tone="positive" fontSize={0}>➕ เข้า playlist</Badge>}
-                      {r.removeFlag && <Badge tone="critical" fontSize={0}>➖ ออกจาก playlist</Badge>}
+                      {r.addFlag && <Badge tone="positive" fontSize={0}>← เข้า playlist</Badge>}
+                      {r.removeFlag && <Badge tone="critical" fontSize={0}>→ ออกจาก playlist</Badge>}
                       <Badge tone={r.isNew ? 'primary' : 'caution'} fontSize={0}>{r.isNew ? 'ใหม่' : 'แก้ไข'}</Badge>
                     </Flex>
                   </Flex>
