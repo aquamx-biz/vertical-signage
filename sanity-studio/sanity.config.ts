@@ -10,6 +10,7 @@ import { DocumentOverview }     from './views/DocumentOverview'
 import { MediaOverview }        from './views/MediaOverview'
 import { OfferOverview }        from './views/OfferOverview'
 import { ProviderOverview }     from './views/ProviderOverview'
+import { OfferWebPreview }      from './views/WebPreview'
 import { AILookupAction }      from './actions/AILookupAction'
 import { AIPartyLookupAction } from './actions/AIPartyLookupAction'
 import { MarkAsSignedAction }             from './actions/MarkAsSignedAction'
@@ -121,6 +122,7 @@ export default defineConfig({
           return S.document().views([
             S.view.component(OfferOverview).id('overview').title('Overview'),
             S.view.form().id('edit').title('Edit'),
+            S.view.component(OfferWebPreview).id('web').title('หน้าเว็บ (ลูกค้า)'),
           ])
         }
         if (schemaType === 'media') {

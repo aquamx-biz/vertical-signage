@@ -1,18 +1,16 @@
 /**
- * ProviderOverview — dedicated read-only landing view for `provider` documents.
+ * ProviderOverview — read-only landing view for `provider` documents.
  *
- * Answers the admin's questions about a shop in order:
- *   1. Who is this?        → cover + logo + name + type + description
- *   2. How to reach them?  → phone / LINE / website / location / hours
- *   3. What do they run?   → every offer of this shop, each with review/active
- *      status and a 📺 marker when it is actually rotating on a screen
- *   4. Plumbing            → linked CRM party, web-form owners, handoff type
- * Everything else stays on the Edit tab.
+ * Top: the REAL customer-facing shop page (app.aquamx.biz/m/p/{slug}) embedded
+ * in a phone frame — never drifts from the web app because it IS the web app.
+ * Below: only what the web page does NOT show — admin signals (status, live
+ * screens), every offer of the shop with review status, and CRM plumbing.
  */
 import React, { useEffect, useMemo, useState } from 'react'
 import { useClient } from 'sanity'
 import { IntentLink } from 'sanity/router'
-import { Badge, Box, Card, Flex, Heading, Spinner, Stack, Text } from '@sanity/ui'
+import { Badge, Box, Card, Flex, Spinner, Stack, Text } from '@sanity/ui'
+import { PhonePreview, providerPreviewUrl, NoSlugCard } from './WebPreview'
 
 interface Props {
   document: {
@@ -34,15 +32,6 @@ const TYPE_TH: Record<string, string> = {
 }
 const HANDOFF_TH: Record<string, string> = { qr: 'QR เท่านั้น', sms: 'เบอร์โทรเท่านั้น', both: 'QR + เบอร์โทร' }
 
-function assetUrl(ref: string | undefined, projectId: string, dataset: string, w?: number): string | null {
-  if (!ref) return null
-  const p = ref.split('-')
-  if (p[0] === 'image' && p.length >= 4) {
-    return `https://cdn.sanity.io/images/${projectId}/${dataset}/${p[1]}-${p[2]}.${p[3]}${w ? `?w=${w}&auto=format` : ''}`
-  }
-  return null
-}
-
 /* Studio's raw perspective returns drafts AND published — collapse to one row
    per real document, preferring the draft (it reflects the latest edits). */
 function dedupe(rows: OfferRow[]): OfferRow[] {
@@ -57,13 +46,10 @@ function dedupe(rows: OfferRow[]): OfferRow[] {
 export function ProviderOverview(props: Props) {
   const d      = props.document.displayed || {}
   const client = useClient({ apiVersion: '2024-01-01' })
-  const cfg    = client.config() as { projectId?: string; dataset?: string }
-  const pid    = cfg.projectId || ''
-  const ds     = cfg.dataset || ''
   const provId = String(d._id || '').replace(/^drafts\./, '')
 
-  const [offers, setOffers]     = useState<OfferRow[] | null>(null)
-  const [liveIds, setLiveIds]   = useState<Set<string> | null>(null)
+  const [offers, setOffers]       = useState<OfferRow[] | null>(null)
+  const [liveIds, setLiveIds]     = useState<Set<string> | null>(null)
   const [partyName, setPartyName] = useState<string | null>(null)
 
   useEffect(() => {
@@ -90,17 +76,12 @@ export function ProviderOverview(props: Props) {
     ).then(r => setPartyName(r?.title || 'Party (CRM)')).catch(() => setPartyName('Party (CRM)'))
   }, [client, partyRef])
 
-  const name  = d.name_th || d.name_en || '(ไม่มีชื่อร้าน)'
-  const cover = assetUrl(d.coverImage?.asset?._ref, pid, ds, 1000)
-  const logo  = assetUrl(d.logo?.asset?._ref, pid, ds, 160)
+  const previewUrl = providerPreviewUrl(d.slug?.current)
 
-  // contact rows — only what the shop actually filled in
-  const contacts: Array<[string, string, string?]> = []
-  if (d.phone)        contacts.push(['📞 โทร', d.phone, `tel:${String(d.phone).replace(/[^\d+]/g, '')}`])
-  if (d.lineId)       contacts.push(['💬 LINE', d.lineId])
-  if (d.website)      contacts.push(['🌐 เว็บไซต์', String(d.website).replace(/^https?:\/\//, ''), d.website])
-  if (d.locationText) contacts.push(['📍 ที่ตั้ง', d.locationText, d.mapUrl || undefined])
-  if (d.openingHours) contacts.push(['🕐 เวลาเปิด', d.openingHours])
+  const liveCount = useMemo(
+    () => (offers || []).filter(o => liveIds?.has(o._id)).length,
+    [offers, liveIds],
+  )
 
   const detailRows: Array<[string, string]> = []
   if (d.slug?.current) detailRows.push(['Slug', d.slug.current])
@@ -108,11 +89,6 @@ export function ProviderOverview(props: Props) {
   if (d.unitRef) detailRows.push(['Unit', String(d.unitRef)])
   if (Array.isArray(d.owners) && d.owners.length) detailRows.push(['เจ้าของบัญชี (แก้ผ่านเว็บได้)', d.owners.join(' · ').slice(0, 90)])
   if (d.submittedBy) detailRows.push(['ส่งล่าสุดโดย', String(d.submittedBy)])
-
-  const liveCount = useMemo(
-    () => (offers || []).filter(o => liveIds?.has(o._id)).length,
-    [offers, liveIds],
-  )
 
   return (
     <Box padding={4}>
@@ -122,27 +98,10 @@ export function ProviderOverview(props: Props) {
           <Text size={1}>👁️ หน้าสรุป (ดูอย่างเดียว) — ต้องการแก้ไข กดแท็บ <b>Edit</b> ด้านบน</Text>
         </Card>
 
-        {/* 1 — identity: cover + logo + name */}
-        <Card radius={3} shadow={1} overflow="hidden" tone="transparent">
-          {cover ? (
-            <img src={cover} alt={name} style={{ display: 'block', width: '100%', height: 180, objectFit: 'cover' }} />
-          ) : (
-            <Box style={{ height: 90, background: '#12161f' }} />
-          )}
-          <Flex align="center" gap={3} padding={4} style={{ marginTop: logo ? -44 : 0 }}>
-            {logo && <img src={logo} alt="" style={{ width: 72, height: 72, borderRadius: 16, objectFit: 'cover', border: '3px solid var(--card-bg-color, #fff)', background: '#fff', flexShrink: 0 }} />}
-            <Box flex={1} style={{ marginTop: logo ? 28 : 0 }}>
-              <Heading size={2}>{name}</Heading>
-              {d.name_en && d.name_th && d.name_en !== d.name_th && <Text size={1} muted style={{ marginTop: 4 }}>{d.name_en}</Text>}
-            </Box>
-          </Flex>
-          {(d.description_th || d.description_en) && (
-            <Box paddingX={4} paddingBottom={4}>
-              <Text size={1} muted>{String(d.description_th || d.description_en).slice(0, 200)}</Text>
-            </Box>
-          )}
-        </Card>
+        {/* 1 — what the customer sees: the real page, framed like a phone */}
+        {previewUrl ? <PhonePreview url={previewUrl} /> : <NoSlugCard what="ร้าน" />}
 
+        {/* 2 — admin-only signals (things the web page does NOT show) */}
         <Flex gap={2} wrap="wrap">
           <Badge tone={d.status === false ? 'critical' : 'positive'} fontSize={1} padding={2}>
             {d.status === false ? '○ ปิดใช้งาน' : '● Active'}
@@ -150,28 +109,9 @@ export function ProviderOverview(props: Props) {
           {d.providerType && <Badge mode="outline" fontSize={1} padding={2}>{TYPE_TH[d.providerType] || d.providerType}</Badge>}
           {liveCount > 0 && <Badge tone="positive" fontSize={1} padding={2}>📺 ขึ้นจอ {liveCount} โฆษณา</Badge>}
           {d.showcaseWeb && <Badge tone="primary" fontSize={1} padding={2}>🌐 มีหน้าเว็บสาธารณะ{d.slug?.current ? ` — /l/${d.slug.current}` : ''}</Badge>}
-          {Array.isArray(d.amenities) && d.amenities.slice(0, 4).map((a: string) => (
-            <Badge key={a} mode="outline" fontSize={1} padding={2}>{a}</Badge>
-          ))}
         </Flex>
 
-        {/* 2 — contact */}
-        {contacts.length > 0 && (
-          <Card padding={3} radius={3} shadow={1}>
-            <Stack space={3}>
-              {contacts.map(([k, v, href]) => (
-                <Flex key={k} gap={3} align="center">
-                  <Box style={{ width: 110, flexShrink: 0 }}><Text size={1} muted>{k}</Text></Box>
-                  <Text size={1} weight="semibold">
-                    {href ? <a href={href} target="_blank" rel="noreferrer">{v} ↗</a> : v}
-                  </Text>
-                </Flex>
-              ))}
-            </Stack>
-          </Card>
-        )}
-
-        {/* 3 — the shop's offers */}
+        {/* 3 — the shop's offers, each with its review state + on-screen marker */}
         <Stack space={3}>
           <Text size={1} weight="semibold" style={{ textTransform: 'uppercase', letterSpacing: '0.05em' }}>
             🎫 โฆษณาของร้านนี้{offers ? ` — ${offers.length} รายการ` : ''}
