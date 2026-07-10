@@ -28,6 +28,10 @@ interface Row {
   addFlag?: boolean | null
   removeFlag?: boolean | null
   isNew?: boolean
+  scope?: string | null
+  kind?: string | null
+  projTitles?: Array<string | null> | null   // media/offer/buildingUpdate: projects[]
+  projTitle?: string | null                  // playlistItem: project · juristic provider: projectSite
 }
 
 const TYPES = ['media', 'offer', 'provider', 'playlistItem', 'buildingUpdate']
@@ -39,6 +43,23 @@ const WEBHOOK_URL = 'https://app.aquamx.biz/api/sanity-webhook'
 
 const fmt = (d?: string) =>
   d ? new Date(d).toLocaleString('th-TH', { timeZone: 'Asia/Bangkok', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '—'
+
+/* Where will this doc show? 🌍 Global / 📍 project name(s) / ⚠ scoped but no project picked.
+   Mirrors the target rules in mediaPublishAction: notices use projects[] regardless of scope. */
+function scopeBadge(r: Row): { label: string; tone: 'primary' | 'caution' | 'default' } | null {
+  const titles = (r.projTitles ?? (r.projTitle ? [r.projTitle] : [])).filter(Boolean) as string[]
+  const list = titles.slice(0, 2).join(' · ') + (titles.length > 2 ? ` +${titles.length - 2}` : '')
+  if (r._type === 'playlistItem') return titles.length ? { label: `📍 ${list}`, tone: 'default' } : null
+  if ((r._type === 'media' && r.kind === 'notice') || r.scope === 'project') {
+    return titles.length
+      ? { label: `📍 ${list}`, tone: 'default' }
+      : { label: '⚠ ยังไม่เลือกโครงการ', tone: 'caution' }
+  }
+  if (r._type === 'media' || r._type === 'offer' || r._type === 'buildingUpdate') {
+    return { label: '🌍 Global — ทุกตึก', tone: 'primary' }   // scope 'global' or unset defaults to global
+  }
+  return titles.length ? { label: `📍 ${list}`, tone: 'default' } : null   // juristic provider → projectSite
+}
 
 export function PendingChangesTool() {
   const client = useClient({ apiVersion: '2024-01-01' })
@@ -60,7 +81,10 @@ export function PendingChangesTool() {
         "img": coalesce(posterImage.asset->url, primaryImage.asset->url, images[0].asset->url,
                         logo.asset->url, coverImage.asset->url, imageFiles[0].asset->url,
                         media->posterImage.asset->url),
-        "addFlag": addToPlaylistOnPublish, "removeFlag": removeFromPlaylistOnPublish
+        "addFlag": addToPlaylistOnPublish, "removeFlag": removeFromPlaylistOnPublish,
+        scope, kind,
+        "projTitles": projects[]->title,
+        "projTitle": coalesce(project->title, projectSite->title)
       }`, { types: TYPES },
     ).catch(() => [] as Row[])
     const baseIds = drafts.map(d => d._id.replace(/^drafts\./, ''))
@@ -240,7 +264,8 @@ export function PendingChangesTool() {
                       </Text>
                       <Text size={1} muted style={{ marginTop: 3 }}>แก้ล่าสุด {fmt(r._updatedAt)}</Text>
                     </Box>
-                    <Flex gap={2}>
+                    <Flex gap={2} align="center" wrap="wrap" justify="flex-end">
+                      {(() => { const s = scopeBadge(r); return s ? <Badge tone={s.tone} mode="outline" fontSize={0}>{s.label}</Badge> : null })()}
                       {r.addFlag && <Badge tone="positive" fontSize={0}>➕ เข้า playlist</Badge>}
                       {r.removeFlag && <Badge tone="critical" fontSize={0}>➖ ออกจาก playlist</Badge>}
                       <Badge tone={r.isNew ? 'primary' : 'caution'} fontSize={0}>{r.isNew ? 'ใหม่' : 'แก้ไข'}</Badge>
