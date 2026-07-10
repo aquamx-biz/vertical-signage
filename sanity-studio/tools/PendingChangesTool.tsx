@@ -196,7 +196,9 @@ export function PendingChangesTool() {
     try {
       const res = await fetch(WEBHOOK_URL, { method: 'POST' })
       const out = await res.json().catch(() => null)
-      setDeployMsg(out?.success ? '✓ สั่ง rebuild แล้ว — จอทุกตึกจะได้ของใหม่ใน ~3-5 นาที' : `✗ ${JSON.stringify(out)}`)
+      setDeployMsg(out?.success
+        ? '✅ สั่งส่งขึ้นจอสำเร็จ — กำลังอบ build อยู่หลังบ้าน จอทุกตึกได้ของใหม่ใน ~3-5 นาที · หน้านี้จะไม่มีอะไรเปลี่ยน (รายการ draft ยังอยู่ เพราะปุ่มนี้ไม่ได้ publish อะไรให้)'
+        : `✗ ${JSON.stringify(out)}`)
     } catch {
       // no-cors fallback: fire-and-forget when the browser blocks reading the response
       try { await fetch(WEBHOOK_URL, { method: 'POST', mode: 'no-cors' }); setDeployMsg('✓ ส่งคำสั่งแล้ว (ยืนยันผลไม่ได้ — ดูที่ GitHub Actions)') }
@@ -235,7 +237,11 @@ export function PendingChangesTool() {
           <Button text="📡 Deploy Now (ปุ่มสำรอง)" mode="ghost" tone="caution" disabled={busy} onClick={deployNow}
             title="บังคับส่งขึ้นจอรอบใหม่ — ใช้เมื่อ publish แล้วจอไม่อัปเดตใน ~10 นาที · ไม่ได้ publish อะไรให้" />
         </Flex>
-        {deployMsg && <Text size={1} muted>{deployMsg}</Text>}
+        {deployMsg && (
+          <Card padding={3} radius={3} tone={deployMsg.startsWith('✗') ? 'critical' : 'positive'}>
+            <Text size={1}>{deployMsg}</Text>
+          </Card>
+        )}
 
         {log.length > 0 && (
           <Card padding={3} radius={3} tone="transparent" border>
