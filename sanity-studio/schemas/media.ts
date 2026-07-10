@@ -173,11 +173,11 @@ export default defineType({
     // ── Provider (convenience shortcut) ──────────────────────────────────────
     defineField({
       name:        'provider',
-      title:       'Provider (convenience)',
+      title:       'Provider',
       type:        'reference',
       to:          [{ type: 'provider' }],
-      options:     { filter: 'providerType == "juristicOffice"' },
-      description: 'Optional. Shows Juristic Office providers only. Offer already carries the provider reference.',
+      options:     { filter: 'status != false' },
+      description: 'Provider linked to this media — should match the selected offer\'s provider (verify the link here). Shows all active providers.',
     }),
 
     // ── Scope ─────────────────────────────────────────────────────────────────

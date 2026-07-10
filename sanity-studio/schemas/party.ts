@@ -237,6 +237,11 @@ export default defineType({
     defineField({ group: 'identity', name: 'lineGroupId', title: 'LINE Group ID',  type: 'string',
       description: 'Group conversation ID from LINE. Add the bot to the group and send any message — the bot will reply with this ID.',
     }),
+    defineField({
+      group: 'identity', name: 'logins', title: 'Website Logins', type: 'array',
+      of: [{ type: 'string' }], readOnly: true,
+      description: 'Login identities linked to this party (email:<addr> / line:<userId>) — written automatically by aquamx.biz sign-in (account.js). One party can hold several logins.',
+    }),
     defineField({ group: 'identity', name: 'website', title: 'Website', type: 'url'    }),
 
     // Legacy array fields — hidden, kept so existing data is not lost

@@ -7,16 +7,21 @@ import { RatecardLiveNote } from '../components/RatecardLiveNote'
 // (aquamx-landing/scripts/build-ratecard.js) bakes these values into the
 // static HTML on deploy. Publish here → (webhook) → Netlify rebuild → live.
 //
-// Bilingual fields use { th, en }. Numbers (prices, seconds, plays) are
-// language-neutral and shown verbatim. Feature cells render as:
-//   check → ✓   ·   cross → —   ·   text → the typed text (e.g. "×1")
+// MODEL: the table is ONE list of rows, top to bottom. Columns are the
+// `tiers` (packages — headers only). Every attribute is a row, so editing
+// any attribute shows all packages side by side in that row's cells:
+//   • Value row   → big number + unit (Price, Display time, Frequency)
+//   • Mark row    → ✓ / — / custom text per package (Video, Gallery, …)
+//   • Heading row → a section divider that spans all columns
+// Bilingual text uses { th, en }; numbers are language-neutral.
 
-const localeString = (name: string, title: string) =>
+const localeString = (name: string, title: string, description?: string) =>
   defineField({
     name,
     title,
     type: 'object',
     options: { columns: 2 },
+    description,
     fields: [
       defineField({ name: 'th', title: 'Thai',    type: 'string' }),
       defineField({ name: 'en', title: 'English', type: 'string' }),
@@ -45,12 +50,12 @@ export default defineType({
       description: 'Internal label only — not shown on the website.',
     }),
 
-    // ── Tiers (table columns) ──────────────────────────────────────────────
+    // ── Columns: the packages (headers only) ───────────────────────────────
     defineField({
       name: 'tiers',
       title: 'Packages (columns)',
       type: 'array',
-      description: 'Each entry is one pricing column, left to right. Usually 4.',
+      description: 'Each entry is one pricing column, left to right. Usually 4. All prices/values live in the Rows below — this is just the column header.',
       validation: Rule => Rule.required().min(1).max(6),
       of: [{
         type: 'object',
@@ -58,113 +63,123 @@ export default defineType({
         fields: [
           defineField({ name: 'name', title: 'Package Name', type: 'string', validation: Rule => Rule.required(), description: 'e.g. Starter, Booster, Pro, Premium (shown the same in both languages).' }),
           defineField({ name: 'popular', title: '★ Most Popular', type: 'boolean', initialValue: false, description: 'Highlights this column with the orange "Most Popular" badge.' }),
-          defineField({ name: 'pricePerWeek',   title: 'Price / week (฿)',   type: 'number', validation: Rule => Rule.required().min(0) }),
-          defineField({ name: 'billedPerMonth', title: 'Billed / month (฿)', type: 'number', validation: Rule => Rule.required().min(0), description: 'Shown as the small "billed ฿X monthly" sub-line.' }),
-          defineField({ name: 'displaySeconds', title: 'Display time (seconds)', type: 'number', validation: Rule => Rule.required().min(0) }),
-          defineField({ name: 'playsPerDay',    title: 'Frequency (plays / day)', type: 'number', validation: Rule => Rule.required().min(0) }),
         ],
         preview: {
-          select: { name: 'name', price: 'pricePerWeek', popular: 'popular' },
-          prepare: ({ name, price, popular }) => ({
-            title: `${popular ? '★ ' : ''}${name ?? '(unnamed)'}`,
-            subtitle: price != null ? `฿${price} / week` : '',
-          }),
+          select: { name: 'name', popular: 'popular' },
+          prepare: ({ name, popular }) => ({ title: `${popular ? '★ ' : ''}${name ?? '(unnamed)'}` }),
         },
       }],
     }),
 
-    // ── Row labels (left column, bilingual) ────────────────────────────────
-    localeString('priceRowLabel',   'Row label — Price'),
-    localeString('displayRowLabel', 'Row label — Display time'),
-    localeString('freqRowLabel',    'Row label — Frequency'),
-    localeString('secondsUnit',     'Unit — seconds (under display time)'),
-    localeString('perDayUnit',      'Unit — per day (under frequency)'),
-
-    // Billed sub-line template. {n} is replaced with each tier's Billed/month.
+    // ── Rows: the whole table body, top to bottom ──────────────────────────
     defineField({
-      name: 'billedFormat',
-      title: 'Billed sub-line format',
-      type: 'object',
-      options: { columns: 2 },
-      description: 'Use {n} where the amount goes. e.g. Thai "เรียกเก็บ ฿{n}/เดือน", English "billed ฿{n} monthly".',
-      fields: [
-        defineField({ name: 'th', title: 'Thai',    type: 'string', initialValue: 'เรียกเก็บ ฿{n}/เดือน' }),
-        defineField({ name: 'en', title: 'English', type: 'string', initialValue: 'billed ฿{n} monthly' }),
-      ],
-    }),
-
-    // ── Feature matrix ─────────────────────────────────────────────────────
-    defineField({
-      name: 'featureGroups',
-      title: 'Feature Groups',
+      name: 'rows',
+      title: 'Rows (the table, top to bottom)',
       type: 'array',
-      description: 'Grouped feature rows (e.g. "Media type", "Standard CTA"). Each row has one cell per package, in the same order as the columns above.',
-      of: [{
-        type: 'object',
-        name: 'featureGroup',
-        fields: [
-          localeString('label', 'Group Heading'),
-          defineField({
-            name: 'rows',
-            title: 'Rows',
-            type: 'array',
-            of: [{
-              type: 'object',
-              name: 'featureRow',
-              fields: [
-                localeString('label', 'Feature Label'),
-                defineField({
-                  name: 'cells',
-                  title: 'Cells (one per package, in column order)',
-                  type: 'array',
-                  description: 'Add one cell per package. ✓ = included, — = not included, or type a value like "×1".',
-                  of: [{
-                    type: 'object',
-                    name: 'cell',
-                    fields: [
-                      defineField({
-                        name: 'type',
-                        title: 'Type',
-                        type: 'string',
-                        initialValue: 'check',
-                        options: { list: [
-                          { title: '✓ Included',     value: 'check' },
-                          { title: '— Not included', value: 'cross' },
-                          { title: 'Custom text (e.g. ×1)', value: 'text' },
-                        ], layout: 'radio' },
-                      }),
-                      defineField({
-                        name: 'text',
-                        title: 'Custom text',
-                        type: 'string',
-                        hidden: ({ parent }) => (parent as any)?.type !== 'text',
-                        description: 'Shown only when Type = Custom text. e.g. "×1", "×2".',
-                      }),
-                    ],
-                    preview: {
-                      select: { type: 'type', text: 'text' },
-                      prepare: ({ type, text }) => ({
-                        title: type === 'text' ? (text || '(empty)') : type === 'cross' ? '—' : '✓',
-                      }),
-                    },
-                  }],
-                }),
-              ],
-              preview: {
-                select: { th: 'label.th', en: 'label.en' },
-                prepare: ({ th, en }) => ({ title: th || en || '(row)' }),
-              },
-            }],
-          }),
-        ],
-        preview: {
-          select: { th: 'label.th', en: 'label.en', rows: 'rows' },
-          prepare: ({ th, en, rows }) => ({
-            title: th || en || '(group)',
-            subtitle: `${rows?.length ?? 0} row(s)`,
-          }),
+      description: 'One entry per table row, in display order. Each row has one cell per package (same order as the columns above). Add a Value row for numbers (price, seconds…), a Mark row for ✓/—/×N, or a Section heading to group rows.',
+      of: [
+        // ── Value row: big number + unit (Price, Display time, Frequency) ───
+        {
+          type: 'object',
+          name: 'valueRow',
+          title: 'Value row (big number)',
+          fields: [
+            localeString('label', 'Row label'),
+            localeString('unit', 'Unit / sub-line', 'Small text under each number. Type {n} to insert that cell\'s "sub number" (e.g. billed/month → "เรียกเก็บ ฿{n}/เดือน"). For a constant unit like "seconds" just type it — leave the cell sub-number blank.'),
+            defineField({
+              name: 'cells',
+              title: 'Cells (one per package, in column order)',
+              type: 'array',
+              validation: Rule => Rule.max(6),
+              of: [{
+                type: 'object',
+                name: 'valueCell',
+                fields: [
+                  defineField({ name: 'big', title: 'Big number', type: 'string', description: 'The large value shown, e.g. "฿55", "8", "25". Type it exactly as it should appear.' }),
+                  defineField({ name: 'sub', title: 'Sub-number ({n})', type: 'number', description: 'Optional. Fills {n} in the Unit above (e.g. billed/month = 220). Leave blank for rows whose unit is constant.' }),
+                ],
+                preview: {
+                  select: { big: 'big', sub: 'sub' },
+                  prepare: ({ big, sub }) => ({ title: big ?? '(empty)', subtitle: sub != null ? `{n}=${sub}` : '' }),
+                },
+              }],
+            }),
+          ],
+          preview: {
+            select: { th: 'label.th', en: 'label.en', cells: 'cells' },
+            prepare: ({ th, en, cells }) => ({
+              title: `📊  ${th || en || '(value row)'}`,
+              subtitle: (cells || []).map((c: any) => c?.big ?? '·').join('   '),
+            }),
+          },
         },
-      }],
+
+        // ── Mark row: ✓ / — / custom text per package ──────────────────────
+        {
+          type: 'object',
+          name: 'markRow',
+          title: 'Mark row (✓ / — / ×N)',
+          fields: [
+            localeString('label', 'Row label'),
+            defineField({
+              name: 'cells',
+              title: 'Cells (one per package, in column order)',
+              type: 'array',
+              validation: Rule => Rule.max(6),
+              description: 'One cell per package. ✓ = included, — = not included, or type a value like "×1" / "5 images".',
+              of: [{
+                type: 'object',
+                name: 'cell',
+                fields: [
+                  defineField({
+                    name: 'type',
+                    title: 'Type',
+                    type: 'string',
+                    initialValue: 'check',
+                    options: { list: [
+                      { title: '✓ Included',     value: 'check' },
+                      { title: '— Not included', value: 'cross' },
+                      { title: 'Custom text (e.g. ×1)', value: 'text' },
+                    ], layout: 'radio' },
+                  }),
+                  defineField({
+                    name: 'text',
+                    title: 'Custom text',
+                    type: 'string',
+                    hidden: ({ parent }) => (parent as any)?.type !== 'text',
+                    description: 'Shown only when Type = Custom text. e.g. "×1", "5 images".',
+                  }),
+                ],
+                preview: {
+                  select: { type: 'type', text: 'text' },
+                  prepare: ({ type, text }) => ({
+                    title: type === 'text' ? (text || '(empty)') : type === 'cross' ? '—' : '✓',
+                  }),
+                },
+              }],
+            }),
+          ],
+          preview: {
+            select: { th: 'label.th', en: 'label.en', cells: 'cells' },
+            prepare: ({ th, en, cells }) => ({
+              title: th || en || '(mark row)',
+              subtitle: (cells || []).map((c: any) => c?.type === 'text' ? (c.text || '·') : c?.type === 'cross' ? '—' : '✓').join('   '),
+            }),
+          },
+        },
+
+        // ── Section heading: divider spanning all columns ──────────────────
+        {
+          type: 'object',
+          name: 'heading',
+          title: 'Section heading',
+          fields: [ localeString('label', 'Heading') ],
+          preview: {
+            select: { th: 'label.th', en: 'label.en' },
+            prepare: ({ th, en }) => ({ title: `▸  ${th || en || '(heading)'}` }),
+          },
+        },
+      ],
     }),
   ],
 
