@@ -33,6 +33,7 @@ import saleOpportunity    from './saleOpportunity'
 import serviceContract    from './serviceContract'
 import ratecard           from './ratecard'
 import siteStats          from './siteStats'
+import screenStatus       from './screenStatus'
 
 export const schemaTypes = [
   project,
@@ -70,4 +71,5 @@ export const schemaTypes = [
   serviceContract,
   ratecard,
   siteStats,
+  screenStatus,
 ]

@@ -7,6 +7,9 @@ import { ProjectPublishAction } from './actions/projectPublishAction'
 import { AddToPlaylistAction }  from './actions/addToPlaylistAction'
 import { MediaPublishAction }   from './actions/mediaPublishAction'
 import { DocumentOverview }     from './views/DocumentOverview'
+import { MediaOverview }        from './views/MediaOverview'
+import { OfferOverview }        from './views/OfferOverview'
+import { ProviderOverview }     from './views/ProviderOverview'
 import { AILookupAction }      from './actions/AILookupAction'
 import { AIPartyLookupAction } from './actions/AIPartyLookupAction'
 import { MarkAsSignedAction }             from './actions/MarkAsSignedAction'
@@ -34,6 +37,7 @@ import { AccountCodeTreeView }    from './tools/AccountCodeTreeView'
 import { HowToTool }            from './tools/HowToTool'
 import { DashboardTool }        from './tools/DashboardTool'
 import { PartyMigrationTool }   from './tools/PartyMigrationTool'
+import { ScreenHealthTool }     from './tools/ScreenHealthTool'
 import { accessControlPlugin, accessStore } from './plugins/accessControl'
 import { paneWidthOverride }               from './plugins/paneWidthOverride'
 
@@ -60,6 +64,11 @@ const dashboardPlugin = definePlugin({
       name:      'party-migration',
       title:     'Party Migration',
       component: PartyMigrationTool,
+    },
+    {
+      name:      'screen-health',
+      title:     'Screen Health',
+      component: ScreenHealthTool,
     },
   ],
 })
@@ -100,6 +109,24 @@ export default defineConfig({
             S.view.form().id('edit').title('Edit'),
             S.view.component(ApprovalView).id('approval').title('Approval'),
             S.view.component(ActivityView).id('activity').title('Activity'),
+          ])
+        }
+        if (schemaType === 'provider') {
+          return S.document().views([
+            S.view.component(ProviderOverview).id('overview').title('Overview'),
+            S.view.form().id('edit').title('Edit'),
+          ])
+        }
+        if (schemaType === 'offer') {
+          return S.document().views([
+            S.view.component(OfferOverview).id('overview').title('Overview'),
+            S.view.form().id('edit').title('Edit'),
+          ])
+        }
+        if (schemaType === 'media') {
+          return S.document().views([
+            S.view.component(MediaOverview).id('overview').title('Overview'),
+            S.view.form().id('edit').title('Edit'),
           ])
         }
         if (schemaType === 'party') {
