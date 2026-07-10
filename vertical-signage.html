@@ -804,10 +804,11 @@ body {
 ============================================================ */
 .swipe-hint {
     position: absolute; inset: 0; z-index: 40;
-    opacity: 0; pointer-events: none;
-    transition: opacity 0.6s ease;
+    /* visibility-gated like the popup — zero compositor cost while hidden */
+    opacity: 0; pointer-events: none; visibility: hidden;
+    transition: opacity 0.6s ease, visibility 0s linear 0.6s;
 }
-.swipe-hint.show { opacity: 1; }
+.swipe-hint.show { opacity: 1; visibility: visible; transition: opacity 0.6s ease, visibility 0s linear 0s; }
 /* chevrons pinned to the screen edges — "more content beyond this edge".
    Sits at 44% height: clearly ABOVE the title/price text block (bottom zone),
    so the hint never mixes into the reading area. */
@@ -825,7 +826,8 @@ body {
 .swipe-hint.hand-r .hand { right: 7.5vh; left: auto; }
 .swipe-hint svg {
     width: 5.6vh; height: 5.6vh; display: block;
-    filter: drop-shadow(0 0.3vh 1.2vh rgba(0,0,0,0.7));
+    /* no drop-shadow filter here: a filter on a transform-animated element forces
+       a repaint every frame on weak kiosk GPUs — the stroke contrast is enough */
     animation: hint-sway 1.7s ease-in-out infinite;
     animation-play-state: paused;              /* don't burn weak kiosk GPUs while hidden */
 }
@@ -1280,11 +1282,19 @@ body {
     backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
     display: flex; align-items: flex-start; justify-content: center;
     padding-top: 12vh;                /* top edge around the MENU level · not higher */
-    opacity: 0; pointer-events: none;
-    transition: opacity 0.25s var(--ease-out);
+    /* visibility:hidden (not just opacity:0) — takes the whole popup OUT of the
+       compositor while closed. Critical on kiosk-box GPUs: the caption layers
+       use backdrop-filter, and an opacity-hidden overlay still forces the stage
+       beneath to composite through them 24/7 → progressive tile dropout
+       (images rendering half-loaded after hours of unattended rotation). */
+    opacity: 0; pointer-events: none; visibility: hidden;
+    transition: opacity 0.25s var(--ease-out), visibility 0s linear 0.25s;
     overflow-y: auto;
 }
-.detail-overlay.open { opacity: 1; pointer-events: auto; }
+.detail-overlay.open {
+    opacity: 1; pointer-events: auto; visibility: visible;
+    transition: opacity 0.25s var(--ease-out), visibility 0s linear 0s;
+}
 .detail-card {
     position: relative;
     width: 72%;                          /* matches /offer .pop-overlay width:72% */
@@ -3611,6 +3621,7 @@ function openDetail(ctx) {
     const dback = document.getElementById('detailBack');
     if (dback) dback.style.display = 'none';
 
+    detailOverlay.style.visibility = '';   // clear the closeDetail fallback before reopening
     detailOverlay.classList.add('open');
     clearAllSlotTimers();
     advanceToken++;
@@ -3619,6 +3630,12 @@ function openDetail(ctx) {
 }
 function closeDetail() {
     detailOverlay.classList.remove('open');
+    // Belt-and-braces: force the overlay out of the compositor after the fade,
+    // even if a quirky WebView mishandles the delayed CSS visibility transition.
+    // (Hidden popup must cost ZERO GPU — its caption layers use backdrop-filter.)
+    setTimeout(() => {
+        if (!detailOverlay.classList.contains('open')) detailOverlay.style.visibility = 'hidden';
+    }, 300);
     stopDetailGallery();           // F — stop auto-rotate when popup closes
     syncInteractingClass();
     resumeRotation();   // re-arm current slot (video/multi-image + dwell) — never stall
