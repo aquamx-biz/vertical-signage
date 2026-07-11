@@ -4,6 +4,7 @@ import { ExcludedProjectsInput }      from '../components/ExcludedProjectsInput'
 import { NoticeSubcategoryInput }     from '../components/NoticeSubcategoryInput'
 import { VideoCompressInput }         from '../components/VideoCompressInput'
 import { PosterImageAIInput }         from '../components/PosterImageAIInput'
+import { createTranslateInput }       from '../components/TranslateInput'
 import { MediaUsageSummary }          from '../components/MediaUsageSummary'
 import { PlaylistStatusBadge }        from '../components/PlaylistStatusBadge'
 
@@ -73,12 +74,14 @@ export default defineType({
       type:        'string',
       validation:  Rule => Rule.required(),
       description: 'ชื่อที่ขึ้นจอ — เป็นภาษาตาม "ภาษาหลักบนจอ" ด้านบน · Can be auto-filled by 🤖 Read Image with AI (notices + promos).',
+      components:  { input: createTranslateInput({ sourceField: 'altText', sourceLang: 'English', targetLang: 'Thai', buttonLabel: '✨ Translate from English' }) },
     }),
     defineField({
       name:        'altText',
       title:       'Title (English)',
       type:        'string',
-      description: 'English version of the title. Can be auto-filled by 🤖 Read Image with AI above (notices + promos).',
+      description: 'English version of the title — กด ✨ แปลจากช่องบนแล้วตรวจก่อนบันทึก · Can be auto-filled by 🤖 Read Image with AI above (notices + promos).',
+      components:  { input: createTranslateInput({ sourceField: 'title', sourceLang: 'Thai', targetLang: 'English', buttonLabel: '✨ Translate from Thai' }) },
     }),
 
     // ── Asset type + files (promo only) ──────────────────────────────────────
