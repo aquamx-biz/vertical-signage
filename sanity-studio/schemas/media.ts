@@ -39,7 +39,16 @@ export default defineType({
       title:       'Poster Image',
       type:        'image',
       options:     { hotspot: true },
-      description: 'Upload the poster/announcement image, then click 🤖 Read Image with AI to auto-fill the titles below — works for both notices and promos. (For promos it is also the fallback thumbnail shown before the video loads.)',
+      // Hidden for image promos: the screen shows Image Files there — never this
+      // field — so having both visible made editors unsure which image airs. And
+      // customers now send plain photos (not text posters), so the AI reader has
+      // nothing to read for promos anyway. Still used by: notices (this IS the
+      // on-screen image) and video promos (thumbnail before the video loads).
+      hidden:      ({ document }) => {
+        const doc = document as any
+        return doc?.kind === 'promo' && doc?.type === 'image'
+      },
+      description: 'รูปประกาศ (notice = รูปนี้คือตัวที่ขึ้นจอ) หรือปกวิดีโอระหว่างโหลด · กด 🤖 Read Image with AI ให้อ่านข้อความในรูปมากรอกชื่ออัตโนมัติ · โปรโมแบบรูปภาพไม่ใช้ช่องนี้ (จอใช้ Image Files)',
       components:  { input: PosterImageAIInput },
     }),
 

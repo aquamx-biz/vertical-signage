@@ -80,8 +80,10 @@ export function MediaOverview(props: Props) {
       .then(setProvider).catch(() => setProvider(null))
   }, [client, provRef])
 
-  // Hero: poster → first slideshow image → notice image. Video with no poster gets a dark placeholder.
-  const heroRef  = d.posterImage?.asset?._ref || d.imageFiles?.[0]?.asset?._ref || d.imageFile?.asset?._ref
+  // Hero mirrors what the SCREEN actually airs (build.mjs coalesce order):
+  // imageFiles first — for image promos posterImage never airs, so showing it
+  // here as the hero misled editors about which image is live.
+  const heroRef  = d.imageFiles?.[0]?.asset?._ref || d.posterImage?.asset?._ref || d.imageFile?.asset?._ref
   const hero     = assetUrl(heroRef, pid, ds, 1000)
   const videoUrl = assetUrl(d.videoFile?.asset?._ref, pid, ds)
   const isVideo  = d.type === 'video' || !!d.videoFile
