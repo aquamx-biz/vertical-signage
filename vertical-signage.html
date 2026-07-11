@@ -3189,13 +3189,15 @@ function buildCatCard(it, idx) {
     if (it.img) {
         const img = document.createElement('img');
         img.className = 'cat-card-img-el';
-        img.src = it.img; img.alt = '';
+        // sized (not the multi-MB original) + SAME params as the SW prewarm list,
+        // so menu cards paint instantly from cache instead of fetching on tap
+        img.src = sizedImg(it.img, 640, 480); img.alt = '';
         imgWrap.appendChild(img);
     }
     if (p && p.logo) {
         const logo = document.createElement('img');
         logo.className = 'cat-card-logo';
-        logo.src = p.logo; logo.alt = '';
+        logo.src = sizedImg(p.logo, 240, 240); logo.alt = '';
         imgWrap.appendChild(logo);
     }
     if (provName) {
@@ -4131,10 +4133,22 @@ async function init() {
             // Video: cache the raw file url exactly as <video src> will request it.
             const vid = item.url && (isVid(item.url) || item.mediaType === 'video') ? item.url : null;
             if (vid) mediaUrls.push(vid);
+            // Slide provider badge (top-right logo)
+            if (item.provider && item.provider.logo) mediaUrls.push(sizedImg(item.provider.logo, 240, 240));
         });
-        if (mediaUrls.length) {
-            navigator.serviceWorker.controller.postMessage({ action: 'prewarm', urls: mediaUrls });
-            console.log('[SW] Prewarm sent for', mediaUrls.length, 'media URLs (images sized + videos)');
+        // MENU/category content too (offers, provider logos, Building-Updates
+        // posters) — tapping MENU used to fetch everything on demand, so cards sat
+        // blank on slow condo wifi. Prewarm the SAME sized URLs the cards request
+        // (the cache only hits on an exact match).
+        Object.values(CATEGORIES || {}).forEach(cat => (cat.items || []).forEach(it => {
+            if (it.img && !isVid(it.img)) mediaUrls.push(sizedImg(it.img, 640, 480));
+            const lg = it._provider && it._provider.logo;
+            if (lg) mediaUrls.push(sizedImg(lg, 240, 240));
+        }));
+        const uniqueUrls = [...new Set(mediaUrls.filter(Boolean))];
+        if (uniqueUrls.length) {
+            navigator.serviceWorker.controller.postMessage({ action: 'prewarm', urls: uniqueUrls });
+            console.log('[SW] Prewarm sent for', uniqueUrls.length, 'media URLs (slides + menu + logos + videos)');
         }
     }
 
