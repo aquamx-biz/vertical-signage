@@ -53,12 +53,26 @@ export default defineType({
     }),
 
     // ── Identity ─────────────────────────────────────────────────────────────
+    // Display language: mirrors offer.displayLang — the owner's intended
+    // language. The `title` below holds the PRIMARY-language title (not
+    // necessarily Thai: an English ad carries its English title here).
+    defineField({
+      name: 'displayLang',
+      title: 'ภาษาหลักบนจอ (Display language)',
+      type: 'string',
+      options: { list: [
+        { title: 'ไทย (Thai)', value: 'th' },
+        { title: 'English',    value: 'en' },
+      ], layout: 'radio', direction: 'horizontal' },
+      initialValue: 'th',
+      description: 'ภาษาที่เจ้าของต้องการให้แสดง — ฟอร์มเว็บตั้งให้อัตโนมัติตามภาษาที่ลูกค้าพิมพ์',
+    }),
     defineField({
       name:        'title',
-      title:       'Title (Thai)',
+      title:       'Title (ภาษาหลัก / Primary)',
       type:        'string',
       validation:  Rule => Rule.required(),
-      description: 'Main title shown on screen. Can be auto-filled by 🤖 Read Image with AI above (notices + promos).',
+      description: 'ชื่อที่ขึ้นจอ — เป็นภาษาตาม "ภาษาหลักบนจอ" ด้านบน · Can be auto-filled by 🤖 Read Image with AI (notices + promos).',
     }),
     defineField({
       name:        'altText',

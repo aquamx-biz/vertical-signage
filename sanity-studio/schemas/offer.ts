@@ -82,13 +82,37 @@ export default defineType({
     }),
 
     // ── Identity ─────────────────────────────────────────────────────────────
+    // ── Display language: the OWNER's intent, the single source of truth ──────
+    // A customer who typed English wants an English ad — the screen must never
+    // lead with an unapproved machine translation. Set automatically by the web
+    // form from the language the customer typed; editable here.
+    defineField({
+      name: 'displayLang',
+      group: 'content',
+      title: 'ภาษาหลักบนจอ (Display language)',
+      type: 'string',
+      options: { list: [
+        { title: 'ไทย (Thai)',       value: 'th' },
+        { title: 'English',          value: 'en' },
+      ], layout: 'radio', direction: 'horizontal' },
+      initialValue: 'th',
+      description: 'ภาษาที่เจ้าของต้องการให้โฆษณาแสดง — ฟอร์มเว็บตั้งให้อัตโนมัติตามภาษาที่ลูกค้าพิมพ์',
+    }),
     defineField({
       name:       'title_th',
       group:      'content',
       title:      'Title (Thai)',
       type:       'string',
       description: 'ชื่อสินค้า / บริการ / โปรโมชั่น สั้นๆ กระชับ — เช่น "All-Day Brunch", "นวดแผนไทย 60 นาที", "ลด 50% วันนี้". Short product / service / promo name (the ad headline).',
-      validation: Rule => Rule.required(),
+      // required — UNLESS the owner chose English and the English title exists
+      // (an English-only ad is legitimate; forcing Thai here would push admins
+      // to paste machine translations the owner never approved).
+      validation: Rule => Rule.custom((value, context) => {
+        const doc = context.document as any
+        if (value) return true
+        if (doc?.displayLang === 'en' && doc?.title_en) return true
+        return 'ใส่ชื่อภาษาไทย — หรือเลือกภาษาหลัก = English แล้วใส่ Title (English) แทน'
+      }),
       components: { input: createTranslateInput({ sourceField: 'title_en', sourceLang: 'English', targetLang: 'Thai',    buttonLabel: '✨ Translate from English' }) },
     }),
     defineField({
@@ -96,7 +120,7 @@ export default defineType({
       group:      'content',
       title:      'Title (English)',
       type:       'string',
-      description: 'กรอกไทยแล้วกด ✨ แปล — หรือฟอร์มเว็บ /offer แปลให้อัตโนมัติ. English version, auto-translated from the Thai title.',
+      description: 'ระบบไม่แปลอัตโนมัติ — อยากมีเวอร์ชันอังกฤษ กด ✨ แปลจากช่องไทย แล้วตรวจก่อนบันทึก (จอโชว์ภาษาตาม "ภาษาหลักบนจอ")',
       components: { input: createTranslateInput({ sourceField: 'title_th', sourceLang: 'Thai',    targetLang: 'English', buttonLabel: '✨ Translate from Thai'    }) },
     }),
     defineField({
@@ -180,7 +204,8 @@ export default defineType({
     // One description per language (the old Short Description was dropped — it was
     // redundant and the web form only ever collected one). Shown as the subtitle
     // under the ad on the kiosk (clamped to ~2 lines) AND as the full detail on the
-    // offer page in the app. The web form auto-fills TH/EN from a single input.
+    // offer page in the app. The web form stores ONLY the language the customer
+    // typed (see displayLang) — the other side stays empty until a human translates.
     defineField({ name: 'description_th', group: 'content', title: 'Description (Thai)',    type: 'text', rows: 3,
       description: 'ป้ายใต้โฆษณาบนจอ (ตัด ~2 บรรทัด) + รายละเอียดเต็มในหน้า offer บนแอป. Ad subtitle on-screen + full detail on the app offer page.',
       components: { input: createTranslateInput({ sourceField: 'description_en', sourceLang: 'English', targetLang: 'Thai',    buttonLabel: '✨ Translate from English' }) },
