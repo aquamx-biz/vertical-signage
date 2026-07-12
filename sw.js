@@ -148,18 +148,35 @@ self.addEventListener('message', (event) => {
       if (!wantedVideos.has(request.url)) await vidCache.delete(request);
     }
 
-    await Promise.all(data.urls.map(async (url) => {
-      try {
-        if (isCacheableVideo(url)) {
-          if (await vidCache.match(url)) return;                  // already cached
-          const resp = await fetch(url, { mode: 'cors' });        // readable full 200
-          if (resp && resp.status === 200) await vidCache.put(url, resp.clone());
-        } else if (isCacheableImage(url)) {
-          if (await imgCache.match(url)) return;
-          const resp = await fetch(url, { mode: 'no-cors' });     // opaque — never CORS
-          if (resp) await imgCache.put(url, resp.clone());
+    // THROTTLED, PRIORITISED fetch — never Promise.all the whole list.
+    // Firing every URL at once (slides + menu cards + logos + full videos)
+    // saturates condo wifi exactly while the on-air slide images are still
+    // downloading/decoding → the box GPU composites half-decoded textures and
+    // keeps them (the recurring "half-rendered slide" bug). Images run first
+    // (player posts slide URLs before menu URLs, order preserved) a few at a
+    // time; videos go LAST, one at a time — they're the multi-MB hogs.
+    const fetchImage = async (url) => {
+      if (await imgCache.match(url)) return;
+      const resp = await fetch(url, { mode: 'no-cors' });         // opaque — never CORS
+      if (resp) await imgCache.put(url, resp.clone());
+    };
+    const fetchVideo = async (url) => {
+      if (await vidCache.match(url)) return;                      // already cached
+      const resp = await fetch(url, { mode: 'cors' });            // readable full 200
+      if (resp && resp.status === 200) await vidCache.put(url, resp.clone());
+    };
+    const runQueue = async (urls, worker, concurrency) => {
+      let i = 0;
+      await Promise.all(Array.from({ length: Math.min(concurrency, urls.length) }, async () => {
+        while (i < urls.length) {
+          const url = urls[i++];
+          try { await worker(url) } catch (_) { /* offline / transient — fetch handler retries on demand */ }
         }
-      } catch (_) { /* offline / transient — skip, fetch handler will retry on demand */ }
-    }));
+      }));
+    };
+    const images = data.urls.filter(isCacheableImage);
+    const videos = data.urls.filter(isCacheableVideo);
+    await runQueue(images, fetchImage, 3);
+    await runQueue(videos, fetchVideo, 1);
   })());
 });

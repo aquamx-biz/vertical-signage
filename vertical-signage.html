@@ -2664,6 +2664,20 @@ function buildSlots() {
     slots = Array.from(stage.querySelectorAll('.slot'));
     if (devTotal) devTotal.textContent = SLOTS.length;
     if (cur >= SLOTS.length) cur = 0;
+
+    // Kiosk-box GPU guard: if a slide image finishes loading AFTER its slot was
+    // already composited (slow condo wifi racing the first rotation), some box
+    // GPUs keep the half-decoded texture forever — the recurring "half-rendered
+    // slide". When each image completes, nudge its layer so the compositor
+    // re-rasterises from the now-complete bitmap. No-op visually.
+    stage.querySelectorAll('.slot img').forEach(img => {
+        if (img.complete) return;
+        img.addEventListener('load', () => {
+            const layer = img.closest('.slot-media') || img;
+            layer.style.willChange = 'transform';
+            requestAnimationFrame(() => requestAnimationFrame(() => { layer.style.willChange = ''; }));
+        }, { once: true });
+    });
 }
 
 function pickTransition() {
