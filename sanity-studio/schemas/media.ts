@@ -54,7 +54,18 @@ export default defineType({
       name:        'title',
       title:       'Title (ภาษาหลัก / Primary)',
       type:        'string',
-      validation:  Rule => Rule.required(),
+      validation:  Rule => [
+        Rule.required(),
+        // The screen leads with THIS field verbatim — if the owner wants an
+        // English ad but the headline here is Thai script, the screen airs
+        // Thai. Warn (not block: brand names can mix scripts legitimately).
+        Rule.custom((value, context) => {
+          const doc = context.document as any
+          if (doc?.displayLang === 'en' && /[฀-๿]/.test(String(value ?? '')))
+            return 'ภาษาหลักบนจอ = English แต่ชื่อนี้เป็นภาษาไทย — จอจะขึ้นข้อความไทยนี้ · กด ⤵ ดึงจาก Offer หรือพิมพ์ชื่ออังกฤษ (หรือสลับภาษาหลักกลับเป็นไทย)'
+          return true
+        }).warning(),
+      ],
       description: 'พาดหัวที่ขึ้นจอ — ใช้ "ชื่อโปรโม/บริการ" (กด ⤵ ดึงจาก Offer) ไม่ใช่ชื่อร้าน เพราะชื่อร้านขึ้นจากโลโก้/ป๊อปอัปอยู่แล้ว · เป็นภาษาตาม "ภาษาหลักบนจอ" ด้านบน',
       components:  { input: MediaTitleInput },
     }),
