@@ -10,8 +10,10 @@
  *   3. Batch Publish — one click publishes the selected drafts, replaying the
  *      media playlist side-effects (add/remove-on-publish flags) exactly like
  *      the per-doc MediaPublishAction, then resetting those one-shot flags.
- *   4. The publish burst triggers the Sanity webhook per doc; rebuild.yml's
- *      concurrency group collapses the burst into ~one rebuild.
+ *   4. Publishing NO LONGER auto-deploys — the webhook endpoint ignores
+ *      Sanity's per-publish calls (?manual=1 required). This tool fires
+ *      exactly ONE rebuild per batch after the publish loop, so a batch of
+ *      any size costs a single Netlify build round.
  *   5. "Deploy Now" forces an immediate rebuild for urgent cases.
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
@@ -39,7 +41,10 @@ const TYPE_TH: Record<string, string> = {
   media: '🖼 สื่อ (Media)', offer: '🎫 โฆษณา (Offer)', provider: '🏪 ร้าน (Provider)',
   playlistItem: '📋 สลอตเพลย์ลิสต์', buildingUpdate: '📌 ประกาศอาคาร',
 }
-const WEBHOOK_URL = 'https://app.aquamx.biz/api/sanity-webhook'
+// ?manual=1 is required — the endpoint ignores Sanity's automatic per-publish
+// webhook calls so individual publishes never burn a rebuild; only these
+// Studio buttons (and hand-run curls) start one.
+const WEBHOOK_URL = 'https://app.aquamx.biz/api/sanity-webhook?manual=1'
 
 const fmt = (d?: string) =>
   d ? new Date(d).toLocaleString('th-TH', { timeZone: 'Asia/Bangkok', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '—'
@@ -186,9 +191,29 @@ export function PendingChangesTool() {
       }
     }
     pushLog(`— เสร็จ: สำเร็จ ${ok} · พลาด ${fail} —`)
-    if (ok > 0) pushLog(`✅ ไม่ต้องกดอะไรต่อ — ระบบกำลังส่งขึ้นจออัตโนมัติ จอทุกตึกได้ของใหม่ภายใน ~5 นาที`)
+    if (ok > 0) {
+      // one rebuild for the whole batch — individual publishes cost nothing
+      pushLog('📡 กำลังสั่งส่งขึ้นจอ (รอบเดียวสำหรับทั้งชุด)…')
+      const r = await triggerRebuild()
+      pushLog(r === 'fail'
+        ? '⚠ publish สำเร็จแล้ว แต่สั่งส่งขึ้นจอไม่ผ่าน — กดปุ่ม "Deploy Now" อีกครั้ง'
+        : '✅ ส่งขึ้นจอแล้ว — จอทุกตึกได้ของใหม่ภายใน ~5 นาที ไม่ต้องกดอะไรต่อ')
+    }
     setBusy(false)
     load()
+  }
+
+  // Fire ONE rebuild. Returns 'ok' (confirmed), 'sent' (fired, response
+  // unreadable), or 'fail' (couldn't reach the endpoint).
+  async function triggerRebuild(): Promise<'ok' | 'sent' | 'fail'> {
+    try {
+      const res = await fetch(WEBHOOK_URL, { method: 'POST' })
+      const out = await res.json().catch(() => null)
+      return out?.success ? 'ok' : 'fail'
+    } catch {
+      try { await fetch(WEBHOOK_URL, { method: 'POST', mode: 'no-cors' }); return 'sent' }
+      catch { return 'fail' }
+    }
   }
 
   async function deployNow() {
@@ -197,7 +222,7 @@ export function PendingChangesTool() {
       const res = await fetch(WEBHOOK_URL, { method: 'POST' })
       const out = await res.json().catch(() => null)
       setDeployMsg(out?.success
-        ? '✅ สั่งส่งขึ้นจอสำเร็จ — กำลังอบ build อยู่หลังบ้าน จอทุกตึกได้ของใหม่ใน ~3-5 นาที · หน้านี้จะไม่มีอะไรเปลี่ยน (รายการ draft ยังอยู่ เพราะปุ่มนี้ไม่ได้ publish อะไรให้)'
+        ? '✅ สั่งส่งขึ้นจอสำเร็จ — กำลังอบ build อยู่หลังบ้าน จอทุกตึกได้ของใหม่ใน ~3-5 นาที · หน้านี้จะไม่มีอะไรเปลี่ยน (รายการ draft ยังอยู่ เพราะปุ่มนี้ไม่ได้ publish อะไรให้) · หมายเหตุ: publish รายตัวใน Studio จะยังไม่ขึ้นจอจนกว่าจะกดปุ่มนี้หรือ Publish ที่เลือก'
         : `✗ ${JSON.stringify(out)}`)
     } catch {
       // no-cors fallback: fire-and-forget when the browser blocks reading the response
@@ -222,8 +247,9 @@ export function PendingChangesTool() {
               ระบบจะส่งขึ้นจอทุกตึกให้เอง ภายใน ~5 นาที <b>ไม่ต้องกดปุ่มอื่นต่อ</b>
             </Text>
             <Text size={1} muted>
-              📡 Deploy Now = <b>ปุ่มสำรอง</b> — ใช้เฉพาะเมื่อ publish ไปแล้วเกิน ~10 นาทีจอยังไม่อัปเดต
-              (บังคับส่งขึ้นจอรอบใหม่ · ไม่ได้ publish อะไรให้ · วันปกติไม่ต้องใช้เลย)
+              📡 Deploy Now = <b>ส่งของที่ publish แล้วขึ้นจอทันที</b> — ตอนนี้การกด Publish รายตัวจากหน้าเอกสาร
+              <b>จะยังไม่ขึ้นจอ</b> (ประหยัดรอบ build) สะสมกี่รายการก็ได้ แล้วค่อยกดปุ่มนี้ครั้งเดียว
+              · ใช้ซ้ำได้ถ้าจอไม่อัปเดตหลัง publish ชุด · ปุ่มนี้ไม่ได้ publish อะไรให้
             </Text>
           </Stack>
         </Card>
