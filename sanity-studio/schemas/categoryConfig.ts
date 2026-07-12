@@ -2,7 +2,7 @@ import { defineField, defineType } from 'sanity'
 
 // Global singleton — _id is always "categoryConfig-global".
 // All projects share one category configuration; no project reference needed.
-// Kiosk reads label/ctaItem per category for display; reads subcategories[] for filter tabs.
+// Kiosk reads label per category for display; reads subcategories[] for filter tabs.
 // subcategories are plain display strings (e.g. "Dine-in") — order = display order.
 // Category IDs must match enum: food, groceries, services, forRent, forSale, buildingUpdates.
 
@@ -50,15 +50,9 @@ export default defineType({
               defineField({ name: 'th', title: 'Thai',    type: 'string' }),
             ],
           }),
-          defineField({
-            name: 'ctaItem',
-            title: 'CTA Button Label',
-            type: 'object',
-            fields: [
-              defineField({ name: 'en', title: 'English', type: 'string' }),
-              defineField({ name: 'th', title: 'Thai',    type: 'string' }),
-            ],
-          }),
+          // ctaItem (per-category CTA button label) removed: the player renders
+          // CTA labels from the offer level (offer.ctaLabel → ctaLabelFor matrix
+          // → generic) and never reads this field — filling it did nothing.
           defineField({
             name: 'defaultSubcategoryId',
             title: 'Default Sub-Category ID',
