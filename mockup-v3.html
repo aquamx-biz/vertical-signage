@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Signage Player — Mockup v3 (Commercial + Notice)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   RESET + TOKENS
+============================================================ */
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+html, body { width:100%; height:100%; overflow:hidden; }
+
+:root {
+    --bg-deep: #050608;
+    --bg-stage: #0a0c10;
+    --ink-100: #ffffff;
+    --ink-80:  rgba(255,255,255,0.82);
+    --ink-60:  rgba(255,255,255,0.58);
+    --ink-40:  rgba(255,255,255,0.38);
+    --ink-20:  rgba(255,255,255,0.18);
+
+    /* Commercial — warm copper */
+    --accent:       #E08B3A;
+    --accent-soft:  rgba(224,139,58,0.18);
+    --accent-line:  rgba(224,139,58,0.45);
+
+    /* Notice — cool steel blue (signals "info" not "sales") */
+    --info:        #6BA3D6;
+    --info-soft:   rgba(107,163,214,0.16);
+    --info-line:   rgba(107,163,214,0.40);
+    --info-bg-tint: rgba(15,32,52,0.85);
+
+    --glass-bg:     rgba(255,255,255,0.06);
+    --glass-stroke: rgba(255,255,255,0.12);
+
+    --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+    --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--bg-deep);
+    color: var(--ink-100);
+    display: flex; align-items: center; justify-content: center;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+}
+
+/* ============================================================
+   9:16 CONTAINER
+============================================================ */
+.signage {
+    position: relative;
+    width: 100%; height: 100%;
+    max-width: 56.25vh; max-height: 177.78vw;
+    background: var(--bg-deep);
+    overflow: hidden;
+    display: grid;
+    grid-template-rows: 7vh 1fr 4vh;
+}
+@media (aspect-ratio > 9/16) { .signage { width: 56.25vh; height: 100vh; } }
+@media (aspect-ratio < 9/16) { .signage { width: 100vw; height: 177.78vw; } }
+
+/* ============================================================
+   TOP BAR
+============================================================ */
+.topbar {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    padding: 0 3vh;
+    background: linear-gradient(180deg, rgba(5,6,8,0.95) 0%, rgba(5,6,8,0) 100%);
+    z-index: 50;
+    gap: 2vh;
+}
+.topbar-time {
+    font-family: 'Inter', monospace;
+    font-size: 1.95vh;
+    font-weight: 600;
+    color: var(--ink-100);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.1vh;
+    justify-self: start;
+}
+.topbar-dot {
+    width: 0.45vh; height: 0.45vh; border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 0.8vh var(--accent);
+    animation: pulse-dot 2s ease-in-out infinite;
+}
+@keyframes pulse-dot {
+    0%,100% { opacity: 1; transform: scale(1); }
+    50%     { opacity: 0.4; transform: scale(0.7); }
+}
+.topbar-weather {
+    display: flex; align-items: center; gap: 0.8vh;
+    justify-self: end;
+    font-size: 1.55vh;
+    color: var(--ink-60);
+    font-weight: 500;
+}
+.topbar-weather .icon { font-size: 2.2vh; line-height: 1; }
+.topbar-weather .temp {
+    color: var(--ink-100); font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+/* ============================================================
+   MEDIA STAGE
+============================================================ */
+.stage {
+    position: relative;
+    perspective: 2200px;
+    perspective-origin: 50% 50%;
+    transform-style: preserve-3d;
+    background: var(--bg-stage);
+    overflow: hidden;
+}
+
+.slot {
+    position: absolute; inset: 0;
+    transform-style: preserve-3d;
+    backface-visibility: hidden;
+    will-change: transform, opacity;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.7s var(--ease-out), transform 0.9s var(--ease-out);
+}
+.slot.active { opacity: 1; pointer-events: auto; z-index: 2; }
+.slot.leaving { z-index: 1; }
+
+.slot-media {
+    position: absolute; inset: 0;
+    background-size: cover;
+    background-position: center;
+    background-color: #0a0c10;
+    transform-origin: center;
+}
+/* Commercial: cinematic Ken Burns */
+.slot[data-kind="commercial"].active .slot-media {
+    animation: ken-burns 14s ease-out forwards;
+}
+@keyframes ken-burns {
+    0%   { transform: scale(1.02) translate(0, 0); }
+    100% { transform: scale(1.14) translate(-2.5%, 2%); }
+}
+/* Notice: subtle drift only — feels stable & official, not glamorous */
+.slot[data-kind="notice"].active .slot-media {
+    animation: drift 18s ease-out forwards;
+    filter: saturate(0.5) brightness(0.55) blur(0.2vh);
+}
+@keyframes drift {
+    0%   { transform: scale(1.05); }
+    100% { transform: scale(1.10); }
+}
+
+/* Gradient overlays */
+.slot-grad-top {
+    position: absolute; inset: 0 0 auto 0; height: 28%;
+    background: linear-gradient(180deg, rgba(5,6,8,0.85) 0%, transparent 100%);
+    pointer-events: none;
+}
+.slot-grad-bot {
+    position: absolute; inset: auto 0 0 0; height: 58%;
+    background: linear-gradient(0deg, rgba(5,6,8,0.92) 0%, rgba(5,6,8,0.4) 55%, transparent 100%);
+    pointer-events: none;
+}
+/* Notice: stronger overlay so info text dominates */
+.slot[data-kind="notice"] .slot-grad-bot {
+    background: linear-gradient(0deg, rgba(5,12,22,0.96) 0%, rgba(5,12,22,0.75) 45%, rgba(5,12,22,0.25) 80%, transparent 100%);
+    height: 78%;
+}
+.slot[data-kind="notice"] .slot-grad-top {
+    background: linear-gradient(180deg, rgba(5,12,22,0.9) 0%, transparent 100%);
+    height: 34%;
+}
+
+/* ============================================================
+   SLOT CONTENT
+============================================================ */
+.slot-content {
+    position: absolute;
+    left: 3.5vh; right: 3.5vh;
+    bottom: 16vh;
+    display: flex; flex-direction: column;
+    gap: 1.2vh;
+    z-index: 5;
+}
+/* Notice: pull content higher (since no CTA) and give more vertical room */
+.slot[data-kind="notice"] .slot-content {
+    bottom: 6vh;
+    gap: 1.4vh;
+}
+
+.slot-eyebrow {
+    display: inline-flex; align-items: center; gap: 0.8vh;
+    width: fit-content;
+    font-size: 1.25vh; font-weight: 600;
+    letter-spacing: 0.35vh; text-transform: uppercase;
+    color: var(--accent);
+    opacity: 0; transform: translateY(1.2vh);
+    transition: opacity 0.6s var(--ease-out) 0.4s, transform 0.6s var(--ease-out) 0.4s;
+}
+.slot-eyebrow::before {
+    content: ''; width: 2.5vh; height: 0.15vh;
+    background: var(--accent);
+}
+.slot[data-kind="notice"] .slot-eyebrow {
+    color: var(--info);
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.2vh;
+}
+.slot[data-kind="notice"] .slot-eyebrow::before { background: var(--info); }
+
+.slot-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 5.4vh; font-weight: 600;
+    line-height: 1.05; letter-spacing: -0.1vh;
+    color: var(--ink-100);
+    opacity: 0; transform: translateY(2vh);
+    transition: opacity 0.7s var(--ease-out) 0.55s, transform 0.7s var(--ease-out) 0.55s;
+    text-shadow: 0 0.3vh 1.5vh rgba(0,0,0,0.5);
+}
+/* Notice title: smaller, functional sans serif — feels official, not editorial */
+.slot[data-kind="notice"] .slot-title {
+    font-family: 'Inter', sans-serif;
+    font-size: 3.9vh; font-weight: 700;
+    letter-spacing: -0.05vh; line-height: 1.15;
+}
+
+.slot-sub {
+    font-size: 1.7vh; font-weight: 400;
+    line-height: 1.45; color: var(--ink-80);
+    max-width: 42vh;
+    opacity: 0; transform: translateY(1.5vh);
+    transition: opacity 0.6s var(--ease-out) 0.75s, transform 0.6s var(--ease-out) 0.75s;
+    text-shadow: 0 0.15vh 0.8vh rgba(0,0,0,0.5);
+}
+/* Notice body: larger, easier to read — body IS the deliverable, not the CTA */
+.slot[data-kind="notice"] .slot-sub {
+    font-size: 2.1vh; line-height: 1.5;
+    color: rgba(255,255,255,0.92);
+    max-width: 47vh;
+}
+
+.slot.active .slot-eyebrow,
+.slot.active .slot-title,
+.slot.active .slot-sub {
+    opacity: 1; transform: translateY(0);
+}
+
+/* ============================================================
+   NOTICE META — info chips (timestamp, effective date, contact)
+============================================================ */
+.slot-meta {
+    display: flex; flex-wrap: wrap; gap: 0.8vh;
+    margin-top: 1.6vh;
+    opacity: 0; transform: translateY(1vh);
+    transition: opacity 0.55s var(--ease-out) 0.95s, transform 0.55s var(--ease-out) 0.95s;
+}
+.slot.active .slot-meta { opacity: 1; transform: translateY(0); }
+
+.meta-chip {
+    display: inline-flex; align-items: center; gap: 0.7vh;
+    padding: 0.85vh 1.4vh;
+    border-radius: 0.8vh;
+    background: var(--info-soft);
+    border: 0.12vh solid var(--info-line);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.35vh; font-weight: 500;
+    color: rgba(255,255,255,0.88);
+    letter-spacing: 0.05vh;
+}
+.meta-chip .label {
+    color: var(--info);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 1.1vh;
+    letter-spacing: 0.15vh;
+}
+.meta-chip .value { color: var(--ink-100); }
+
+/* Posted-by line under meta — even lighter */
+.slot-source {
+    margin-top: 1.2vh;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.2vh;
+    color: var(--ink-40);
+    letter-spacing: 0.08vh;
+    opacity: 0;
+    transition: opacity 0.5s var(--ease-out) 1.1s;
+}
+.slot.active .slot-source { opacity: 1; }
+
+/* ============================================================
+   CTA DOCK
+============================================================ */
+.cta-dock {
+    position: absolute;
+    left: 3.5vh; right: 3.5vh;
+    bottom: 3.5vh;
+    display: flex; flex-direction: column;
+    gap: 1vh;
+    z-index: 6;
+}
+.cta {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1.9vh 2.4vh;
+    font-family: 'Inter', sans-serif;
+    border-radius: 1.6vh;
+    cursor: pointer;
+    touch-action: manipulation; user-select: none;
+    backdrop-filter: blur(20px) saturate(140%);
+    -webkit-backdrop-filter: blur(20px) saturate(140%);
+    opacity: 0;
+    transform: translateY(3vh);
+    transition: opacity 0.55s var(--ease-out),
+                transform 0.55s var(--ease-spring),
+                background 0.18s ease;
+}
+.cta-primary {
+    background: linear-gradient(135deg, #E08B3A 0%, #C4682D 100%);
+    color: #fff;
+    border: 0.15vh solid rgba(255,255,255,0.18);
+    font-size: 2.1vh; font-weight: 700;
+    letter-spacing: 0.05vh;
+    box-shadow: 0 1.2vh 3.5vh rgba(196,104,45,0.35),
+                0 0 0 0.15vh rgba(224,139,58,0.4) inset;
+}
+.cta-primary:active { transform: translateY(0) scale(0.98); filter: brightness(1.05); }
+.cta-secondary {
+    background: var(--glass-bg);
+    color: var(--ink-100);
+    border: 0.15vh solid var(--glass-stroke);
+    font-size: 1.65vh; font-weight: 500;
+}
+.cta-secondary:active { background: rgba(255,255,255,0.14); }
+
+/* Notice action — info-toned single chip (only when action genuinely needed) */
+.cta-notice {
+    background: var(--info-soft);
+    color: var(--info);
+    border: 0.15vh solid var(--info-line);
+    font-size: 1.7vh; font-weight: 600;
+    letter-spacing: 0.05vh;
+}
+.cta-notice:active { background: rgba(107,163,214,0.32); }
+
+.cta .arrow { font-size: 2.2vh; opacity: 0.9; transition: transform 0.3s var(--ease-out); }
+.cta-secondary .arrow { font-size: 1.6vh; color: var(--ink-60); }
+.cta-notice .arrow { font-size: 1.6vh; color: var(--info); }
+.cta:active .arrow { transform: translateX(0.4vh); }
+
+/* Stagger enter */
+.slot.active .cta:nth-child(1) {
+    opacity: 1; transform: translateY(0);
+    transition-delay: 1.0s, 1.0s, 0s;
+}
+.slot.active .cta:nth-child(2) {
+    opacity: 1; transform: translateY(0);
+    transition-delay: 1.18s, 1.18s, 0s;
+}
+.slot.exiting .cta {
+    opacity: 0; transform: translateY(3vh);
+    transition-delay: 0s !important;
+    transition-duration: 0.35s, 0.35s, 0s;
+}
+
+/* ============================================================
+   TRANSITIONS (same set as v2)
+============================================================ */
+.stage[data-tx="cube"] .slot {
+    transition: transform 0.95s cubic-bezier(0.83, 0, 0.17, 1),
+                opacity 0.25s linear 0.7s;
+}
+.stage[data-tx="cube"] .slot.leaving {
+    transform: rotateY(-90deg);
+    transform-origin: left center;
+    animation: cube-fade-out 0.95s linear forwards;
+}
+.stage[data-tx="cube"] .slot.entering {
+    transform: rotateY(90deg);
+    transform-origin: right center;
+    opacity: 1;
+}
+.stage[data-tx="cube"] .slot.active {
+    transform: rotateY(0deg);
+    transform-origin: center center;
+    opacity: 1;
+}
+@keyframes cube-fade-out {
+    0%, 75% { opacity: 1; }
+    100%    { opacity: 0; }
+}
+
+.stage[data-tx="flip"] .slot.leaving {
+    transform: rotateX(180deg) translateZ(-20vh); opacity: 0;
+}
+.stage[data-tx="flip"] .slot.entering {
+    transform: rotateX(-180deg) translateZ(-20vh); opacity: 0;
+}
+.stage[data-tx="flip"] .slot.active { transform: rotateX(0) translateZ(0); opacity: 1; }
+
+.stage[data-tx="zoom"] .slot.leaving { transform: scale(1.18) translateY(-2vh); opacity: 0; }
+.stage[data-tx="zoom"] .slot.entering { transform: scale(0.88) translateY(2vh); opacity: 0; }
+.stage[data-tx="zoom"] .slot.active { transform: scale(1) translateY(0); opacity: 1; }
+
+.stage[data-tx="push"] .slot.leaving {
+    transform: translateX(-35%) scale(0.92); opacity: 0; filter: blur(0.6vh);
+}
+.stage[data-tx="push"] .slot.entering {
+    transform: translateX(35%) scale(0.92); opacity: 0; filter: blur(0.6vh);
+}
+.stage[data-tx="push"] .slot.active {
+    transform: translateX(0) scale(1); opacity: 1; filter: blur(0);
+}
+
+/* ============================================================
+   BOTTOM TAGLINE
+============================================================ */
+.bottombar {
+    background: var(--bg-deep);
+    border-top: 0.1vh solid var(--ink-20);
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden; position: relative;
+}
+.bottombar-track {
+    display: flex; white-space: nowrap;
+    animation: marquee 38s linear infinite;
+}
+.bottombar-item {
+    font-size: 1.35vh; font-weight: 500;
+    color: var(--ink-60);
+    padding: 0 5vh;
+    letter-spacing: 0.25vh; text-transform: uppercase;
+}
+.bottombar-sep { color: var(--accent); font-size: 0.6vh; align-self: center; }
+@keyframes marquee {
+    0%   { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+}
+
+/* ============================================================
+   DEV BADGE
+============================================================ */
+.dev-badge {
+    position: absolute;
+    top: 9vh; right: 2vh;
+    z-index: 100;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(10px);
+    border: 0.1vh solid var(--ink-20);
+    color: var(--ink-60);
+    font-family: monospace;
+    font-size: 1.1vh;
+    padding: 0.6vh 1.2vh;
+    border-radius: 0.6vh;
+    pointer-events: none;
+    letter-spacing: 0.1vh;
+}
+.dev-badge .v { color: var(--accent); font-weight: 700; }
+.dev-badge .k { color: var(--info); font-weight: 700; }
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01s !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.15s !important;
+    }
+    .slot.active .slot-media { animation: none; transform: scale(1.04); }
+}
+</style>
+</head>
+<body>
+
+<div class="signage">
+
+    <div class="topbar">
+        <div class="topbar-time" id="topTime">18:42</div>
+        <div class="topbar-dot" title="Live"></div>
+        <div class="topbar-weather">
+            <span class="icon">☀</span>
+            <span class="temp">28°</span>
+            <span>Bangkok</span>
+        </div>
+    </div>
+
+    <div class="stage" id="stage" data-tx="zoom"></div>
+
+    <div class="bottombar">
+        <div class="bottombar-track">
+            <span class="bottombar-item">Live in Balance</span>
+            <span class="bottombar-sep">●</span>
+            <span class="bottombar-item">Premium Living · Bangkok</span>
+            <span class="bottombar-sep">●</span>
+            <span class="bottombar-item">Touch screen to explore</span>
+            <span class="bottombar-sep">●</span>
+            <span class="bottombar-item">Live in Balance</span>
+            <span class="bottombar-sep">●</span>
+            <span class="bottombar-item">Premium Living · Bangkok</span>
+            <span class="bottombar-sep">●</span>
+            <span class="bottombar-item">Touch screen to explore</span>
+            <span class="bottombar-sep">●</span>
+        </div>
+    </div>
+
+    <div class="dev-badge" id="devBadge">
+        tx <span class="v" id="devTx">zoom</span> · kind <span class="k" id="devKind">commercial</span> · <span id="devIdx">1</span>/<span id="devTotal">7</span>
+    </div>
+
+</div>
+
+<script>
+/* ============================================================
+   MOCK SLOTS — mix of commercial & notice
+============================================================ */
+const SLOTS = [
+    /* === Commercial: full primary + secondary CTA === */
+    {
+        kind: 'commercial',
+        image: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=900&q=80',
+        eyebrow: 'Premium Residence',
+        title: 'Mahogany Tower',
+        sub: 'Penthouse-style 3-bedroom suites from 18.2M฿. Sky lounge access included.',
+        ctas: [
+            { kind: 'primary',   label: 'Book a Private Tour', icon: '→' },
+            { kind: 'secondary', label: 'See Floor Plans',     icon: '↗' }
+        ]
+    },
+
+    /* === Notice: pure info, NO CTA — just informs === */
+    {
+        kind: 'notice',
+        image: 'https://images.unsplash.com/photo-1582719188393-bb71ca45dbb9?auto=format&fit=crop&w=900&q=80',
+        eyebrow: '📢 NOTICE · JURISTIC OFFICE',
+        title: 'Scheduled Water Supply Maintenance',
+        sub: 'Water supply to Tower A will be temporarily suspended on Jun 5 from 09:00–12:00 for routine pipe inspection. Tower B and C are unaffected.',
+        meta: [
+            { label: 'Effective', value: 'Jun 5, 09:00–12:00' },
+            { label: 'Affects',   value: 'Tower A only' }
+        ],
+        source: 'Posted 2h ago · Juristic Office',
+        ctas: []   // no CTA — pure info delivery
+    },
+
+    /* === Commercial === */
+    {
+        kind: 'commercial',
+        image: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=900&q=80',
+        eyebrow: 'Featured Dining',
+        title: 'The Mahogany Kitchen',
+        sub: 'Chef-curated tasting menu, evenings 18:00–23:00. Reservations recommended.',
+        ctas: [
+            { kind: 'primary',   label: 'View Menu', icon: '→' },
+            { kind: 'secondary', label: 'Reserve a Table', icon: '↗' }
+        ]
+    },
+
+    /* === Notice with single soft CTA — action genuinely required === */
+    {
+        kind: 'notice',
+        image: 'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?auto=format&fit=crop&w=900&q=80',
+        eyebrow: '📢 NOTICE · ANNUAL MEETING',
+        title: 'AGM 2026 — Resident Meeting',
+        sub: 'Annual General Meeting for all residents. Hear updates from the committee and vote on key building decisions.',
+        meta: [
+            { label: 'When',  value: 'Sat Jun 15, 14:00' },
+            { label: 'Where', value: 'Sky Lounge, 38F' }
+        ],
+        source: 'Posted 1d ago · Building Committee',
+        ctas: [
+            { kind: 'notice', label: 'Confirm Attendance', icon: '→' }
+        ]
+    },
+
+    /* === Commercial === */
+    {
+        kind: 'commercial',
+        image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=900&q=80',
+        eyebrow: 'Limited Offer',
+        title: 'Resident Rewards',
+        sub: 'Sign before June 30 to receive complimentary 12-month wellness membership.',
+        ctas: [
+            { kind: 'primary',   label: 'Claim Offer', icon: '→' },
+            { kind: 'secondary', label: 'Learn More',  icon: '↗' }
+        ]
+    },
+
+    /* === Notice: contact-only info, no CTA === */
+    {
+        kind: 'notice',
+        image: 'https://images.unsplash.com/photo-1505691938895-1758d7feb511?auto=format&fit=crop&w=900&q=80',
+        eyebrow: '📢 NOTICE · LIFT SERVICE',
+        title: 'Lift #2 Under Maintenance',
+        sub: 'Lift #2 will be out of service for inspection. Lift #1 and #3 remain in full operation. We apologise for any inconvenience.',
+        meta: [
+            { label: 'Until',   value: 'Jun 3, 18:00' },
+            { label: 'Contact', value: '02-XXX-XXXX' }
+        ],
+        source: 'Posted 4h ago · Facility Team',
+        ctas: []
+    },
+
+    /* === Commercial === */
+    {
+        kind: 'commercial',
+        image: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=900&q=80',
+        eyebrow: 'Lifestyle',
+        title: 'Live in Balance',
+        sub: 'Wellness, design and community — curated for the modern resident.',
+        ctas: [
+            { kind: 'primary',   label: 'Discover More', icon: '→' },
+            { kind: 'secondary', label: 'About Us',      icon: '↗' }
+        ]
+    }
+];
+
+const TRANSITIONS = ['cube', 'flip', 'zoom', 'push'];
+
+/* ============================================================
+   RENDER
+============================================================ */
+const stage = document.getElementById('stage');
+const devTx = document.getElementById('devTx');
+const devKind = document.getElementById('devKind');
+const devIdx = document.getElementById('devIdx');
+const devTotal = document.getElementById('devTotal');
+devTotal.textContent = SLOTS.length;
+
+SLOTS.forEach((s, i) => {
+    const el = document.createElement('div');
+    el.className = 'slot';
+    el.dataset.index = i;
+    el.dataset.kind = s.kind;
+
+    const metaHTML = (s.meta || []).map(m =>
+        `<div class="meta-chip"><span class="label">${m.label}</span><span class="value">${m.value}</span></div>`
+    ).join('');
+
+    const ctaHTML = (s.ctas || []).map(c =>
+        `<button class="cta cta-${c.kind}">
+            <span>${c.label}</span>
+            <span class="arrow">${c.icon}</span>
+        </button>`
+    ).join('');
+
+    el.innerHTML = `
+        <div class="slot-media" style="background-image:url('${s.image}');"></div>
+        <div class="slot-grad-top"></div>
+        <div class="slot-grad-bot"></div>
+        <div class="slot-content">
+            <div class="slot-eyebrow">${s.eyebrow}</div>
+            <div class="slot-title">${s.title}</div>
+            <div class="slot-sub">${s.sub}</div>
+            ${metaHTML ? `<div class="slot-meta">${metaHTML}</div>` : ''}
+            ${s.source ? `<div class="slot-source">${s.source}</div>` : ''}
+        </div>
+        ${ctaHTML ? `<div class="cta-dock">${ctaHTML}</div>` : ''}
+    `;
+    stage.appendChild(el);
+});
+
+const slots = Array.from(stage.querySelectorAll('.slot'));
+let cur = 0;
+let prevTxIdx = -1;
+let forcedTx = null;
+
+function pickTransition() {
+    let i;
+    do { i = Math.floor(Math.random() * TRANSITIONS.length); }
+    while (i === prevTxIdx && TRANSITIONS.length > 1);
+    prevTxIdx = i;
+    return TRANSITIONS[i];
+}
+
+function showSlot(idx, isFirst = false) {
+    const tx = isFirst ? 'zoom' : (forcedTx || pickTransition());
+    forcedTx = null;
+    stage.dataset.tx = tx;
+    devTx.textContent = tx;
+    devKind.textContent = SLOTS[idx].kind;
+    devIdx.textContent = idx + 1;
+
+    slots.forEach((el, i) => {
+        el.classList.remove('active', 'leaving', 'entering', 'exiting');
+        if (i === idx) {
+            el.classList.add('entering');
+        } else if (el.classList.contains('active') || i === cur) {
+            el.classList.add('leaving');
+        }
+    });
+
+    void stage.offsetWidth;
+
+    requestAnimationFrame(() => {
+        slots[idx].classList.remove('entering');
+        slots[idx].classList.add('active');
+    });
+
+    cur = idx;
+}
+
+function preExitCurrent() {
+    if (slots[cur]) slots[cur].classList.add('exiting');
+}
+
+/* Notice slots get longer dwell time — give people time to actually read */
+function dwellMs() { return SLOTS[cur].kind === 'notice' ? 11000 : 8500; }
+const PRE_EXIT_MS = 600;
+
+showSlot(0, true);
+
+function scheduleNext() {
+    setTimeout(() => {
+        preExitCurrent();
+        setTimeout(() => {
+            const next = (cur + 1) % SLOTS.length;
+            showSlot(next);
+            scheduleNext();
+        }, PRE_EXIT_MS);
+    }, dwellMs());
+}
+scheduleNext();
+
+/* Clock */
+function updateTime() {
+    const d = new Date();
+    document.getElementById('topTime').textContent =
+        `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+updateTime();
+setInterval(updateTime, 30000);
+
+/* Keyboard */
+const TX_KEYS = { '1': 'cube', '2': 'flip', '3': 'zoom', '4': 'push' };
+document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight') {
+        preExitCurrent();
+        setTimeout(() => showSlot((cur + 1) % SLOTS.length), PRE_EXIT_MS);
+    }
+    if (e.key === 'ArrowLeft') {
+        preExitCurrent();
+        setTimeout(() => showSlot((cur - 1 + SLOTS.length) % SLOTS.length), PRE_EXIT_MS);
+    }
+    if (TX_KEYS[e.key]) {
+        forcedTx = TX_KEYS[e.key];
+        preExitCurrent();
+        setTimeout(() => showSlot((cur + 1) % SLOTS.length), PRE_EXIT_MS);
+    }
+    if (e.key === 'd' || e.key === 'D') {
+        const b = document.getElementById('devBadge');
+        b.style.display = b.style.display === 'none' ? '' : 'none';
+    }
+    /* Jump to next notice slot — useful for review */
+    if (e.key === 'n' || e.key === 'N') {
+        const nextNotice = SLOTS.findIndex((s, i) => i > cur && s.kind === 'notice');
+        const idx = nextNotice >= 0 ? nextNotice : SLOTS.findIndex(s => s.kind === 'notice');
+        if (idx >= 0) {
+            preExitCurrent();
+            setTimeout(() => showSlot(idx), PRE_EXIT_MS);
+        }
+    }
+});
+</script>
+
+</body>
+</html>

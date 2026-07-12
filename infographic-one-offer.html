@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>One Offer → Every Screen</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=Anton&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+:root {
+    --navy:#0E3361; --navy-deep:#072147;
+    --orange:#C9864C; --orange-strong:#A36738; --orange-soft:#F6E5D0;
+    --cream:#FAF6ED; --ink:#0B1B33; --muted:#5C6B82; --white:#fff;
+    --line:#EADFC9; --ink-40:#8B98AE; --cyan:#6DD5E8;
+}
+html, body { background:var(--cream); color:var(--ink); font-family:'IBM Plex Sans Thai','Nunito',system-ui,sans-serif; -webkit-font-smoothing:antialiased; min-height:100vh; }
+a { color:inherit; text-decoration:none; }
+
+.container { max-width:1200px; margin:0 auto; padding:0 32px; }
+.nav-wrap { background:var(--white); border-bottom:1px solid var(--line); position:sticky; top:0; z-index:50; }
+.nav { height:76px; display:flex; align-items:center; justify-content:space-between; }
+.brand { font-family:'Nunito',sans-serif; font-weight:800; font-size:26px; color:var(--navy); letter-spacing:-0.02em; }
+.brand .x { color:var(--orange); }
+.nav-links { display:flex; gap:34px; }
+.nav-links a { color:var(--ink); font-weight:500; font-size:15.5px; }
+.nav-right { display:flex; align-items:center; gap:10px; }
+.lang-btn { background:none; border:1.5px solid var(--navy); border-radius:8px; padding:7px 14px; font-size:13px; font-weight:700; color:var(--navy); font-family:'Nunito',sans-serif; cursor:pointer; }
+.btn-primary { background:var(--navy); color:var(--white); border-radius:10px; padding:11px 20px; font-weight:700; font-family:'Nunito',sans-serif; }
+
+.page { max-width:1400px; margin:0 auto; padding:64px 40px 80px; }
+.eyebrow { display:inline-flex; align-items:center; gap:10px; font-family:'Nunito',sans-serif; font-size:14px; color:var(--orange-strong); letter-spacing:0.06em; text-transform:uppercase; font-weight:700; margin-bottom:18px; }
+.eyebrow .dot { width:8px; height:8px; border-radius:50%; background:var(--orange); }
+h1.title { font-family:'Nunito',sans-serif; font-size:56px; font-weight:800; line-height:1.15; letter-spacing:-0.01em; color:var(--navy); margin-bottom:20px; }
+h1.title .accent { color:var(--orange); }
+.lede { font-size:18px; color:var(--muted); max-width:760px; line-height:1.65; }
+.lede b { color:var(--ink); font-weight:700; }
+
+/* ===== FAN-OUT ===== */
+.fan { display:grid; grid-template-columns:minmax(240px,1fr) minmax(0,1.25fr); gap:30px; align-items:center; margin-top:48px; }
+
+/* input card */
+.fan-in { background:var(--white); border:2px solid var(--orange); border-radius:20px; padding:24px; box-shadow:0 20px 44px -24px rgba(163,103,56,0.4); position:relative; }
+.fan-in .badge { position:absolute; top:-13px; left:24px; background:var(--orange); color:#fff; font-family:'Nunito',sans-serif; font-weight:800; font-size:12px; letter-spacing:0.04em; padding:5px 13px; border-radius:20px; }
+.fan-in .ftitle { font-family:'Nunito',sans-serif; font-weight:800; font-size:19px; color:var(--ink); margin:6px 0 3px; }
+.fan-in .fsub { font-size:13px; color:var(--muted); margin-bottom:16px; }
+.fan-in .in-row { display:flex; gap:16px; align-items:center; }
+.in-photo { width:96px; height:96px; flex-shrink:0; border-radius:14px; background-size:cover; background-position:center; position:relative; box-shadow:0 8px 18px -8px rgba(0,0,0,0.4); }
+.in-photo .lg { position:absolute; top:6px; right:6px; display:flex; align-items:center; gap:3px; color:#fff; text-shadow:0 1px 3px rgba(0,0,0,0.6); }
+.in-photo .lg .mk { width:14px; height:14px; border-radius:50%; background:#fff; color:#0e1d3a; display:flex; align-items:center; justify-content:center; font-family:'Anton',sans-serif; font-size:8px; }
+.in-fields { flex:1; display:flex; flex-direction:column; gap:5px; min-width:0; }
+.in-fields .lab { font-size:8.5px; font-weight:800; letter-spacing:0.08em; text-transform:uppercase; color:var(--ink-40); }
+.in-fields .val { font-size:12.5px; font-weight:600; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.in-chips { display:flex; flex-wrap:wrap; gap:5px; margin-top:14px; }
+.in-chips span { font-size:10.5px; font-weight:700; color:var(--orange-strong); background:var(--orange-soft); border:1px solid var(--orange); border-radius:14px; padding:3px 9px; }
+
+/* output rows */
+.fan-out { display:flex; flex-direction:column; gap:16px; }
+.out-row { display:flex; align-items:center; gap:14px; }
+.out-row .arr { font-family:'Anton',sans-serif; font-size:26px; color:var(--orange); flex-shrink:0; }
+.out-card { flex:1; display:flex; gap:16px; align-items:center; background:var(--white); border:1px solid var(--line); border-radius:16px; padding:14px 18px; }
+.out-card .otext { min-width:0; }
+.out-card .ot { font-family:'Nunito',sans-serif; font-weight:800; font-size:16px; color:var(--ink); }
+.out-card .ot .ico { margin-right:7px; }
+.out-card .od { font-size:12.5px; color:var(--muted); margin-top:4px; line-height:1.5; }
+
+/* mini screens */
+.scr { flex-shrink:0; border:2px solid #0c111c; position:relative; overflow:hidden; background:#0a0c10; }
+.scr.sg { width:62px; aspect-ratio:9/16; border-radius:6px 6px 0 0; border-bottom:none; }
+.scr.sg + .sg-base { width:62px; height:9px; background:linear-gradient(180deg,#1b2740,#05080d); border-top:1px solid #36486a; border-radius:0 0 5px 5px; }
+.sg-wrap { flex-shrink:0; }
+.phone-mini { flex-shrink:0; width:62px; aspect-ratio:9/18; border:3px solid #11151c; border-radius:11px; overflow:hidden; background:#000; }
+.pm-screen { background:#fff; height:100%; }
+
+footer.site-footer { background:var(--white); border-top:1px solid var(--line); margin-top:64px; }
+.footer-inner { max-width:1200px; margin:0 auto; padding:28px 32px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:14px; }
+.footer-inner .copy { font-size:13px; color:var(--muted); }
+.footer-inner a { font-size:13.5px; color:var(--muted); margin-left:18px; }
+
+.note { margin-top:36px; padding:16px 20px; background:var(--orange-soft); border:1px solid var(--orange); border-radius:14px; font-size:13.5px; color:var(--ink); line-height:1.6; max-width:820px; }
+.note b { color:var(--orange-strong); }
+
+@media (max-width:860px){ .fan{ grid-template-columns:1fr; } }
+@media (max-width:600px){ .page{ padding:36px 18px 56px; } .container{ padding:0 18px; } .nav-links{ display:none; } }
+</style>
+</head>
+<body>
+
+<div class="nav-wrap"><div class="container"><nav class="nav">
+    <a href="https://aquamx.biz" class="brand">aqua<span class="x">mx</span></a>
+    <div class="nav-links"><a href="https://aquamx.biz#how">วิธีทำงาน</a><a href="https://aquamx.biz#network">เครือข่าย</a><a href="https://aquamx.biz#contact">ติดต่อ</a></div>
+    <div class="nav-right"><button class="lang-btn">EN</button><a href="https://aquamx.biz#contact" class="btn-primary">นัดเดโม →</a></div>
+</nav></div></div>
+
+<div class="page">
+
+    <div class="eyebrow"><span class="dot"></span>One Offer · Every Screen</div>
+    <h1 class="title">กรอกครั้งเดียว<br><span class="accent">ขึ้นได้ทุกจอ</span></h1>
+    <p class="lede">
+        คุณกรอก <b>Offer ชุดเดียว</b> (รูป + ข้อมูล) ลงระบบ — แล้วระบบ<b>เอาไปแสดงได้ทุกช่องทาง</b>
+        ทั้งจอ signage · เมนู directory · และหน้าเว็บบนมือถือ · <b>ไม่ต้องกรอกซ้ำในแต่ละที่</b>
+    </p>
+
+    <div class="fan">
+
+        <!-- INPUT: the single offer -->
+        <div class="fan-in">
+            <div class="badge">📦 กรอกครั้งเดียว</div>
+            <div class="ftitle">Your Offering</div>
+            <div class="fsub">1 ชุดข้อมูล · เก็บใน Sanity</div>
+            <div class="in-row">
+                <div class="in-photo" style="background-image:url('https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=240&q=70');">
+                    <div class="lg"><span class="mk">A</span></div>
+                </div>
+                <div class="in-fields">
+                    <div><div class="lab">Category</div><div class="val">Featured Dining</div></div>
+                    <div><div class="lab">Name</div><div class="val">Aurora Bistro</div></div>
+                    <div><div class="lab">Description</div><div class="val">All-day brunch &amp; coffee</div></div>
+                </div>
+            </div>
+            <div class="in-chips">
+                <span>📷 รูป</span><span>฿ Price</span><span>🕐 เวลา</span><span>▸ CTA</span><span>🔗 Link</span>
+            </div>
+        </div>
+
+        <!-- OUTPUTS: 3 screens -->
+        <div class="fan-out">
+
+            <!-- Signage -->
+            <div class="out-row">
+                <span class="arr">→</span>
+                <div class="out-card">
+                    <div class="sg-wrap">
+                        <div class="scr sg">
+                            <div style="position:absolute;inset:0;background:url('https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=140&q=60') center/cover;"></div>
+                            <div style="position:absolute;inset:0;background:linear-gradient(0deg,rgba(5,6,8,0.9),transparent 55%);"></div>
+                            <div style="position:absolute;left:4px;bottom:4px;right:4px;color:#fff;">
+                                <div style="font-family:'Anton',sans-serif;font-size:8px;line-height:0.9;">AURORA<br>BISTRO</div>
+                                <div style="margin-top:2px;font-size:3.5px;border:0.5px solid rgba(255,255,255,0.5);display:inline-block;padding:1px 3px;border-radius:5px;">VIEW MENU</div>
+                            </div>
+                        </div>
+                        <div class="sg-base"></div>
+                    </div>
+                    <div class="otext">
+                        <div class="ot"><span class="ico">📺</span>บนจอ signage</div>
+                        <div class="od">โปสเตอร์ 9:16 + ระบบ overlay ข้อความ/ปุ่มให้ · เลื่อนอัตโนมัติ</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Menu -->
+            <div class="out-row">
+                <span class="arr">→</span>
+                <div class="out-card">
+                    <div class="sg-wrap">
+                        <div class="scr sg" style="background:linear-gradient(165deg,#050608,#0e1d3a);">
+                            <div style="position:absolute;top:0;left:0;right:0;height:9px;background:#0e1d3a;display:flex;align-items:center;padding:0 3px;"><span style="font-family:'Anton',sans-serif;font-size:4px;color:#fff;">DINING</span></div>
+                            <div style="position:absolute;top:11px;left:3px;right:3px;display:flex;flex-direction:column;gap:2px;">
+                                <div style="display:flex;gap:2px;"><div style="width:14px;height:10px;border-radius:1.5px;background:url('https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=60&q=50') center/cover;"></div><div style="flex:1;"><div style="height:2px;width:80%;background:rgba(255,255,255,0.6);border-radius:1px;"></div><div style="height:1.5px;width:55%;background:rgba(255,255,255,0.25);border-radius:1px;margin-top:1.5px;"></div></div></div>
+                                <div style="display:flex;gap:2px;"><div style="width:14px;height:10px;border-radius:1.5px;background:url('https://images.unsplash.com/photo-1559339352-11d035aa65de?auto=format&fit=crop&w=60&q=50') center/cover;"></div><div style="flex:1;"><div style="height:2px;width:70%;background:rgba(255,255,255,0.6);border-radius:1px;"></div><div style="height:1.5px;width:45%;background:rgba(255,255,255,0.25);border-radius:1px;margin-top:1.5px;"></div></div></div>
+                                <div style="display:flex;gap:2px;"><div style="width:14px;height:10px;border-radius:1.5px;background:url('https://images.unsplash.com/photo-1481931098730-318b6f776db0?auto=format&fit=crop&w=60&q=50') center/cover;"></div><div style="flex:1;"><div style="height:2px;width:75%;background:rgba(255,255,255,0.6);border-radius:1px;"></div></div></div>
+                            </div>
+                        </div>
+                        <div class="sg-base"></div>
+                    </div>
+                    <div class="otext">
+                        <div class="ot"><span class="ico">🗂️</span>ในเมนู directory</div>
+                        <div class="od">โผล่เป็นการ์ดในหมวด Dining · ลูกบ้านกด MENU แล้วค้นเจอเอง</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Web -->
+            <div class="out-row">
+                <span class="arr">→</span>
+                <div class="out-card">
+                    <div class="phone-mini"><div class="pm-screen">
+                        <div style="height:30px;background:url('https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=120&q=55') center/cover;"></div>
+                        <div style="padding:3px 4px;">
+                            <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:5px;color:var(--ink);line-height:1.1;">All-Day Brunch</div>
+                            <div style="margin-top:2px;display:flex;gap:2px;"><span style="font-size:3.5px;color:var(--orange-strong);background:var(--orange-soft);border:0.5px solid var(--orange);border-radius:6px;padding:1px 3px;">From 250</span></div>
+                            <div style="margin-top:3px;height:8px;background:var(--navy);border-radius:3px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:3.5px;font-weight:800;">View Menu →</div>
+                        </div>
+                    </div></div>
+                    <div class="otext">
+                        <div class="ot"><span class="ico">📱</span>บนเว็บ (handoff)</div>
+                        <div class="od">หน้า offer บนมือถือ หลังสแกน QR / กด CTA — จอง · สั่ง · ดูเมนู</div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="note">
+        <b>กรอกครั้งเดียวจริง:</b> ข้อความ (category · ชื่อ · คำอธิบาย · ราคา · CTA) ใช้ร่วมกัน 100% ทุกจอ ·
+        ส่วน <b>รูป</b> อัปโหลดชุดเดียว ระบบครอปให้ตามจอเอง (9:16 สำหรับ signage · 1:1 + แกลเลอรีสำหรับเว็บ) ·
+        แก้ที่เดียว → อัปเดตทุกจอพร้อมกัน
+    </div>
+
+</div>
+
+<footer class="site-footer"><div class="footer-inner">
+    <div class="copy">© 2026 AquaMx · All rights reserved</div>
+    <div><a href="https://aquamx.biz">หน้าหลัก</a><a href="https://aquamx.biz#contact">ติดต่อ</a></div>
+</div></footer>
+
+</body>
+</html>

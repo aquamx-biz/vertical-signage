@@ -1,0 +1,1429 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>วิธีสร้าง Poster Ad · สำหรับลูกค้า</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=Anton&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.5.0/dist/tabler-icons.min.css" />
+<style>
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+:root {
+    /* AQUAMX brand tokens */
+    --navy:          #0E3361;
+    --navy-deep:     #072147;
+    --orange:        #C9864C;
+    --orange-strong: #A36738;
+    --orange-soft:   #F6E5D0;
+    --cream:         #FAF6ED;
+    --ink:           #0B1B33;
+    --muted:         #5C6B82;
+    --line:          #EADFC9;
+    --white:         #ffffff;
+
+    /* Compat remap — original var names → light brand values */
+    --bg-deep:    var(--cream);
+    --bg-card:    var(--white);
+    --bg-card-2:  #FBF7EE;
+    --ink-80:     #2a3a55;
+    --ink-60:     var(--muted);
+    --ink-40:     #8B98AE;
+    --ink-20:     #C5CCD8;
+
+    /* Accent + semantic colours (distinct for do/should/dont meaning) */
+    --cyan:       #C9864C;   /* primary brand accent (was cyan) */
+    --green:      #2E9E5B;   /* do / must */
+    --amber:      #B07A12;   /* should / warning */
+    --red:        #C73E3E;   /* don't / bad */
+}
+
+html, body {
+    background: var(--cream);
+    color: var(--ink);
+    font-family: 'IBM Plex Sans Thai', 'Nunito', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+}
+a { color: inherit; text-decoration: none; }
+
+/* ============================================================
+   NAV + FOOTER — replicated from aquamx.biz landing
+============================================================ */
+.container { max-width: 1200px; margin: 0 auto; padding: 0 32px; }
+.nav-wrap {
+    background: var(--white);
+    border-bottom: 1px solid var(--line);
+    position: sticky; top: 0; z-index: 50;
+}
+.nav {
+    display: flex; align-items: center; justify-content: space-between;
+    height: 76px;
+}
+.brand {
+    display: flex; align-items: baseline;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 800; font-size: 26px;
+    color: var(--navy); letter-spacing: -0.02em;
+}
+.brand img { display: block; height: 72px; width: auto; }
+.brand-text .x-mark { color: var(--orange); }
+.nav-links { display: flex; align-items: center; gap: 32px; }
+.nav-links a {
+    color: var(--ink); font-weight: 500; font-size: 15.5px;
+    transition: color .15s;
+}
+.nav-links a:hover { color: var(--orange-strong); }
+.lang-btn {
+    background: none; border: 1.5px solid var(--navy);
+    border-radius: 8px; padding: 5px 13px;
+    font-size: 13px; font-weight: 700; color: var(--navy);
+    cursor: pointer; letter-spacing: 0.05em;
+    font-family: 'Nunito', sans-serif;
+    transition: background .15s, color .15s; margin-left: 8px;
+}
+.lang-btn:hover { background: var(--navy); color: #fff; }
+.nav-toggle { display: none; align-items: center; justify-content: center; width: 40px; height: 36px; background: none; border: 1.5px solid var(--line); border-radius: 8px; cursor: pointer; padding: 0; flex: 0 0 auto; margin-left: 8px; }
+.nav-toggle .bars, .nav-toggle .bars::before, .nav-toggle .bars::after { display: block; width: 18px; height: 2px; background: var(--navy); border-radius: 2px; transition: transform .2s ease, opacity .2s ease; }
+.nav-toggle .bars { position: relative; }
+.nav-toggle .bars::before, .nav-toggle .bars::after { content: ""; position: absolute; left: 0; }
+.nav-toggle .bars::before { top: -6px; }
+.nav-toggle .bars::after { top: 6px; }
+.nav-toggle.open .bars { background: transparent; }
+.nav-toggle.open .bars::before { transform: translateY(6px) rotate(45deg); }
+.nav-toggle.open .bars::after { transform: translateY(-6px) rotate(-45deg); }
+.btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 11px 22px; border-radius: 10px;
+    font-weight: 600; font-size: 15px; cursor: pointer; border: none;
+    transition: transform .12s, background .15s, color .15s;
+    font-family: 'Nunito', sans-serif;
+}
+.btn-primary { background: var(--navy); color: var(--white); }
+.btn-primary:hover { background: #001E40; transform: translateY(-1px); }
+
+.site-footer {
+    background: var(--white); border-top: 1px solid var(--line);
+    padding: 32px 40px; text-align: center; margin-top: 24px;
+}
+.site-footer .footer-inner {
+    max-width: 1200px; margin: 0 auto;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 16px; flex-wrap: wrap;
+}
+.site-footer .copy { font-size: 13px; color: var(--muted); }
+.site-footer .footer-links { display: flex; gap: 22px; }
+.site-footer .footer-links a { font-size: 13.5px; color: var(--muted); transition: color .15s; }
+.site-footer .footer-links a:hover { color: var(--orange-strong); }
+
+@media (max-width: 700px) {
+    .container { padding: 0 18px; }
+    .nav { height: 64px; }
+    .brand img { height: 46px; }
+    .nav-toggle { display: inline-flex; }
+    .nav-links { display: none; position: absolute; top: 100%; left: 0; right: 0; flex-direction: column; gap: 0;
+        background: #fff; border-bottom: 1px solid var(--line); box-shadow: 0 14px 26px -10px rgba(7,18,40,0.18); padding: 6px 0; z-index: 60; }
+    .nav-links.open { display: flex; }
+    .nav-links a { padding: 13px 24px; font-size: 16px; border-top: 1px solid var(--line); }
+    .site-footer { padding: 24px 20px; }
+    .site-footer .footer-inner { flex-direction: column; gap: 12px; }
+}
+.page {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 64px 40px 80px;
+}
+
+/* HEADER */
+.eyebrow {
+    display: inline-flex; align-items: center; gap: 10px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 14px;
+    color: var(--orange-strong);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    font-weight: 700;
+    margin-bottom: 18px;
+}
+.eyebrow::before { content: none; }
+.eyebrow .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--orange);
+    box-shadow: none;
+}
+h1.title {
+    font-family: 'Nunito', sans-serif;
+    font-size: 56px;
+    font-weight: 800;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    text-transform: none;
+    color: var(--navy);
+    margin-bottom: 20px;
+}
+h1.title .accent { color: var(--orange); }
+.lede {
+    font-size: 18px;
+    color: var(--muted);
+    max-width: 720px;
+    line-height: 1.65;
+    margin-bottom: 28px;
+}
+.lede b { color: var(--ink); font-weight: 700; }
+
+.divider {
+    display: flex; align-items: center; gap: 16px;
+    margin: 64px 0 32px;
+    color: var(--orange-strong);
+    font-family: 'Nunito', sans-serif;
+    font-size: 14px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    font-weight: 700;
+}
+.divider::before { content: none; }
+.divider::after  { content: ''; flex: 1; height: 1px; background: var(--line); }
+
+/* ============================================================
+   SECTION 1 — Visual anatomy of an ideal poster
+============================================================ */
+.anatomy {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 56px;
+    align-items: center;
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: 24px;
+    padding: 40px;
+    backdrop-filter: blur(20px);
+}
+@media (max-width: 900px) {
+    .anatomy { grid-template-columns: 1fr; }
+}
+
+/* Big visual mockup */
+.big-mockup-wrap {
+    width: 100%; max-width: 280px; margin: 0 auto;
+    display: flex; flex-direction: column; align-items: center;
+}
+.big-mockup {
+    width: 280px;
+    aspect-ratio: 9 / 16;
+    border-radius: 8px 8px 0 0;
+    background: linear-gradient(135deg,#1a3d6e 0%,#0e1d3a 60%, #1a2b4a 100%);
+    border: 4px solid #0c111c; border-bottom: none;   /* slim signage bezel */
+    position: relative;
+    overflow: hidden;
+    box-shadow:
+        0 26px 52px -18px rgba(0,0,0,0.6),
+        inset 0 0 0 1px rgba(255,255,255,0.05);
+}
+/* Solid black bottom panel — full width, no stand (matches ratecard-sme) */
+.bm-stand { display: none; }
+.bm-base {
+    width: 100%; height: 80px;
+    background: linear-gradient(180deg, #1b2740 0%, #05080d 100%);
+    border-top: 3px solid #36486a;           /* seam: separates pedestal from screen */
+    border-radius: 0 0 8px 8px;
+    box-shadow: inset 0 3px 7px -2px rgba(0,0,0,0.55), 0 18px 30px -12px rgba(0,0,0,0.55);
+}
+/* Brand owner's logo — sits top-right of the Poster Image
+   (same monogram-badge + name style as the Dining mini-signage) */
+.bm-logo {
+    position: absolute; top: 34px; right: 14px; z-index: 6;
+    display: flex; align-items: center; gap: 6px;
+    color: #fff; text-shadow: 0 1px 7px rgba(0,0,0,0.65);
+}
+.bm-mark {
+    width: 24px; height: 24px; border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Anton', 'Inter', sans-serif; font-size: 15px; line-height: 1;
+    background: #fff; color: #0e1d3a; flex-shrink: 0;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+}
+.bm-mark.round { border-radius: 50%; }
+.bm-name {
+    font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 800;
+    letter-spacing: 0.8px; text-transform: uppercase;
+}
+.big-topbar {
+    position: absolute; top: 0; left: 0; right: 0;
+    height: 28px;
+    background: var(--navy);
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    display: flex; align-items: center; padding: 0 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px; color: var(--ink); font-weight: 600;
+}
+.big-bottombar {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    height: 16px;
+    background: var(--navy);
+    border-top: 1px solid rgba(255,255,255,0.05);
+}
+
+/* Annotation lines on big mockup */
+.anno-zone {
+    position: absolute;
+    left: 12px; right: 12px;
+    border: 1.5px dashed;
+    border-radius: 6px;
+    padding: 8px;
+    display: flex; align-items: center; justify-content: center;
+    text-align: center;
+}
+.anno-zone .anno-num {
+    position: absolute;
+    top: -10px; left: -10px;
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    background: var(--cyan);
+    color: var(--navy);
+    font-family: 'Anton', sans-serif;
+    font-size: 13px;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 0 12px rgba(201,134,76,0.6);
+    z-index: 2;
+}
+.anno-zone .anno-label {
+    font-size: 9px;
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+}
+
+.anno-zone.eyebrow-z {
+    top: 34px; height: 24px;
+    border-color: rgba(245,183,64,0.6);
+    background: rgba(245,183,64,0.06);
+    color: rgba(245,183,64,0.9);
+}
+.anno-zone.headline-z {
+    top: 64px; height: 78px;
+    border-color: rgba(201,134,76,0.6);
+    background: rgba(201,134,76,0.07);
+    color: var(--cyan);
+    flex-direction: column;
+}
+.anno-zone.headline-z .anno-text {
+    font-family: 'Anton', sans-serif;
+    font-size: 24px;
+    line-height: 0.9;
+    color: var(--ink);
+    letter-spacing: 0.02em;
+}
+.anno-zone.subhead-z {
+    top: 152px; height: 44px;
+    border-color: rgba(94,211,149,0.55);
+    background: rgba(94,211,149,0.05);
+    color: rgba(94,211,149,0.9);
+    flex-direction: column;
+    gap: 3px;
+}
+.anno-zone.subhead-z .anno-text {
+    font-size: 10px;
+    color: var(--ink);
+    line-height: 1.3;
+    font-weight: 500;
+}
+.anno-zone.meta-z {
+    top: 204px; height: 40px;
+    border-color: rgba(201,164,73,0.55);
+    background: rgba(201,164,73,0.05);
+    color: rgba(201,164,73,0.95);
+    flex-direction: column;
+    gap: 2px;
+}
+.anno-zone.meta-z .anno-text {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: var(--ink);
+    letter-spacing: 0.05em;
+}
+.anno-zone.image-z {
+    top: 252px; height: 110px;
+    border-color: rgba(237,104,104,0.55);
+    background: rgba(237,104,104,0.05);
+    color: rgba(237,104,104,0.95);
+    flex-direction: column;
+    gap: 3px;
+}
+.anno-zone.image-z .anno-text {
+    font-size: 9px;
+    color: var(--ink-80);
+}
+
+/* Safe zones overlay (top/bottom system reserved) */
+.system-zone {
+    position: absolute;
+    left: 0; right: 0;
+    background: repeating-linear-gradient(
+        135deg,
+        rgba(255,255,255,0.04) 0,
+        rgba(255,255,255,0.04) 6px,
+        rgba(255,255,255,0.08) 6px,
+        rgba(255,255,255,0.08) 12px
+    );
+    pointer-events: none;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 7px;
+    color: rgba(255,255,255,0.45);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+}
+.system-zone.top-sys    { top: 28px;  height: 6px; }
+.system-zone.bottom-sys { bottom: 16px; height: 6px; }
+
+/* Annotation right panel */
+.anatomy-info h2 {
+    font-family: 'Anton', sans-serif;
+    font-size: 32px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    margin-bottom: 8px;
+}
+.anatomy-info > p {
+    font-size: 14px;
+    color: var(--ink-60);
+    line-height: 1.6;
+    margin-bottom: 24px;
+}
+
+.anno-list {
+    display: flex; flex-direction: column;
+    gap: 14px;
+}
+.anno-row {
+    display: grid;
+    grid-template-columns: 32px 1fr auto;
+    gap: 14px;
+    padding: 14px;
+    background: var(--bg-card-2);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    align-items: center;
+}
+.anno-row .num {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: rgba(201,134,76,0.18);
+    border: 1px solid rgba(201,134,76,0.45);
+    color: var(--cyan);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Anton', sans-serif;
+    font-size: 16px;
+}
+.anno-row .body .name {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 2px;
+    letter-spacing: 0.02em;
+}
+.anno-row .body .desc {
+    font-size: 12px;
+    color: var(--ink-60);
+    line-height: 1.45;
+}
+.anno-row .priority {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    font-weight: 700;
+    white-space: nowrap;
+}
+.priority.must    { background: rgba(237,104,104,0.15); color: var(--red); border: 1px solid rgba(237,104,104,0.3); }
+.priority.should  { background: rgba(245,183,64,0.15); color: var(--amber); border: 1px solid rgba(245,183,64,0.3); }
+.priority.nice    { background: rgba(94,211,149,0.15); color: var(--green); border: 1px solid rgba(94,211,149,0.3); }
+
+/* ============================================================
+   SECTION 2 — Required elements by poster type
+============================================================ */
+.types-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);   /* 2×2 matrix */
+    gap: 16px;
+}
+@media (max-width: 720px) { .types-grid { grid-template-columns: 1fr; } }
+
+/* Section-2 cells: horizontal — signage left, info right (scoped so it
+   does NOT affect the vertical .type-card panels in section 1) */
+.types-grid > .type-card { flex-direction: row; align-items: flex-start; gap: 18px; padding: 18px 20px; }
+.types-grid .type-visual { flex: 0 0 132px; }
+.types-grid .type-info   { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+.types-grid .type-mock      { margin: 0; }
+.types-grid .type-mock-base { margin: 0; }
+.types-grid .type-head { margin-top: 0; }
+@media (max-width: 420px) { .types-grid > .type-card { flex-direction: column; align-items: center; text-align: center; } .types-grid .type-head { justify-content: center; } }
+
+/* Section-2 comparison matrix: columns = category, rows = field */
+.matrix-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.matrix {
+    display: grid;
+    grid-template-columns: minmax(116px, 0.8fr) repeat(4, 1fr);
+    min-width: 640px;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    overflow: hidden;
+    background: var(--bg-card);
+}
+.matrix > div {
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+    border-right: 1px solid rgba(0,0,0,0.06);
+}
+.matrix > div:nth-child(5n)            { border-right: none; }   /* last column */
+.matrix > div:nth-last-child(-n+5)     { border-bottom: none; }  /* last row    */
+.mx-corner  { background: transparent; }
+.mx-colhead {
+    display: flex; flex-direction: column; align-items: center; gap: 5px;
+    text-align: center; padding: 15px 10px; background: #faf6f0;
+}
+.mx-ic  { font-size: 23px; line-height: 1; }
+.mx-cat { font-family: 'Anton', sans-serif; font-size: 17px; text-transform: uppercase; letter-spacing: 0.03em; color: var(--ink); line-height: 1; }
+.mx-sub { font-family: 'JetBrains Mono', monospace; font-size: 8px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--cyan); }
+.mx-rowhead {
+    display: flex; align-items: center;
+    padding: 13px 15px; background: #faf6f0;
+    font-size: 11.5px; font-weight: 800; color: #7d8694; line-height: 1.3;
+}
+.mx-cell {
+    display: flex; align-items: center;
+    padding: 13px 15px; font-size: 12.5px; line-height: 1.4; color: var(--ink-80);
+}
+.mx-imgcell { display: flex; justify-content: center; align-items: center; padding: 14px 10px; }
+.mx-sign { width: 132px; zoom: 0.62; }
+.mx-sign .type-mock-base { margin: 0 auto; }
+
+.type-card {
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 22px;
+    display: flex; flex-direction: column;
+    backdrop-filter: blur(20px);
+}
+/* Mini signage example per type */
+.type-mock {
+    width: 100%; max-width: 132px;
+    aspect-ratio: 9 / 16;
+    margin: 0 auto;
+    border-radius: 7px 7px 0 0;
+    border: 3px solid #0c111c; border-bottom: none;
+    background-size: cover; background-position: center;
+    position: relative; overflow: hidden;
+    box-shadow: 0 12px 26px -12px rgba(0,0,0,0.45);
+}
+.type-mock-stand { display: none; }
+.type-mock-base {
+    width: 100%; max-width: 132px; height: 40px; margin: 0 auto 16px;
+    background: linear-gradient(180deg, #1b2740 0%, #05080d 100%);
+    border-top: 2px solid #36486a;           /* seam: separates pedestal from screen */
+    border-radius: 0 0 7px 7px;
+    box-shadow: inset 0 2px 5px -1px rgba(0,0,0,0.55), 0 10px 20px -8px rgba(0,0,0,0.5);
+}
+.type-mock-logo {
+    position: absolute; top: 8px; right: 8px; z-index: 3;
+    display: flex; align-items: center; gap: 3px;
+    color: #fff; text-shadow: 0 1px 4px rgba(0,0,0,0.6);
+}
+.tml-mark {
+    width: 13px; height: 13px; border-radius: 3px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Anton', 'Inter', sans-serif; font-size: 8px; line-height: 1;
+    background: #fff; color: #0e1d3a; flex-shrink: 0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.45);
+}
+.tml-mark.round { border-radius: 50%; }
+.tml-name {
+    font-family: 'Inter', sans-serif; font-size: 6px; font-weight: 800;
+    letter-spacing: 0.4px; text-transform: uppercase;
+}
+.type-mock-cap {
+    position: absolute; left: 0; right: 0; bottom: 0;
+    padding: 30px 9px 10px;
+    background: linear-gradient(0deg, rgba(5,8,18,0.96) 0%, rgba(5,8,18,0.8) 55%, rgba(5,8,18,0.25) 90%, transparent 100%);
+    text-align: left;
+}
+.type-mock-eyebrow {
+    display: inline-block;
+    font-family: 'Inter', sans-serif;
+    font-size: 6px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase;
+    color: #fff; border: 1px solid rgba(255,255,255,0.5); border-radius: 50px;
+    padding: 2px 6px;
+}
+.type-mock-title {
+    font-family: 'Anton', 'Nunito', sans-serif;
+    font-size: 13px; color: #fff; line-height: 0.95;
+    letter-spacing: 0.01em; margin-top: 5px; text-shadow: 0 1px 4px rgba(0,0,0,0.6);
+    text-transform: uppercase;
+}
+.type-mock-sub {
+    font-family: 'IBM Plex Sans Thai', 'Inter', sans-serif;
+    font-size: 6.5px; color: rgba(255,255,255,0.9); line-height: 1.35;
+    margin-top: 5px; text-shadow: 0 1px 3px rgba(0,0,0,0.6);
+}
+.type-mock-facts {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 6px; font-weight: 700; color: #fff;
+    background: rgba(201,134,76,0.95);
+    padding: 2px 5px; border-radius: 3px; margin-top: 6px;
+    letter-spacing: 0.02em;
+}
+.type-head { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+.type-icon {
+    width: 42px; height: 42px;
+    border-radius: 12px;
+    background: rgba(201,134,76,0.12);
+    border: 1px solid rgba(201,134,76,0.3);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 21px;
+    flex-shrink: 0;
+}
+.type-name {
+    font-family: 'Anton', sans-serif;
+    font-size: 22px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+.type-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--cyan);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+}
+.type-list {
+    display: flex; flex-direction: column;
+    gap: 8px;
+    margin-top: 2px;
+}
+.type-list .li {
+    position: relative;
+    padding-left: 18px;
+    font-size: 12.5px;
+    color: var(--ink-80);
+    line-height: 1.4;
+}
+.type-list .li::before {
+    content: '▸';
+    position: absolute; left: 0; top: 0;
+    color: var(--cyan);
+    font-size: 11px;
+    line-height: 1.7;
+}
+.type-list .li.bold {
+    color: var(--ink);
+    font-weight: 600;
+}
+.type-list .li.bold::before { color: var(--amber); }
+/* Field label inline with its value: "CATEGORY TAG: Featured Dining" */
+.type-list .li .li-field {
+    font-family: 'Nunito', sans-serif; font-weight: 800;
+    font-size: 11px; color: var(--orange-strong);
+    text-transform: uppercase; letter-spacing: 0.02em;
+}
+.type-list .li .li-field::after { content: ': '; }
+
+/* ② Ad-info infographic breakdown */
+.ai-list { display:flex; flex-direction:column; gap:7px; }
+.ai-item { display:grid; grid-template-columns:auto 1fr auto; gap:10px; align-items:center;
+    background:#fbf7f1; border:1px solid rgba(0,0,0,0.07); border-radius:11px; padding:8px 11px; }
+.ai-ic { font-size:17px; line-height:1; }
+.ai-name { font-size:11.5px; font-weight:800; color:var(--ink); letter-spacing:0.01em; }
+.ai-ex { font-size:11px; color:#7d8694; margin-top:3px; line-height:1.3; }
+.ai-lim { font-family:'JetBrains Mono',monospace; font-size:9px; font-weight:700; color:var(--orange-strong);
+    background:rgba(201,134,76,0.12); padding:3px 7px; border-radius:6px; white-space:nowrap; align-self:flex-start; }
+.ai-chips { display:flex; flex-wrap:wrap; gap:4px; margin-top:5px; }
+.ai-chips span { font-size:9.5px; font-weight:700; padding:3px 8px; border-radius:20px;
+    background:#fff; border:1px solid rgba(0,0,0,0.12); color:#7d8694; }
+.ai-chips span.on { background:var(--orange); color:#fff; border-color:var(--orange); }
+
+/* ============================================================
+   SECTION 3 — Do's & Don'ts
+============================================================ */
+.do-dont-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+}
+@media (max-width: 900px) { .do-dont-grid { grid-template-columns: 1fr; } }
+
+.dd-card {
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 28px;
+    backdrop-filter: blur(20px);
+}
+.dd-card.do  { border-color: rgba(94,211,149,0.3); background: linear-gradient(180deg, rgba(94,211,149,0.06) 0%, rgba(255,255,255,0.03) 60%); }
+.dd-card.dont { border-color: rgba(237,104,104,0.3); background: linear-gradient(180deg, rgba(237,104,104,0.06) 0%, rgba(255,255,255,0.03) 60%); }
+.dd-head {
+    display: flex; align-items: center; gap: 14px;
+    margin-bottom: 18px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--line);
+}
+.dd-icon {
+    width: 40px; height: 40px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+    font-weight: 800;
+}
+.dd-icon.green { background: rgba(94,211,149,0.18); color: var(--green); }
+.dd-icon.red   { background: rgba(237,104,104,0.18); color: var(--red); }
+.dd-title {
+    font-family: 'Anton', sans-serif;
+    font-size: 26px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.dd-list { display: flex; flex-direction: column; gap: 12px; }
+.dd-item {
+    display: grid;
+    grid-template-columns: 18px 1fr;
+    gap: 12px;
+    font-size: 13.5px;
+    line-height: 1.5;
+    color: var(--ink-80);
+}
+.dd-item .dd-mark {
+    color: var(--green); font-weight: 800;
+    font-size: 16px;
+    line-height: 1.4;
+}
+.dd-card.dont .dd-item .dd-mark { color: var(--red); }
+.dd-item b { color: var(--ink); font-weight: 600; }
+
+/* Section-3 Do / Don't comparison matrix */
+.ddx-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.ddx {
+    display: grid;
+    grid-template-columns: minmax(120px, 0.7fr) 1fr 1fr;
+    min-width: 660px;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    overflow: hidden;
+    background: var(--bg-card);
+}
+.ddx > div { border-bottom: 1px solid rgba(0,0,0,0.06); border-right: 1px solid rgba(0,0,0,0.06); padding: 13px 16px; }
+.ddx > div:nth-child(3n)        { border-right: none; }   /* last column */
+.ddx > div:nth-last-child(-n+3) { border-bottom: none; }  /* last row    */
+.ddx-corner { background: transparent; }
+.ddx-head {
+    display: flex; align-items: center; gap: 7px;
+    font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 14.5px;
+}
+.ddx-head.do   { background: rgba(94,211,149,0.10); color: var(--green); }
+.ddx-head.dont { background: rgba(237,104,104,0.10); color: var(--red); }
+.ddx-rowhead {
+    display: flex; align-items: center; background: #faf6f0;
+    font-size: 11.5px; font-weight: 800; color: #7d8694; line-height: 1.3;
+}
+.ddx-cell { font-size: 12px; line-height: 1.45; color: var(--ink-80); }
+.ddx-cell.do   { background: rgba(94,211,149,0.05); }
+.ddx-cell.dont { background: rgba(237,104,104,0.05); }
+.ddx-cell b { color: var(--ink); font-weight: 700; }
+.ddx-cell .ln { display: block; }
+.ddx-cell .ln + .ln { margin-top: 8px; padding-top: 8px; border-top: 1px dashed rgba(0,0,0,0.08); }
+
+/* ============================================================
+   SECTION 4 — Spec sheet (export details)
+============================================================ */
+.spec-card {
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 36px;
+    backdrop-filter: blur(20px);
+}
+.spec-card h2 {
+    font-family: 'Anton', sans-serif;
+    font-size: 32px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 6px;
+}
+.spec-card > p {
+    font-size: 14px;
+    color: var(--ink-60);
+    margin-bottom: 28px;
+    line-height: 1.55;
+}
+.spec-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+}
+@media (max-width: 900px) { .spec-grid { grid-template-columns: repeat(2, 1fr); } }
+.spec-item {
+    background: var(--bg-card-2);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 18px 20px;
+}
+.spec-item .label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-40);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+}
+.spec-item .value {
+    font-family: 'Anton', sans-serif;
+    font-size: 24px;
+    color: var(--ink);
+    line-height: 1;
+    letter-spacing: 0.02em;
+}
+.spec-item .sub {
+    font-size: 11px;
+    color: var(--ink-60);
+    margin-top: 6px;
+    line-height: 1.4;
+}
+
+/* Export-spec visual: annotated 9:16 canvas + side specs */
+.spec-viz { display: flex; gap: 32px; align-items: center; justify-content: center; flex-wrap: wrap; margin-top: 6px; }
+.spec-framewrap { flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; gap: 11px; }
+.spec-frame {
+    position: relative; width: 268px; max-width: 78vw; aspect-ratio: 9 / 16;
+    border: 3px solid #0c111c; border-radius: 16px; overflow: hidden;
+    background: linear-gradient(165deg, #eef3f9 0%, #dce5f0 100%);
+    box-shadow: 0 20px 44px -20px rgba(0,0,0,0.45);
+}
+.sf-strip {
+    position: absolute; left: 0; right: 0; z-index: 1;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(14,29,58,0.86); color: #fff;
+    font-size: 8.5px; font-weight: 600; text-align: center; padding: 0 6px; letter-spacing: 0.01em;
+}
+.sf-top { top: 0; height: 8%; }
+.sf-bot { bottom: 0; height: 9%; }
+.sf-chip {
+    position: absolute; z-index: 3; max-width: 44%;
+    background: rgba(8,12,22,0.55); border: 1px dashed rgba(255,255,255,0.7); color: #fff;
+    font-size: 8px; font-weight: 700; padding: 4px 6px; border-radius: 6px;
+    text-align: center; line-height: 1.25; letter-spacing: 0.02em;
+}
+.sf-menu { top: 11%; left: 7px; }
+.sf-logo { top: 10.5%; right: 7px; }
+.sf-cta  { bottom: 12%; left: 7px; }
+.sf-center {
+    position: absolute; inset: 21% 8% 20%; z-index: 2;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
+    border: 1.5px dashed rgba(14,29,58,0.4); border-radius: 12px; color: #0e1d3a; padding: 0 8px;
+}
+.sf-area   { font-family: 'Anton', sans-serif; font-size: 16px; text-transform: uppercase; letter-spacing: 0.03em; line-height: 1; }
+.sf-area-s { font-size: 9.5px; margin-top: 6px; color: #46566f; line-height: 1.45; }
+.sf-cap { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.03em; color: #7d8694; text-align: center; }
+.spec-side { flex: 1 1 300px; max-width: 440px; display: flex; flex-direction: column; gap: 11px; }
+.ss-row {
+    display: grid; grid-template-columns: auto 1fr; gap: 13px; align-items: start;
+    background: #fbf7f1; border: 1px solid rgba(0,0,0,0.06); border-radius: 13px; padding: 13px 15px;
+}
+.ss-ic { font-size: 21px; line-height: 1; }
+.ss-k  { font-family: 'JetBrains Mono', monospace; font-size: 9.5px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #9aa1ad; }
+.ss-v  { font-size: 13.5px; font-weight: 700; color: var(--ink); margin-top: 3px; }
+.ss-note { font-size: 11px; color: #7d8694; margin-top: 4px; line-height: 1.45; }
+@media (max-width: 560px) { .spec-frame { width: 232px; } .spec-viz { gap: 22px; } }
+
+/* ============================================================
+   aquamx.biz typography overrides (match ratecard-sme)
+   — Nunito display headings; Anton kept for graphic mockup text.
+============================================================ */
+.divider, .eyebrow { color: var(--orange-strong); }
+h1.title, .anatomy-info h2, .spec-card h2,
+.type-name, .dd-title, .spec-item .value {
+    font-family: 'Nunito', sans-serif;
+    font-weight: 800;
+    text-transform: none;
+    letter-spacing: -0.01em;
+}
+/* ============================================================
+   Big mockup = a REAL example poster (property), with the 5
+   parts shown as actual content + numbered callouts (1–5).
+============================================================ */
+.big-topbar { color: rgba(255,255,255,0.92); z-index: 5; }
+.big-mockup .system-zone { z-index: 5; }
+.bm-photo {
+    position: absolute; inset: 0; z-index: 0;
+    background-image: url('https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=600&q=80');
+    background-size: cover; background-position: center;
+}
+.bm-scrim {
+    position: absolute; inset: 0; z-index: 1;
+    background: linear-gradient(180deg,
+        rgba(8,14,30,0.45) 0%, rgba(8,14,30,0.10) 30%,
+        rgba(8,14,30,0.55) 60%, rgba(8,14,30,0.92) 100%);
+}
+.bm-num {
+    flex-shrink: 0;
+    width: 21px; height: 21px; margin-left: -30px;
+    border-radius: 50%;
+    background: var(--orange); color: #fff;
+    font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 11px;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.45);
+}
+.bm-imgtag {
+    position: absolute; z-index: 4; top: 80px; left: 40px;
+    display: flex; align-items: center; gap: 8px;
+    font-family: 'JetBrains Mono', monospace; font-size: 8px;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: rgba(255,255,255,0.92);
+    background: rgba(8,14,30,0.45); border: 1px solid rgba(255,255,255,0.28);
+    padding: 4px 10px; border-radius: 50px; backdrop-filter: blur(2px);
+}
+.bm-content {
+    position: absolute; z-index: 4; left: 40px; right: 16px; bottom: 104px;
+    display: flex; flex-direction: column; gap: 10px; align-items: flex-start;
+}
+/* System ☰ MENU chip — top-left (player-rendered) */
+.bm-menu {
+    position: absolute; z-index: 4; top: 38px; left: 10px;
+    font-family: 'Inter', sans-serif; font-size: 7px; font-weight: 700; letter-spacing: 0.18em;
+    color: #fff; background: rgba(8,14,30,0.6); border: 1px solid rgba(255,255,255,0.4);
+    padding: 4px 7px; border-radius: 5px; backdrop-filter: blur(3px);
+}
+/* System CTA dock — bottom-left (player-rendered; poster must leave room) */
+.bm-cta {
+    position: absolute; z-index: 4; bottom: 24px; left: 10px;
+    display: flex; flex-direction: column; gap: 5px; align-items: flex-start;
+}
+.bm-cta-row { display: flex; gap: 5px; }
+.bm-cta-btn {
+    font-family: 'Nunito', sans-serif; font-size: 8px; font-weight: 800;
+    letter-spacing: 0.08em; text-transform: uppercase; color: #fff;
+    background: rgba(8,14,30,0.6); border: 1px solid rgba(255,255,255,0.45);
+    padding: 5px 11px; border-radius: 6px; backdrop-filter: blur(3px);
+}
+.bm-cta-btn.primary { background: var(--orange); border-color: var(--orange); }
+.bm-cta-tag {
+    font-family: 'JetBrains Mono', monospace; font-size: 6.5px;
+    letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.62);
+}
+.bm-row { display: flex; align-items: flex-start; gap: 8px; }
+.bm-eyebrow {
+    font-family: 'Inter', 'IBM Plex Sans Thai', sans-serif;
+    font-size: 8px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase;
+    color: #fff; background: rgba(8,14,30,0.4);
+    border: 1px solid rgba(255,255,255,0.55); border-radius: 50px;
+    padding: 3px 10px; backdrop-filter: blur(2px);
+}
+.bm-headline {
+    font-family: 'Anton', sans-serif; font-size: 30px; line-height: 0.9;
+    color: #fff; letter-spacing: 0.02em; text-shadow: 0 2px 10px rgba(0,0,0,0.6);
+}
+.bm-sub {
+    font-size: 10px; line-height: 1.3; font-weight: 500;
+    color: rgba(255,255,255,0.92); max-width: 178px;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.6);
+}
+.bm-facts {
+    font-family: 'JetBrains Mono', monospace; font-size: 9.5px; font-weight: 600;
+    color: #fff; background: rgba(201,134,76,0.92);
+    padding: 4px 9px; border-radius: 5px; letter-spacing: 0.03em;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+</style>
+</head>
+<body>
+
+<!-- ============ NAV (same look as aquamx.biz) ============ -->
+<div class="nav-wrap">
+    <div class="container">
+        <nav class="nav">
+            <a href="https://aquamx.biz" class="brand" aria-label="aquamx">
+                <img src="data:image/png;base64,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" alt="aquamx" height="72" style="display:block;"
+                     onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-flex';">
+                <span class="brand-text" style="display:none;">aquam<span class="x-mark">x</span></span>
+            </a>
+            <div class="nav-links">
+                <a href="https://aquamx.biz#how" data-i18n="nav.how">วิธีทำงาน</a>
+                <a href="https://aquamx.biz#network" data-i18n="nav.network">เครือข่าย</a>
+                <a href="https://aquamx.biz#contact" data-i18n="nav.contact">ติดต่อ</a>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;">
+                <button class="lang-btn" id="langToggle" aria-label="Switch language">EN</button>
+                <a href="https://aquamx.biz/ratecard-sme/" class="btn btn-primary">
+                    <span data-i18n="nav.cta">ดูแพ็คเกจ</span>
+                    <i class="ti ti-arrow-right"></i>
+                </a>
+            </div>
+            <button class="nav-toggle" id="navToggle" aria-label="เมนู" aria-expanded="false"><span class="bars"></span></button>
+        </nav>
+    </div>
+</div>
+
+<div class="page">
+
+    <!-- ===================== HEADER ===================== -->
+    <div class="eyebrow">
+        <span class="dot"></span>
+        Client Brief · Poster Submission
+    </div>
+    <h1 class="title" data-i18n-html="h1">วิธีสร้าง <span class="accent">Poster Ad</span></h1>
+    <p class="lede" data-i18n-html="lede">
+        เราเชื่อว่า<b>รูปที่ดีดึงดูดความสนใจได้ดีกว่าข้อมูลที่เยอะ</b> — จึงให้รูปนำสายตา แล้วให้ลูกค้ากดดูข้อมูลต่อที่หน้าเครื่อง
+    </p>
+
+    <!-- ===================== SECTION 1 — What you send -> on screen ===================== -->
+    <div class="divider">1 · What You Send → On Screen</div>
+
+    <p data-i18n-html="s1.intro" style="text-align:center; font-size:15px; color:var(--ink); max-width:680px; margin:0 auto 26px;">
+        คุณส่งมาแค่ <b>2 อย่าง</b> — <b style="color:var(--orange-strong);">① รูป</b> กับ <b style="color:var(--orange-strong);">② ข้อมูล (Info)</b> ·
+        ที่เหลือ <b>ระบบประกอบขึ้นจอให้เอง</b> (③) — เมนู · ปุ่ม CTA · แถบเวลา คุณไม่ต้องทำ
+    </p>
+
+    <div style="display:flex; flex-wrap:wrap; align-items:stretch; justify-content:center; gap:14px; margin-bottom:8px;">
+
+        <!-- ① Poster Image (plain image — NOT on a signage frame) -->
+        <div class="type-card" style="flex:1 1 220px; max-width:300px;">
+            <div style="font-family:'Anton',sans-serif; font-size:20px; color:var(--orange-strong); line-height:1;">①</div>
+            <div style="font-weight:800; font-size:15px; margin:5px 0 2px; color:var(--ink);" data-i18n="s1.t1">รูปโปสเตอร์โฆษณา</div>
+            <div data-i18n="s1.imgsub" style="font-size:12px; color:#7d8694; margin-bottom:12px;">รูป hero สะอาด · สัดส่วน 9:16 · โลโก้มุมขวาบน</div>
+            <div style="flex:1; display:flex; align-items:center; justify-content:center; width:100%;">
+                <div style="width:100%; max-width:235px; aspect-ratio:9/16; border-radius:12px; overflow:hidden; position:relative; background:url('https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=420&q=72') center/cover; box-shadow:0 12px 26px -10px rgba(0,0,0,0.42);"></div>
+            </div>
+        </div>
+
+        <div style="font-family:'Anton',sans-serif; font-size:28px; color:var(--orange); flex:0 0 auto; align-self:center;">+</div>
+
+        <!-- ② Info — fields + CTA -->
+        <div class="type-card" style="flex:1 1 220px; max-width:300px; text-align:left;">
+            <div style="font-family:'Anton',sans-serif; font-size:20px; color:var(--orange-strong); line-height:1;">②</div>
+            <div style="font-weight:800; font-size:15px; margin:5px 0 10px; color:var(--ink);" data-i18n="s1.t2">ข้อมูลโฆษณา</div>
+
+            <div class="ai-list">
+                <div class="ai-item"><span class="ai-ic">🏷️</span><div><div class="ai-name" data-i18n="ai.cat">หมวด / แท็ก</div><div class="ai-ex">FEATURED DINING</div></div><span class="ai-lim">≤ 24</span></div>
+                <div class="ai-item"><span class="ai-ic">✏️</span><div><div class="ai-name" data-i18n="ai.name">ชื่อผลิตภัณฑ์ / บริการ</div><div class="ai-ex">Aurora Bistro</div></div><span class="ai-lim" data-i18n="ai.lim12">≤ 12/บรรทัด</span></div>
+                <div class="ai-item"><span class="ai-ic">📝</span><div><div class="ai-name" data-i18n="ai.desc">คำอธิบาย</div><div class="ai-ex">All-day brunch &amp; specialty coffee</div></div><span class="ai-lim">≤ 120</span></div>
+                <div class="ai-item"><span class="ai-ic">📊</span><div><div class="ai-name" data-i18n="ai.key">ข้อมูลสำคัญ</div><div class="ai-ex">฿฿ · Floor 2 · ★ 4.8</div></div><span class="ai-lim" data-i18n="ai.lim3">≤ 3 ค่า</span></div>
+                <div class="ai-item"><span class="ai-ic">🔘</span><div><div class="ai-name" data-i18n="ai.cta">ปุ่มคำสั่ง</div><div class="ai-chips"><span class="on">View Menu</span><span>Book</span><span>Order</span><span>Contact</span></div></div><span class="ai-lim" data-i18n="ai.lim1">เลือก 1</span></div>
+            </div>
+            <div data-i18n-html="s1.ctanote" style="margin-top:10px; font-size:10.5px; color:#7d8694; line-height:1.5;">⚙️ <b>ระบบวาดปุ่มให้เอง</b> (ตำแหน่ง + ดีไซน์ + ภาษา TH/EN)</div>
+            <div data-i18n-html="s1.provnote" style="margin-top:11px; padding-top:11px; border-top:1px dashed rgba(0,0,0,0.14); font-size:10.5px; color:#7d8694; line-height:1.5;">🏪 <b>โลโก้ · ติดต่อ · เวลาเปิด</b> — ตั้งครั้งเดียวที่หน้า <b>ตั้งร้าน (Provider)</b> ที่ <b>aquamx.biz/provider</b> · ทุก Ad ดึงไปใช้เอง</div>
+        </div>
+
+        <div style="font-family:'Anton',sans-serif; font-size:28px; color:var(--orange); flex:0 0 auto; align-self:center;">→</div>
+
+        <!-- ③ Signage end product (system composites everything) -->
+        <div class="type-card" style="flex:1 1 220px; max-width:300px;">
+            <div style="font-family:'Anton',sans-serif; font-size:20px; color:var(--orange-strong); line-height:1;">③</div>
+            <div style="font-weight:800; font-size:15px; margin:5px 0 2px; color:var(--ink);" data-i18n="s1.t3">โฆษณาบนจอ</div>
+            <div data-i18n="s1.ressub" style="font-size:12px; color:#7d8694; margin-bottom:12px;">ระบบประกอบ รูป + Info + เติม UI ให้</div>
+            <div style="flex:1; display:flex; flex-direction:column; justify-content:center; width:100%;">
+            <div style="width:100%; max-width:150px; margin:0 auto; zoom:1.5;">
+                <div style="aspect-ratio:9/16; border:3px solid #0c111c; border-bottom:none; border-radius:7px 7px 0 0; position:relative; overflow:hidden; background:url('https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=420&q=72') center/cover;">
+                    <div style="position:absolute; inset:0; background:linear-gradient(0deg, rgba(5,6,8,0.92) 0%, rgba(5,6,8,0.35) 45%, transparent 70%);"></div>
+                    <div style="position:absolute; top:0; left:0; right:0; height:14px; background:#0e1d3a; display:flex; align-items:center; padding:0 6px; font-size:6px; color:#fff; font-weight:600;">18:42</div>
+                    <div style="position:absolute; top:19px; left:5px; padding:2px 5px; background:rgba(8,12,22,0.6); border:1px solid rgba(255,255,255,0.3); border-radius:3px; font-size:5px; font-weight:700; letter-spacing:0.12em; color:#fff;">☰ MENU</div>
+                    <div style="position:absolute; top:18px; right:6px; display:flex; align-items:center; gap:3px; color:#fff; text-shadow:0 1px 3px rgba(0,0,0,0.6);"><span style="width:11px;height:11px;border-radius:50%;background:#fff;color:#0e1d3a;display:flex;align-items:center;justify-content:center;font-family:'Anton',sans-serif;font-size:7px;">A</span><span style="font-size:5.5px;font-weight:800;text-transform:uppercase;">Aurora</span></div>
+                    <div style="position:absolute; left:7px; right:7px; bottom:33px; text-align:left; color:#fff; text-shadow:0 1px 4px rgba(0,0,0,0.5);">
+                        <span style="display:inline-block; padding:2px 6px; border:1px solid rgba(255,255,255,0.5); border-radius:20px; font-size:5.5px; font-weight:700; letter-spacing:0.1em;">FEATURED DINING</span>
+                        <div style="font-family:'Anton',sans-serif; font-size:17px; line-height:0.92; margin-top:4px;">AURORA<br>BISTRO</div>
+                        <div style="font-size:6.5px; margin-top:3px; color:rgba(255,255,255,0.88);">All-day brunch &amp; specialty coffee</div>
+                        <div style="font-size:6px; margin-top:3px; color:rgba(255,255,255,0.82); font-weight:600;">฿฿ · Floor 2 · ★ 4.8</div>
+                    </div>
+                    <div style="position:absolute; left:7px; bottom:13px;"><span style="display:inline-block; padding:3px 7px; background:rgba(8,12,22,0.62); border:1px solid rgba(255,255,255,0.45); border-radius:4px; font-size:5.5px; font-weight:700; letter-spacing:0.1em; color:#fff;">VIEW MENU →</span></div>
+                    <div style="position:absolute; bottom:0; left:0; right:0; height:8px; background:#0e1d3a;"></div>
+                </div>
+                <div style="height:26px; background:linear-gradient(180deg,#1b2740,#05080d); border-top:2px solid #36486a; border-radius:0 0 7px 7px;"></div>
+            </div>
+            <div data-i18n="s1.rescaption" style="margin-top:10px; font-size:10px; color:#9aa1ad; line-height:1.5;">ระบบเติมให้: ☰ เมนู · ปุ่ม CTA · แถบเวลา/บน-ล่าง</div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ===================== SECTION 2 — By type ===================== -->
+    <div class="divider">2 · Sample Content by Category</div>
+
+    <div class="matrix-scroll">
+    <div class="matrix">
+
+        <!-- ── column headers: categories ── -->
+        <div class="mx-corner"></div>
+        <div class="mx-colhead"><span class="mx-ic">🍽️</span><span class="mx-cat">Dining</span><span class="mx-sub">Restaurant · Bar · Café</span></div>
+        <div class="mx-colhead"><span class="mx-ic">✨</span><span class="mx-cat">Service</span><span class="mx-sub">Spa · Gym · Concierge</span></div>
+        <div class="mx-colhead"><span class="mx-ic">🎁</span><span class="mx-cat">Promotion</span><span class="mx-sub">Offer · Campaign · Event</span></div>
+        <div class="mx-colhead"><span class="mx-ic">🏠</span><span class="mx-cat">Property</span><span class="mx-sub">For Sale · For Rent</span></div>
+
+        <!-- ── row: on-screen preview ── -->
+        <div class="mx-rowhead" data-i18n="ai.screen">ตัวอย่างบนจอ</div>
+        <div class="mx-imgcell"><div class="mx-sign">
+            <div class="type-mock" style="background-image:url('https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=300&q=70');">
+                <div class="type-mock-logo"><span class="tml-mark round">A</span><span class="tml-name">Aurora</span></div>
+                <div class="type-mock-cap">
+                    <span class="type-mock-eyebrow">Featured Dining</span>
+                    <div class="type-mock-title">Aurora<br>Bistro</div>
+                    <div class="type-mock-sub">Brunch &amp; specialty coffee</div>
+                    <div class="type-mock-facts">฿฿ · Floor 2 · 08:00–22:00</div>
+                </div>
+            </div>
+            <div class="type-mock-base"></div>
+        </div></div>
+        <div class="mx-imgcell"><div class="mx-sign">
+            <div class="type-mock" style="background-image:url('https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=300&q=70');">
+                <div class="type-mock-logo"><span class="tml-mark round">S</span><span class="tml-name">Serene</span></div>
+                <div class="type-mock-cap">
+                    <span class="type-mock-eyebrow">Wellness</span>
+                    <div class="type-mock-title">Serene<br>Spa</div>
+                    <div class="type-mock-sub" data-i18n="val.serv.desc">Signature ritual 90 นาที</div>
+                    <div class="type-mock-facts">Floor 35 · 10:00–22:00</div>
+                </div>
+            </div>
+            <div class="type-mock-base"></div>
+        </div></div>
+        <div class="mx-imgcell"><div class="mx-sign">
+            <div class="type-mock" style="background-image:url('https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=300&q=70');">
+                <div class="type-mock-logo"><span class="tml-mark">M</span><span class="tml-name">Aqua Mart</span></div>
+                <div class="type-mock-cap">
+                    <span class="type-mock-eyebrow">Limited Offer</span>
+                    <div class="type-mock-title">Mid-Year<br>Sale</div>
+                    <div class="type-mock-sub" data-i18n="val.promo.desc">เฉพาะสมาชิก · สินค้าร่วมรายการ</div>
+                    <div class="type-mock-facts" data-i18n="val.promo.facts">20% OFF · ถึง 30 มิ.ย.</div>
+                </div>
+            </div>
+            <div class="type-mock-base"></div>
+        </div></div>
+        <div class="mx-imgcell"><div class="mx-sign">
+            <div class="type-mock" style="background-image:url('https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=300&q=70');">
+                <div class="type-mock-logo"><span class="tml-mark">R</span><span class="tml-name">The Residence</span></div>
+                <div class="type-mock-cap">
+                    <span class="type-mock-eyebrow">For Sale</span>
+                    <div class="type-mock-title">The<br>Residence</div>
+                    <div class="type-mock-sub" data-i18n="val.prop.desc">Penthouse 3 ห้องนอน · sky lounge</div>
+                    <div class="type-mock-facts">3 BR · 89 m² · ฿18.2M</div>
+                </div>
+            </div>
+            <div class="type-mock-base"></div>
+        </div></div>
+
+        <!-- ── row: Category tag ── -->
+        <div class="mx-rowhead" data-i18n="ai.cat">หมวด / แท็ก</div>
+        <div class="mx-cell">Featured Dining</div>
+        <div class="mx-cell">Wellness</div>
+        <div class="mx-cell">Limited Offer</div>
+        <div class="mx-cell">For Sale</div>
+
+        <!-- ── row: Name ── -->
+        <div class="mx-rowhead" data-i18n="ai.name">ชื่อผลิตภัณฑ์ / บริการ</div>
+        <div class="mx-cell">Aurora Bistro</div>
+        <div class="mx-cell">Serene Spa</div>
+        <div class="mx-cell">Mid-Year Sale</div>
+        <div class="mx-cell">The Residence</div>
+
+        <!-- ── row: Description ── -->
+        <div class="mx-rowhead" data-i18n="ai.desc">คำอธิบาย</div>
+        <div class="mx-cell">All-day brunch &amp; specialty coffee</div>
+        <div class="mx-cell" data-i18n="val.serv.desc">Signature ritual 90 นาที</div>
+        <div class="mx-cell" data-i18n="val.promo.desc">เฉพาะสมาชิก · สินค้าร่วมรายการ</div>
+        <div class="mx-cell" data-i18n="val.prop.desc">Penthouse 3 ห้องนอน · sky lounge</div>
+
+        <!-- ── row: Key info ── -->
+        <div class="mx-rowhead" data-i18n="ai.key">ข้อมูลสำคัญ</div>
+        <div class="mx-cell">฿฿ · Floor 2 · 08:00–22:00</div>
+        <div class="mx-cell">Floor 35 · 10:00–22:00</div>
+        <div class="mx-cell" data-i18n="val.promo.facts">20% OFF · ถึง 30 มิ.ย.</div>
+        <div class="mx-cell">3 BR · 89 m² · From ฿18.2M</div>
+
+    </div>
+    </div>
+
+    <!-- ===================== SECTION 3 — Do's & Don'ts ===================== -->
+    <div class="divider">3 · Do's & Don'ts</div>
+
+    <div class="ddx-scroll">
+    <div class="ddx">
+
+        <!-- header row -->
+        <div class="ddx-corner"></div>
+        <div class="ddx-head do"><span>✓</span><span data-i18n="dd.do">ควรทำ</span></div>
+        <div class="ddx-head dont"><span>✕</span><span data-i18n="dd.dont">ไม่แนะนำ</span></div>
+
+        <!-- รูป -->
+        <div class="ddx-rowhead" data-i18n="dd.r1">รูป</div>
+        <div class="ddx-cell do"><span data-i18n-html="do.1"><b>ส่งภาพถ่ายจริง ความละเอียดสูง</b> — ไม่ใช่ stock photo</span></div>
+        <div class="ddx-cell dont"><span data-i18n-html="dont.7"><b>ส่ง animation / GIF</b> — ส่งภาพนิ่งเท่านั้น ระบบทำ transition ให้</span></div>
+
+        <!-- ข้อความ / โลโก้ -->
+        <div class="ddx-rowhead" data-i18n="dd.r2">ข้อความ / โลโก้</div>
+        <div class="ddx-cell do"><span data-i18n-html="do.3"><b>ปล่อยรูปให้สะอาด</b> — ไม่ต้องใส่โลโก้/ข้อความ (ระบบใส่ให้)</span></div>
+        <div class="ddx-cell dont"><span data-i18n-html="dont.1"><b>ฝังตัวหนังสือลงในรูป</b> — กรอกเป็นช่องแทน ระบบ overlay ให้เอง</span></div>
+
+        <!-- ปุ่ม · QR · ติดต่อ -->
+        <div class="ddx-rowhead" data-i18n="dd.r3">ปุ่ม · QR · ติดต่อ</div>
+        <div class="ddx-cell do"><span data-i18n="dd.auto">ระบบสร้างปุ่ม + QR ให้จากข้อมูลติดต่อที่ให้กรอก</span></div>
+        <div class="ddx-cell dont"><span data-i18n-html="dont.3"><b>ฝัง QR / เบอร์โทร / website ลงในรูป</b> — ระบบสร้าง QR เมื่อกด CTA · ข้อมูลติดต่อใส่ใน popup data</span></div>
+
+        <!-- องค์ประกอบ -->
+        <div class="ddx-rowhead" data-i18n="dd.r4">องค์ประกอบ</div>
+        <div class="ddx-cell do"><span data-i18n-html="do.2"><b>เว้นพื้นที่ภาพให้โล่ง</b> — โดยเฉพาะครึ่งล่าง เผื่อระบบ overlay ข้อความแล้วยังอ่านง่าย</span></div>
+        <div class="ddx-cell dont"><span data-i18n-html="dont.6"><b>วางของสำคัญชิดขอบ / มุม</b> — overscan อาจตัด (subject สำคัญ)</span></div>
+
+        <!-- ตัวอักษร / ลิมิต -->
+        <div class="ddx-rowhead" data-i18n="dd.r5">ตัวอักษร / ลิมิต</div>
+        <div class="ddx-cell do"><span data-i18n-html="do.5"><b>กรอกข้อความสั้น กระชับ</b> — ตามจำนวนตัวอักษรที่กำหนด (ระบบจัด font + ขนาดให้เอง)</span></div>
+        <div class="ddx-cell dont"><span data-i18n-html="dont.5"><b>กรอกเกินลิมิตตัวอักษร</b> — Category Tag ≤ 24 · ชื่อ ≤ 12/บรรทัด · คำอธิบาย ~120 (ดูข้อ 1)</span></div>
+
+        <!-- ราคา -->
+        <div class="ddx-rowhead" data-i18n="dd.r6">ราคา</div>
+        <div class="ddx-cell do"><span data-i18n-html="do.6"><b>โชว์ราคา/ตัวเลขจริง</b> — "From ฿18.2M" ดีกว่า "Premium pricing"</span></div>
+        <div class="ddx-cell dont"><span data-i18n-html="dont.4"><b>ใช้ "Contact us" แทนราคา</b> — ลด trust + คนไม่กดต่อ</span></div>
+
+        <!-- ภาษา & เนื้อหา -->
+        <div class="ddx-rowhead" data-i18n="dd.r7">ภาษา &amp; เนื้อหา</div>
+        <div class="ddx-cell do"><span data-i18n-html="do.7"><b>อยากได้ 2 ภาษา → ทำเป็น 2 โฆษณา</b> — ภาษาละ 1 อัน (ไทยอัน · อังกฤษอัน) อ่านง่ายกว่าปนกัน</span></div>
+        <div class="ddx-cell dont"><span data-i18n="dd.langdont">ยัด 2 ภาษาในโฆษณาเดียว · ยัดหลายเรื่องในรูปเดียว</span></div>
+
+    </div>
+    </div>
+
+    <div style="text-align:center; margin-top:40px;">
+        <a href="/ad-preview/" data-i18n="xlink" style="display:inline-flex; align-items:center; gap:8px; font-family:'Nunito',sans-serif; font-weight:800; font-size:15px; color:var(--navy); border:1.5px solid var(--navy); border-radius:12px; padding:12px 24px;">🆚 ดูความแตกต่างระหว่างโฆษณาผลิตภัณฑ์กับโฆษณาร้านค้า →</a>
+    </div>
+
+</div>
+
+<!-- ============ FOOTER ============ -->
+<footer class="site-footer">
+    <div class="footer-inner">
+        <div class="copy">© 2026 aquamx · All rights reserved</div>
+        <div class="footer-links">
+            <a href="https://aquamx.biz" data-i18n="foot.home">หน้าหลัก</a>
+            <a href="https://aquamx.biz#contact" data-i18n="foot.contact">ติดต่อ</a>
+            <a href="https://aquamx.biz">aquamx.biz</a>
+        </div>
+    </div>
+</footer>
+
+<script>
+/* ===== TH / EN i18n toggle (mirrors ratecard-sme) ===== */
+const T = {
+  th: {
+    'nav.how': 'วิธีทำงาน',
+    'nav.network': 'เครือข่าย',
+    'nav.contact': 'ติดต่อ',
+    'nav.cta': 'ดูแพ็คเกจ',
+    'h1': `วิธีสร้าง <span class="accent">Poster Ad</span>`,
+    'foot.home': 'หน้าหลัก',
+    'foot.contact': 'ติดต่อ',
+    'xlink': `🆚 ดูความแตกต่างระหว่างโฆษณาผลิตภัณฑ์กับโฆษณาร้านค้า →`,
+    'lede': `เราเชื่อว่า<b>รูปที่ดีดึงดูดความสนใจได้ดีกว่าข้อมูลที่เยอะ</b> — จึงให้รูปนำสายตา แล้วให้ลูกค้ากดดูข้อมูลต่อที่หน้าเครื่อง`,
+    'anat.h2': '5 ส่วนที่ "คุณส่ง" มาให้',
+    's1.intro': `คุณส่งมาแค่ <b>2 อย่าง</b> — <b style="color:var(--orange-strong);">① รูป</b> กับ <b style="color:var(--orange-strong);">② ข้อมูล (Info)</b> · ที่เหลือ <b>ระบบประกอบขึ้นจอให้เอง</b> (③) — เมนู · ปุ่ม CTA · แถบเวลา คุณไม่ต้องทำ`,
+    's1.t1': `รูปโปสเตอร์โฆษณา`, 's1.t2': `ข้อมูลโฆษณา`, 's1.t3': `โฆษณาบนจอ`,
+    's1.imgsub': `รูป hero สะอาด · สัดส่วน 9:16 · ไม่ต้องใส่โลโก้/ข้อความ`,
+    's1.lbl.cat': `Category Tag<span style="text-transform:none; font-weight:400; letter-spacing:0;"> · ประเภท / แท็ก</span>`,
+    's1.lbl.name': `Product / Service Name<span style="text-transform:none; font-weight:400; letter-spacing:0;"> · ชื่อผลิตภัณฑ์ / บริการ</span>`,
+    's1.lbl.desc': `Description<span style="text-transform:none; font-weight:400; letter-spacing:0;"> · คำอธิบาย</span>`,
+    's1.lbl.key': `Key Info<span style="text-transform:none; font-weight:400; letter-spacing:0;"> · ข้อมูลสำคัญ</span>`,
+    's1.lbl.cta': `Choose CTA<span style="text-transform:none; font-weight:400; letter-spacing:0;"> · เลือกปุ่ม</span>`,
+    's1.lbl.link': `Destination Link<span style="text-transform:none; font-weight:400; letter-spacing:0;"> · ลิงก์ปลายทาง</span>`,
+    'ai.cat': `หมวด / แท็ก`, 'ai.name': `ชื่อผลิตภัณฑ์ / บริการ`, 'ai.desc': `คำอธิบาย`, 'ai.key': `ข้อมูลสำคัญ`, 'ai.cta': `ปุ่มคำสั่ง`, 'ai.link': `ลิงก์ปลายทาง`,
+    'ai.lim12': `≤ 12/บรรทัด`, 'ai.lim3': `≤ 3 ค่า`, 'ai.lim1': `เลือก 1`, 'ai.screen': `ตัวอย่างบนจอ`,
+    's1.ctanote': `⚙️ <b>ระบบวาดปุ่มให้เอง</b> (ตำแหน่ง + ดีไซน์ + ภาษา TH/EN)`,
+    's1.provnote': `🏪 <b>โลโก้ · ติดต่อ · เวลาเปิด</b> — ตั้งครั้งเดียวที่หน้า <b>ตั้งร้าน (Provider)</b> ที่ <b>aquamx.biz/provider</b> · ทุก Ad ดึงไปใช้เอง`,
+    's1.ressub': `ระบบประกอบ รูป + Info + เติม UI ให้`,
+    's1.rescaption': `ระบบเติมให้: ☰ เมนู · ปุ่ม CTA · แถบเวลา/บน-ล่าง`,
+    'anat.intro': `ลำดับตา: <b>1 → 2 → 3 → 4 → 5</b>
+      คนเดินผ่านอ่านจากบนลงล่าง — ใส่ของสำคัญสุดอยู่บน ·
+      <b>กรอกเป็นช่อง ระบบ overlay ให้ (ไม่ฝังในรูป)</b>`,
+    'anat.legend': `<b style="color:var(--orange-strong);">● ตัวเลข 1–5 = สิ่งที่คุณส่ง</b> — รูป + ข้อความในช่อง<br>
+      <b style="color:#9aa1ad;">● ☰ เมนู · ปุ่ม CTA · แถบเวลา · โลโก้ = ระบบใส่อัตโนมัติ</b> — <b>ไม่ต้องส่งมา</b> และห้ามใส่ในรูป (ในภาพตัวอย่างโชว์ไว้ให้เห็นว่าผลลัพธ์จริงหน้าตาเป็นยังไง)`,
+    'f1.name': 'ประเภท / โปรโมชั่น · Category Tag',
+    'f1.desc': `บอกประเภทใน 0.5 วินาที — เช่น "FOR SALE", "FEATURED DINING" · <b>TH / EN · ≤ 24 ตัว</b>`,
+    'f2.name': 'ชื่อผลิตภัณฑ์หรือบริการ · Product / Service Name',
+    'f2.desc': `ชื่อหลัก — โครงการ, ร้าน, บริการ · <b>TH / EN · 1–2 บรรทัด, บรรทัดละ ≤ 12 ตัว</b>`,
+    'f3.name': 'คำอธิบายผลิตภัณฑ์ · Product Description',
+    'f3.desc': `อธิบายสั้นๆ — จุดเด่น, โปรโมชั่น, โอกาสพิเศษ · <b>TH / EN · ≤ 2 บรรทัด (~120 ตัว)</b>`,
+    'f4.name': 'ข้อมูลที่สำคัญ · Key Information',
+    'f4.desc': `ราคา · ขนาด · ห้อง · เวลา · ส่วนลด · floor · <b>สูงสุด 3 ค่า — ตัวเลข ≤ 7 ตัว + label ≤ 10 ตัว</b>`,
+    'f5.desc': `ภาพคุณภาพสูง 9:16 · <b>พื้นที่เว้นว่าง ไม่มีตัวหนังสือ/โลโก้</b> (ระบบใส่ข้อความ + โลโก้ให้) — เลี่ยง stock photo`,
+    'ov.block': `<b style="color:var(--orange-strong); font-family:'Nunito',sans-serif; letter-spacing:0.02em;">+ ต้องส่งเพิ่มสำหรับโหมด overlay</b><br>
+      🏷️ <b>โลโก้แบรนด์</b> — อัปโหลดที่ Provider · ระบบวางมุมขวาบนให้ (ไม่ต้องใส่ในรูป)<br>
+      🔘 <b>CTA</b> — เลือก type (View Menu / Book / Order / Contact) + ใส่ลิงก์/deepLink<br>
+      🌐 <b>ไทย หรือ อังกฤษ ก็ได้</b> (ใช้ทั้งสองได้ แต่กรอกแยกภาษา) — จอมีปุ่มสลับภาษา`,
+    'val.prop.desc': 'Penthouse 3 ห้องนอน · sky lounge',
+    'val.serv.desc': 'Signature ritual 90 นาที',
+    'val.promo.desc': 'เฉพาะสมาชิก · สินค้าร่วมรายการ',
+    'val.promo.facts': '20% OFF · ถึง 30 มิ.ย.',
+    'do.1': `<b>ส่งภาพถ่ายจริง ความละเอียดสูง</b> — ไม่ใช่ stock photo`,
+    'do.2': `<b>เว้นพื้นที่ภาพให้โล่ง</b> — โดยเฉพาะครึ่งล่าง เผื่อระบบ overlay ข้อความแล้วยังอ่านง่าย`,
+    'do.3': `<b>ปล่อยรูปให้สะอาด</b> — ไม่ต้องใส่โลโก้/ข้อความ (ระบบใส่ให้)`,
+    'do.4': `<b>One main message</b> — 1 โปรเจกต์/โปรโมชั่น ต่อ poster`,
+    'do.5': `<b>กรอกข้อความสั้น กระชับ</b> — ตามจำนวนตัวอักษรที่กำหนด (ระบบจัด font + ขนาดให้เอง)`,
+    'do.6': `<b>โชว์ราคา/ตัวเลขจริง</b> — "From ฿18.2M" ดีกว่า "Premium pricing"`,
+    'do.7': `<b>อยากได้ 2 ภาษา → ทำเป็น 2 โฆษณา</b> — ภาษาละ 1 อัน (ไทยอัน · อังกฤษอัน) อ่านง่ายกว่าปนกัน`,
+    'dont.1': `<b>ฝังตัวหนังสือลงในรูป</b> — กรอกเป็นช่องแทน ระบบ overlay ให้เอง`,
+    'dont.2': `<b>ห้ามฝังปุ่ม / CTA ลงในรูป</b> — ระบบมีปุ่ม CTA ของตัวเอง (จะซ้ำ/ขัดแย้ง)`,
+    'dont.3': `<b>ฝัง QR / เบอร์โทร / website ลงในรูป</b> — ระบบสร้าง QR เมื่อกด CTA · ข้อมูลติดต่อใส่ใน popup data`,
+    'dont.4': `<b>ใช้ "Contact us" แทนราคา</b> — ลด trust + คนไม่กดต่อ`,
+    'dont.5': `<b>กรอกเกินลิมิตตัวอักษร</b> — Category Tag ≤ 24 · ชื่อ ≤ 12/บรรทัด · คำอธิบาย ~120 (ดูข้อ 1)`,
+    'dont.6': `<b>วางของสำคัญชิดขอบ / มุม</b> — overscan อาจตัด (subject สำคัญ)`,
+    'dont.7': `<b>ส่ง animation / GIF</b> — ส่งภาพนิ่งเท่านั้น ระบบทำ transition ให้`,
+    'dd.do': `ควรทำ`, 'dd.dont': `ไม่แนะนำ`,
+    'dd.r1': `รูป`, 'dd.r2': `ข้อความ / โลโก้`, 'dd.r3': `ปุ่ม · QR · ติดต่อ`, 'dd.r4': `องค์ประกอบ`, 'dd.r5': `ตัวอักษร / ลิมิต`, 'dd.r6': `ราคา`, 'dd.r7': `ภาษา & เนื้อหา`,
+    'dd.auto': `ระบบสร้างปุ่ม + QR ให้จากข้อมูลติดต่อที่ให้กรอก`,
+    'dd.langdont': `ยัด 2 ภาษาในโฆษณาเดียว · ยัดหลายเรื่องในรูปเดียว`,
+    'spec.intro': 'ลูกค้า/designer ส่งไฟล์ตาม spec นี้เพื่อให้ขึ้นจอได้สวยที่สุด',
+    'spec.format.sub': 'AVIF/WebP ดีที่สุด · ห้าม GIF',
+    'spec.img.val': 'เว้นว่าง',
+    'spec.img.sub': 'ไม่มีตัวหนังสือ — ระบบ overlay ข้อความให้',
+    'spec.logo.val': 'ระบบใส่ให้',
+    'spec.logo.sub': 'ระบบดึงโลโก้จาก Provider มาวางมุมขวาบนให้ · อย่าใส่ในรูป',
+    'spec.size.sub': 'ที่ 1080×1920 ภาพคมชัดอยู่แล้ว — ขนาดไฟล์แค่คุมความเร็วโหลด ไม่ใช่ความคม · WebP/AVIF ช่วยให้เล็กแต่คม',
+    'spec.color.val': 'สำหรับหน้าจอ',
+    'spec.color.sub': 'เซฟแบบ "สำหรับเว็บ/หน้าจอ" ไม่ใช่แบบงานพิมพ์ · รูปจากมือถือ/กล้องใช้ได้เลย (ดีไซเนอร์: sRGB)',
+    'spec.safe.val': 'ดูภาพตัวอย่างด้านบน',
+    'spec.safe.sub': 'เว้นแถบบน ~7% (นาฬิกา) + ล่าง ~4% (tagline) · มุมซ้ายบน (เมนู) และล่างซ้าย (ปุ่ม CTA) ให้โล่ง',
+    'spec.lang.sub': 'ไทย หรือ อังกฤษ · อยากได้ 2 ภาษา ทำเป็น 2 โฆษณา (ภาษาละอัน)',
+    'spec.z.top': 'เว้นบน ~7% — นาฬิกา / สถานะ',
+    'spec.z.bot': 'เว้นล่าง ~4% — tagline',
+    'spec.z.menu': '☰ เมนู',
+    'spec.z.cta': 'ปุ่ม CTA',
+    'spec.z.logo': 'โลโก้ · ระบบใส่ให้',
+    'spec.z.area': 'พื้นที่ภาพ',
+    'spec.z.cap': '9 : 16 · 1080 × 1920 px (ขั้นต่ำ) · 4K 2160 × 3840'
+  },
+  en: {
+    'nav.how': 'How it works',
+    'nav.network': 'Network',
+    'nav.contact': 'Contact',
+    'nav.cta': 'See Package',
+    'h1': `How to Build Your <span class="accent">Poster Ad</span>`,
+    'foot.home': 'Home',
+    'foot.contact': 'Contact',
+    'xlink': `🆚 Product ad vs shop ad — see the difference →`,
+    'lede': `We believe <b>a strong image draws attention better than lots of text</b> — so the image leads, and customers tap for the details on the screen`,
+    'anat.h2': 'The 5 parts YOU send',
+    's1.intro': `You send just <b>2 things</b> — <b style="color:var(--orange-strong);">① an image</b> and <b style="color:var(--orange-strong);">② your info</b> · the system builds the screen for you (③) — menu · CTA buttons · time bar are all automatic`,
+    's1.t1': `Your Ad Poster Image`, 's1.t2': `Your Ad Info`, 's1.t3': `Your Ad on Signage`,
+    's1.imgsub': `Clean hero image · 9:16 ratio · no logo/text`,
+    's1.lbl.cat': `Category Tag`,
+    's1.lbl.name': `Product / Service Name`,
+    's1.lbl.desc': `Description`,
+    's1.lbl.key': `Key Info`,
+    's1.lbl.cta': `Choose CTA`,
+    's1.lbl.link': `Destination Link`,
+    'ai.cat': `Category Tag`, 'ai.name': `Product / Service Name`, 'ai.desc': `Description`, 'ai.key': `Key Info`, 'ai.cta': `Call-to-action`, 'ai.link': `Destination Link`,
+    'ai.lim12': `≤ 12/line`, 'ai.lim3': `≤ 3 values`, 'ai.lim1': `pick 1`, 'ai.screen': `On screen`,
+    's1.ctanote': `⚙️ <b>The system draws the button</b> (position + design + TH/EN)`,
+    's1.provnote': `🏪 <b>Logo · contact · hours</b> — set once on the <b>Set up shop (Provider)</b> page at <b>aquamx.biz/provider</b> · every Ad reuses them`,
+    's1.ressub': `System assembles image + info + adds the UI`,
+    's1.rescaption': `System adds: ☰ menu · CTA buttons · time/top-bottom bars`,
+    'anat.intro': `Reading order: <b>1 → 2 → 3 → 4 → 5</b>
+      passers-by read top to bottom — put the most important thing first ·
+      <b>fill in fields and the system overlays them (not baked into the image)</b>`,
+    'anat.legend': `<b style="color:var(--orange-strong);">● Numbers 1–5 = what you send</b> — image + text fields<br>
+      <b style="color:#9aa1ad;">● ☰ menu · CTA buttons · time bars · logo = added automatically</b> — <b>don't send them</b>, and never bake them into the image (the mockup shows them only so you see what the live screen looks like)`,
+    'f1.name': 'Category / Promotion · Category Tag',
+    'f1.desc': `Signals the type in 0.5s — e.g. "FOR SALE", "FEATURED DINING" · <b>TH / EN · ≤ 24 chars</b>`,
+    'f2.name': 'Product or Service Name · Product / Service Name',
+    'f2.desc': `The main name — project, shop, service · <b>TH / EN · 1–2 lines, ≤ 12 chars each</b>`,
+    'f3.name': 'Product Description',
+    'f3.desc': `A short description — highlights, promotion, special occasion · <b>TH / EN · ≤ 2 lines (~120 chars)</b>`,
+    'f4.name': 'Key Information',
+    'f4.desc': `Price · size · rooms · hours · discount · floor · <b>up to 3 values — number ≤ 7 chars + label ≤ 10 chars</b>`,
+    'f5.desc': `High-quality 9:16 image · <b>keep it clear, no text/logo</b> (the system adds the copy + logo) — avoid stock photos`,
+    'ov.block': `<b style="color:var(--orange-strong); font-family:'Nunito',sans-serif; letter-spacing:0.02em;">+ Additional items required for overlay mode</b><br>
+      🏷️ <b>Brand logo</b> — uploaded in Provider · the system places it top-right (don't add it to the image)<br>
+      🔘 <b>CTA</b> — choose a type (View Menu / Book / Order / Contact) + add a link / deepLink<br>
+      🌐 <b>Thai or English</b> (use both if you like, kept separate) — the screen has a language toggle`,
+    'val.prop.desc': 'Penthouse · 3-bed · sky lounge',
+    'val.serv.desc': 'Signature ritual · 90 min',
+    'val.promo.desc': 'Members only · selected items',
+    'val.promo.facts': '20% OFF · until 30 Jun',
+    'do.1': `<b>Submit a real, high-res photo</b> — not stock`,
+    'do.2': `<b>Keep the image uncluttered</b> — especially the lower half, so the system's overlaid text stays readable`,
+    'do.3': `<b>Keep the image clean</b> — no logo/text (the system adds them)`,
+    'do.4': `<b>One main message</b> — 1 project / promotion per poster`,
+    'do.5': `<b>Keep field copy short</b> — within the character limits (the system sets the font + size for you)`,
+    'do.6': `<b>Show real prices / numbers</b> — "From ฿18.2M" beats "Premium pricing"`,
+    'do.7': `<b>Want 2 languages → make 2 ads</b> — one per language (one Thai, one English); easier to read than mixing`,
+    'dont.1': `<b>Bake text into the image</b> — fill in the fields instead; the system overlays them`,
+    'dont.2': `<b>Bake a button / CTA into the image</b> — the system has its own CTA (it would duplicate / clash)`,
+    'dont.3': `<b>Bake in QR / phone / website</b> — the system makes a QR on CTA tap · put contact info in the popup data`,
+    'dont.4': `<b>Use "Contact us" instead of a price</b> — it lowers trust and kills tap-through`,
+    'dont.5': `<b>Exceed the character limits</b> — Category Tag ≤ 24 · Name ≤ 12/line · Description ~120 (see §1)`,
+    'dont.6': `<b>Place key content at the edges / corners</b> — overscan may crop it (the key subject)`,
+    'dont.7': `<b>Submit animation / GIF</b> — static images only; the system handles transitions`,
+    'dd.do': `Recommended`, 'dd.dont': `Not recommended`,
+    'dd.r1': `Image`, 'dd.r2': `Text / logo`, 'dd.r3': `Button · QR · contact`, 'dd.r4': `Layout`, 'dd.r5': `Text limits`, 'dd.r6': `Price`, 'dd.r7': `Language & focus`,
+    'dd.auto': `The system builds the button + QR from the contact info you fill in`,
+    'dd.langdont': `Two languages in one ad · cramming many messages`,
+    'spec.intro': 'Clients / designers export files to this spec for the best on-screen result',
+    'spec.format.sub': 'AVIF/WebP is best · no GIF',
+    'spec.img.val': 'Leave clear',
+    'spec.img.sub': 'No text — the system overlays the copy',
+    'spec.logo.val': 'Auto-added',
+    'spec.logo.sub': 'System overlays your Provider logo (top-right) — do not bake it into the image',
+    'spec.size.sub': 'At 1080×1920 it\'s already sharp — file size only affects load speed, not sharpness · WebP/AVIF keeps it small and crisp',
+    'spec.color.val': 'For screen',
+    'spec.color.sub': 'Save "for web/screen", not for print · phone/camera photos work as-is (designers: sRGB)',
+    'spec.safe.val': 'See the example above',
+    'spec.safe.sub': 'Keep the top ~7% (clock) + bottom ~4% (tagline) clear · also leave the top-left (menu) and lower-left (CTA) open',
+    'spec.lang.sub': 'Thai or English · want both? make 2 ads (one per language)',
+    'spec.z.top': 'Keep top ~7% — clock / status',
+    'spec.z.bot': 'Keep bottom ~4% — tagline',
+    'spec.z.menu': '☰ Menu',
+    'spec.z.cta': 'CTA button',
+    'spec.z.logo': 'Logo · auto-added',
+    'spec.z.area': 'Image area',
+    'spec.z.cap': '9 : 16 · 1080 × 1920 px (min) · 4K 2160 × 3840'
+  }
+};
+
+function applyLang(lang){
+  const dict = T[lang] || T.th;
+  document.querySelectorAll('[data-i18n]').forEach(el=>{
+    const k = el.getAttribute('data-i18n');
+    if(dict[k] != null) el.textContent = dict[k];
+  });
+  document.querySelectorAll('[data-i18n-html]').forEach(el=>{
+    const k = el.getAttribute('data-i18n-html');
+    if(dict[k] != null) el.innerHTML = dict[k];
+  });
+  document.documentElement.lang = lang;
+  const btn = document.getElementById('langToggle');
+  if(btn) btn.textContent = (lang === 'th') ? 'EN' : 'ไทย';
+  try { localStorage.setItem('aqLang', lang); } catch(e){}
+}
+
+(function(){
+  let lang = 'th';
+  try { lang = localStorage.getItem('aqLang') || 'th'; } catch(e){}
+  applyLang(lang);
+  const btn = document.getElementById('langToggle');
+  if(btn) btn.addEventListener('click', function(){
+    const cur = (document.documentElement.lang === 'en') ? 'en' : 'th';
+    applyLang(cur === 'th' ? 'en' : 'th');
+  });
+  const t = document.getElementById('navToggle'), links = document.querySelector('.nav-links');
+  if(t && links){
+    t.addEventListener('click', function(){
+      const open = t.classList.toggle('open');
+      links.classList.toggle('open', open);
+      t.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+    links.querySelectorAll('a').forEach(function(a){ a.addEventListener('click', function(){
+      links.classList.remove('open'); t.classList.remove('open'); t.setAttribute('aria-expanded','false');
+    }); });
+  }
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "magic": {
+      "command": "cmd",
+      "args": ["/c", "C:\\Users\\Lenovo\\OneDrive - MBK Group\\Documents\\Visual\\vertical-signage\\magic-mcp.cmd"]
+    }
+  }
+}

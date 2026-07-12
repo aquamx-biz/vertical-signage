@@ -1,0 +1,147 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-06-28T00:00:00.000Z",
+  "title": "Design System: AquaMX Vertical Signage",
+  "extensions": {
+    "colorMeta": {
+      "navy": { "role": "primary", "displayName": "Marquee Navy", "canonical": "#0E3361", "tonalRamp": ["#040b18", "#072147", "#0a2a55", "#0E3361", "#1c4a82", "#3a679d", "#6b8fbb", "#aec5dd"] },
+      "navy-deep": { "role": "primary", "displayName": "Navy Deep", "canonical": "#072147", "tonalRamp": ["#03101f", "#051a38", "#072147", "#0a2a59", "#10396f", "#2a5285", "#5c7da5", "#9db6cf"] },
+      "bronze": { "role": "secondary", "displayName": "Bronze", "canonical": "#C9864C", "tonalRamp": ["#3a2611", "#5c3d1d", "#80552a", "#A36738", "#C9864C", "#d8a273", "#e7c2a0", "#f4e1cd"] },
+      "bronze-strong": { "role": "secondary", "displayName": "Bronze Strong", "canonical": "#A36738", "tonalRamp": ["#2e1c0e", "#4a2f17", "#6b4422", "#8a572c", "#A36738", "#c0895a", "#d8b491", "#efdcc8"] },
+      "bronze-soft": { "role": "secondary", "displayName": "Bronze Soft", "canonical": "#F6E5D0", "tonalRamp": ["#6b4d2f", "#8f6a45", "#b58e66", "#d4b48f", "#e7cfb1", "#F6E5D0", "#fbf1e4", "#fefaf4"] },
+      "ink": { "role": "neutral", "displayName": "Ink", "canonical": "#0B1B33", "tonalRamp": ["#05101f", "#0B1B33", "#15294a", "#243d63", "#3f567c", "#65799a", "#97a6bd", "#cdd5e0"] },
+      "muted": { "role": "neutral", "displayName": "Muted", "canonical": "#5C6B82", "tonalRamp": ["#222b38", "#37414f", "#4a5666", "#5C6B82", "#7c8aa0", "#9da9ba", "#c2cad5", "#e4e8ee"] },
+      "ink-40": { "role": "neutral", "displayName": "Ink-40", "canonical": "#8B98AE", "tonalRamp": ["#3a4250", "#515b6c", "#6a7588", "#8B98AE", "#a6b1c2", "#c1c9d5", "#dde2e9", "#f1f3f7"] },
+      "line": { "role": "neutral", "displayName": "Line", "canonical": "#E6E9F1", "tonalRamp": ["#9aa1b3", "#b3b9c8", "#cdd2dd", "#E6E9F1", "#eef0f6", "#f4f6fa", "#f9fafc", "#ffffff"] },
+      "cream": { "role": "neutral", "displayName": "Cream (cool)", "canonical": "#F4F6FA", "tonalRamp": ["#aeb4c2", "#c4cad6", "#dde1ea", "#E6E9F1", "#eef1f6", "#F4F6FA", "#fafbfd", "#ffffff"] },
+      "success": { "role": "tertiary", "displayName": "Success Green", "canonical": "#2E9E5B", "tonalRamp": ["#0e3d23", "#155a33", "#1d7c46", "#2E9E5B", "#4cb978", "#7fce9d", "#b3e3c5", "#e0f4e9"] },
+      "danger": { "role": "tertiary", "displayName": "Alert Red", "canonical": "#B23B2E", "tonalRamp": ["#451310", "#661c16", "#8a271f", "#B23B2E", "#cf5c50", "#e08a81", "#eeb8b2", "#f8e1de"] },
+      "stage-deep": { "role": "neutral", "displayName": "Stage Deep", "canonical": "#050608", "tonalRamp": ["#050608", "#0A0C10", "#14171d", "#22272f", "#3a414c", "#5d6573", "#8c93a0", "#c3c7cf"] },
+      "marquee-cyan": { "role": "tertiary", "displayName": "Marquee Cyan", "canonical": "#6DD5E8", "tonalRamp": ["#0e3a42", "#15555f", "#1d7280", "#2f97a8", "#48b8cb", "#6DD5E8", "#a3e6f1", "#d6f5fa"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display (Anton)", "purpose": "Big numbers and statement headlines only — one per view." },
+      "headline": { "displayName": "Headline (Prompt 800)", "purpose": "Page and section titles." },
+      "title": { "displayName": "Title (Prompt 800)", "purpose": "Card titles, form section heads." },
+      "body": { "displayName": "Body (Prompt)", "purpose": "Paragraphs and form copy, 65–75ch measure." },
+      "label": { "displayName": "Label (JetBrains Mono)", "purpose": "Occasional kickers, metadata, system tags." }
+    },
+    "shadows": [
+      { "name": "card-lift", "value": "0 1px 2px rgba(16,24,40,0.04), 0 14px 36px -14px rgba(16,24,40,0.12)", "purpose": "Signature soft far-cast lift under form cards and key panels (light theme)." },
+      { "name": "focus-glow", "value": "0 0 0 3px rgba(201,134,76,0.15)", "purpose": "Bronze focus ring on interactive elements — the lit-bulb moment." }
+    ],
+    "motion": [
+      { "name": "ease-out", "value": "cubic-bezier(0.22, 1, 0.36, 1)", "purpose": "Default exponential ease-out for reveals and state transitions." },
+      { "name": "ease-spring", "value": "cubic-bezier(0.34, 1.56, 0.64, 1)", "purpose": "Gentle overshoot for tactile press/pop accents only." },
+      { "name": "press", "value": "transform: scale(0.98)", "purpose": "Tactile active state on primary buttons." }
+    ],
+    "breakpoints": [
+      { "name": "mobile", "value": "640px" },
+      { "name": "tablet", "value": "960px" },
+      { "name": "desktop", "value": "1200px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Solid navy primary action — confident and tactile, with a satisfying press.",
+      "html": "<button class=\"ds-btn-primary\">ส่งฟอร์ม · Submit</button>",
+      "css": ".ds-btn-primary { background: #0E3361; color: #fff; border: none; border-radius: 12px; padding: 15px 32px; font-family: 'Prompt','IBM Plex Sans Thai',sans-serif; font-weight: 800; font-size: 16px; cursor: pointer; transition: background .15s, transform .1s; } .ds-btn-primary:hover { background: #072147; } .ds-btn-primary:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(201,134,76,0.35); } .ds-btn-primary:active { transform: scale(0.98); }"
+    },
+    {
+      "name": "Toggle Tab",
+      "kind": "button",
+      "refersTo": "button-toggle",
+      "description": "Segmented CTA-type picker; selected tab fills navy.",
+      "html": "<div class=\"ds-tabs\"><button class=\"ds-tab on\">เมนู Menu</button><button class=\"ds-tab\">สั่งซื้อ Order</button><button class=\"ds-tab\">จอง Book</button></div>",
+      "css": ".ds-tabs { display:flex; gap:8px; } .ds-tab { flex:1; background:#fff; border:1.5px solid #E6E9F1; border-radius:12px; padding:11px 12px; font-family:'Prompt','IBM Plex Sans Thai',sans-serif; font-weight:800; font-size:13.5px; color:#5C6B82; cursor:pointer; transition:all .15s; } .ds-tab:hover { border-color:#C9864C; } .ds-tab.on { background:#0E3361; color:#fff; border-color:#0E3361; }"
+    },
+    {
+      "name": "Floating-Label Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Floating-label field with a warm bronze focus glow.",
+      "html": "<label class=\"ds-ff\"><input class=\"ds-input\" placeholder=\" \" /><span class=\"ds-fl\">ชื่อร้าน · Shop name</span></label>",
+      "css": ".ds-ff { position:relative; display:block; } .ds-input { width:100%; border:1.5px solid #E6E9F1; background:#fff; border-radius:12px; padding:22px 15px 7px; font-family:'Prompt','IBM Plex Sans Thai',sans-serif; font-size:15px; color:#0B1B33; transition:border-color .15s, box-shadow .15s; } .ds-fl { position:absolute; left:15px; top:15px; color:#8B98AE; font-size:14px; pointer-events:none; transition:all .15s; } .ds-input:focus { outline:none; border-color:#C9864C; box-shadow:0 0 0 3px rgba(201,134,76,0.15); } .ds-input:focus + .ds-fl, .ds-input:not(:placeholder-shown) + .ds-fl { top:7px; font-size:10.5px; font-weight:700; color:#A36738; }"
+    },
+    {
+      "name": "Badge",
+      "kind": "chip",
+      "refersTo": "badge",
+      "description": "Soft-bronze featured tag — a sanctioned larger use of the accent.",
+      "html": "<span class=\"ds-badge\">แนะนำ Featured</span>",
+      "css": ".ds-badge { display:inline-block; background:#F6E5D0; color:#A36738; border:1px solid #C9864C; border-radius:8px; padding:2px 10px; font-family:'Prompt','IBM Plex Sans Thai',sans-serif; font-weight:800; font-size:13px; }"
+    },
+    {
+      "name": "Chip",
+      "kind": "chip",
+      "refersTo": "chip",
+      "description": "Compact quiet tag for categories.",
+      "html": "<span class=\"ds-chip\">อาหาร Dining</span>",
+      "css": ".ds-chip { display:inline-block; background:#fff; color:#5C6B82; border:1px solid #E6E9F1; border-radius:8px; padding:5px 10px; font-family:'Prompt','IBM Plex Sans Thai',sans-serif; font-size:12px; }"
+    },
+    {
+      "name": "Form Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Primary white card with the signature soft far-cast lift.",
+      "html": "<div class=\"ds-card\"><h3 class=\"ds-card-title\">รายละเอียดร้าน</h3><p class=\"ds-card-body\">Add your shop details and we'll feature your offer on the lobby screen.</p></div>",
+      "css": ".ds-card { background:#fff; border:1px solid #EEF1F6; border-radius:22px; padding:34px 32px; box-shadow:0 1px 2px rgba(16,24,40,0.04), 0 14px 36px -14px rgba(16,24,40,0.12); } .ds-card-title { font-family:'Prompt','IBM Plex Sans Thai',sans-serif; font-weight:800; font-size:17px; color:#0B1B33; margin:0 0 8px; } .ds-card-body { font-family:'Prompt','IBM Plex Sans Thai',sans-serif; font-size:15px; line-height:1.6; color:#5C6B82; margin:0; }"
+    },
+    {
+      "name": "Brand Wordmark",
+      "kind": "nav",
+      "refersTo": "navigation",
+      "description": "AquaMX wordmark — navy with the bronze X.",
+      "html": "<a class=\"ds-brand\">Aqua<span class=\"x\">M</span>X</a>",
+      "css": ".ds-brand { font-family:'Prompt',sans-serif; font-weight:800; font-size:26px; color:#0E3361; letter-spacing:-0.02em; text-decoration:none; } .ds-brand .x { color:#C9864C; }"
+    },
+    {
+      "name": "Kiosk Stage CTA",
+      "kind": "custom",
+      "refersTo": "button-primary",
+      "description": "Dark-theme CTA for the 9:16 player — glassy outline on near-black, distance-legible.",
+      "html": "<div class=\"ds-stage\"><span class=\"ds-stage-dot\"></span><button class=\"ds-stage-cta\">สำรวจเมนู · Explore Menu</button></div>",
+      "css": ".ds-stage { background:#050608; padding:40px; border-radius:14px; display:flex; flex-direction:column; align-items:center; gap:20px; } .ds-stage-dot { width:10px; height:10px; border-radius:50%; background:#6DD5E8; box-shadow:0 0 12px #6DD5E8; } .ds-stage-cta { background:rgba(8,12,22,0.55); color:#fff; border:1.5px solid rgba(255,255,255,0.32); border-radius:12px; padding:18px 40px; font-family:'Prompt','IBM Plex Sans Thai',sans-serif; font-weight:700; font-size:20px; cursor:pointer; transition:border-color .2s; } .ds-stage-cta:hover { border-color:rgba(255,255,255,0.6); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Brass Marquee",
+    "overview": "AquaMX is a modern theatre marquee for the building lobby. Bronze lights the way against deep navy; the screen is confident and attention-catching, with the showmanship of a marquee that makes you stop and look — and the discipline of one that never blinks at you. Energy comes from light, motion, and a single warm accent, not from clutter. The screen is the pitch: a lobby that looks this good is the live demo that wins advertisers. The system runs in two registers of one identity — a light web theme (cool off-white, navy ink, bronze accent) for the sell and the forms, and a dark stage theme (near-black, white ink ramp, navy panels, one cyan indicator) for the 9:16 kiosk. One brand under two lights. It is bilingual to the core and explicitly rejects the generic SaaS template and the cluttered ad-board. Brass, not neon. Marquee, not billboard.",
+    "keyCharacteristics": [
+      "Brass-on-navy: deep navy structure, one warm bronze accent that earns attention.",
+      "Two lights, one identity: a light web theme and a dark kiosk-stage theme sharing the same palette logic.",
+      "Energetic but disciplined — liveliness from motion and contrast, calm from generous space.",
+      "Bilingual Thai/English parity, always (Prompt + IBM Plex Sans Thai).",
+      "Confident, tactile components: solid navy actions, a warm bronze focus glow, a satisfying press."
+    ],
+    "rules": [
+      { "name": "The One Bulb Rule", "body": "Bronze is the single light on the marquee. It covers ≤10% of any screen — focus glow, one dot, one emphasized word. Navy carries weight; bronze earns attention.", "section": "colors" },
+      { "name": "The Two Lights Rule", "body": "A surface is either light-theme or stage-theme, never a muddy middle. Marquee Cyan is stage-only; Cream is light-only. Do not import one theme's signature color into the other.", "section": "colors" },
+      { "name": "The Bilingual Parity Rule", "body": "Every font stack ends in 'IBM Plex Sans Thai' before any generic fallback. A stack with no Thai family is forbidden — Thai silently renders in the wrong font.", "section": "typography" },
+      { "name": "The Earned Kicker Rule", "body": "Anton is for the one thing that matters on a view; a mono label kicker is occasional and deliberate, never an automatic eyebrow above every heading.", "section": "typography" },
+      { "name": "The Flat-Stage Rule", "body": "The kiosk stage uses no drop shadows. Depth is tonal — Stage Deep behind, Stage Mid panels, white-alpha ink steps. A shadow on near-black reads as dirt.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do keep bronze to ≤10% of any surface — focus glow, one dot, one emphasized word.",
+      "Do end every font stack with 'IBM Plex Sans Thai' before a generic fallback.",
+      "Do use the bronze focus glow (0 0 0 3px rgba(201,134,76,0.15)) on interactive focus.",
+      "Do size kiosk type for across-the-room legibility — large, high-contrast, never Ink-40.",
+      "Do keep light surfaces and the dark stage cleanly separated; cyan is stage-only, cream is light-only.",
+      "Do give body text Muted (#5C6B82) or Ink — the AA floor — and reserve Ink-40 for disabled/metadata.",
+      "Do honor prefers-reduced-motion with a crossfade or instant fallback."
+    ],
+    "donts": [
+      "Don't ship the generic SaaS-template look — stock gradients, identical icon-heading-text card grids, a hero-metric template.",
+      "Don't build the cluttered ad-board / mall-directory — crammed, competing, blinking promos.",
+      "Don't let 'modern & energetic' collapse into bright-gradient startup; energy is motion + brass-on-navy, not saturation.",
+      "Don't put a mono/uppercase eyebrow or numbered marker (01 / 02 / 03) above every section.",
+      "Don't use border-left/border-right greater than 1px as a colored accent stripe.",
+      "Don't use background-clip:text gradient text anywhere.",
+      "Don't drift the type: no Montserrat, no Nunito, no lone Inter replacing Prompt/Anton.",
+      "Don't add drop shadows on the dark kiosk stage — depth is tonal there."
+    ]
+  }
+}

@@ -72,6 +72,11 @@
       ],
       "fallbackSubcategoryId": "most_recent"
     },
+    { "id": "healthBeauty",  "label": { "en": "Health & Beauty",  "th": "สุขภาพ & ความงาม" },    "ctaItem": { "en": "View",       "th": "ดูเพิ่มเติม" }, "subcategories": [ { "id": "recommended", "label": { "en": "Recommended", "th": "แนะนำ" }, "order": 1 } ], "fallbackSubcategoryId": "recommended" },
+    { "id": "leisureTravel", "label": { "en": "Leisure & Travel", "th": "ท่องเที่ยว & พักผ่อน" }, "ctaItem": { "en": "View",       "th": "ดูเพิ่มเติม" }, "subcategories": [ { "id": "recommended", "label": { "en": "Recommended", "th": "แนะนำ" }, "order": 1 } ], "fallbackSubcategoryId": "recommended" },
+    { "id": "shopping",      "label": { "en": "Shopping",         "th": "ช้อปปิ้ง" },            "ctaItem": { "en": "View Items", "th": "ดูสินค้า" },    "subcategories": [ { "id": "recommended", "label": { "en": "Recommended", "th": "แนะนำ" }, "order": 1 } ], "fallbackSubcategoryId": "recommended" },
+    { "id": "education",     "label": { "en": "Education",        "th": "การศึกษา" },            "ctaItem": { "en": "View",       "th": "ดูเพิ่มเติม" }, "subcategories": [ { "id": "recommended", "label": { "en": "Recommended", "th": "แนะนำ" }, "order": 1 } ], "fallbackSubcategoryId": "recommended" },
+    { "id": "events",        "label": { "en": "Events",           "th": "อีเวนต์" },             "ctaItem": { "en": "View",       "th": "ดูเพิ่มเติม" }, "subcategories": [ { "id": "recommended", "label": { "en": "Recommended", "th": "แนะนำ" }, "order": 1 } ], "fallbackSubcategoryId": "recommended" },
     {
       "id": "updates",
       "label": { "en": "Building Updates", "th": "ประกาศอาคาร" },

@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Signage Player — Mockup v2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   RESET + TOKENS
+============================================================ */
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+html, body { width:100%; height:100%; overflow:hidden; }
+
+:root {
+    --bg-deep: #050608;
+    --bg-stage: #0a0c10;
+    --ink-100: #ffffff;
+    --ink-80:  rgba(255,255,255,0.82);
+    --ink-60:  rgba(255,255,255,0.58);
+    --ink-40:  rgba(255,255,255,0.38);
+    --ink-20:  rgba(255,255,255,0.18);
+    --accent:       #E08B3A;   /* warm copper */
+    --accent-soft:  rgba(224,139,58,0.18);
+    --accent-line:  rgba(224,139,58,0.45);
+    --glass-bg:     rgba(255,255,255,0.06);
+    --glass-stroke: rgba(255,255,255,0.12);
+
+    --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+    --ease-in:  cubic-bezier(0.55, 0, 0.78, 0.32);
+    --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+    --t-fast: 0.35s;
+    --t-med:  0.7s;
+    --t-slow: 1.1s;
+}
+
+body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--bg-deep);
+    color: var(--ink-100);
+    display: flex; align-items: center; justify-content: center;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+}
+
+/* ============================================================
+   9:16 CONTAINER
+============================================================ */
+.signage {
+    position: relative;
+    width: 100%; height: 100%;
+    max-width: 56.25vh; max-height: 177.78vw;
+    background: var(--bg-deep);
+    overflow: hidden;
+    display: grid;
+    grid-template-rows: 7vh 1fr 4vh;
+}
+@media (aspect-ratio > 9/16) { .signage { width: 56.25vh; height: 100vh; } }
+@media (aspect-ratio < 9/16) { .signage { width: 100vw; height: 177.78vw; } }
+
+/* ============================================================
+   TOP BAR — slim, clean, no brand wordmark
+============================================================ */
+.topbar {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    padding: 0 3vh;
+    background: linear-gradient(180deg, rgba(5,6,8,0.95) 0%, rgba(5,6,8,0) 100%);
+    z-index: 50;
+    gap: 2vh;
+}
+.topbar-time {
+    font-family: 'Inter', monospace;
+    font-size: 1.95vh;
+    font-weight: 600;
+    color: var(--ink-100);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.1vh;
+    justify-self: start;
+}
+.topbar-dot {
+    width: 0.45vh; height: 0.45vh; border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 0.8vh var(--accent);
+    animation: pulse-dot 2s ease-in-out infinite;
+}
+@keyframes pulse-dot {
+    0%,100% { opacity: 1; transform: scale(1); }
+    50%     { opacity: 0.4; transform: scale(0.7); }
+}
+.topbar-weather {
+    display: flex; align-items: center; gap: 0.8vh;
+    justify-self: end;
+    font-size: 1.55vh;
+    color: var(--ink-60);
+    font-weight: 500;
+}
+.topbar-weather .icon { font-size: 2.2vh; line-height: 1; }
+.topbar-weather .temp {
+    color: var(--ink-100); font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+/* ============================================================
+   MEDIA STAGE — 3D scene
+============================================================ */
+.stage {
+    position: relative;
+    perspective: 2200px;
+    perspective-origin: 50% 50%;
+    transform-style: preserve-3d;
+    background: var(--bg-stage);
+    overflow: hidden;
+}
+
+.slot {
+    position: absolute;
+    inset: 0;
+    transform-style: preserve-3d;
+    backface-visibility: hidden;
+    will-change: transform, opacity;
+    opacity: 0;
+    pointer-events: none;
+}
+.slot.active {
+    opacity: 1;
+    pointer-events: auto;
+    z-index: 2;
+}
+.slot.leaving { z-index: 1; }
+
+/* Slot media (image) — fills slot, Ken Burns motion when active */
+.slot-media {
+    position: absolute; inset: 0;
+    background-size: cover;
+    background-position: center;
+    background-color: #0a0c10;
+    transform-origin: center;
+}
+.slot.active .slot-media {
+    animation: ken-burns 14s ease-out forwards;
+}
+@keyframes ken-burns {
+    0%   { transform: scale(1.02) translate(0, 0); }
+    100% { transform: scale(1.14) translate(-2.5%, 2%); }
+}
+
+/* Overlays inside slot */
+.slot-grad-top {
+    position: absolute; inset: 0 0 auto 0; height: 28%;
+    background: linear-gradient(180deg, rgba(5,6,8,0.85) 0%, transparent 100%);
+    pointer-events: none;
+}
+.slot-grad-bot {
+    position: absolute; inset: auto 0 0 0; height: 58%;
+    background: linear-gradient(0deg, rgba(5,6,8,0.92) 0%, rgba(5,6,8,0.4) 55%, transparent 100%);
+    pointer-events: none;
+}
+
+/* ============================================================
+   SLOT CONTENT — eyebrow / title / sub
+============================================================ */
+.slot-content {
+    position: absolute;
+    left: 3.5vh; right: 3.5vh;
+    bottom: 16vh;
+    display: flex; flex-direction: column;
+    gap: 1.2vh;
+    z-index: 5;
+}
+.slot-eyebrow {
+    display: inline-flex; align-items: center; gap: 0.8vh;
+    width: fit-content;
+    font-size: 1.25vh; font-weight: 600;
+    letter-spacing: 0.35vh; text-transform: uppercase;
+    color: var(--accent);
+    opacity: 0; transform: translateY(1.2vh);
+    transition: opacity 0.6s var(--ease-out) 0.4s, transform 0.6s var(--ease-out) 0.4s;
+}
+.slot-eyebrow::before {
+    content: ''; width: 2.5vh; height: 0.15vh;
+    background: var(--accent);
+}
+.slot-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 5.4vh; font-weight: 600;
+    line-height: 1.05; letter-spacing: -0.1vh;
+    color: var(--ink-100);
+    opacity: 0; transform: translateY(2vh);
+    transition: opacity 0.7s var(--ease-out) 0.55s, transform 0.7s var(--ease-out) 0.55s;
+    text-shadow: 0 0.3vh 1.5vh rgba(0,0,0,0.5);
+}
+.slot-sub {
+    font-size: 1.7vh; font-weight: 400;
+    line-height: 1.45; color: var(--ink-80);
+    max-width: 42vh;
+    opacity: 0; transform: translateY(1.5vh);
+    transition: opacity 0.6s var(--ease-out) 0.75s, transform 0.6s var(--ease-out) 0.75s;
+    text-shadow: 0 0.15vh 0.8vh rgba(0,0,0,0.5);
+}
+.slot.active .slot-eyebrow,
+.slot.active .slot-title,
+.slot.active .slot-sub {
+    opacity: 1; transform: translateY(0);
+}
+
+/* ============================================================
+   CTA DOCK — overlay bottom of media, glass chips
+============================================================ */
+.cta-dock {
+    position: absolute;
+    left: 3.5vh; right: 3.5vh;
+    bottom: 3.5vh;
+    display: flex; flex-direction: column;
+    gap: 1vh;
+    z-index: 6;
+}
+.cta {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1.9vh 2.4vh;
+    font-family: 'Inter', sans-serif;
+    border-radius: 1.6vh;
+    cursor: pointer;
+    touch-action: manipulation; user-select: none;
+    backdrop-filter: blur(20px) saturate(140%);
+    -webkit-backdrop-filter: blur(20px) saturate(140%);
+    opacity: 0;
+    transform: translateY(3vh);
+    transition: opacity 0.55s var(--ease-out),
+                transform 0.55s var(--ease-spring),
+                background 0.18s ease;
+}
+.cta-primary {
+    background: linear-gradient(135deg, #E08B3A 0%, #C4682D 100%);
+    color: #fff;
+    border: 0.15vh solid rgba(255,255,255,0.18);
+    font-size: 2.1vh; font-weight: 700;
+    letter-spacing: 0.05vh;
+    box-shadow: 0 1.2vh 3.5vh rgba(196,104,45,0.35),
+                0 0 0 0.15vh rgba(224,139,58,0.4) inset;
+}
+.cta-primary:active { transform: translateY(0) scale(0.98); filter: brightness(1.05); }
+.cta-secondary {
+    background: var(--glass-bg);
+    color: var(--ink-100);
+    border: 0.15vh solid var(--glass-stroke);
+    font-size: 1.65vh; font-weight: 500;
+}
+.cta-secondary:active { background: rgba(255,255,255,0.14); }
+
+.cta .arrow {
+    font-size: 2.2vh; opacity: 0.9;
+    transition: transform 0.3s var(--ease-out);
+}
+.cta-secondary .arrow { font-size: 1.6vh; color: var(--ink-60); }
+.cta:hover .arrow,
+.cta:active .arrow { transform: translateX(0.4vh); }
+
+/* CTA enter — staggered */
+.slot.active .cta-primary {
+    opacity: 1; transform: translateY(0);
+    transition-delay: 1.0s, 1.0s, 0s;
+}
+.slot.active .cta-secondary {
+    opacity: 1; transform: translateY(0);
+    transition-delay: 1.18s, 1.18s, 0s;
+}
+
+/* CTA exit — preempt media transition */
+.slot.exiting .cta {
+    opacity: 0;
+    transform: translateY(3vh);
+    transition-delay: 0s !important;
+    transition-duration: 0.35s, 0.35s, 0s;
+}
+
+/* ============================================================
+   TRANSITION VARIANTS — randomized per advance
+============================================================ */
+/* Default: simple fade */
+.slot {
+    transition: opacity 0.7s var(--ease-out), transform 0.9s var(--ease-out);
+}
+
+/* Variant 1: 3D cube — proper rotating-cube look.
+   Keep opacity 1 throughout rotation so both faces stay visible while pivoting.
+   transform-origin at the edge makes the slot rotate around the cube's vertical seam. */
+.stage[data-tx="cube"] .slot {
+    transition: transform 0.95s cubic-bezier(0.83, 0, 0.17, 1),
+                opacity 0.35s linear 0.7s;  /* opacity only fades AT the end */
+}
+.stage[data-tx="cube"] .slot.leaving {
+    transform: rotateY(-90deg);
+    transform-origin: left center;
+    opacity: 1;  /* visible throughout — only fades in last 0.25s */
+    transition: transform 0.95s cubic-bezier(0.83, 0, 0.17, 1),
+                opacity 0.25s linear 0.7s;
+    animation: cube-fade-out 0.95s linear forwards;
+}
+.stage[data-tx="cube"] .slot.entering {
+    transform: rotateY(90deg);
+    transform-origin: right center;
+    opacity: 1;
+}
+.stage[data-tx="cube"] .slot.active {
+    transform: rotateY(0deg);
+    transform-origin: center center;
+    opacity: 1;
+}
+@keyframes cube-fade-out {
+    0%, 75% { opacity: 1; }
+    100%    { opacity: 0; }
+}
+
+/* Variant 2: 3D flip (horizontal axis) */
+.stage[data-tx="flip"] .slot.leaving {
+    transform: rotateX(180deg) translateZ(-20vh);
+    opacity: 0;
+}
+.stage[data-tx="flip"] .slot.entering {
+    transform: rotateX(-180deg) translateZ(-20vh);
+    opacity: 0;
+}
+.stage[data-tx="flip"] .slot.active {
+    transform: rotateX(0) translateZ(0);
+    opacity: 1;
+}
+
+/* Variant 3: Slide + zoom */
+.stage[data-tx="zoom"] .slot.leaving {
+    transform: scale(1.18) translateY(-2vh);
+    opacity: 0;
+}
+.stage[data-tx="zoom"] .slot.entering {
+    transform: scale(0.88) translateY(2vh);
+    opacity: 0;
+}
+.stage[data-tx="zoom"] .slot.active {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+}
+
+/* Variant 4: Parallax push (horizontal slide) */
+.stage[data-tx="push"] .slot.leaving {
+    transform: translateX(-35%) scale(0.92);
+    opacity: 0;
+    filter: blur(0.6vh);
+}
+.stage[data-tx="push"] .slot.entering {
+    transform: translateX(35%) scale(0.92);
+    opacity: 0;
+    filter: blur(0.6vh);
+}
+.stage[data-tx="push"] .slot.active {
+    transform: translateX(0) scale(1);
+    opacity: 1;
+    filter: blur(0);
+}
+
+/* ============================================================
+   BOTTOM TAGLINE — minimal
+============================================================ */
+.bottombar {
+    background: var(--bg-deep);
+    border-top: 0.1vh solid var(--ink-20);
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden;
+    position: relative;
+}
+.bottombar-track {
+    display: flex; white-space: nowrap;
+    animation: marquee 38s linear infinite;
+}
+.bottombar-item {
+    font-size: 1.35vh;
+    font-weight: 500;
+    color: var(--ink-60);
+    padding: 0 5vh;
+    letter-spacing: 0.25vh;
+    text-transform: uppercase;
+}
+.bottombar-sep {
+    color: var(--accent);
+    font-size: 0.6vh;
+    align-self: center;
+}
+@keyframes marquee {
+    0%   { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+}
+
+/* ============================================================
+   DEV PANEL (toggleable) — shows current transition + slot
+============================================================ */
+.dev-badge {
+    position: absolute;
+    top: 9vh; right: 2vh;
+    z-index: 100;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(10px);
+    border: 0.1vh solid var(--ink-20);
+    color: var(--ink-60);
+    font-family: monospace;
+    font-size: 1.1vh;
+    padding: 0.6vh 1.2vh;
+    border-radius: 0.6vh;
+    pointer-events: none;
+    letter-spacing: 0.1vh;
+}
+.dev-badge .v { color: var(--accent); font-weight: 700; }
+
+/* ============================================================
+   REDUCED MOTION
+============================================================ */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01s !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.15s !important;
+    }
+    .slot.active .slot-media { animation: none; transform: scale(1.04); }
+}
+</style>
+</head>
+<body>
+
+<div class="signage">
+
+    <!-- ===================== TOP BAR ===================== -->
+    <div class="topbar">
+        <div class="topbar-time" id="topTime">18:42</div>
+        <div class="topbar-dot" title="Live"></div>
+        <div class="topbar-weather">
+            <span class="icon">☀</span>
+            <span class="temp">28°</span>
+            <span>Bangkok</span>
+        </div>
+    </div>
+
+    <!-- ===================== MEDIA STAGE ===================== -->
+    <div class="stage" id="stage" data-tx="zoom">
+        <!-- Slots injected by JS -->
+    </div>
+
+    <!-- ===================== BOTTOM TAGLINE ===================== -->
+    <div class="bottombar">
+        <div class="bottombar-track">
+            <span class="bottombar-item">Live in Balance</span>
+            <span class="bottombar-sep">●</span>
+            <span class="bottombar-item">Premium Living · Bangkok</span>
+            <span class="bottombar-sep">●</span>
+            <span class="bottombar-item">Touch screen to explore</span>
+            <span class="bottombar-sep">●</span>
+            <!-- Duplicate for seamless loop -->
+            <span class="bottombar-item">Live in Balance</span>
+            <span class="bottombar-sep">●</span>
+            <span class="bottombar-item">Premium Living · Bangkok</span>
+            <span class="bottombar-sep">●</span>
+            <span class="bottombar-item">Touch screen to explore</span>
+            <span class="bottombar-sep">●</span>
+        </div>
+    </div>
+
+    <!-- Dev badge (transition + index) -->
+    <div class="dev-badge" id="devBadge">
+        <span class="v" id="devTx">zoom</span> · slot <span id="devIdx">1</span>/<span id="devTotal">5</span>
+    </div>
+
+</div>
+
+<script>
+/* ============================================================
+   MOCK SLOT DATA
+   Each slot: { image, eyebrow, title, sub, ctaPrimary, ctaSecondary }
+============================================================ */
+const SLOTS = [
+    {
+        image: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=900&q=80',
+        eyebrow: 'Premium Residence',
+        title: 'Mahogany Tower',
+        sub: 'Penthouse-style 3-bedroom suites from 18.2M฿. Sky lounge access included.',
+        ctaPrimary:   { label: 'Book a Private Tour', icon: '→' },
+        ctaSecondary: { label: 'See Floor Plans',     icon: '↗' }
+    },
+    {
+        image: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=900&q=80',
+        eyebrow: 'Featured Dining',
+        title: 'The Mahogany Kitchen',
+        sub: 'Chef-curated tasting menu, evenings 18:00–23:00. Reservations recommended.',
+        ctaPrimary:   { label: 'View Menu', icon: '→' },
+        ctaSecondary: { label: 'Reserve a Table', icon: '↗' }
+    },
+    {
+        image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=900&q=80',
+        eyebrow: 'Limited Offer',
+        title: 'Resident Rewards',
+        sub: 'Sign before June 30 to receive complimentary 12-month wellness membership.',
+        ctaPrimary:   { label: 'Claim Offer', icon: '→' },
+        ctaSecondary: { label: 'Learn More',  icon: '↗' }
+    },
+    {
+        image: 'https://images.unsplash.com/photo-1574691250077-03a929faece5?auto=format&fit=crop&w=900&q=80',
+        eyebrow: 'Building Update',
+        title: 'Rooftop Pool Reopens',
+        sub: 'Renovated infinity pool now open daily 06:00–22:00. New cabanas available.',
+        ctaPrimary:   { label: 'Read Update',  icon: '→' },
+        ctaSecondary: { label: 'Contact Office', icon: '↗' }
+    },
+    {
+        image: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=900&q=80',
+        eyebrow: 'Lifestyle',
+        title: 'Live in Balance',
+        sub: 'Wellness, design and community — curated for the modern resident.',
+        ctaPrimary:   { label: 'Discover More', icon: '→' },
+        ctaSecondary: { label: 'About Us',      icon: '↗' }
+    }
+];
+
+const TRANSITIONS = ['cube', 'flip', 'zoom', 'push'];
+
+/* ============================================================
+   RENDER SLOTS
+============================================================ */
+const stage = document.getElementById('stage');
+const devTx = document.getElementById('devTx');
+const devIdx = document.getElementById('devIdx');
+const devTotal = document.getElementById('devTotal');
+devTotal.textContent = SLOTS.length;
+
+SLOTS.forEach((s, i) => {
+    const el = document.createElement('div');
+    el.className = 'slot';
+    el.dataset.index = i;
+    el.innerHTML = `
+        <div class="slot-media" style="background-image:url('${s.image}');"></div>
+        <div class="slot-grad-top"></div>
+        <div class="slot-grad-bot"></div>
+        <div class="slot-content">
+            <div class="slot-eyebrow">${s.eyebrow}</div>
+            <div class="slot-title">${s.title}</div>
+            <div class="slot-sub">${s.sub}</div>
+        </div>
+        <div class="cta-dock">
+            <button class="cta cta-primary">
+                <span>${s.ctaPrimary.label}</span>
+                <span class="arrow">${s.ctaPrimary.icon}</span>
+            </button>
+            <button class="cta cta-secondary">
+                <span>${s.ctaSecondary.label}</span>
+                <span class="arrow">${s.ctaSecondary.icon}</span>
+            </button>
+        </div>
+    `;
+    stage.appendChild(el);
+});
+
+/* ============================================================
+   ADVANCE LOOP — randomized transition per step
+============================================================ */
+const slots = Array.from(stage.querySelectorAll('.slot'));
+let cur = 0;
+let prevTxIdx = -1;
+
+function pickTransition() {
+    let i;
+    do { i = Math.floor(Math.random() * TRANSITIONS.length); }
+    while (i === prevTxIdx && TRANSITIONS.length > 1);
+    prevTxIdx = i;
+    return TRANSITIONS[i];
+}
+
+let forcedTx = null;  // when set, next advance uses this transition instead of random
+function showSlot(idx, isFirst = false) {
+    const tx = isFirst ? 'zoom' : (forcedTx || pickTransition());
+    forcedTx = null;
+    stage.dataset.tx = tx;
+    devTx.textContent = tx;
+    devIdx.textContent = idx + 1;
+
+    slots.forEach((el, i) => {
+        el.classList.remove('active', 'leaving', 'entering', 'exiting');
+        if (i === idx) {
+            el.classList.add('entering');
+        } else if (el.classList.contains('active') || i === cur) {
+            el.classList.add('leaving');
+        }
+    });
+
+    // Force reflow so "entering" pose is committed before activating
+    void stage.offsetWidth;
+
+    requestAnimationFrame(() => {
+        slots[idx].classList.remove('entering');
+        slots[idx].classList.add('active');
+    });
+
+    cur = idx;
+}
+
+function preExitCurrent() {
+    // Trigger CTA exit just before media transition begins
+    if (slots[cur]) slots[cur].classList.add('exiting');
+}
+
+const HOLD_MS = 8500;  // total time each slot displays
+const PRE_EXIT_MS = 600; // CTA exit kicks in this much before media swap
+
+showSlot(0, true);
+
+setInterval(() => {
+    preExitCurrent();
+    setTimeout(() => {
+        const next = (cur + 1) % SLOTS.length;
+        showSlot(next);
+    }, PRE_EXIT_MS);
+}, HOLD_MS);
+
+/* ============================================================
+   LIVE CLOCK
+============================================================ */
+function updateTime() {
+    const d = new Date();
+    const hh = String(d.getHours()).padStart(2, '0');
+    const mm = String(d.getMinutes()).padStart(2, '0');
+    document.getElementById('topTime').textContent = `${hh}:${mm}`;
+}
+updateTime();
+setInterval(updateTime, 30000);
+
+/* ============================================================
+   KEYBOARD: arrow keys to step through, "d" toggles dev badge
+============================================================ */
+const TX_KEYS = { '1': 'cube', '2': 'flip', '3': 'zoom', '4': 'push' };
+document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight') {
+        preExitCurrent();
+        setTimeout(() => showSlot((cur + 1) % SLOTS.length), PRE_EXIT_MS);
+    }
+    if (e.key === 'ArrowLeft') {
+        preExitCurrent();
+        setTimeout(() => showSlot((cur - 1 + SLOTS.length) % SLOTS.length), PRE_EXIT_MS);
+    }
+    if (TX_KEYS[e.key]) {
+        // Force a specific transition and advance to next slot immediately.
+        forcedTx = TX_KEYS[e.key];
+        preExitCurrent();
+        setTimeout(() => showSlot((cur + 1) % SLOTS.length), PRE_EXIT_MS);
+    }
+    if (e.key === 'd' || e.key === 'D') {
+        document.getElementById('devBadge').style.display =
+            document.getElementById('devBadge').style.display === 'none' ? '' : 'none';
+    }
+});
+</script>
+
+</body>
+</html>

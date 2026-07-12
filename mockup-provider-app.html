@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>AquaMX · ตั้งร้าน (App Prototype)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=Mitr:wght@500;600&family=Anton&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+/* tokens copied verbatim from /offer (same contract as mockup-offer-app) */
+:root{
+  --navy:#0E3361; --navy-deep:#072147;
+  --orange:#C9864C; --orange-strong:#A36738; --orange-soft:#F6E5D0;
+  --cream:#F4F6FA; --ink:#0B1B33; --muted:#5C6B82; --white:#fff;
+  --line:#E6E9F1; --ink-40:#8B98AE; --green:#2E9E5B;
+}
+html,body{height:100%;}
+body{background:#dfe3ea;color:var(--ink);font-family:'IBM Plex Sans Thai','Nunito',system-ui,sans-serif;-webkit-font-smoothing:antialiased;overflow:hidden;}
+button{font-family:inherit;cursor:pointer;touch-action:manipulation;}
+input,select,textarea{touch-action:manipulation;}
+/* ui-ux-pro-max pass: press feedback (150ms, transform-only ไม่ขยับ layout) + focus ring คีย์บอร์ด */
+.pt-card,.hub-card,.wchip,.sheet-save,.btn-navy,.btn-line,.ex-add,.img-pick,.login-big,.cta-opt{transition:transform .15s ease,border-color .15s ease,background .15s ease;}
+.pt-card:active,.hub-card:active,.wchip:active,.sheet-save:active,.btn-navy:active,.btn-line:active,.ex-add:active,.img-pick:active,.login-big:active{transform:scale(.97);}
+button:focus-visible{outline:2px solid var(--orange);outline-offset:2px;}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important;}}
+
+/* ── app shell · copied from mockup-offer-app ── */
+.app{height:100dvh;max-width:480px;margin:0 auto;background:var(--cream);display:flex;flex-direction:column;position:relative;box-shadow:0 0 50px -10px rgba(0,0,0,.2);}
+.appbar{flex:0 0 auto;padding:13px 18px 0;background:var(--white);display:flow-root;}
+/* แถบ stepper แยกจาก header (โครงเดียวกับ version responsive) — บนมือถือขาวต่อเนื่องกับ header เหมือนเดิม */
+.railbar{flex:0 0 auto;background:var(--white);border-bottom:1px solid var(--line);padding:0 18px 9px;}
+.appbar-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:11px;gap:10px;}
+/* ── header ตามเว็บจริง (จำลอง nav-wrap ของ aquamx.biz/provider): โลโก้ภาพ + ลิงก์ + hamburger ── */
+.brand-img{height:40px;display:block;}
+.site-links{display:none;gap:22px;flex:1;justify-content:center;}
+.site-links a{color:var(--ink);font-weight:500;font-size:14.5px;text-decoration:none;}
+.nav-toggle{display:inline-flex;align-items:center;justify-content:center;width:40px;height:36px;background:none;border:1.5px solid var(--line);border-radius:8px;cursor:pointer;padding:0;flex:0 0 auto;}
+.nav-toggle .bars{position:relative;display:block;width:18px;height:2px;background:var(--navy);border-radius:2px;transition:transform .2s ease,opacity .2s ease;}
+.nav-toggle .bars::before,.nav-toggle .bars::after{content:'';position:absolute;left:0;display:block;width:18px;height:2px;background:var(--navy);border-radius:2px;transition:transform .2s ease;}
+.nav-toggle .bars::before{top:-6px;} .nav-toggle .bars::after{top:6px;}
+.nav-toggle.open .bars{background:transparent;}
+.nav-toggle.open .bars::before{transform:translateY(6px) rotate(45deg);}
+.nav-toggle.open .bars::after{transform:translateY(-6px) rotate(-45deg);}
+.site-menu{display:none;flex-direction:column;border-top:1px solid var(--line);margin:8px -18px 2px;padding:6px 18px 2px;}
+.site-menu.open{display:flex;}
+.site-menu a{color:var(--ink);font-weight:600;font-size:14.5px;text-decoration:none;padding:11px 2px;}
+/* ไฟล์นี้จำลองมือถือ (แอปล็อก 480px) — header เป็น hamburger เสมอ ไม่กางลิงก์ตามความกว้างเบราว์เซอร์ · ดีไซน์จอกว้างดูไฟล์ -responsive */
+.brand{font-family:'Nunito','IBM Plex Sans Thai',sans-serif;font-weight:800;font-size:20px;color:var(--navy);letter-spacing:-.02em;}
+.brand .x{color:var(--orange);}
+.bar-r{display:flex;align-items:center;gap:10px;}
+.lang-btn{border:1.5px solid var(--line);background:#fff;border-radius:8px;padding:7px 12px;font-size:11px;font-weight:800;color:var(--navy);}
+.exit{font-size:12px;color:var(--muted);background:none;border:none;padding:7px 6px;}
+/* stepper วงกลม: ✓ ผ่านแล้ว (บรอนซ์) · เลขวงทึบ = ขั้นปัจจุบัน (เนวี) · วงโปร่ง = ยังไม่ถึง */
+.rail{display:flex;align-items:center;gap:6px;}
+.rdot{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:800;flex:0 0 auto;transition:background .2s,color .2s;}
+.rdot.done{background:var(--green);color:#fff;}
+.rdot.cur{background:var(--navy);color:#fff;box-shadow:0 0 0 4px rgba(14,51,97,.12);}
+.rdot.todo{background:#fff;border:1.5px solid var(--line);color:var(--ink-40);}
+.rl{flex:1;height:3px;border-radius:2px;background:var(--line);transition:background .2s;}
+.rl.done{background:var(--green);}
+.canvas{flex:1 1 auto;min-height:0;position:relative;display:flex;flex-direction:column;align-items:center;padding:14px 14px 14px;overflow:hidden;}
+.canvas-head{flex:0 0 auto;width:100%;text-align:center;margin-bottom:14px;}
+.canvas-head h1{font-family:'IBM Plex Sans Thai','Nunito',sans-serif;font-weight:800;font-size:19px;color:var(--navy);line-height:1.12;}
+.canvas-head p{font-size:13px;color:var(--muted);margin-top:3px;}
+.canvas-body{flex:1 1 auto;min-height:0;width:100%;display:flex;align-items:center;justify-content:center;}
+/* แถบปุ่ม ก่อนหน้า/ถัดไป ด้านล่าง (แทนปุ่มลอยกลม) */
+/* แถบปุ่มล่างแบบ minimal: ไม่มีกล่อง/เส้นคั่น — สิ่งจำเป็นคือตำแหน่งล่าง+ความสูงกด ≥44px ไม่ใช่แถบขาว */
+.actbar{flex:0 0 auto;display:flex;align-items:center;gap:10px;padding:10px 16px calc(14px + env(safe-area-inset-bottom));}
+.btn-prev{flex:0 0 auto;background:none;border:none;color:var(--muted);border-radius:12px;padding:13px 14px;font-weight:800;font-size:14px;}
+.btn-next{margin-left:auto;flex:0 0 auto;background:var(--navy);border:none;color:#fff;border-radius:12px;padding:13px 26px;font-weight:800;font-size:14px;box-shadow:0 6px 16px -6px rgba(14,51,97,.45);}
+.btn-next:disabled{opacity:.4;box-shadow:none;}
+.btn-prev[hidden],.btn-next[hidden]{display:none;} .actbar[hidden]{display:none;}
+/* กล่องขาวห่อทั้งชุด (เนื้อหา + หัวข้อด้านล่าง) — เลเยอร์ ขาว→ครีม เหมือน offer app */
+.wrap-box{width:100%;align-self:center;background:var(--white);border:1px solid var(--line);border-radius:22px;padding:14px;box-shadow:0 8px 24px -14px rgba(14,51,97,.18);}
+.edit-banner{width:100%;max-width:380px;align-self:center;background:#fff7ec;border:1.5px solid var(--orange);color:var(--orange-strong);border-radius:11px;padding:9px 12px;font-size:12px;font-weight:700;margin-bottom:10px;line-height:1.45;}
+
+/* ── store-type pick ── */
+.pt-pick{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%;}
+/* การ์ดประเภทร้าน = การ์ดรูปเต็มใบ · ตัวอักษร overlay ล่างบน gradient เข้ม */
+.pt-card{position:relative;overflow:hidden;background:var(--cream) center/cover no-repeat;border:1px solid var(--line);border-radius:18px;padding:12px;text-align:left;aspect-ratio:1;display:flex;flex-direction:column;justify-content:flex-end;transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease;}
+.pt-card::before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(7,20,40,0) 34%,rgba(7,20,40,.55) 64%,rgba(7,20,40,.9) 100%);pointer-events:none;}
+.pt-card>*{position:relative;}
+.pt-card.on{border-color:var(--green);transform:scale(1.03);box-shadow:0 10px 26px -10px rgba(14,51,97,.35),inset 0 0 0 2px var(--green);}
+.pt-card .pick{position:absolute;top:10px;right:10px;width:24px;height:24px;border-radius:50%;border:1.5px solid var(--line);background:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:transparent;transition:background .15s,border-color .15s,color .15s;}
+.pt-card.on .pick{background:var(--green);border-color:var(--green);color:#fff;}
+.pt-card.soon .pick{display:none;}
+.pt-card .ic{position:absolute;top:10px;left:10px;font-size:19px;line-height:1;margin:0;background:rgba(255,255,255,.88);border-radius:10px;padding:6px 8px;box-shadow:0 2px 8px rgba(0,0,0,.2);}
+.pt-card .nm{font-weight:800;font-size:14.5px;color:#fff;line-height:1.25;text-shadow:0 1px 4px rgba(0,0,0,.5);}
+.pt-card .ds{font-size:11px;color:rgba(255,255,255,.88);margin-top:3px;line-height:1.4;text-shadow:0 1px 3px rgba(0,0,0,.45);}
+.pt-card.soon{opacity:.6;filter:grayscale(.55);cursor:default;}
+.pt-card.soon .soon-tag{display:block;font-size:10.5px;font-weight:800;color:#FBD7A8;margin-top:6px;text-shadow:0 1px 3px rgba(0,0,0,.5);}
+.pt-note{font-size:12.5px;color:var(--ink-40);line-height:1.55;margin-top:16px;max-width:380px;width:100%;align-self:center;text-align:left;}
+
+/* ── mobile store-page preview (หน้าร้าน /m/p) ── */
+.phone-wrap{display:flex;justify-content:center;}
+.phone{width:230px;aspect-ratio:9/16;background:#fff;border:3px solid #0c111c;border-radius:16px;overflow:hidden;box-shadow:0 14px 24px -8px rgba(0,0,0,.35);text-align:left;}
+.ph-scroll{height:100%;overflow-y:auto;scrollbar-width:none;}
+.ph-scroll::-webkit-scrollbar{width:0;}
+/* status bar มือถือจริง (เวลา · สัญญาณ · แบต) — ไม่ใช่หัวจอ signage */
+.ph-status{display:flex;justify-content:space-between;align-items:center;padding:4px 10px 2px;background:#fff;font-size:7px;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums;}
+.ph-status .r{display:flex;align-items:center;gap:3px;font-size:6.5px;}
+.ph-status .op{font-family:'Nunito','IBM Plex Sans Thai',sans-serif;font-weight:800;color:var(--navy);letter-spacing:-.01em;}
+.ph-status .op b{color:var(--orange);font-weight:800;}
+/* app header ตามหน้า handoff จริง (PageShell): ชิพหมวด + ปุ่มภาษา */
+.ph-appbar{display:flex;justify-content:space-between;align-items:center;padding:4px 8px 5px;background:#fff;border-bottom:1px solid var(--line);}
+.ph-cat{font-size:6.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--orange-strong);background:#fff7ec;border-radius:8px;padding:2px 7px;}
+.ph-lang{font-size:7px;font-weight:700;color:#fff;background:var(--navy);border-radius:5px;padding:2px 6px;border:none;cursor:pointer;}
+.ph-lang:hover{background:var(--navy-deep);}
+.ph-cover{position:relative;aspect-ratio:16/10;background:#11151c center/cover no-repeat;}
+.ph-cover.empty::after{content:'แตะใส่รูปปกร้าน';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#8B98AE;font-size:9px;background:#e9edf3;}
+body.en .ph-cover.empty::after{content:'Tap to add a cover photo';}
+.ph-cover .grad{position:absolute;inset:auto 0 0 0;height:70%;background:linear-gradient(0deg,rgba(7,33,71,.88),transparent);}
+.ph-id{position:absolute;left:9px;right:9px;bottom:8px;display:flex;align-items:flex-end;gap:7px;}
+.ph-logo{width:30px;height:30px;border-radius:9px;background:#fff center/cover no-repeat;border:1.5px solid rgba(255,255,255,.6);display:flex;align-items:center;justify-content:center;font-family:'Anton',sans-serif;font-size:15px;color:var(--navy);flex:0 0 auto;}
+.ph-nm{font-family:'Mitr',sans-serif;font-weight:600;font-size:12px;color:#fff;text-shadow:0 1px 5px rgba(0,0,0,.7);line-height:1.15;}
+.ph-pt{font-size:7px;color:rgba(255,255,255,.85);font-weight:600;margin-top:1px;}
+.ph-body{padding:9px 10px 12px;}
+.ph-h{font-size:7.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--orange-strong);margin:10px 0 4px;}
+.ph-h:first-child{margin-top:0;}
+.ph-about{font-size:8.5px;line-height:1.5;color:var(--muted);}
+.ph-about.empty{color:var(--ink-40);}
+.ph-contact{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-top:5px;}
+.ph-cbtn{border:1px solid var(--line);border-radius:7px;padding:5px 2px;text-align:center;font-size:6.5px;font-weight:700;color:var(--navy);background:#fff;}
+.ph-cbtn i{display:block;font-style:normal;font-size:9px;margin-bottom:1px;}
+.ph-meta{font-size:8px;color:var(--muted);line-height:1.5;}
+.ph-tags{display:flex;flex-wrap:wrap;gap:3px;margin-top:4px;}
+.ph-tag{font-size:6.5px;font-weight:700;color:var(--orange-strong);background:#fff7ec;border:1px solid var(--orange-soft);border-radius:8px;padding:1px 6px;}
+.ph-menu-row{display:flex;justify-content:space-between;gap:6px;padding:4px 0;border-bottom:1px dashed var(--line);font-size:8.5px;}
+.ph-menu-row .n{color:var(--ink);font-weight:600;} .ph-menu-row .p{font-family:'JetBrains Mono',monospace;color:var(--orange-strong);font-weight:700;white-space:nowrap;}
+.ph-note{font-size:7.5px;color:var(--ink-40);margin-top:3px;line-height:1.45;}
+.ph-offers{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:5px;}
+.ph-of{border:1px solid var(--line);border-radius:7px;overflow:hidden;background:#fff;}
+.ph-of .im{height:34px;background:#e9edf3;display:flex;align-items:center;justify-content:center;font-size:7px;color:var(--ink-40);}
+.ph-of .tx{padding:4px 5px;font-size:7px;font-weight:700;color:var(--muted);}
+.tap-hint{flex:0 0 auto;margin-top:8px;font-size:12px;color:var(--orange-strong);font-weight:600;}
+
+/* hotspots — copied from mockup-offer-app */
+.hot{cursor:pointer;outline:2px dashed transparent;outline-offset:2px;transition:outline-color .15s,background .15s;border-radius:7px;position:relative;}
+.hot:hover,.hot:focus-visible{outline-color:#6DD5E8;background:rgba(109,213,232,.12);}
+.hot .chip{position:absolute;top:-9px;right:-6px;background:#6DD5E8;color:#06222b;font-size:8.5px;font-weight:800;border-radius:6px;padding:1px 5px;opacity:0;transition:opacity .15s;z-index:5;}
+.hot:hover .chip,.hot:focus-visible .chip{opacity:1;}
+/* nudge — กระพริบเรียกสายตาจนกว่าจะแตะครั้งแรก แล้วหยุดเอง */
+.hot.nudge{outline-color:#6DD5E8;animation:hotpulse 1.8s ease-in-out infinite;}
+.hot.nudge .chip{opacity:1;}
+@keyframes hotpulse{0%,100%{box-shadow:0 0 0 0 rgba(109,213,232,0);}50%{box-shadow:0 0 0 6px rgba(109,213,232,.35);}}
+.hub-card.nudge{border-color:var(--orange);animation:pkpulse 1.8s ease-in-out infinite;}
+/* ติ๊กยอมรับเงื่อนไขก่อนบันทึก — ไม่ติ๊ก = ปุ่มบันทึกกดไม่ได้ */
+.agree{display:flex;gap:10px;align-items:flex-start;margin-top:16px;font-size:12.5px;color:var(--muted);line-height:1.55;cursor:pointer;}
+.agree input{width:20px;height:20px;margin-top:1px;flex:0 0 auto;accent-color:var(--green);cursor:pointer;}
+.agree a{color:var(--orange-strong);font-weight:700;}
+@keyframes pkpulse{0%,100%{box-shadow:0 0 0 0 rgba(201,134,76,0);}50%{box-shadow:0 0 0 6px rgba(201,134,76,.22);}}
+
+/* ── store-content hub ── */
+.hub{width:100%;max-width:360px;align-self:center;}
+.hub-note{background:#eafaf0;border:1.5px solid #bfe6cf;color:#1f7a4d;border-radius:11px;padding:10px 13px;font-size:12.5px;font-weight:600;margin-bottom:12px;line-height:1.5;}
+/* .hub-card เปล่าๆ = แถวนอนแบบเดิม (sheet เลือกวิธีกรอกเมนูใช้ class นี้ด้วย — ห้ามโดนสไตล์รูป) */
+.hub-card{display:flex;align-items:center;gap:12px;background:var(--cream);border:1px solid var(--line);border-radius:16px;padding:13px 14px;margin-bottom:9px;width:100%;text-align:left;}
+.hub-card:hover{border-color:var(--orange);}
+.hub-card .ic{font-size:22px;flex:0 0 auto;}
+.hub-card .tx{flex:1;min-width:0;}
+.hub-card .nm{font-weight:800;font-size:14px;color:var(--navy);}
+.hub-card .st{font-size:11.5px;color:var(--muted);margin-top:2px;}
+.hub-card .st b{color:var(--orange-strong);}
+.hub-card .go{color:var(--ink-40);font-size:15px;flex:0 0 auto;}
+.hub-card.done .st b{color:var(--green);}
+/* เฉพาะในกริด step 3 (.hub-cards) = การ์ดรูปจัตุรัส ตัวอักษรขาว overlay */
+.hub-cards{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px;}
+.hub-cards .hub-card{position:relative;overflow:hidden;flex-direction:column;align-items:flex-start;justify-content:space-between;gap:8px;background:var(--cream) center/cover no-repeat;border-radius:18px;padding:14px;aspect-ratio:1;margin-bottom:0;}
+.hub-cards .hub-card::before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(7,20,40,.2) 0%,rgba(7,20,40,.08) 28%,rgba(7,20,40,.68) 62%,rgba(7,20,40,.94) 100%);pointer-events:none;}
+.hub-cards .hub-card>*{position:relative;}
+.hub-cards .hub-card .ic{font-size:30px;background:rgba(255,255,255,.88);border-radius:10px;padding:6px 8px;line-height:1;box-shadow:0 2px 8px rgba(0,0,0,.2);}
+.hub-cards .hub-card .tx{flex:0 0 auto;width:100%;margin-top:auto;}
+.hub-cards .hub-card .nm{color:#fff;font-size:14.5px;text-shadow:0 1px 4px rgba(0,0,0,.5);}
+.hub-cards .hub-card .st{color:rgba(255,255,255,.88);text-shadow:0 1px 3px rgba(0,0,0,.45);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}
+.hub-cards .hub-card .go{position:absolute;top:10px;right:11px;color:#fff;background:rgba(8,12,22,.45);border-radius:8px;padding:2px 9px;}
+.hub-cards .hub-card.done{border-color:var(--green);box-shadow:inset 0 0 0 2px var(--green);}
+.hub-cards .hub-card.done .st b{color:#A8E6C2;}
+.hub-skip{font-size:12.5px;color:var(--ink-40);line-height:1.55;max-width:360px;text-align:left;}
+
+/* summary + done */
+.sum{width:100%;max-width:330px;}
+.sum-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line);font-size:14px;}
+.sum-row .k{color:var(--muted);} .sum-row .v{font-weight:700;color:var(--ink);text-align:right;}
+.free-pill{margin-top:14px;background:#e9f7ef;color:var(--green);font-weight:700;font-size:13px;padding:9px 14px;border-radius:10px;text-align:center;}
+.fin{text-align:center;} .fin .done-check{width:60px;height:60px;border-radius:50%;background:#e9f7ef;color:var(--green);font-size:30px;font-weight:800;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;}
+.fin-btns{display:flex;flex-direction:column;gap:9px;margin-top:16px;align-items:center;}
+.btn-navy{background:var(--navy);color:#fff;border:none;border-radius:12px;padding:12px 22px;font-weight:800;font-size:14px;min-width:230px;}
+.btn-line{background:#fff;color:var(--navy);border:1.5px solid var(--navy);border-radius:12px;padding:11px 22px;font-weight:800;font-size:14px;min-width:230px;}
+.btn-ghost{background:none;color:var(--muted);border:none;font-weight:700;font-size:12.5px;padding:6px;}
+
+/* sheet — copied from mockup-offer-app */
+.scrim{position:fixed;inset:0;background:rgba(8,12,22,.45);opacity:0;pointer-events:none;transition:opacity .2s;z-index:40;}
+.scrim.open{opacity:1;pointer-events:auto;}
+.sheet{position:fixed;left:0;right:0;bottom:0;max-width:480px;margin:0 auto;background:var(--white);border-radius:20px 20px 0 0;padding:8px 18px calc(18px + env(safe-area-inset-bottom));transform:translateY(100%);transition:transform .26s cubic-bezier(.2,.8,.2,1);z-index:41;max-height:82dvh;overflow-y:auto;}
+.sheet.open{transform:translateY(0);}
+.sheet .grab{width:38px;height:4px;border-radius:3px;background:var(--line);margin:6px auto 14px;}
+.sheet h3{font-family:'Mitr','IBM Plex Sans Thai',sans-serif;font-weight:600;font-size:17px;color:var(--navy);margin-bottom:3px;}
+.sheet .hint{font-size:12.5px;color:var(--muted);margin-bottom:13px;}
+.fld{width:100%;border:1.5px solid var(--line);border-radius:11px;padding:12px 13px;font-size:16px;font-family:inherit;color:var(--ink);background:#fff;}   /* 16px กัน iOS ซูมเองตอนแตะช่องกรอก */
+.fld:focus{outline:none;border-color:var(--orange);}
+.fld+.fld{margin-top:10px;}
+.fld-lbl{display:block;font-size:12px;font-weight:700;color:var(--ink);margin:14px 0 6px;}
+.fld-wrap{position:relative;}
+.fld-wrap .fld{padding-right:96px;}
+.ai-btn{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:#fff7ec;border:1.5px solid var(--orange);color:var(--orange-strong);border-radius:8px;padding:5px 10px;font-size:11.5px;font-weight:800;}
+.ai-btn.ta{top:12px;transform:none;}
+.ai-box{margin-top:10px;background:#fff7ec;border:1.5px solid var(--orange);border-radius:11px;padding:11px 13px;}
+.ai-box .ai-h{font-size:11.5px;font-weight:800;color:var(--orange-strong);margin-bottom:6px;}
+.ai-box .ai-tx{font-size:13px;color:var(--ink);line-height:1.55;}
+.ai-box .ai-act{display:flex;gap:8px;margin-top:9px;}
+.ai-box .ai-use{background:var(--orange);color:#fff;border:none;border-radius:8px;padding:7px 13px;font-size:12px;font-weight:800;}
+.ai-box .ai-keep{background:none;border:none;color:var(--muted);font-size:12px;font-weight:700;}
+.warn{display:block;font-size:12px;color:#b23b2e;font-weight:700;margin-top:6px;}
+.sheet-save{width:100%;margin-top:15px;background:var(--navy);color:#fff;border:none;border-radius:12px;padding:13px;font-weight:700;font-size:15px;}
+.word-chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px;}
+.wchip{border:1.5px solid var(--line);background:#fff;border-radius:18px;padding:10px 14px;font-family:'IBM Plex Sans Thai','Nunito',sans-serif;font-weight:700;font-size:12.5px;color:var(--muted);cursor:pointer;}   /* padding เพิ่ม → สูง ~40px+ แตะง่ายขึ้น */
+.wchip.on{border-color:var(--green);background:#EFF8F2;color:var(--navy);}
+.wchip.add{border-style:dashed;border-color:var(--orange);color:var(--orange-strong);background:#fffdf8;}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;}
+.ex-row{display:flex;gap:8px;align-items:center;margin-bottom:8px;}
+.ex-row .fld+.fld,.row2 .fld+.fld{margin-top:0;}   /* กัน .fld+.fld (เว้นบรรทัดแนวตั้ง) มาดันช่องที่อยู่ข้างกันในแถวเดียวกันให้เหลื่อม/สูงไม่เท่ากัน */
+.rrm{width:44px;height:44px;border-radius:8px;border:1.5px solid var(--line);background:#fff;color:var(--muted);font-size:13px;flex:0 0 auto;cursor:pointer;}   /* 44px = touch target ขั้นต่ำ */
+.rimg{width:44px;height:44px;border-radius:8px;border:1.5px dashed var(--orange);background:#fffdf8 center/cover no-repeat;color:var(--orange-strong);font-size:13px;flex:0 0 auto;cursor:pointer;}
+.rimg.has{border-style:solid;border-color:var(--line);color:transparent;}
+.ex-add{border:1.5px dashed var(--orange);background:#fffdf8;color:var(--orange-strong);border-radius:10px;padding:9px 14px;font-family:'IBM Plex Sans Thai','Nunito',sans-serif;font-weight:700;font-size:13px;cursor:pointer;margin-top:4px;}
+.auto-note{background:#eafaf0;border:1.5px solid #bfe6cf;color:#1f7a4d;border-radius:11px;padding:10px 13px;font-size:12.5px;font-weight:600;margin-bottom:10px;line-height:1.5;}
+.img-pick{width:100%;border:1.5px dashed var(--orange);border-radius:12px;background:#fffdf8;color:var(--orange-strong);font-weight:800;font-size:14px;padding:16px;cursor:pointer;}
+/* แถววันเปิดร้าน — กล่องจัตุรัสเท่ากัน 7 ช่อง (สไตล์ช่อง OTP) · เลือก = เปิด */
+.day-row{display:flex;gap:6px;width:100%;margin-top:6px;}
+.day-cell{flex:1;min-width:0;aspect-ratio:1;max-height:54px;min-height:44px;border:1.5px solid var(--line);border-radius:10px;background:#fff;font-family:inherit;font-weight:800;font-size:13px;color:var(--ink-40);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;transition:border-color .15s,background .15s,color .15s,transform .15s;}
+.day-cell:active{transform:scale(.94);}
+.day-cell.on{border-color:var(--green);background:#EFF8F2;color:var(--navy);}
+/* ช่องอัพโหลดทรงตามจริง: ปก 16:9 · โลโก้จัตุรัส (แบบช่องสี่เหลี่ยมใน offer app) */
+.cov-pick{width:100%;aspect-ratio:16/9;border:1.5px dashed var(--orange);border-radius:14px;background:#fffdf8;color:var(--orange-strong);font-weight:800;font-size:14px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;}
+.logo-pick{width:140px;height:140px;border:1.5px dashed var(--orange);border-radius:16px;background:#fffdf8;color:var(--orange-strong);font-weight:800;font-size:13px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:10px;text-align:center;}
+.cov-pick .plus,.logo-pick .plus{font-size:26px;line-height:1;font-weight:600;}
+.cov-pick small,.logo-pick small{font-size:11px;font-weight:600;color:var(--ink-40);}
+.cov-pick:active,.logo-pick:active{transform:scale(.97);}
+.cov-pick,.logo-pick{transition:transform .15s ease;}
+.img-have{display:flex;align-items:center;gap:12px;}
+.img-have .im{width:74px;height:52px;border-radius:9px;background:#e9edf3 center/cover no-repeat;border:1.5px solid var(--line);flex:0 0 auto;}
+.img-have .im.sq{width:52px;}
+/* big tap-to-change cover + logo (overlay pattern) */
+.cov-box{position:relative;width:100%;aspect-ratio:16/9;border-radius:14px;overflow:hidden;border:1.5px solid var(--line);background:#e9edf3 center/cover no-repeat;cursor:pointer;transition:transform .15s ease;}
+.logo-box{position:relative;width:104px;height:104px;border-radius:16px;border:1.5px solid var(--line);overflow:hidden;cursor:pointer;transition:transform .15s ease;}
+/* checkerboard behind the logo so transparency is visible after bg removal */
+.logo-box::before{content:'';position:absolute;inset:0;background:conic-gradient(#eceff4 0 25%,#fff 0 50%,#eceff4 0 75%,#fff 0) 0 0/16px 16px;}
+.logo-box .lim{position:absolute;inset:6px;background:center/contain no-repeat;}
+.cov-box:active,.logo-box:active{transform:scale(.98);}
+.cov-box:focus-visible,.logo-box:focus-visible{outline:2px solid var(--orange);outline-offset:2px;}
+.scrim-lbl{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);display:inline-flex;align-items:center;gap:6px;background:rgba(11,27,51,.66);color:#fff;font-weight:800;font-size:13px;padding:9px 16px;border-radius:20px;backdrop-filter:blur(3px);pointer-events:none;white-space:nowrap;}
+.logo-box .scrim-lbl{bottom:7px;font-size:10.5px;padding:5px 10px;gap:4px;border-radius:14px;}
+.cov-focus{position:absolute;top:8px;right:8px;display:flex;flex-direction:column;gap:5px;}
+.cov-focus .cf{width:58px;padding:10px 0;border:none;border-radius:10px;background:rgba(11,27,51,.55);color:#fff;font-family:inherit;font-weight:800;font-size:11.5px;cursor:pointer;backdrop-filter:blur(3px);}
+.cov-focus .cf.on{background:var(--green);}
+.login-big{display:flex;align-items:center;gap:12px;width:100%;border-radius:12px;padding:14px;font-weight:800;font-size:14.5px;border:none;margin-top:10px;}
+.login-line{background:#06C755;color:#fff;}
+.login-mail{background:#fff;color:var(--navy);border:1.5px solid var(--line);}
+.login-big .lic{font-size:19px;}
+.proto-tag{position:fixed;top:6px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;font-size:10px;padding:3px 10px;border-radius:8px;z-index:50;opacity:.8;}
+</style>
+</head>
+<body>
+<div class="proto-tag">PROTOTYPE · mock data · /provider app draft</div>
+<div class="app">
+  <div class="appbar">
+    <div class="appbar-top">
+      <a href="https://aquamx.biz" target="_blank" rel="noopener"><img class="brand-img" src="https://aquamx.biz/img/logo.png" alt="aquamx"></a>
+      <div class="site-links"><a href="https://aquamx.biz#how" target="_blank" rel="noopener" data-th="วิธีทำงาน" data-en="How it works">วิธีทำงาน</a><a href="https://aquamx.biz#network" target="_blank" rel="noopener" data-th="เครือข่าย" data-en="Network">เครือข่าย</a><a href="https://aquamx.biz#contact" target="_blank" rel="noopener" data-th="ติดต่อ" data-en="Contact">ติดต่อ</a></div>
+      <span class="bar-r"><button class="lang-btn" id="langBtn" onclick="tglLang()">EN</button><button class="exit" id="exitBtn">✕ ออก</button><button class="nav-toggle" id="navToggle" aria-label="เมนู" aria-expanded="false" onclick="tglNav(this)"><span class="bars"></span></button></span>
+    </div>
+    <div class="site-menu" id="siteMenu"><a href="https://aquamx.biz#how" target="_blank" rel="noopener" data-th="วิธีทำงาน" data-en="How it works">วิธีทำงาน</a><a href="https://aquamx.biz#network" target="_blank" rel="noopener" data-th="เครือข่าย" data-en="Network">เครือข่าย</a><a href="https://aquamx.biz#contact" target="_blank" rel="noopener" data-th="ติดต่อ" data-en="Contact">ติดต่อ</a></div>
+  </div>
+  <div class="railbar"><div class="rail" id="rail"></div></div>
+  <div class="canvas" id="canvas"></div>
+  <div class="actbar" id="actbar">
+    <button class="btn-prev" id="backBtn" hidden>← ก่อนหน้า</button>
+    <button class="btn-next" id="nextBtn"><span id="nextCap">ถัดไป</span> <span id="nextAr">→</span></button>
+  </div>
+</div>
+<div class="scrim" id="scrim"></div>
+<div class="sheet" id="sheet"></div>
+
+<script>
+/* ── i18n ──
+   L(th,en) = inline bilingual string — EVERYTHING user-visible goes through this
+   (or the T/PH dicts). Mirrors the real /provider form which is fully bilingual. */
+const L=(th,en)=>S.lang==='en'?(en??th):th;
+const T={
+ th:{next:'ถัดไป',save:'บันทึกร้าน',exit:'✕ ออก',
+  s1h:'เลือกประเภทร้านของคุณ',s1p:'ระบบจะปรับขั้นตอนให้เหมาะกับร้านแต่ละแบบ',s1note:'ตั้งร้านฟรี — ใช้เวลาไม่กี่นาที',
+  s2h:'กรอกข้อมูลหน้าร้านของคุณ',s2p:'นี่คือหน้าที่ลูกค้าเห็นเมื่อสแกน QR จากจอ · แตะแต่ละส่วนเพื่อกรอก',tap:'แตะบนหน้าร้านเพื่อแก้ไข',
+  s3h:'ตั้งค่าเมนู & การขายของร้าน',s3p:'กรอกครั้งเดียว — โฆษณาทุกตัวดึงไปใช้อัตโนมัติ',
+  s3note:'💡 ใส่เมนูหรือเปิดรับจองไว้ ปุ่ม View Menu · Order · Book บนโฆษณาของคุณถึงจะใช้งานได้',
+  s3skip:'ไม่บังคับ — ข้ามก่อนแล้วกลับมาตั้งทีหลังได้',
+  s4h:'ตรวจสรุปก่อนบันทึกร้าน',s4p:'แก้ทีหลังได้เสมอ',
+  editBanner:'✏️ โหมดแก้ไข — ร้านนี้เผยแพร่แล้ว การแก้ไขจะส่งให้แอดมินตรวจก่อนขึ้นจริง',
+  menuNm:'เมนูร้าน',orderNm:'ตั้งค่าการรับออเดอร์',bookNm:'คิวจองของร้าน',
+  freePill:'🎉 ตั้งร้านฟรี'},
+ en:{next:'Next',save:'Save store',exit:'✕ Exit',
+  s1h:'Choose your store type',s1p:'We tailor the steps to your store type',s1note:'Free to set up — takes just a few minutes',
+  s2h:'Fill in your store page',s2p:'What customers see after scanning the QR · tap any part to fill it in',tap:'Tap the page to edit',
+  s3h:'Set up menu & selling',s3p:'Fill once — every ad reuses it automatically',
+  s3note:'💡 Add a menu or enable bookings so the View Menu · Order · Book buttons on your ads work',
+  s3skip:'Optional — skip and come back later',
+  s4h:'Review before saving',s4p:'Editable anytime',
+  editBanner:'✏️ Edit mode — this store is live; changes go to admin review first',
+  menuNm:'Store menu',orderNm:'Ordering settings',bookNm:'Booking slots',
+  freePill:'🎉 Free to set up'},
+};
+const t=k=>(T[S.lang]&&T[S.lang][k])||T.th[k]||k;
+/* strings INSIDE the phone preview — the real /m/p store page is bilingual */
+const PH={
+ th:{about:'เกี่ยวกับร้าน',contact:'ติดต่อ',call:'โทร',map:'แผนที่',web:'เว็บ',hours:'เวลา · ที่ตั้ง',
+  tags:'จุดเด่นร้าน',menu:'เมนู / บริการของร้าน',offers:'โปรโมชั่น / ประกาศ',
+  nm:'ชื่อร้านของคุณ',pt:'โปรไฟล์ร้าน',aboutEmpty:'แนะนำร้านสั้นๆ จะขึ้นตรงนี้ — แตะเพื่อกรอก',
+  menuEmpty:'ยังไม่มีเมนู — ตั้งได้ในขั้น "เมนู & การขาย" (ครั้งเดียว ใช้ทุกโฆษณา)',
+  bookNote:(o,c,s)=>`📅 รับจองคิว ${o}–${c} · ช่วงละ ${s} นาที`,
+  ad1:'โฆษณา 1',ad2:'โฆษณา 2',adAuto:'ขึ้นเองเมื่อลงโฆษณา',
+  chCover:'รูปปก·โลโก้',chText:'ข้อความ',chContact:'ติดต่อ'},
+ en:{about:'About',contact:'Contact',call:'Call',map:'Map',web:'Web',hours:'Hours · Location',
+  tags:'Highlights',menu:'Store menu / services',offers:'Offers & notices',
+  nm:'Your store name',pt:'Store profile',aboutEmpty:'A short intro shows here — tap to fill in',
+  menuEmpty:'No menu yet — set it once in "Menu & selling" (reused by every ad)',
+  bookNote:(o,c,s)=>`📅 Bookings ${o}–${c} · ${s}-min slots`,
+  ad1:'Ad 1',ad2:'Ad 2',adAuto:'Appears when you run an ad',
+  chCover:'Cover·Logo',chText:'Text',chContact:'Contact'},
+};
+const ph=k=>(PH[S.lang]&&PH[S.lang][k])||PH.th[k];
+
+/* provider types — mirrors sanity provider.ts (INCLUDES the new "service") */
+/* รูปการ์ด = รูป stock จริงตรงประเภท (Unsplash ครอปจัตุรัส ตรวจ 200 แล้ว) */
+const PU=id=>`https://images.unsplash.com/photo-${id}?w=480&h=480&fit=crop&q=60&auto=format`;
+const PTYPES=[
+  {id:'shop',ic:'🏪',nm:'ร้านค้า / ร้านอาหาร',en:'Shop / Restaurant',ds:'ขายสินค้า อาหาร เครื่องดื่ม',dsEn:'Products, food & drinks',img:PU('1555396273-367ea4eb4db5')},
+  {id:'service',ic:'🔧',nm:'บริการ / ธุรกิจ',en:'Service / Business',ds:'ช่าง สปา คลินิก ติวเตอร์ ทัวร์',dsEn:'Repairs, spa, clinic, tutor, tours',img:PU('1562322140-8baeececf3df')},
+  {id:'unitOwnerOrAgent',ic:'🔑',nm:'เจ้าของห้อง / เอเจนต์',en:'Unit Owner / Agent',ds:'ลงประกาศขาย-เช่าห้อง',dsEn:'List units for sale / rent',img:PU('1560518883-ce09059eeffa'),soon:true},   // อสังหาลงประกาศตรงที่ /offer-listing — โปรไฟล์เอเจนต์ไว้อนาคต
+  {id:'juristicOffice',ic:'🏢',nm:'นิติบุคคลอาคาร',en:'Juristic Office',ds:'ประกาศข่าวสารอาคาร',dsEn:'Building announcements',img:PU('1486406146926-c627a92ad1ab'),soon:true},   // นิติ = ทีมงานตั้งให้ตอนติดตั้งจอ
+];
+const PT_NOTE={
+  shop:{th:'ตั้งโปรไฟล์ร้านครั้งเดียว — โลโก้ ติดต่อ เวลาเปิด และ "เมนูร้าน" ใช้กับทุกโฆษณาที่ลงอัตโนมัติ',en:'Set up once — logo, contact, hours and the store menu are reused by every ad automatically'},
+  service:{th:'ธุรกิจบริการตั้งเวลา "คิวจอง" ไว้ที่ร้านครั้งเดียว — โฆษณาทุกตัวที่มีปุ่มจองจะใช้ตารางเดียวกัน',en:'Service businesses set booking slots once on the store — every ad with a Book button shares them'},
+  unitOwnerOrAgent:{th:'ไม่บังคับ — ลงประกาศได้เลย ระบบสร้างโปรไฟล์ให้อัตโนมัติ · ตั้งหน้าร้านเองเฉพาะถ้าอยากแต่งโปรไฟล์เอเจนต์ (รวมทุกประกาศไว้หน้าเดียว)',en:'Optional — you can list right away; a profile is auto-created. Set one up only to brand your agent page (all listings in one place)'},
+  juristicOffice:{th:'ปกติทีมงาน aquamx ตั้งโปรไฟล์นิติให้ตอนติดตั้งจอ — หน้านี้มีไว้เผื่อแก้ไข/ดูข้อมูล',en:'Usually set up by the aquamx team when the screen is installed — this page is for viewing/editing'},
+};
+/* ก้อนไหนโผล่ให้ประเภทไหน — ตาม TYPE_CTAS ของฟอร์มจริง (offer/index.html:1578):
+   ร้านค้า(product/promotion) = order ได้ ไม่มี book · บริการ(service) = book ได้ ไม่มี order
+   เจ้าของห้อง(listing) = book (นัดชมห้อง) · นิติ = ไม่มีเลย */
+const HUB_OF={shop:['menu','order'],service:['menu','book'],unitOwnerOrAgent:['book'],juristicOffice:[]};
+/* amenity tags — stored as Thai canonical, displayed per language */
+const TAGS=['มีที่จอดรถ','เดลิเวอรี','รับบัตร','เปิดทุกวัน','WiFi ฟรี','สัตว์เลี้ยงเข้าได้'];
+const TAG_EN={'มีที่จอดรถ':'Parking','เดลิเวอรี':'Delivery','รับบัตร':'Cards accepted','เปิดทุกวัน':'Open daily','WiFi ฟรี':'Free WiFi','สัตว์เลี้ยงเข้าได้':'Pet friendly',
+ 'ของสดทุกวัน':'Fresh daily','มีโปรสมาชิก':'Member deals','สั่งล่วงหน้าได้':'Pre-order','มืออาชีพ':'Professional','รับประกันงาน':'Guaranteed work','จองคิวออนไลน์':'Online booking',
+ 'พร้อมเข้าอยู่':'Move-in ready','ใกล้ BTS':'Near BTS','เฟอร์ครบ':'Fully furnished','แจ้งข่าวไว':'Fast updates','ติดต่อสะดวก':'Easy contact','ดูแลลูกบ้าน':'Resident care'};
+const tagL=x=>S.lang==='en'?(TAG_EN[x]||x):x;
+/* ✨ AI mock suggestions (real form calls Claude via Netlify fn — needs login) */
+const AI_TAGS={shop:['ของสดทุกวัน','มีโปรสมาชิก','สั่งล่วงหน้าได้'],service:['มืออาชีพ','รับประกันงาน','จองคิวออนไลน์'],unitOwnerOrAgent:['พร้อมเข้าอยู่','ใกล้ BTS','เฟอร์ครบ'],juristicOffice:['แจ้งข่าวไว','ติดต่อสะดวก','ดูแลลูกบ้าน']};
+const el=id=>document.getElementById(id);
+/* ไอคอนอัพโหลด (เมฆ+ลูกศร) — สืบสีจากปุ่ม (currentColor) */
+const UPICO=`<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 14.9A7 7 0 1 1 15.7 8h1.8a4.5 4.5 0 0 1 2.5 8.2"/><path d="M12 12v9"/><path d="m16 16-4-4-4 4"/></svg>`;
+const esc=s=>String(s==null?'':s).replace(/"/g,'&quot;').replace(/</g,'&lt;');
+
+const S={step:1,total:4,lang:'th',ptype:null,editMode:false,auth:null,sawPhone:false,sawHub:{},agree:false,
+  name:'',about:'',phone:'',line:'',web:'',map:'',loc:'',tags:[],logo:'',cover:'',coverFocus:'center',logoWarn:false,logoPrev:'',
+  days:[0,1,2,3,4,5,6],open:'09:00',close:'18:00',   // วัน-เวลาเปิดร้าน = ที่เดียว กรอกครั้งเดียว — booking/หน้าร้าน/สรุป อ่านจากตรงนี้
+  menu:[],menuMode:null,menuLink:'',ful:['dinein','pickup'],deliv:'',min:'',orderLink:'',
+  book:{on:false,slot:'60',ahead:'7',breakS:'',breakE:'',cap:''}};   // เหลือเฉพาะการตั้งค่าคิว — วัน/เวลาใช้ของร้าน
+/* วัน-เวลาเปิดร้าน — ของจริงยังไม่มีแบบ structured ใน schema (ช่องโหว่) · mockup นำเสนอก่อน */
+const DAYS=[{th:'จ',en:'Mo'},{th:'อ',en:'Tu'},{th:'พ',en:'We'},{th:'พฤ',en:'Th'},{th:'ศ',en:'Fr'},{th:'ส',en:'Sa'},{th:'อา',en:'Su'}];
+/* แปลงวันเปิดเป็นข้อความ: ทุกวัน / จ–ศ / จ–ศ · อา */
+function daysText(){const d=[...S.days].sort((a,b)=>a-b);if(d.length===7)return L('ทุกวัน','Daily');if(!d.length)return L('ยังไม่เลือกวัน','No days set');
+  const nm=i=>S.lang==='en'?DAYS[i].en:DAYS[i].th,parts=[];let s=d[0],p=d[0];
+  for(let k=1;k<d.length;k++){if(d[k]===p+1){p=d[k];}else{parts.push(s===p?nm(s):nm(s)+'–'+nm(p));s=p=d[k];}}
+  parts.push(s===p?nm(s):nm(s)+'–'+nm(p));return parts.join(' · ');}
+const hoursText=()=>daysText()+' '+S.open+'–'+S.close;
+const ptype=()=>PTYPES.find(p=>p.id===S.ptype)||{};
+const ptNm=()=>S.lang==='en'?(ptype().en||''):(ptype().nm||'');
+const hub=()=>HUB_OF[S.ptype]||[];
+const monogram=()=>((S.name||'?').trim()[0]||'?').toUpperCase();
+/* ป้ายก้อนรายการ เปลี่ยนตามประเภทร้าน — ร้านค้า="เมนูร้าน" · บริการ="บริการ & แพ็กเกจ"
+   (คำเดียวกับ ratecard "เมนู/แพ็กเกจ" — เมนูล้วนๆ ฟังแปลกสำหรับธุรกิจบริการ) */
+const menuNm=()=>S.ptype==='service'?L('บริการ & แพ็กเกจ','Services & packages'):L('เมนูร้าน','Store menu');
+/* ป้ายก้อนจอง เปลี่ยนตามประเภท — เจ้าของห้อง = "นัดชมห้อง" (ฟอร์มจริง: อสังหา → View Listing + นัดชม) */
+const bookNm=()=>S.ptype==='unitOwnerOrAgent'?L('นัดชมห้อง','Viewing appointments'):t('bookNm');
+function tglLang(){S.lang=S.lang==='th'?'en':'th';document.body.classList.toggle('en',S.lang==='en');el('langBtn').textContent=S.lang==='th'?'EN':'ไทย';el('exitBtn').textContent=t('exit');document.querySelectorAll('[data-th]').forEach(a=>a.textContent=S.lang==='en'?a.dataset.en:a.dataset.th);renderStep();}
+function tglNav(b){b.classList.toggle('open');const m=el('siteMenu'),o=m.classList.toggle('open');b.setAttribute('aria-expanded',o);}
+
+/* ── mobile store-page preview ── */
+function phone(edit){
+  const hot=(k,inner,chip)=>edit?`<div class="hot${k==='about'&&!S.sawPhone?' nudge':''}" data-edit="${k}" tabindex="0" role="button">${inner}<span class="chip">${chip} ✎</span></div>`:inner;
+  const menuRows=S.menu.filter(r=>r[0]).slice(0,4).map(r=>`<div class="ph-menu-row"><span class="n">${esc(r[0])}</span><span class="p">${esc(r[1]||'')}</span></div>`).join('');
+  const hasHub=hub().includes('menu');   // section เมนูใน preview เฉพาะประเภทที่มีเมนูจริง (เจ้าของห้องมีแค่นัดชม)
+  return `<div class="phone"><div class="ph-scroll">
+    <div class="ph-status"><span>13:35 · <span class="op">aqua<b>m</b>x</span></span><span class="r"><span>📶 6G</span><span>🔋 100%</span></span></div>   <!-- 13:35 · Mark 13:35 "Watch ye therefore…" · operator=aquamx · แบตเต็ม=พร้อมเต็มร้อย -->
+
+    <div class="ph-appbar"><span class="ph-cat">${ptNm()||ph('pt')}</span><button class="ph-lang" onclick="event.stopPropagation();tglLang()" title="${S.lang==='th'?'Switch to English':'สลับเป็นไทย'}">${S.lang==='th'?'EN':'TH'}</button></div>
+    ${hot('cover',`<div class="ph-cover ${S.cover?'':'empty'}" ${S.cover?`style="background-image:url('${S.cover}');background-position:center ${S.coverFocus};"`:''}>
+      <div class="grad"></div>
+      <div class="ph-id">
+        <span class="ph-logo" ${S.logo?`style="background-image:url('${S.logo}')"`:''}>${S.logo?'':monogram()}</span>
+        <span><span class="ph-nm">${esc(S.name)||ph('nm')}</span><div class="ph-pt">${ptype().ic||''} ${ptNm()||ph('pt')}</div></span>
+      </div></div>`,ph('chCover'))}
+    <div class="ph-body">
+      ${hot('about',`<div class="ph-h">${ph('about')}</div><div class="ph-about ${S.about?'':'empty'}">${esc(S.about)||ph('aboutEmpty')}</div>`,ph('chText'))}
+      ${hot('contact',`<div class="ph-h">${ph('contact')}</div><div class="ph-contact">
+        <span class="ph-cbtn"><i>📞</i>${ph('call')}</span><span class="ph-cbtn"><i>💬</i>LINE</span><span class="ph-cbtn"><i>📍</i>${ph('map')}</span><span class="ph-cbtn"><i>🌐</i>${ph('web')}</span></div>
+        <div class="ph-h">${ph('hours')}</div><div class="ph-meta">${hoursText()} · ${esc(S.loc)||'—'}</div>`,ph('chContact'))}
+      ${S.tags.length?`<div class="ph-h">${ph('tags')}</div><div class="ph-tags">${S.tags.map(tg=>`<span class="ph-tag">${esc(tagL(tg))}</span>`).join('')}</div>`:''}
+      ${hasHub?`<div class="ph-h">${ph('menu')}</div>
+        ${menuRows||`<div class="ph-note">${ph('menuEmpty')}</div>`}
+        ${S.book.on?`<div class="ph-note">${ph('bookNote')(esc(S.open),esc(S.close),esc(S.book.slot))}</div>`:''}`:''}
+      <div class="ph-h">${ph('offers')}</div>
+      <div class="ph-offers"><div class="ph-of"><div class="im">${ph('ad1')}</div><div class="tx">${ph('adAuto')}</div></div><div class="ph-of"><div class="im">${ph('ad2')}</div><div class="tx">${ph('adAuto')}</div></div></div>
+    </div>
+  </div></div>`;
+}
+
+function renderStep(){
+  el('rail').innerHTML=Array.from({length:S.total},(_,i)=>{const n=i+1,st=n<S.step?'done':n===S.step?'cur':'todo';
+    return `${i?`<span class="rl ${n<=S.step?'done':''}"></span>`:''}<span class="rdot ${st}">${st==='done'?'✓':n}</span>`;}).join('');
+  el('backBtn').hidden=S.step<=1;
+  el('backBtn').textContent=L('← ก่อนหน้า','← Back');
+  const c=el('canvas'),nA=el('nextAr'),nC=el('nextCap');
+  el('nextBtn').hidden=false;
+  /* prototype: เดินดูได้ทุกขั้นโดยไม่ต้องกรอก — ล็อคแค่ขั้น 1 ให้เลือกประเภทก่อน
+     (ประเภทกำหนดขั้นถัดไปทั้งหมด · ของจริงค่อยบังคับชื่อร้านตอน submit) */
+  el('nextBtn').disabled=(S.step===1&&!S.ptype)||(S.step===S.total&&!S.agree);
+  if(S.step<S.total){nA.textContent='→';nC.textContent=t('next');}else{nA.textContent='✓';nC.textContent=t('save');}
+  const banner=S.editMode?`<div class="edit-banner">${t('editBanner')}</div>`:'';
+
+  if(S.step===1){
+    c.innerHTML=`<div class="canvas-body" style="flex-direction:column;align-items:center;justify-content:flex-start;overflow-y:auto;"><div class="wrap-box">
+        <div class="canvas-head" style="margin:0 3px 12px;"><h1>${t('s1h')}</h1><p>${t('s1p')}</p></div>
+        <div class="pt-pick">${PTYPES.map(p=>`<button class="pt-card ${S.ptype===p.id?'on':''} ${p.soon?'soon':''}" ${p.soon?'disabled':''} data-pt="${p.id}" style="background-image:url('${p.img}')"><span class="pick">✓</span><span class="ic">${p.ic}</span><span class="nm">${S.lang==='en'?p.en:p.nm}</span><div class="ds">${S.lang==='en'?p.dsEn:p.ds}</div>${p.soon?`<span class="soon-tag">${L('(สำหรับอนาคต)','(coming later)')}</span>`:''}</button>`).join('')}</div>        <div class="pt-note" style="margin-top:10px;max-width:none;">${S.ptype?PT_NOTE[S.ptype][S.lang]:t('s1note')}</div>
+      </div></div>`;
+    document.querySelectorAll('[data-pt]').forEach(b=>b.onclick=()=>{S.ptype=b.dataset.pt;renderStep();});
+  } else if(S.step===2){
+    c.innerHTML=`${banner}<div class="canvas-body" style="align-items:flex-start;overflow-y:auto;"><div class="wrap-box" style="display:flex;flex-direction:column;align-items:center;">
+      <div class="canvas-head" style="margin:0 0 10px;width:100%;"><h1>${t('s2h')}</h1><p>${t('s2p')}</p></div>
+      <div class="phone-wrap">${phone(true)}</div>
+      <div class="tap-hint">${t('tap')}</div>
+    </div></div>`;
+    bindHot();
+  } else if(S.step===3){
+    const blocks=hub();
+    if(!blocks.length){
+      c.innerHTML=`${banner}<div class="canvas-body" style="align-items:flex-start;overflow-y:auto;"><div class="wrap-box">
+        <div class="canvas-head" style="margin:0 3px 12px;"><h1>${t('s3h')}</h1><p>${ptNm()}</p></div>
+        <div class="hub" style="max-width:none;"><div class="hub-note">✅ ${ptNm()} ${L('ไม่ต้องตั้งค่าส่วนนี้','doesn’t need this step')} — ${S.ptype==='juristicOffice'?L('ประกาศอาคารไม่ใช้เมนู/การจอง','building notices don’t use menus or booking'):L('รายละเอียดห้องกรอกตอนลงประกาศแต่ละตัว','unit details are entered per listing')}</div>
+        <div class="hub-skip">${L('ข้ามไปสรุปได้เลย →','Skip ahead to the summary →')}</div></div>      </div></div>`;
+    } else {
+      const nItem=n=>L(`${n} รายการ`,`${n} item${n>1?'s':''}`);
+      /* หัวการ์ด = กริยาสั่งการ (บอกว่ากดแล้วได้ทำอะไร) · คำนามอยู่ในบรรทัดสถานะ/หัว sheet แทน */
+      const cards={
+        menu:{img:S.ptype==='service'?PU('1544161515-4ab6ce6db874'):PU('1504754524776-8f4f37790ca0'),ic:S.ptype==='service'?'🧾':'🍽️',nm:S.ptype==='service'?L('ใส่รายการบริการ & แพ็กเกจ','Add your services & packages'):L('ใส่เมนูร้าน','Add your menu'),st:S.menu.filter(r=>r[0]).length?`<b>${nItem(S.menu.filter(r=>r[0]).length)}</b> · ${L('ใช้กับปุ่ม View Menu','used by the View Menu button')}`:L('ยังไม่ได้ใส่ · ใช้กับปุ่ม View Menu','not set yet · used by View Menu')},
+        order:{img:PU('1556742049-0cfed4f6a45d'),ic:'🛒',nm:L('ตั้งค่าการรับออเดอร์','Set up ordering'),st:S.menu.filter(r=>r[0]).length?`<b>${L('ใช้รายการเดียวกับเมนู','same items as menu')}</b> · ${S.ful.length} ${L('ช่องทาง','channels')}${S.deliv?` · ${L('ค่าส่ง','fee')} ฿${S.deliv}`:''}`:L('ค่าส่ง/ขั้นต่ำ/ช่องทางรับ · รายการดึงจากเมนูร้านอัตโนมัติ','fee / minimum / channels · items come from your menu automatically')},
+        book:{img:S.ptype==='unitOwnerOrAgent'?PU('1560518883-ce09059eeffa'):PU('1506784983877-45594efa4cbe'),ic:'📅',nm:S.ptype==='unitOwnerOrAgent'?L('ตั้งค่านัดชมห้อง','Set up viewing appointments'):L('เปิดรับจองคิว','Set up bookings'),st:S.book.on?`<b>${hoursText()}</b> · ${L(`ช่วงละ ${S.book.slot} นาที`,`${S.book.slot}-min slots`)}`:L('ยังไม่เปิดรับจอง · ใช้กับปุ่ม Book','not enabled · used by Book')},
+      };
+      c.innerHTML=`${banner}<div class="canvas-body" style="align-items:flex-start;overflow-y:auto;"><div class="wrap-box">
+        <div class="canvas-head" style="margin:0 3px 12px;"><h1>${t('s3h')}</h1><p>${t('s3p')}</p></div>
+        <div class="hub" style="max-width:none;">
+        <div class="hub-note">${t('s3note')}</div>
+        <div class="hub-cards">${blocks.map(k=>{const d=cards[k];const done=(k==='menu'&&S.menu.filter(r=>r[0]).length)||(k==='order'&&S.menu.filter(r=>r[0]).length)||(k==='book'&&S.book.on);
+          return `<button class="hub-card ${done?'done':''}${(!done&&!S.sawHub[k])?' nudge':''}" data-hub="${k}" style="background-image:url('${d.img}')"><span class="ic">${d.ic}</span><span class="tx"><span class="nm">${d.nm}</span><div class="st">${d.st}</div></span><span class="go">›</span></button>`;}).join('')}</div>
+        <!-- order.done ผูกกับเมนู (รายการชุดเดียวกัน) -->
+        <div class="hub-skip" style="margin-top:6px;">${t('s3skip')}</div>
+        </div>      </div></div>`;
+      document.querySelectorAll('[data-hub]').forEach(b=>b.onclick=()=>{S.sawHub[b.dataset.hub]=true;b.classList.remove('nudge');openSheet(b.dataset.hub);});
+    }
+  } else if(S.step===4){
+    const menuN=S.menu.filter(r=>r[0]).length;
+    const nItem=n=>L(`${n} รายการ`,`${n} item${n>1?'s':''}`);
+    c.innerHTML=`<div class="canvas-head"><h1>${t('s4h')}</h1><p>${t('s4p')}</p></div>${banner}
+      <div class="canvas-body" style="align-items:flex-start;overflow-y:auto;"><div class="sum">
+        <div style="display:flex;gap:12px;align-items:center;margin-bottom:12px;">
+          <span class="ph-logo" style="width:44px;height:44px;font-size:20px;${S.logo?`background-image:url('${S.logo}');`:''}border:1.5px solid var(--line);">${S.logo?'':monogram()}</span>
+          <div><div style="font-family:'Mitr';font-weight:600;font-size:16px;color:var(--navy)">${esc(S.name)||'—'}</div>
+          <div style="font-size:12px;color:var(--muted)">${ptype().ic||''} ${ptNm()}</div></div></div>
+        <div class="sum-row"><span class="k">${L('ติดต่อ','Contact')}</span><span class="v">${[S.phone&&L('โทร','Call'),S.line&&'LINE',S.web&&L('เว็บ','Web'),S.map&&L('แผนที่','Map')].filter(Boolean).join(' · ')||'—'}</span></div>
+        <div class="sum-row"><span class="k">${L('เวลา · ที่ตั้ง','Hours · Location')}</span><span class="v">${hoursText()} · ${esc(S.loc)||'—'}</span></div>
+        <div class="sum-row"><span class="k">${L('รูปปก · โลโก้','Cover · Logo')}</span><span class="v">${S.cover?L('✓ ปก','✓ Cover'):'—'} · ${S.logo?L('✓ โลโก้','✓ Logo'):L('ใช้อักษรย่อ','monogram')}</span></div>
+        <div class="sum-row"><span class="k">${L('จุดเด่น','Highlights')}</span><span class="v">${S.tags.length?nItem(S.tags.length):'—'}</span></div>
+        ${hub().includes('menu')?`<div class="sum-row"><span class="k">${menuNm()}</span><span class="v">${menuN?nItem(menuN):'—'}</span></div>`:''}
+        ${hub().includes('order')?`<div class="sum-row"><span class="k">${L('การรับออเดอร์','Ordering')}</span><span class="v">${S.ful.length} ${L('ช่องทาง','ch.')}${S.deliv?' · '+L('ค่าส่ง','fee')+' ฿'+S.deliv:''}${S.min?' · '+L('ขั้นต่ำ','min')+' ฿'+S.min:''}</span></div>`:''}
+        ${hub().includes('book')?`<div class="sum-row"><span class="k">${bookNm()}</span><span class="v">${S.book.on?hoursText()+' · /'+S.book.slot+' '+L('นาที','min'):L('ไม่เปิด','off')}</span></div>`:''}
+        <div class="sum-row"><span class="k">${L('บัญชี','Account')}</span><span class="v">${S.auth?(S.auth.kind==='line'?'💬 LINE':'✉️ '+(S.auth.email||'Email')):L('ยังไม่ล็อกอิน — ล็อกอินตอนบันทึก','not signed in — sign in on save')}</span></div>
+        <label class="agree"><input type="checkbox" ${S.agree?'checked':''} onchange="S.agree=this.checked;renderStep()"><span>${L('ฉันยอมรับ','I agree to the')} <a href="#" onclick="event.preventDefault();alert('(prototype) ${L('หน้าเงื่อนไขการใช้บริการ','Terms of service page')}')">${L('เงื่อนไขการใช้บริการ','terms of service')}</a> ${L('และ','and the')} <a href="#" onclick="event.preventDefault();alert('(prototype) ${L('หน้านโยบายความเป็นส่วนตัว','Privacy policy page')}')">${L('นโยบายความเป็นส่วนตัว','privacy policy')}</a>${L(' และยืนยันว่าข้อมูลร้านเป็นความจริง',', and confirm my store information is accurate')}</span></label>
+      </div></div>`;
+  }
+}
+
+function bindHot(){document.querySelectorAll('.hot[data-edit]').forEach(h=>{const o=()=>{if(!S.sawPhone){S.sawPhone=true;document.querySelectorAll('.hot.nudge').forEach(x=>x.classList.remove('nudge'));}openSheet(h.dataset.edit);};h.onclick=o;h.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();o();}};});}
+
+/* ── sheets ── */
+let rowKind='menu';
+function openSheet(kind){
+  if(kind==='menu')rowKind='menu';   // รายการมีชุดเดียว (เมนูร้าน) — order ใช้ร่วม ไม่มี rows ของตัวเอง
+  const sh=el('sheet');let html='';
+  const times=Array.from({length:24},(_,h)=>String(h).padStart(2,'0')+':00');
+  const sel=(id,val,opts)=>`<select class="fld" id="${id}">${opts.map(o=>`<option ${String(val)===String(o.v)?'selected':''} value="${o.v}">${o.l}</option>`).join('')}</select>`;
+  if(kind==='cover'){
+    html=`<h3>${L('รูปปก & โลโก้','Cover & Logo')}</h3><p class="hint">${L('ปก = ภาพใหญ่หัวหน้าร้าน (แนวนอน 16:9) · โลโก้ = ตราร้าน (จัตุรัส, ขึ้นบนโปสเตอร์จอด้วย)','Cover = big header photo (16:9) · Logo = square brand mark (also shown on the on-screen poster)')}</p>
+      <label class="fld-lbl">${L('รูปปกร้าน','Cover photo')}</label>
+      <input type="file" id="fCover" accept="image/*" hidden onchange="onPic(this,'cover')">
+      ${S.cover?`<div class="cov-box" role="button" tabindex="0" aria-label="${L('เปลี่ยนรูปปก','Change cover')}" onclick="el('fCover').click()" onkeydown="if(event.key==='Enter')el('fCover').click()" style="background-image:url('${S.cover}');background-position:center ${S.coverFocus};">
+          <span class="cov-focus">${[['top',L('บน','Top')],['center',L('กลาง','Mid')],['bottom',L('ล่าง','Low')]].map(f=>`<button class="cf ${S.coverFocus===f[0]?'on':''}" onclick="event.stopPropagation();setFocus('${f[0]}')" aria-label="${L('โฟกัสปก: ','Cover focus: ')+f[1]}">${f[1]}</button>`).join('')}</span>
+          <span class="scrim-lbl">📷 ${L('แตะเพื่อเปลี่ยนรูปปก','Tap to change cover')}</span>
+        </div>
+        <div class="cap-note" style="text-align:left;margin-top:6px">${L('✏️ ปุ่ม บน/กลาง/ล่าง บนรูป = เลือกส่วนที่โชว์ (ของจริงใช้ตัวครอปเต็มรูปแบบ)','✏️ Top/Mid/Low buttons on the photo pick the visible area (real form has a full cropper)')}</div>`
+      :`<button class="cov-pick" onclick="el('fCover').click()"><span class="plus">${UPICO}</span>${L('เลือกรูปปก','Pick a cover photo')}<small>${L('แนวนอน 16:9 · หรือลากไฟล์มาวาง','landscape 16:9 · or drag & drop')}</small></button>`}
+      <label class="fld-lbl">${L('โลโก้ร้าน — แนะนำ <b>PNG พื้นหลังโปร่งใส</b> · จัตุรัส 1:1 · ≥ 512px','Store logo — <b>transparent PNG</b> recommended · square 1:1 · ≥ 512px')}</label>
+      <input type="file" id="fLogo" accept="image/png,image/svg+xml,image/jpeg,image/webp" hidden onchange="onLogo(this)">
+      ${S.logo?`<div class="logo-box" role="button" tabindex="0" aria-label="${L('เปลี่ยนโลโก้','Change logo')}" onclick="el('fLogo').click()" onkeydown="if(event.key==='Enter')el('fLogo').click()"><span class="lim" style="background-image:url('${S.logo}')"></span><span class="scrim-lbl">✎ ${L('เปลี่ยน','Change')}</span></div>`:`<button class="logo-pick" onclick="el('fLogo').click()"><span class="plus">${UPICO}</span>${L('เลือกโลโก้','Pick a logo')}<small>${L('ไม่ใส่ = ใช้อักษรย่อ','blank = monogram')}</small></button>`}
+      ${S.logoWarn?`<span class="warn">${L('⚠️ พื้นหลังโลโก้ไม่โปร่งใส — จะเป็นกล่องสีทึบบนจอเข้ม','⚠️ Logo background is not transparent — it will show as a solid box on the dark screen')}</span>
+        <button class="ex-add" style="margin-top:8px" onclick="removeLogoBg()">✨ ${L('ลบพื้นหลังให้อัตโนมัติ','Remove background automatically')}</button>`:''}
+      ${S.logoPrev?`<button class="ex-add" style="margin-top:8px;border-color:var(--line);color:var(--muted);background:#fff" onclick="undoLogoBg()">↩ ${L('ใช้รูปเดิม (ยกเลิกลบพื้นหลัง)','Undo — use the original')}</button>`:''}
+      <button class="sheet-save" onclick="closeSheet();renderStep()">${L('เสร็จ','Done')}</button>`;
+  } else if(kind==='about'){
+    html=`<h3>${L('ชื่อร้าน & แนะนำร้าน','Store name & intro')}</h3><p class="hint">${L('ขึ้นบนหน้าร้าน + ใช้กับทุกโฆษณาของร้าน','Shown on your store page + reused by every ad')}</p>
+      <input class="fld" id="fName" maxlength="40" value="${esc(S.name)}" placeholder="${L('ชื่อร้าน *','Store name *')}">
+      <div class="fld-wrap" style="margin-top:10px;">
+        <textarea class="fld" id="fAbout" maxlength="300" rows="4" style="resize:none;" placeholder="${L('แนะนำร้านสั้นๆ (2–4 บรรทัด) — ขายอะไร เด่นอะไร','Short intro (2–4 lines) — what you sell, what stands out')}">${esc(S.about)}</textarea>
+        <button class="ai-btn ta" onclick="aiAbout()">✨ ${S.about?L('ช่วยเกลา','Polish'):L('ช่วยเขียน','Write')}</button>
+      </div>
+      <div id="aiAboutBox"></div>
+      <label class="fld-lbl">${L('จุดเด่นร้าน (เลือกได้หลายอัน)','Highlights (pick any)')}</label>
+      <div class="word-chips" id="tagChips">${TAGS.concat(S.tags.filter(x=>!TAGS.includes(x))).map(tg=>`<button class="wchip ${S.tags.includes(tg)?'on':''}" onclick="tglTag('${esc(tg)}')">${esc(tagL(tg))}</button>`).join('')}</div>
+      <div class="fld-wrap" style="margin-top:10px;">
+        <input class="fld" id="fTagCustom" placeholder="${L('เพิ่มจุดเด่นเอง (คั่นด้วย ,)','Add your own (comma separated)')}">
+        <button class="ai-btn" onclick="aiTags()">✨ ${L('แนะนำ','Suggest')}</button>
+      </div>
+      <div id="aiTagBox"></div>
+      <button class="sheet-save" onclick="saveAbout()">${L('บันทึก','Save')}</button>`;
+  } else if(kind==='contact'){
+    html=`<h3>${L('ติดต่อ & เวลาเปิด','Contact & hours')}</h3><p class="hint">${L('ปุ่มโทร/LINE/แผนที่/เว็บ บนหน้าร้าน — ใช้กับทุกโฆษณา','Call/LINE/Map/Web buttons on your page — reused by every ad')}</p>
+      <input class="fld" id="fPhone" value="${esc(S.phone)}" placeholder="${L('เบอร์โทร','Phone number')}" inputmode="tel">
+      <input class="fld" id="fLine" value="${esc(S.line)}" placeholder="LINE ID (${L('เช่น','e.g.')} @myshop)">
+      <input class="fld" id="fWeb" value="${esc(S.web)}" placeholder="${L('เว็บไซต์ / โซเชียล','Website / social')} (https://...)">
+      <input class="fld" id="fMap" value="${esc(S.map)}" placeholder="${L('ลิงก์ Google Maps','Google Maps link')}">
+      <label class="fld-lbl">${L('วันเปิดร้าน (แตะปิดวันหยุด เช่น ส-อา)','Open days (tap to toggle e.g. Sat-Sun)')}</label>
+      <div class="day-row">${DAYS.map((d,i)=>`<button class="day-cell ${S.days.includes(i)?'on':''}" onclick="tglDay(${i})" aria-pressed="${S.days.includes(i)}" aria-label="${(S.lang==='en'?d.en:d.th)+(S.days.includes(i)?L(' (เปิด)',' (open)'):L(' (หยุด)',' (closed)'))}">${S.lang==='en'?d.en:d.th}</button>`).join('')}</div>
+      <div class="row2"><div><label class="fld-lbl">${L('เวลาเปิด','Opens')}</label>${sel('fStOpen',S.open,times.map(x=>({v:x,l:x})))}</div><div><label class="fld-lbl">${L('เวลาปิด','Closes')}</label>${sel('fStClose',S.close,times.map(x=>({v:x,l:x})))}</div></div>
+      <div class="auto-note" style="margin:10px 0 0;">✅ ${L('กรอกครั้งเดียว — หน้าร้าน และ ระบบจองคิว ใช้วัน-เวลานี้อัตโนมัติ','Fill once — your store page and the booking system both use these hours automatically')}</div>
+      <label class="fld-lbl">${L('ที่ตั้ง','Location')}</label><input class="fld" id="fLoc" value="${esc(S.loc)}" placeholder="${L('เช่น ชั้น G โซน A','e.g. G floor, Zone A')}">
+      <button class="sheet-save" onclick="saveContact()">${L('บันทึก','Save')}</button>`;
+  } else if(kind==='menu'){
+    const hasItems=S.menu.filter(r=>r[0]).length>0;
+    const head=`<h3>${S.ptype==='service'?'🧾':'🍽️'} ${menuNm()}</h3><p class="hint">${L('กรอกครั้งเดียว — โฆษณาทุกตัวที่มีปุ่ม View Menu ใช้รายการชุดนี้','Fill once — every ad with a View Menu button uses this list')}</p>`;
+    if(!hasItems&&!S.menuMode){
+      /* ── เลือกวิธีก่อน (สะอาด ไม่ยัดทุกอย่างในหน้าเดียว) ── */
+      html=`${head}
+        <button class="hub-card" onclick="setMenuMode('type')"><span class="ic">⌨️</span><span class="tx"><span class="nm">${L('กรอกเอง','Type it in')}</span><div class="st">${L('เพิ่มรายการทีละแถว — ชื่อ · ราคา · รูป','Add items one by one — name · price · photo')}</div></span><span class="go">›</span></button>
+        <button class="hub-card" onclick="setMenuMode('photo')"><span class="ic">📷</span><span class="tx"><span class="nm">${L('อัปรูปเมนู ให้ AI กรอกให้','Upload a menu photo — AI fills it')}</span><div class="st">${L('ถ่ายรูปเมนูร้าน → AI อ่านชื่อ+ราคาให้ ตรวจก่อนบันทึก','Snap your menu → AI reads names + prices for review')}</div></span><span class="go">›</span></button>
+        <button class="hub-card" onclick="setMenuMode('link')"><span class="ic">🔗</span><span class="tx"><span class="nm">${L('วางลิงก์ ให้ AI อ่าน','Paste a link — AI reads it')}</span><div class="st">${L('เว็บ / รูป / PDF เมนูของร้าน','Your menu on the web / image / PDF')}</div></span><span class="go">›</span></button>
+        <p class="hint" style="margin-top:10px;">${L('เลือกวิธีไหนก็แก้ทีหลังได้เสมอ','Whichever you pick, you can edit later')}</p>`;
+    } else if(S.menuMode==='photo'&&!hasItems){
+      html=`${head}
+        <input type="file" id="menuPhotoFile" accept="image/*" hidden onchange="onMenuPhoto(this)">
+        <button class="img-pick" onclick="el('menuPhotoFile').click()">📷 ${L('ถ่าย / เลือกรูปเมนู','Snap / pick a menu photo')}</button>
+        <div id="aiMenuBox"></div>
+        <button class="btn-ghost" style="margin-top:12px;" onclick="setMenuMode(null)">‹ ${L('เปลี่ยนวิธี','Change method')}</button>`;
+    } else if(S.menuMode==='link'){
+      html=`${head}
+        <label class="fld-lbl">${L('ลิงก์เมนู (เว็บ / รูป / PDF)','Menu link (web / image / PDF)')}</label>
+        <div class="fld-wrap"><input class="fld" id="fMenuLink" value="${esc(S.menuLink)}" placeholder="https://...">
+          <button class="ai-btn" onclick="aiMenuFromLink()">🤖 ${L('อ่านลิงก์','Read link')}</button></div>
+        <div class="hint" style="margin:6px 0 0;">${L('Facebook/IG มักอ่านไม่ได้ (ติดล็อกอิน) — แคปหน้าจอเมนูแล้วใช้วิธีอัปรูปแทน','Facebook/IG usually can’t be read (login wall) — screenshot the menu and use the photo method instead')}</div>
+        <div id="aiMenuBox"></div>
+        <button class="btn-ghost" style="margin-top:12px;" onclick="setMenuMode(null)">‹ ${L('เปลี่ยนวิธี','Change method')}</button>`;
+    } else {
+      /* ── มีรายการแล้ว (หรือเลือกกรอกเอง) → ตัวแก้ไข · AI เป็นปุ่มเสริมเล็กๆ ── */
+      html=`${head}
+        <div class="auto-note">${L('แก้เมนูที่นี่ที่เดียว → อัปเดตทุกโฆษณาอัตโนมัติ','Edit the menu here once → every ad updates automatically')}</div>
+        <input type="file" id="menuPhotoFile" accept="image/*" hidden onchange="onMenuPhoto(this)">
+        <input type="file" id="rowImgFile" accept="image/*" hidden onchange="onRowImg(this)">
+        <div id="rowsBox">${rowsHtml(S.menu)}</div><button class="ex-add" onclick="addRow('menu')">${L('＋ เพิ่มรายการ','＋ Add item')}</button>
+        <div id="aiMenuBox"></div>
+        <div style="display:flex;gap:8px;margin-top:12px;">
+          <button class="btn-ghost" onclick="syncRows();syncLinks();el('menuPhotoFile').click()">📷 ${L('เพิ่มจากรูป (AI)','Add from photo (AI)')}</button>
+          <button class="btn-ghost" onclick="setMenuMode('link')">🔗 ${L('เพิ่มจากลิงก์ (AI)','Add from link (AI)')}</button>
+        </div>
+        <button class="sheet-save" onclick="saveRows('menu')">${L('บันทึก','Save')}</button>`;
+    }
+  } else if(kind==='order'){
+    const n=S.menu.filter(r=>r[0]).length;
+    html=`<h3>🛒 ${t('orderNm')}</h3><p class="hint">${L('ใช้กับปุ่ม Order ของทุกโฆษณา','Used by every ad’s Order button')}</p>
+      <div class="auto-note">✅ ${L(`ใช้รายการชุดเดียวกับ "${menuNm()}" (${n} รายการ) — ไม่ต้องกรอกซ้ำ ตั้งค่าเฉพาะการรับออเดอร์ที่นี่`,`Uses the same items as "${menuNm()}" (${n} item${n===1?'':'s'}) — no re-typing; only ordering settings here`)}</div>
+      <button class="ex-add" onclick="openSheet('menu')">✎ ${L('แก้รายการ (เปิด','Edit items (open')} ${menuNm()})</button>
+      <label class="fld-lbl">${L('รับออเดอร์แบบไหน','How do you fulfil orders?')}</label>
+      <div class="word-chips">${[['dinein',L('🍽️ ทานที่ร้าน','🍽️ Dine-in')],['pickup',L('🛍️ รับเอง','🛍️ Pickup')],['delivery',L('🛵 เดลิเวอรี','🛵 Delivery')]].map(f=>`<button class="wchip ${S.ful.includes(f[0])?'on':''}" onclick="tglFul('${f[0]}')">${f[1]}</button>`).join('')}</div>
+      <div class="row2"><input class="fld" id="fDeliv" value="${esc(S.deliv)}" placeholder="${L('ค่าส่ง (บาท)','Delivery fee (฿)')}" inputmode="numeric"><input class="fld" id="fMin" value="${esc(S.min)}" placeholder="${L('ขั้นต่ำ/ออเดอร์','Minimum order')}" inputmode="numeric"></div>
+      <label class="fld-lbl">${L('มีระบบสั่งของร้านอยู่แล้ว? ใส่ลิงก์ (ไม่บังคับ)','Already have an ordering system? Add the link (optional)')}</label>
+      <input class="fld" id="fOrderLink" value="${esc(S.orderLink)}" placeholder="https://...">
+      <button class="sheet-save" onclick="saveOrderCfg()">${L('บันทึก','Save')}</button>`;
+  } else if(kind==='book'){
+    html=`<h3>📅 ${bookNm()}</h3><p class="hint">${L('ตารางเดียว ใช้กับปุ่ม Book ของทุกโฆษณา','One schedule — used by every ad’s Book button')}</p>
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;cursor:pointer;"><input type="checkbox" id="fBkOn" ${S.book.on?'checked':''}> ${L('เปิดรับจองคิว','Accept bookings')}</label>
+      <div class="auto-note" style="margin:12px 0 0;">🕐 ${L('รับจองตามวัน-เวลาเปิดร้าน: ','Bookings follow your store hours: ')}<b>${hoursText()}</b><br><a href="#" onclick="event.preventDefault();openSheet('contact')" style="color:inherit;font-weight:800;">${L('✏️ แก้วัน-เวลาเปิดร้าน →','✏️ Edit store hours →')}</a></div>
+      <div class="row2"><div><label class="fld-lbl">${L('ความยาว/คิว','Slot length')}</label>${sel('fBkSlot',S.book.slot,[30,45,60,90,120].map(m=>({v:m,l:m+L(' นาที',' min')})))}</div><div><label class="fld-lbl">${L('จองล่วงหน้า','Book ahead')}</label>${sel('fBkAhead',S.book.ahead,[3,7,14,30].map(d=>({v:d,l:d+L(' วัน',' days')})))}</div></div>
+      <div class="row2"><div><label class="fld-lbl">${L('พักเบรก เริ่ม (ถ้ามี)','Break starts (optional)')}</label>${sel('fBkBreakS',S.book.breakS,[{v:'',l:'—'}].concat(times.map(x=>({v:x,l:x}))))}</div><div><label class="fld-lbl">${L('พักเบรก ถึง','Break ends')}</label>${sel('fBkBreakE',S.book.breakE,[{v:'',l:'—'}].concat(times.map(x=>({v:x,l:x}))))}</div></div>
+      <input class="fld" id="fBkCap" value="${esc(S.book.cap)}" placeholder="${L('รับกี่คิว/ช่วง (ไม่บังคับ)','Capacity per slot (optional)')}" inputmode="numeric" style="margin-top:10px;">
+      <button class="sheet-save" onclick="saveBook()">${L('บันทึก','Save')}</button>`;
+  } else if(kind==='login'){
+    html=`<h3>${L('เข้าสู่ระบบก่อนบันทึก','Sign in to save')}</h3><p class="hint">${L('ผูกร้านกับบัญชี — กลับมาแก้ไขได้ทุกเครื่อง ไม่ต้องกรอกใหม่','Link the store to your account — edit from any device, no re-typing')}</p>
+      <button class="login-big login-line" onclick="authLine()"><span class="lic">💬</span> ${L('เข้าสู่ระบบด้วย LINE','Continue with LINE')}</button>
+      <button class="login-big login-mail" onclick="authEmailStart()"><span class="lic">✉️</span> ${L('เข้าสู่ระบบด้วย Email (OTP)','Continue with Email (OTP)')}</button>
+      <div id="otpBox"></div>
+      <p class="hint" style="margin-top:12px;">${L('(prototype — ของจริงใช้ LINE Login / ส่งรหัส OTP ทางอีเมล)','(prototype — real form uses LINE Login / emailed OTP)')}</p>`;
+  }
+  sh.innerHTML='<div class="grab"></div>'+html;sh.classList.add('open');el('scrim').classList.add('open');
+}
+function closeSheet(){el('sheet').classList.remove('open');el('scrim').classList.remove('open');}
+
+/* pics + logo warn + cover focus */
+function onPic(inp,k){const f=inp.files[0];if(f)S[k]=URL.createObjectURL(f);inp.value='';openSheet('cover');renderStep();}
+function onLogo(inp){const f=inp.files[0];if(f){S.logo=URL.createObjectURL(f);S.logoPrev='';S.logoWarn=false;checkLogoBg();}inp.value='';openSheet('cover');renderStep();}
+/* วาดโลโก้ลง canvas (ย่อไม่เกิน 1024px) แล้วคืน {canvas,ctx,imageData} */
+function logoCanvas(cb){const im=new Image();im.onload=()=>{
+  const k=Math.min(1,1024/Math.max(im.width,im.height));
+  const c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);
+  const x=c.getContext('2d');x.drawImage(im,0,0,c.width,c.height);
+  cb(c,x,x.getImageData(0,0,c.width,c.height));
+};im.src=S.logo;}
+/* ตรวจจาก pixel จริง: มุมทั้ง 4 ทึบและสีเดียวกัน = พื้นหลังไม่โปร่งใส (แม่นกว่าดูนามสกุลไฟล์) */
+function checkLogoBg(){logoCanvas((c,x,img)=>{
+  const d=img.data,W=c.width,H=c.height;
+  const px=(i,j)=>{const o=(j*W+i)*4;return[d[o],d[o+1],d[o+2],d[o+3]];};
+  const cs=[px(0,0),px(W-1,0),px(0,H-1),px(W-1,H-1)];
+  const near=(a,b)=>Math.abs(a[0]-b[0])+Math.abs(a[1]-b[1])+Math.abs(a[2]-b[2])<60;
+  S.logoWarn=cs.every(p=>p[3]>250)&&near(cs[0],cs[1])&&near(cs[0],cs[2])&&near(cs[0],cs[3]);
+  openSheet('cover');renderStep();
+});}
+/* ลบพื้นหลังจริงด้วย flood-fill จากขอบรูป: ลบเฉพาะสีใกล้สีพื้น (กันโดนสีเดียวกันกลางโลโก้) + ขอบจางนุ่ม */
+function removeLogoBg(){logoCanvas((c,x,img)=>{
+  const d=img.data,W=c.width,H=c.height,TOL=48;
+  const o0=0,bg=[d[o0],d[o0+1],d[o0+2]];
+  const dist=o=>{const r=d[o]-bg[0],g=d[o+1]-bg[1],b=d[o+2]-bg[2];return Math.sqrt(r*r+g*g+b*b);};
+  const seen=new Uint8Array(W*H),st=[];
+  for(let i=0;i<W;i++)st.push([i,0],[i,H-1]);
+  for(let j=0;j<H;j++)st.push([0,j],[W-1,j]);
+  while(st.length){const [i,j]=st.pop();if(i<0||j<0||i>=W||j>=H)continue;const idx=j*W+i;if(seen[idx])continue;seen[idx]=1;
+    const o=idx*4;if(dist(o)>=TOL)continue;d[o+3]=0;st.push([i+1,j],[i-1,j],[i,j+1],[i,j-1]);}
+  for(let j=0;j<H;j++)for(let i=0;i<W;i++){const o=(j*W+i)*4;if(!d[o+3])continue;
+    const edge=[[1,0],[-1,0],[0,1],[0,-1]].some(([a,b])=>{const ii=i+a,jj=j+b;return ii>=0&&jj>=0&&ii<W&&jj<H&&!d[(jj*W+ii)*4+3];});
+    if(edge){const t=dist(o);if(t<TOL*2)d[o+3]=Math.min(d[o+3],Math.round(255*t/(TOL*2)));}}
+  x.putImageData(img,0,0);
+  S.logoPrev=S.logo;S.logo=c.toDataURL('image/png');S.logoWarn=false;
+  openSheet('cover');renderStep();
+});}
+function undoLogoBg(){if(!S.logoPrev)return;S.logo=S.logoPrev;S.logoPrev='';checkLogoBg();}
+function setFocus(f){S.coverFocus=f;openSheet('cover');renderStep();}
+/* about + tags (+ custom + ✨AI) */
+function syncAbout(){if(el('fName'))S.name=el('fName').value;if(el('fAbout'))S.about=el('fAbout').value;}
+function addCustomTags(){const v=(el('fTagCustom')&&el('fTagCustom').value||'').split(',').map(s=>s.trim()).filter(Boolean);v.forEach(x=>{if(!S.tags.includes(x))S.tags.push(x);});}
+function tglTag(tg){syncAbout();addCustomTags();const i=S.tags.indexOf(tg);if(i>=0)S.tags.splice(i,1);else S.tags.push(tg);openSheet('about');}
+function saveAbout(){syncAbout();addCustomTags();closeSheet();renderStep();}
+function aiAbout(){syncAbout();
+  const tags=S.tags.slice(0,3).map(tagL).join(' · ');
+  const dsL=S.lang==='en'?(ptype().dsEn||'great services near you'):(ptype().ds||'บริการดีๆ ใกล้คุณ');
+  const base=S.about||`${S.name||L('ร้านของเรา','Our store')} — ${dsL}`;
+  const sug=S.about
+    ?`${S.about.replace(/\s+$/,'')} ${tags?L('จุดเด่น: ','Highlights: ')+tags+'.':''} ${L('ยินดีต้อนรับทุกท่านค่ะ/ครับ','We look forward to seeing you!')}`
+    :`${base}. ${tags?L('จุดเด่น: ','Highlights: ')+tags+'.':''} ${L('เปิดบริการ','Open')} ${hoursText()} ${L('ที่','at')} ${S.loc||'de Residenz'} — ${L('แวะมาหากันได้เลย!','drop by any time!')}`;
+  el('aiAboutBox').innerHTML=`<div class="ai-box"><div class="ai-h">✨ ${S.about?L('AI เกลาให้ — เทียบก่อนได้','AI polish — compare first'):L('AI ร่างให้ — เทียบก่อนได้','AI draft — compare first')}</div><div class="ai-tx" id="aiAboutTx">${esc(sug)}</div>
+    <div class="ai-act"><button class="ai-use" onclick="useAiAbout()">${L('ใช้ข้อความนี้','Use this')}</button><button class="ai-keep" onclick="el('aiAboutBox').innerHTML=''">${L('เก็บของเดิม','Keep mine')}</button></div></div>`;
+}
+function useAiAbout(){S.about=el('aiAboutTx').textContent;openSheet('about');renderStep();}
+function aiTags(){syncAbout();addCustomTags();
+  const sug=(AI_TAGS[S.ptype]||AI_TAGS.shop).filter(x=>!S.tags.includes(x));
+  el('aiTagBox').innerHTML=sug.length?`<div class="ai-box"><div class="ai-h">✨ ${L('AI แนะนำจุดเด่น — แตะเพื่อเพิ่ม','AI suggestions — tap to add')}</div>
+    <div class="word-chips" style="margin-top:2px;">${sug.map(x=>`<button class="wchip add" onclick="addAiTag('${esc(x)}')">＋ ${esc(tagL(x))}</button>`).join('')}</div></div>`
+    :`<div class="ai-box"><div class="ai-h">✨ ${L('เพิ่มครบแล้ว','All added')}</div></div>`;
+}
+function addAiTag(x){if(!S.tags.includes(x))S.tags.push(x);openSheet('about');renderStep();aiTags();}
+/* contact */
+function syncContact(){[['fPhone','phone'],['fLine','line'],['fWeb','web'],['fMap','map'],['fLoc','loc'],['fStOpen','open'],['fStClose','close']].forEach(([id,k])=>{if(el(id))S[k]=el(id).value;});}
+function saveContact(){syncContact();closeSheet();renderStep();}
+/* store-content rows — [ชื่อ, ราคา, รูป] · รูปต่อรายการเหมือนฟอร์ม /offer (mn-thumb) */
+function rowsHtml(rows){const r=rows.length?rows:[['','','']];return r.map((x,i)=>`<div class="ex-row"><button class="rimg ${x[2]?'has':''}" ${x[2]?`style="background-image:url('${x[2]}')"`:''} onclick="pickRowImg(${i})" aria-label="${L('ใส่รูปรายการ','Add item photo')}" title="${L('รูปรายการ','Item photo')}">${x[2]?'':'📷'}</button><input class="fld rN" value="${esc(x[0])}" aria-label="${L('ชื่อรายการ','Item name')}" placeholder="${L('ชื่อรายการ','Item name')}"><input class="fld rP" value="${esc(x[1])}" aria-label="${L('ราคา','Price')}" placeholder="${L('ราคา','Price')}" style="max-width:86px"><button class="rrm" onclick="rmRow(${i})" aria-label="${L('ลบรายการนี้','Remove this item')}">✕</button></div>`).join('');}
+function syncRows(){const ns=[...document.querySelectorAll('#rowsBox .rN')].map(x=>x.value),ps=[...document.querySelectorAll('#rowsBox .rP')].map(x=>x.value);const old=S[rowKind];S[rowKind]=ns.map((n,i)=>[n,ps[i]||'',(old[i]&&old[i][2])||'']);}
+function syncLinks(){if(el('fMenuLink'))S.menuLink=el('fMenuLink').value;if(el('fOrderLink'))S.orderLink=el('fOrderLink').value;if(el('fDeliv'))S.deliv=el('fDeliv').value;if(el('fMin'))S.min=el('fMin').value;}
+let rowImgIdx=0;
+function pickRowImg(i){syncRows();syncLinks();rowImgIdx=i;if(!S[rowKind][i])S[rowKind][i]=['','',''];el('rowImgFile').click();}
+function onRowImg(inp){const f=inp.files[0];if(f&&S[rowKind][rowImgIdx])S[rowKind][rowImgIdx][2]=URL.createObjectURL(f);inp.value='';openSheet(rowKind);}
+/* เลือกวิธีใส่เมนู: null=หน้าเลือก · type=กรอกเอง · photo=AI อ่านรูป · link=AI อ่านลิงก์ */
+function setMenuMode(m){if(el('rowsBox')){syncRows();syncLinks();}S.menuMode=m;openSheet('menu');}
+/* 🤖 อ่านเมนูจากรูปด้วย AI — mock (ของจริง: ส่งรูปเข้า Netlify fn → Claude vision อ่าน
+   → คืน [{ชื่อ,ราคา}] → เติมให้ตรวจก่อนบันทึก · pattern เดียวกับ extract-payment ที่อ่านสลิปอยู่แล้ว) */
+function onMenuPhoto(inp){
+  const f=inp.files[0];inp.value='';if(!f)return;
+  if(el('rowsBox')){syncRows();syncLinks();}
+  el('aiMenuBox').innerHTML=`<div class="ai-box"><div class="ai-h">🤖 ${L('AI กำลังอ่านเมนูจากรูป…','AI is reading your menu…')}</div></div>`;
+  setTimeout(()=>{
+    const mock=[[L('ข้าวซอยไก่','Khao Soi (chicken)'),'89',''],[L('ผัดไทยกุ้งสด','Pad Thai (prawn)'),'95',''],[L('ชาเย็น','Thai iced tea'),'45','']];
+    const names=new Set(S.menu.map(r=>r[0]));
+    mock.forEach(r=>{if(!names.has(r[0]))S.menu.push(r);});
+    S.menuMode='type';   // อ่านเสร็จ → กลับหน้าตัวแก้ไขให้ตรวจ
+    openSheet('menu');
+    el('aiMenuBox').innerHTML=`<div class="ai-box"><div class="ai-h">✨ ${L(`AI อ่านได้ ${mock.length} รายการ (mock) — ตรวจชื่อ/ราคาแล้วแก้ได้ก่อนบันทึก`,`AI read ${mock.length} items (mock) — review names/prices before saving`)}</div></div>`;
+  },900);
+}
+/* 🤖 อ่านเมนูจากลิงก์ — mock (ของจริง: function fetch หน้าเว็บ/รูป/PDF → Claude สกัดรายการ
+   · FB/IG ติด login wall อ่านไม่ได้ → แนะนำแคปจอแล้วใช้ปุ่มอัปรูปแทน) */
+function aiMenuFromLink(){
+  if(el('rowsBox')){syncRows();}syncLinks();
+  if(!S.menuLink.trim()){el('aiMenuBox').innerHTML=`<div class="ai-box"><div class="ai-h">⚠️ ${L('ใส่ลิงก์ในช่องก่อน แล้วกดอ่านอีกครั้ง','Paste a link first, then tap read again')}</div></div>`;return;}
+  el('aiMenuBox').innerHTML=`<div class="ai-box"><div class="ai-h">🤖 ${L('AI กำลังเปิดลิงก์และอ่านเมนู…','AI is opening the link and reading…')}</div></div>`;
+  setTimeout(()=>{
+    const mock=[[L('กะเพราหมูกรอบ','Crispy pork basil'),'75',''],[L('ต้มยำกุ้ง','Tom Yum Goong'),'120',''],[L('ข้าวผัดปู','Crab fried rice'),'110',''],[L('น้ำมะพร้าว','Coconut water'),'40','']];
+    const names=new Set(S.menu.map(r=>r[0]));
+    mock.forEach(r=>{if(!names.has(r[0]))S.menu.push(r);});
+    S.menuMode='type';   // อ่านเสร็จ → กลับหน้าตัวแก้ไขให้ตรวจ
+    openSheet('menu');
+    el('aiMenuBox').innerHTML=`<div class="ai-box"><div class="ai-h">✨ ${L(`AI อ่านจากลิงก์ได้ ${mock.length} รายการ (mock) — ตรวจชื่อ/ราคาก่อนบันทึก`,`AI read ${mock.length} items from the link (mock) — review before saving`)}</div></div>`;
+  },1100);
+}
+function addRow(k){rowKind=k;syncRows();syncLinks();S[k].push(['','','']);openSheet(k);}
+function rmRow(i){syncRows();syncLinks();S[rowKind].splice(i,1);openSheet(rowKind);}
+function tglFul(f){syncLinks();const a=S.ful,i=a.indexOf(f);if(i>=0)a.splice(i,1);else a.push(f);openSheet('order');}
+function saveRows(k){rowKind=k;syncRows();syncLinks();S[k]=S[k].filter(r=>r[0]);closeSheet();renderStep();}
+function saveOrderCfg(){syncLinks();closeSheet();renderStep();}
+function syncBook(){if(!el('fBkOn'))return;S.book.on=el('fBkOn').checked;S.book.slot=el('fBkSlot').value;S.book.ahead=el('fBkAhead').value;S.book.breakS=el('fBkBreakS').value;S.book.breakE=el('fBkBreakE').value;S.book.cap=el('fBkCap').value;}
+/* วันเปิดเป็นของร้าน (ที่เดียว) — แตะชิปวันใน sheet ติดต่อ & เวลาเปิด */
+function tglDay(i){syncContact();const a=S.days,x=a.indexOf(i);if(x>=0)a.splice(x,1);else{a.push(i);a.sort();}openSheet('contact');}
+function saveBook(){syncBook();closeSheet();renderStep();}
+/* login-first (mock ของ LINE Login + Email OTP ในฟอร์มจริง) */
+function authLine(){S.auth={kind:'line'};closeSheet();finish();}
+function authEmailStart(){el('otpBox').innerHTML=`<label class="fld-lbl">${L('อีเมล','Email')}</label><input class="fld" id="fEmail" type="email" placeholder="you@email.com">
+  <button class="sheet-save" onclick="authEmailOtp()">${L('ส่งรหัส OTP','Send OTP')}</button>`;}
+function authEmailOtp(){const em=el('fEmail').value||'you@email.com';el('otpBox').innerHTML=`<div class="auto-note">📨 ${L('(mock) ส่งรหัสไปที่','(mock) code sent to')} ${esc(em)}</div>
+  <input class="fld" id="fOtp" inputmode="numeric" maxlength="6" placeholder="${L('รหัส 6 หลัก','6-digit code')}">
+  <button class="sheet-save" onclick="S.auth={kind:'email',email:'${esc(em)}'};closeSheet();finish();">${L('ยืนยัน','Verify')}</button>`;}
+/* finish → 2 ปลายทาง (dashboard / ลงโฆษณาต่อ) + โหมดแก้ไขร้าน */
+function finish(){
+  el('canvas').innerHTML=`<div class="canvas-body"><div class="fin"><div class="done-check">✓</div>
+    <div style="font-family:'Mitr';font-weight:600;font-size:20px;color:var(--navy)">${S.editMode?L('ส่งการแก้ไขแล้ว!','Changes submitted!'):L('บันทึกร้านแล้ว!','Store saved!')}</div>
+    <p style="font-size:13px;color:var(--muted);margin-top:8px;max-width:260px">(prototype) ${S.editMode?L('ร้านที่เผยแพร่แล้ว — การแก้ไขถูกส่งให้แอดมินตรวจ · ตัวที่ขึ้นจอยังเป็นเวอร์ชันเดิมจนกว่าจะอนุมัติ','This store is live — changes go to admin review; the on-screen version stays until approved'):L('โปรไฟล์ + เมนู/การขายถูกเก็บไว้ที่ร้าน — ลงโฆษณากี่ตัวก็ไม่ต้องกรอกซ้ำ','Profile + menu/selling are saved on the store — run any number of ads without re-typing')}</p>
+    <div class="fin-btns">
+      <button class="btn-navy" onclick="location.href='mockup-offer-app.html'">${L('＋ ลงโฆษณาต่อเลย →','＋ Run your first ad →')}</button>
+      <button class="btn-line" onclick="alert('${L('(prototype) ไปหน้า Dashboard ร้านของฉัน','(prototype) Goes to My Store dashboard')}')">${L('🏠 ไปหน้าร้านของฉัน (Dashboard)','🏠 My Store (Dashboard)')}</button>
+      <button class="btn-ghost" onclick="S.editMode=true;S.step=2;el('actbar').hidden=false;renderStep();">${L('✏️ แก้ไขร้าน (โหมดแก้ไข)','✏️ Edit store (edit mode)')}</button>
+    </div></div></div>`;
+  el('rail').innerHTML='';el('actbar').hidden=true;
+}
+
+el('nextBtn').onclick=()=>{
+  if(el('nextBtn').disabled)return;
+  if(S.step<S.total){S.step++;renderStep();}
+  else{if(!S.auth)openSheet('login');else finish();}
+};
+el('backBtn').onclick=()=>{if(S.step>1){S.step--;renderStep();}};
+el('scrim').onclick=closeSheet;
+renderStep();
+</script>
+</body>
+</html>

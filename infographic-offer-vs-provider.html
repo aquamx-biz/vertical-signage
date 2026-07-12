@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Offer หรือ Provider · คุณอยากโฆษณาแบบไหน</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=Anton&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+:root {
+    --navy:#0E3361; --navy-deep:#072147;
+    --orange:#C9864C; --orange-strong:#A36738; --orange-soft:#F6E5D0;
+    --cream:#FAF6ED; --ink:#0B1B33; --muted:#5C6B82; --white:#fff;
+    --line:#EADFC9; --ink-40:#8B98AE;
+    --green:#2E9E5B;
+}
+html, body { background:var(--cream); color:var(--ink); font-family:'IBM Plex Sans Thai','Nunito',system-ui,sans-serif; -webkit-font-smoothing:antialiased; min-height:100vh; }
+a { color:inherit; text-decoration:none; }
+
+/* NAV */
+.container { max-width:1200px; margin:0 auto; padding:0 32px; }
+.nav-wrap { background:var(--white); border-bottom:1px solid var(--line); position:sticky; top:0; z-index:50; }
+.nav { height:76px; display:flex; align-items:center; justify-content:space-between; }
+.brand { font-family:'Nunito',sans-serif; font-weight:800; font-size:26px; color:var(--navy); letter-spacing:-0.02em; }
+.brand .x { color:var(--orange); }
+.nav-links { display:flex; gap:34px; }
+.nav-links a { color:var(--ink); font-weight:500; font-size:15.5px; }
+.nav-links a:hover { color:var(--orange-strong); }
+.nav-right { display:flex; align-items:center; gap:10px; }
+.lang-btn { background:none; border:1.5px solid var(--navy); border-radius:8px; padding:7px 14px; font-size:13px; font-weight:700; color:var(--navy); font-family:'Nunito',sans-serif; cursor:pointer; }
+.btn-primary { background:var(--navy); color:var(--white); border-radius:10px; padding:11px 20px; font-weight:700; font-family:'Nunito',sans-serif; }
+.nav-toggle { display:none; align-items:center; justify-content:center; width:40px; height:36px; background:none; border:1.5px solid var(--line); border-radius:8px; cursor:pointer; padding:0; flex:0 0 auto; }
+.nav-toggle .bars, .nav-toggle .bars::before, .nav-toggle .bars::after { display:block; width:18px; height:2px; background:var(--navy); border-radius:2px; transition:transform .2s ease, opacity .2s ease; }
+.nav-toggle .bars { position:relative; }
+.nav-toggle .bars::before, .nav-toggle .bars::after { content:""; position:absolute; left:0; }
+.nav-toggle .bars::before { top:-6px; }
+.nav-toggle .bars::after { top:6px; }
+.nav-toggle.open .bars { background:transparent; }
+.nav-toggle.open .bars::before { transform:translateY(6px) rotate(45deg); }
+.nav-toggle.open .bars::after { transform:translateY(-6px) rotate(-45deg); }
+
+/* HEADER */
+.page { max-width:1280px; margin:0 auto; padding:64px 40px 80px; }
+.eyebrow { display:inline-flex; align-items:center; gap:10px; font-family:'Nunito',sans-serif; font-size:14px; color:var(--orange-strong); letter-spacing:0.06em; text-transform:uppercase; font-weight:700; margin-bottom:18px; }
+.eyebrow .dot { width:8px; height:8px; border-radius:50%; background:var(--orange); }
+h1.title { font-family:'Nunito',sans-serif; font-size:54px; font-weight:800; line-height:1.15; letter-spacing:-0.01em; color:var(--navy); margin-bottom:20px; }
+h1.title .accent { color:var(--orange); }
+.lede { font-size:18px; color:var(--muted); max-width:780px; line-height:1.65; }
+.lede b { color:var(--ink); font-weight:700; }
+
+/* DECISION BANNER */
+.decide { display:flex; flex-wrap:wrap; gap:16px; margin:40px 0 8px; }
+.decide .q { flex:1 1 320px; border-radius:16px; padding:18px 22px; display:flex; align-items:center; gap:16px; }
+.decide .q.o { background:linear-gradient(135deg,#fbf1e3,#f6e5d0); border:1.5px solid var(--orange); }
+.decide .q.p { background:linear-gradient(135deg,#e9eff7,#dde7f3); border:1.5px solid var(--navy); }
+.decide .q .ico { font-size:30px; flex-shrink:0; }
+.decide .q .tx { font-size:15px; line-height:1.5; color:var(--ink); }
+.decide .q .tx b { font-family:'Nunito',sans-serif; font-weight:800; }
+.decide .q.o .tag { color:var(--orange-strong); }
+.decide .q.p .tag { color:var(--navy); }
+.decide .q .tag { font-family:'Nunito',sans-serif; font-weight:800; font-size:13px; text-transform:uppercase; letter-spacing:0.04em; }
+
+/* COMPARE GRID */
+.cmp { display:grid; grid-template-columns:1fr 1fr; gap:24px; margin-top:34px; align-items:start; }
+.col { background:var(--white); border:1px solid var(--line); border-radius:22px; padding:26px 24px 28px; }
+.col.offer { border-top:5px solid var(--orange); }
+.col.prov { border-top:5px solid var(--navy); }
+.col-head { display:flex; align-items:center; gap:12px; margin-bottom:5px; }
+.col-head .em { font-size:26px; }
+.col-head .nm { font-family:'Nunito',sans-serif; font-weight:800; font-size:22px; }
+.col.offer .nm { color:var(--orange-strong); }
+.col.prov .nm { color:var(--navy); }
+.col-sub { font-size:14px; color:var(--muted); margin-bottom:20px; line-height:1.5; }
+.col-sub b { color:var(--ink); font-weight:700; }
+
+/* STAGE LABELS + connector */
+.stage-lbl { display:flex; align-items:center; justify-content:center; gap:7px; font-family:'Nunito',sans-serif; font-weight:800; font-size:11px; text-transform:uppercase; letter-spacing:0.05em; color:var(--muted); margin-bottom:9px; }
+.stage-lbl .n { display:inline-flex; width:19px; height:19px; border-radius:50%; background:var(--orange-soft); color:var(--orange-strong); align-items:center; justify-content:center; font-size:10px; }
+.col.prov .stage-lbl .n { background:#dde7f3; color:var(--navy); }
+.scan-conn { display:flex; flex-direction:column; align-items:center; gap:2px; margin:12px 0 16px; }
+.scan-conn .ar { font-family:'Anton',sans-serif; font-size:20px; color:var(--orange); line-height:1; }
+.col.prov .scan-conn .ar { color:var(--navy); }
+.scan-conn .tx { font-size:10px; font-weight:700; color:var(--muted); }
+
+/* TOTEM (signage 9:16) */
+.totem-wrap { display:flex; justify-content:center; }
+.totem { width:196px; }
+.tt-screen { width:100%; aspect-ratio:9/16; border:3px solid #0c111c; border-bottom:none; border-radius:8px 8px 0 0; position:relative; overflow:hidden; background:#0a0c10; }
+.tt-base { width:100%; height:24px; background:linear-gradient(180deg,#1b2740 0%,#05080d 100%); border-top:2px solid #36486a; border-radius:0 0 8px 8px; box-shadow:inset 0 2px 5px -1px rgba(0,0,0,0.5), 0 12px 22px -8px rgba(0,0,0,0.5); }
+.tt-bg { position:absolute; inset:0; background-size:cover; background-position:center; }
+.tt-grad { position:absolute; inset:auto 0 0 0; height:70%; background:linear-gradient(0deg,rgba(5,6,8,0.9) 0%,rgba(5,6,8,0.35) 50%,transparent 100%); }
+/* MENU — top-left (persistent shell) */
+.tt-menu { position:absolute; top:9px; left:9px; z-index:6; display:flex; align-items:center; gap:4px; background:rgba(8,12,22,0.5); border:1px solid rgba(255,255,255,0.32); color:#fff; font-size:6px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; padding:4px 7px; border-radius:6px; }
+/* client logo — top-right */
+.tt-logo { position:absolute; top:11px; right:10px; z-index:6; font-family:'Anton',sans-serif; font-size:9px; letter-spacing:0.16em; text-transform:uppercase; color:#fff; text-shadow:0 1px 5px rgba(0,0,0,0.6); }
+/* text block (v6 slot-content) — bottom-left, ABOVE the cta dock */
+.tt-content { position:absolute; left:10px; right:10px; bottom:68px; z-index:5; display:flex; flex-direction:column; align-items:flex-start; gap:6px; }
+.tt-eyebrow { display:inline-flex; align-items:center; gap:5px; padding:3px 8px; border:1px solid rgba(255,255,255,0.4); border-radius:20px; background:rgba(8,12,22,0.35); font-size:6px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:#fff; }
+.tt-eyebrow::before { content:''; width:4px; height:4px; border-radius:50%; background:#6DD5E8; box-shadow:0 0 5px #6DD5E8; }
+.tt-title { font-family:'Anton',sans-serif; font-size:16px; line-height:0.95; text-transform:uppercase; color:#fff; text-shadow:0 1px 6px rgba(0,0,0,0.5); }
+/* price line — offer only, sits in content block ABOVE the cta dock */
+.tt-price { display:flex; align-items:baseline; gap:5px; font-family:'IBM Plex Sans Thai','Nunito',sans-serif; font-weight:700; font-size:20px; color:#FBD7A8; line-height:1; text-shadow:0 1px 7px rgba(0,0,0,0.6); }
+.tt-price small { font-size:8px; font-weight:600; color:#fff; opacity:0.88; letter-spacing:0; }
+.tt-sub { font-size:8px; line-height:1.4; color:rgba(255,255,255,0.88); text-shadow:0 1px 4px rgba(0,0,0,0.55); max-width:155px; }
+/* CTA dock (v6) — bottom-left, buttons STACKED vertically, equal width */
+.tt-dock { position:absolute; left:10px; bottom:10px; z-index:6; display:grid; grid-template-columns:max-content; gap:4px; }
+.tt-cta { width:100%; display:flex; align-items:center; justify-content:space-between; gap:14px; background:rgba(8,12,22,0.5); border:1px solid rgba(255,255,255,0.4); color:#fff; font-family:'Nunito',sans-serif; font-weight:700; font-size:7.5px; letter-spacing:0.08em; text-transform:uppercase; padding:6px 9px; border-radius:7px; backdrop-filter:blur(4px); }
+.tt-cta.sec { font-weight:600; border-color:rgba(255,255,255,0.26); }
+.tt-cta .ar { font-size:8px; }
+
+/* PHONE */
+.dev-wrap { display:flex; justify-content:center; margin-bottom:22px; }
+.dev { width:268px; zoom:0.72; background:#0c111c; border-radius:30px; padding:9px; box-shadow:0 20px 40px -16px rgba(0,0,0,0.5); }
+.scr { background:#fff; border-radius:23px; overflow-y:auto; overflow-x:hidden; position:relative; height:540px; }
+.scr::-webkit-scrollbar { width:5px; }
+.scr::-webkit-scrollbar-thumb { background:rgba(0,0,0,0.18); border-radius:3px; }
+.bar { position:sticky; top:0; z-index:10; height:26px; background:var(--white); border-bottom:1px solid #eee; display:flex; align-items:center; justify-content:space-between; padding:0 12px; }
+.bar .l { font-size:8px; color:var(--muted); font-weight:600; }
+.bar .r { font-family:'Nunito',sans-serif; font-weight:800; font-size:10px; color:var(--navy); }
+.bar .r .x { color:var(--orange); }
+
+/* hero / cover */
+.hero { position:relative; aspect-ratio:1/1; background-size:cover; background-position:center; }
+.cover { position:relative; aspect-ratio:16/10; background-size:cover; background-position:center; }
+.cover::after { content:''; position:absolute; inset:0; background:linear-gradient(180deg,rgba(8,12,22,0) 35%,rgba(8,12,22,0.78)); }
+.ov-logo { position:absolute; top:8px; right:9px; display:flex; align-items:center; gap:4px; color:#fff; text-shadow:0 1px 4px rgba(0,0,0,0.6); z-index:2; }
+.ov-logo .mk { width:15px; height:15px; border-radius:50%; background:#fff; color:#0e1d3a; display:flex; align-items:center; justify-content:center; font-family:'Anton',sans-serif; font-size:9px; }
+.ov-logo .nm { font-size:7px; font-weight:800; text-transform:uppercase; letter-spacing:0.3px; }
+.chip { position:absolute; left:8px; bottom:9px; background:rgba(8,12,22,0.62); border:1px solid rgba(255,255,255,0.32); color:#fff; font-size:6.5px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; padding:3px 8px; border-radius:12px; z-index:2; }
+.cover-id { position:absolute; left:11px; bottom:10px; z-index:2; display:flex; align-items:center; gap:7px; }
+.cover-id .lg { width:30px; height:30px; border-radius:9px; background:#fff; color:var(--navy); display:flex; align-items:center; justify-content:center; font-family:'Anton',sans-serif; font-size:16px; box-shadow:0 3px 8px rgba(0,0,0,0.3); }
+.cover-id .nm { color:#fff; }
+.cover-id .nm b { display:block; font-family:'Nunito',sans-serif; font-weight:800; font-size:12px; line-height:1.1; }
+.cover-id .nm span { font-size:7px; opacity:0.85; }
+
+/* body */
+.body { padding:11px 12px 13px; }
+.prov-row { display:flex; align-items:center; gap:6px; margin-bottom:4px; }
+.prov-row .pl { width:15px; height:15px; border-radius:50%; background:var(--navy); color:#fff; display:flex; align-items:center; justify-content:center; font-family:'Anton',sans-serif; font-size:8px; }
+.prov-row .pn { font-size:8.5px; font-weight:700; color:var(--muted); }
+.o-title { font-family:'Nunito',sans-serif; font-weight:800; font-size:14px; line-height:1.2; color:var(--ink); margin-bottom:7px; }
+.price-row { display:flex; align-items:baseline; gap:6px; margin-bottom:7px; }
+.price-row .big { font-family:'Nunito',sans-serif; font-weight:800; font-size:21px; color:var(--orange-strong); line-height:1; }
+.price-row .from { font-size:8px; color:var(--muted); }
+.badge-row { display:flex; flex-wrap:wrap; gap:4px; margin-bottom:8px; }
+.bdg { font-size:7.5px; padding:2.5px 7px; border-radius:11px; border:1px solid var(--line); color:var(--muted); }
+.bdg.av { background:#f3faf5; border-color:#cfe9d8; color:#26794a; }
+.desc { font-size:8.5px; line-height:1.5; color:var(--muted); margin-bottom:10px; }
+.cta { display:block; text-align:center; background:var(--navy); color:#fff; font-family:'Nunito',sans-serif; font-weight:800; font-size:10px; padding:9px; border-radius:11px; margin-bottom:9px; }
+.about-h { font-size:7px; font-weight:800; text-transform:uppercase; letter-spacing:0.08em; color:var(--orange-strong); margin-bottom:3px; }
+.about-t { font-size:8.5px; line-height:1.5; color:var(--muted); margin-bottom:10px; }
+
+/* contact mini */
+.contact { display:flex; gap:5px; }
+.contact.slim { margin-bottom:8px; }
+.cb { flex:1; border:1px solid var(--line); border-radius:9px; padding:6px 0; display:flex; flex-direction:column; align-items:center; gap:2px; }
+.cb .i { font-size:11px; }
+.cb .t { font-size:6px; color:var(--muted); font-weight:600; }
+.view-store { display:block; text-align:center; border:1px solid var(--orange); color:var(--orange-strong); font-weight:700; font-size:8.5px; padding:7px; border-radius:10px; }
+
+/* info rows (provider) */
+.inf { border-top:1px solid #f0f0f0; padding-top:7px; margin-top:8px; }
+.inf .h { font-size:7px; font-weight:800; text-transform:uppercase; letter-spacing:0.06em; color:var(--navy); margin-bottom:2px; }
+.inf .t { font-size:8.5px; color:var(--muted); }
+
+/* offers grid (provider) */
+.grid-h { font-size:8px; font-weight:800; text-transform:uppercase; letter-spacing:0.06em; color:var(--navy); margin:11px 0 6px; }
+.grid { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+.gcard { border:1px solid var(--line); border-radius:9px; overflow:hidden; }
+.gcard .gi { aspect-ratio:1/1; background-size:cover; background-position:center; }
+.gcard .gt { padding:4px 5px 5px; }
+.gcard .gt .nm { font-size:7px; font-weight:700; color:var(--ink); line-height:1.2; }
+.gcard .gt .pr { font-size:7.5px; font-weight:800; color:var(--orange-strong); margin-top:2px; }
+
+/* spec card under phone */
+.spec { border-radius:14px; padding:16px 16px 6px; }
+.col.offer .spec { background:#fcf6ee; }
+.col.prov .spec { background:#eef3f9; }
+.spec .row { display:flex; gap:9px; margin-bottom:11px; }
+.spec .row .k { flex:0 0 86px; font-family:'Nunito',sans-serif; font-weight:800; font-size:11px; text-transform:uppercase; letter-spacing:0.03em; }
+.col.offer .spec .row .k { color:var(--orange-strong); }
+.col.prov .spec .row .k { color:var(--navy); }
+.spec .row .v { font-size:13px; line-height:1.5; color:var(--ink); }
+.spec .row .v b { font-weight:700; }
+.fieldlist { display:flex; flex-wrap:wrap; gap:5px; }
+.fchip { font-family:'JetBrains Mono',monospace; font-size:10.5px; padding:3px 8px; border-radius:7px; }
+.col.offer .fchip { background:#fff; border:1px solid var(--orange-soft); color:var(--orange-strong); }
+.col.prov .fchip { background:#fff; border:1px solid #cdd9ea; color:var(--navy); }
+.fchip.key { font-weight:700; }
+.col.offer .fchip.key { background:var(--orange); color:#fff; border-color:var(--orange); }
+
+/* COMPARISON MATRIX (rows = aspect, cols = Offer / Provider) */
+.mtx-scroll { overflow-x:auto; -webkit-overflow-scrolling:touch; margin-top:30px; }
+.mtx { display:grid; grid-template-columns:132px 1fr 1fr; min-width:720px;
+    background:var(--white); border:1px solid var(--line); border-radius:20px; overflow:hidden; }
+.mtx > div { border-bottom:1px solid var(--line); border-right:1px solid var(--line); padding:15px 18px; }
+.mtx > div:nth-child(3n)        { border-right:none; }
+.mtx > div:nth-last-child(-n+3) { border-bottom:none; }
+.mtx-corner { background:var(--white); }
+.mtx-head { display:flex; align-items:center; justify-content:center; gap:10px; font-family:'Nunito',sans-serif; font-weight:800; font-size:17px; line-height:1.2; text-align:center; }
+.mtx-head .em { font-size:21px; flex:0 0 auto; }
+.mtx-head.o { color:var(--orange-strong); background:#fcf6ee; }
+.mtx-head.p { color:var(--navy); background:#eef3f9; }
+.mtx-rh { display:flex; flex-direction:column; justify-content:center; background:var(--cream);
+    font-family:'Nunito',sans-serif; font-weight:800; font-size:12px; text-transform:uppercase; letter-spacing:0.03em; color:var(--muted); }
+.mtx-rh .rh-note { font-family:'IBM Plex Sans Thai','Nunito',sans-serif; font-weight:600; font-size:9px; text-transform:none; letter-spacing:0; color:var(--ink-40); margin-top:5px; }
+.mtx-rh .rh-eye { font-size:9px; font-weight:800; letter-spacing:0.04em; color:var(--orange-strong); margin-bottom:5px; }
+.mc { font-size:13px; line-height:1.55; color:var(--ink); }
+.mc.o { background:rgba(201,134,76,0.04); }
+.mc.p { background:rgba(14,51,97,0.035); }
+.mc b { font-weight:700; }
+.mc-viz { display:flex; justify-content:center; align-items:flex-start; padding-top:18px; padding-bottom:18px; }
+.mc.o .fchip { background:#fff; border:1px solid var(--orange-soft); color:var(--orange-strong); }
+.mc.p .fchip { background:#fff; border:1px solid #cdd9ea; color:var(--navy); }
+.mc.o .fchip.key { background:var(--orange); color:#fff; border-color:var(--orange); }
+.mc .fcat { display:flex; flex-wrap:wrap; align-items:center; gap:5px; margin-top:9px; }
+.mc .fcat .fl { font-size:11px; color:var(--muted); margin-right:1px; }
+
+/* FILL-IN FORMS */
+.fill-note { background:#f3faf5; border:1.5px solid #cfe9d8; border-radius:14px; padding:15px 20px; font-size:14.5px; line-height:1.55; color:var(--ink); margin-bottom:26px; }
+.fill-note b { font-weight:800; color:#1f7a45; }
+.form-grid { display:grid; grid-template-columns:1fr 1fr; gap:24px; align-items:start; }
+.form-card { background:var(--white); border:1px solid var(--line); border-radius:20px; padding:24px 22px 22px; }
+.form-card.offer { border-top:5px solid var(--orange); }
+.form-card.prov { border-top:5px solid var(--navy); }
+.fc-head { display:flex; align-items:center; gap:11px; margin-bottom:4px; }
+.fc-head .em { font-size:23px; }
+.fc-head .t { font-family:'Nunito',sans-serif; font-weight:800; font-size:18px; }
+.form-card.offer .t { color:var(--orange-strong); }
+.form-card.prov .t { color:var(--navy); }
+.fc-badge { margin-left:auto; font-family:'Nunito',sans-serif; font-weight:800; font-size:10px; text-transform:uppercase; letter-spacing:0.04em; padding:4px 10px; border-radius:20px; }
+.form-card.offer .fc-badge { background:var(--orange-soft); color:var(--orange-strong); }
+.form-card.prov .fc-badge { background:#dde7f3; color:var(--navy); }
+.fc-sub { font-size:12.5px; color:var(--muted); margin-bottom:18px; line-height:1.5; }
+.ff { margin-bottom:12px; }
+.ff-row { display:flex; gap:10px; }
+.ff-row .ff { flex:1; }
+.ff-lbl { display:flex; justify-content:space-between; align-items:baseline; gap:6px; font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:var(--ink-40); margin-bottom:4px; }
+.ff-lbl .hint { text-transform:none; font-weight:600; letter-spacing:0; color:#bbb; }
+.ff-in { border:1px solid rgba(0,0,0,0.12); border-radius:9px; padding:9px 11px; font-size:12.5px; color:#aeb6c2; background:#fff; }
+.ff-in.area { min-height:44px; }
+.ff-in.up { border-style:dashed; text-align:center; color:#b9c1cd; font-size:11.5px; }
+.ff.key .ff-lbl { color:var(--orange-strong); }
+.ff.key .ff-in { border:1.6px solid var(--orange); background:#fffdf8; color:var(--orange-strong); font-weight:800; font-size:14px; }
+.ff.key .ff-lbl .star { color:var(--orange); }
+.ff.key .ff-in.price { display:flex; align-items:stretch; padding:0; overflow:hidden; }
+.ff.key .ff-in.price .cur { display:flex; align-items:center; padding:0 12px; background:var(--orange-soft); border-right:1.6px solid var(--orange); font-size:15px; }
+.ff.key .ff-in.price .val { flex:1; padding:9px 11px; }
+.ff.key .ff-in.price .val .ph { color:#d9b48a; font-weight:600; }
+/* auto block on offer form */
+.auto-blk { margin-top:16px; padding-top:15px; border-top:1.5px dashed #cfe9d8; }
+.auto-h { display:flex; align-items:center; gap:7px; font-family:'Nunito',sans-serif; font-weight:800; font-size:11.5px; text-transform:uppercase; letter-spacing:0.03em; color:#1f7a45; margin-bottom:9px; }
+.auto-chips { display:flex; flex-wrap:wrap; gap:6px; }
+.auto-chip { display:inline-flex; align-items:center; gap:4px; font-size:11px; color:#5b7a66; background:#f3faf5; border:1px solid #cfe9d8; border-radius:8px; padding:4px 9px; }
+.auto-note { font-size:11.5px; color:var(--muted); margin-top:9px; line-height:1.45; }
+.auto-note b { color:#1f7a45; font-weight:700; }
+
+/* link strip */
+.link-strip { margin-top:30px; background:var(--navy); border-radius:18px; padding:24px 28px; color:#fff; }
+.link-strip h3 { font-family:'Nunito',sans-serif; font-weight:800; font-size:17px; margin-bottom:14px; display:flex; align-items:center; gap:9px; }
+.link-strip .lk { display:flex; flex-wrap:wrap; gap:14px; }
+.link-strip .lk .it { flex:1 1 260px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.16); border-radius:12px; padding:13px 16px; font-size:13.5px; line-height:1.5; }
+.link-strip .lk .it b { color:#fff; font-weight:800; }
+.link-strip .lk .it .em { font-size:18px; }
+
+.foot { margin-top:34px; font-size:13px; color:var(--ink-40); text-align:center; }
+
+@media (max-width:880px){ .cmp{ grid-template-columns:1fr; } }
+@media (max-width:600px){
+  .page{ padding:36px 18px 56px; } .container{ padding:0 18px; } h1.title{ font-size:38px; }
+  .nav-toggle{ display:inline-flex; }
+  .brand img{ height:46px; }
+  .nav-right{ gap:8px; }
+  .btn-primary{ padding:9px 14px; font-size:14px; }
+  .nav-links{ display:none; position:absolute; top:100%; left:0; right:0; flex-direction:column; gap:0;
+    background:#fff; border-bottom:1px solid var(--line); box-shadow:0 14px 26px -10px rgba(7,18,40,0.18); padding:6px 0; z-index:60; }
+  .nav-links.open{ display:flex; }
+  .nav-links a{ padding:13px 24px; font-size:16px; border-top:1px solid var(--line); }
+}
+</style>
+</head>
+<body>
+
+<div class="nav-wrap"><div class="container"><nav class="nav">
+    <a href="https://aquamx.biz" class="brand" aria-label="aquamx"><img src="/img/logo.png" alt="aquamx" height="72" style="display:block;"></a>
+    <div class="nav-links"><a href="https://aquamx.biz#how" data-i18n="nav.how">วิธีทำงาน</a><a href="https://aquamx.biz#network" data-i18n="nav.network">เครือข่าย</a><a href="https://aquamx.biz#contact" data-i18n="nav.contact">ติดต่อ</a></div>
+    <div class="nav-right"><button class="lang-btn" id="langBtn">EN</button><a href="https://aquamx.biz/ratecard-sme/" class="btn-primary" data-i18n="nav.cta">ดูแพ็คเกจ →</a></div>
+    <button class="nav-toggle" id="navToggle" aria-label="เมนู" aria-expanded="false"><span class="bars"></span></button>
+</nav></div></div>
+
+<div class="page">
+
+    <div class="eyebrow"><span class="dot"></span><span data-i18n="eyebrow">Offer vs Provider · เลือกแบบที่ใช่</span></div>
+    <h1 class="title" data-i18n-html="h1">คุณอยากโฆษณา<br><span class="accent">แบบไหน?</span></h1>
+    <p class="lede" data-i18n-html="lede">
+        จะโฆษณา<b>สินค้าขายดี</b>แบบบน <b>Shopee / TikTok</b> หรือเลือกโฆษณาเพื่อ<b>แนะนำร้านของคุณ</b>แบบบน <b>Facebook / IG</b> — aquamx ทำได้หมด
+    </p>
+
+    <!-- COMPARE MATRIX -->
+    <div class="mtx-scroll"><div class="mtx">
+
+        <!-- header row -->
+        <div class="mtx-corner"></div>
+        <div class="mtx-head o"><span class="em">🎟️</span><span data-i18n="colh.offer">โฆษณาผลิตภัณฑ์ / บริการ</span></div>
+        <div class="mtx-head p"><span class="em">🏪</span><span data-i18n="colh.provider">โฆษณาร้านของคุณ</span></div>
+
+        <!-- เน้นอะไร -->
+        <div class="mtx-rh" data-i18n="spec.k.focus">เน้นอะไร</div>
+        <div class="mc o"><span data-i18n-html="spec.offer.focus"><b>ให้ลูกค้าตัดสินใจซื้อทันที</b><span class="fcat"><span class="fl">เหมาะกับ</span><span class="fchip">groceries</span><span class="fchip">shopping</span><span class="fchip">events</span><span class="fchip">education</span></span></span></div>
+        <div class="mc p"><span data-i18n-html="spec.provider.focus"><b>ให้ลูกค้ารู้จักและอยากมา</b><span class="fcat"><span class="fl">เหมาะกับ</span><span class="fchip">dining</span><span class="fchip">services</span><span class="fchip">health &amp; beauty</span><span class="fchip">travel</span></span></span></div>
+
+        <!-- บนจอป้าย -->
+        <div class="mtx-rh" data-i18n="st.signage">บนจอป้าย</div>
+        <div class="mc o mc-viz"><div class="totem">
+            <div class="tt-screen">
+                <div class="tt-bg" style="background-image:url('https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=400&q=72');"></div>
+                <div class="tt-grad"></div>
+                <div class="tt-menu">☰ Menu</div>
+                <div class="tt-logo">Aurora</div>
+                <div class="tt-content">
+                    <div class="tt-eyebrow">Featured Dining</div>
+                    <div class="tt-title">All-Day Brunch &amp; Specialty Coffee</div>
+                    <div class="tt-price">฿250 <small>เริ่มต้น / จาน</small></div>
+                    <div class="tt-sub">บรันช์ทั้งวัน · กาแฟพิเศษคั่วเอง</div>
+                </div>
+                <div class="tt-dock">
+                    <span class="tt-cta"><span>View Menu</span><span class="ar">→</span></span>
+                    <span class="tt-cta sec"><span>Reserve</span><span class="ar">↗</span></span>
+                </div>
+            </div>
+            <div class="tt-base"></div>
+        </div></div>
+        <div class="mc p mc-viz"><div class="totem">
+            <div class="tt-screen">
+                <div class="tt-bg" style="background-image:url('https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=440&q=72');"></div>
+                <div class="tt-grad"></div>
+                <div class="tt-menu">☰ Menu</div>
+                <div class="tt-logo">Aurora</div>
+                <div class="tt-content">
+                    <div class="tt-eyebrow">Café &amp; Bistro</div>
+                    <div class="tt-title">Aurora Bistro</div>
+                    <div class="tt-sub">คาเฟ่ &amp; บิสโทร · เปิดทุกวัน 08:00–22:00 · ชั้น 2</div>
+                </div>
+                <div class="tt-dock">
+                    <span class="tt-cta"><span>View Store</span><span class="ar">→</span></span>
+                    <span class="tt-cta sec"><span>All Offers</span><span class="ar">↗</span></span>
+                </div>
+            </div>
+            <div class="tt-base"></div>
+        </div></div>
+
+        <!-- บนมือถือ -->
+        <div class="mtx-rh"><span data-i18n="st.mobile">บนมือถือ</span><span class="rh-note" data-i18n="scan">สแกน QR → เปิดบนมือถือ</span></div>
+        <div class="mc o mc-viz"><div class="dev"><div class="scr">
+            <div class="bar"><span class="l">📍 de Residenz</span><span class="r">aqua<span class="x">mx</span></span></div>
+            <div class="hero" style="background-image:url('https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=420&q=72');">
+                <div class="ov-logo"><span class="mk">A</span><span class="nm">Aurora</span></div>
+                <div class="chip">Featured Dining</div>
+            </div>
+            <div class="body">
+                <div class="prov-row"><span class="pl">A</span><span class="pn">Aurora Bistro</span></div>
+                <div class="o-title">All-Day Brunch &amp; Specialty Coffee</div>
+                <div class="price-row"><span class="big">฿250</span><span class="from">/ จาน · เริ่มต้น</span></div>
+                <div class="badge-row"><span class="bdg av">🕐 Open now · 08:00–22:00</span><span class="bdg">★ 4.8</span></div>
+                <div class="desc">บรันช์ทั้งวันพร้อมกาแฟพิเศษคั่วเอง · เมนูซิกเนเจอร์เปลี่ยนตามฤดูกาล นั่งสบายวิวสวน ชั้น 2</div>
+                <a class="cta">สั่งเลย · Order Now →</a>
+                <div class="contact slim">
+                    <div class="cb"><span class="i">📞</span><span class="t">Call</span></div>
+                    <div class="cb"><span class="i">💬</span><span class="t">LINE</span></div>
+                    <div class="cb"><span class="i">📍</span><span class="t">Map</span></div>
+                    <div class="cb"><span class="i">🌐</span><span class="t">Web</span></div>
+                </div>
+                <a class="view-store">ดูร้าน Aurora Bistro เต็ม ๆ →</a>
+            </div>
+        </div></div></div>
+        <div class="mc p mc-viz"><div class="dev"><div class="scr">
+            <div class="bar"><span class="l">📍 de Residenz</span><span class="r">aqua<span class="x">mx</span></span></div>
+            <div class="cover" style="background-image:url('https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=480&q=72');">
+                <div class="cover-id"><span class="lg">A</span><span class="nm"><b>Aurora Bistro</b><span>Featured Dining · ชั้น 2</span></span></div>
+            </div>
+            <div class="body">
+                <div class="about-h">เกี่ยวกับร้าน</div>
+                <div class="about-t">คาเฟ่ &amp; บิสโทรบรรยากาศอบอุ่น เสิร์ฟบรันช์และกาแฟพิเศษคั่วเอง เปิดทุกวันใจกลาง de Residenz</div>
+                <div class="contact">
+                    <div class="cb"><span class="i">📞</span><span class="t">Call</span></div>
+                    <div class="cb"><span class="i">💬</span><span class="t">LINE</span></div>
+                    <div class="cb"><span class="i">📍</span><span class="t">Map</span></div>
+                    <div class="cb"><span class="i">🌐</span><span class="t">Web</span></div>
+                </div>
+                <div class="inf"><div class="h">เวลาเปิด-ปิด</div><div class="t">จันทร์–อาทิตย์ · 08:00–22:00 น.</div></div>
+                <div class="inf"><div class="h">ที่ตั้ง</div><div class="t">ชั้น 2, de Residenz · Sukhumvit 24</div></div>
+                <div class="inf"><div class="h">จุดเด่นร้าน</div><div class="badge-row" style="margin-top:4px;"><span class="bdg">🅿️ ที่จอดรถ</span><span class="bdg">📶 Wi-Fi</span><span class="bdg">💳 รับบัตร</span><span class="bdg">❄️ ห้องแอร์</span></div></div>
+                <div class="grid-h">โปร/เมนูทั้งหมดของร้าน</div>
+                <div class="grid">
+                    <div class="gcard"><div class="gi" style="background-image:url('https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=200&q=62');"></div><div class="gt"><div class="nm">All-Day Brunch</div><div class="pr">฿250</div></div></div>
+                    <div class="gcard"><div class="gi" style="background-image:url('https://images.unsplash.com/photo-1559339352-11d035aa65de?auto=format&fit=crop&w=200&q=62');"></div><div class="gt"><div class="nm">Specialty Coffee Set</div><div class="pr">฿180</div></div></div>
+                    <div class="gcard"><div class="gi" style="background-image:url('https://images.unsplash.com/photo-1481931098730-318b6f776db0?auto=format&fit=crop&w=200&q=62');"></div><div class="gt"><div class="nm">Weekend Free-flow</div><div class="pr">฿590</div></div></div>
+                    <div class="gcard"><div class="gi" style="background-image:url('https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=200&q=62');"></div><div class="gt"><div class="nm">Dinner Tasting</div><div class="pr">฿890</div></div></div>
+                </div>
+            </div>
+        </div></div></div>
+
+        <!-- เหมาะกับ -->
+        <div class="mtx-rh" data-i18n="spec.k.fit">เหมาะกับ</div>
+        <div class="mc o"><span data-i18n="spec.offer.fit">เมนูอาหารขายดี · โปรโมชันล่าสุด · บริการหลัก · สินค้าที่มีราคาชัด</span></div>
+        <div class="mc p"><span data-i18n="spec.provider.fit">เมื่อต้องการสร้างการรับรู้แบรนด์ · ร้านค้าที่มีสินค้าและบริการหลากหลาย</span></div>
+
+        <!-- คุณส่งอะไร · แยกตามประเภทข้อมูล -->
+        <div class="mtx-rh"><span class="rh-eye" data-i18n="spec.k.send">คุณส่งอะไร</span><span data-i18n="send.r.img">รูปภาพ</span></div>
+        <div class="mc o"><span data-i18n-html="send.o.img">รูปเมนูขายดี · โปรล่าสุด · บริการหลัก <span style="color:var(--muted)">(รูปเดียวต่อโฆษณา)</span></span></div>
+        <div class="mc p"><span data-i18n-html="send.p.img">ภาพรวมร้าน + ภาพสินค้า/บริการของร้าน</span></div>
+
+        <div class="mtx-rh" data-i18n="send.r.info">ข้อมูลทั่วไป</div>
+        <div class="mc o"><span data-i18n-html="send.o.info">ข้อมูลของผลิตภัณฑ์/บริการนั้นโดยเฉพาะ</span></div>
+        <div class="mc p"><span data-i18n-html="send.p.info">ข้อมูลร้าน / บริการโดยภาพรวม</span></div>
+
+        <div class="mtx-rh" data-i18n="send.r.contact">ข้อมูลติดต่อ</div>
+        <div class="mc o"><span data-i18n-html="send.o.contact"><b>ไม่ต้องกรอก</b> — ดึงจากข้อมูลร้านให้อัตโนมัติ</span></div>
+        <div class="mc p"><span data-i18n-html="send.p.contact"><b>กรอกครั้งเดียว</b> · เบอร์ · LINE · เว็บ</span></div>
+
+        <div class="mtx-rh" data-i18n="send.r.hours">เวลาเปิด-ปิด</div>
+        <div class="mc o"><span data-i18n-html="send.o.hours"><b>ไม่ต้องกรอก</b> — ดึงจากข้อมูลร้าน</span></div>
+        <div class="mc p"><span data-i18n-html="send.p.hours"><b>กรอกครั้งเดียว</b>ที่ Provider</span></div>
+
+    </div></div>
+
+    <!-- FILL-IN SUMMARY -->
+    <div class="divider" data-i18n="divider">ข้อมูลที่ต้องกรอก · ไม่ซ้ำกัน</div>
+
+    <div class="fill-note" data-i18n-html="fillnote">
+        ✓ <b>แทบไม่มีช่องซ้ำกัน</b> — ข้อมูลร้านกรอกที่ <b>Provider ครั้งเดียว</b> แล้วทุก Offer <b>ดึงไปใช้อัตโนมัติ</b>
+    </div>
+
+    <div style="display:flex; flex-wrap:wrap; gap:14px; justify-content:center; margin:4px 0 2px;">
+        <a href="https://aquamx.biz/provider/" style="background:var(--navy); color:#fff; border-radius:12px; padding:13px 26px; font-family:'Nunito',sans-serif; font-weight:800; font-size:15px;" data-i18n="cta.provider">🏪 ตั้งร้านได้ที่นี่ →</a>
+        <a href="https://aquamx.biz/offer/" style="background:var(--orange); color:#fff; border-radius:12px; padding:13px 26px; font-family:'Nunito',sans-serif; font-weight:800; font-size:15px;" data-i18n="cta.offer">🎟️ ลงโฆษณาได้ที่นี่ →</a>
+        <a href="/ad-poster/" style="background:#fff; color:var(--navy); border:1.5px solid var(--navy); border-radius:12px; padding:13px 26px; font-family:'Nunito',sans-serif; font-weight:800; font-size:15px;" data-i18n="xlink">📐 วิธีสร้าง Poster Ad →</a>
+    </div>
+
+    <div class="foot" data-i18n="foot">ราคาคือหัวใจของ Offer · แบรนด์และการติดต่อคือหัวใจของ Provider — เลือกให้ตรงกับสิ่งที่อยากสื่อ</div>
+
+</div>
+
+<script>
+(function () {
+  var T = {
+    th: {
+      'nav.how':'วิธีทำงาน', 'nav.network':'เครือข่าย', 'nav.contact':'ติดต่อ', 'nav.cta':'ดูแพ็คเกจ →',
+      'eyebrow':'Offer vs Provider · เลือกแบบที่ใช่',
+      'h1':'คุณอยากโฆษณา<br><span class="accent">แบบไหน?</span>',
+      'lede':'จะโฆษณา<b>สินค้าขายดี</b>แบบบน <b>Shopee / TikTok</b> หรือเลือกโฆษณาเพื่อ<b>แนะนำร้านของคุณ</b>แบบบน <b>Facebook / IG</b> — aquamx ทำได้หมด',
+      'dec.offer':'<span class="tag">โฆษณาผลิตภัณฑ์ / บริการ</span><br>ถ้ามี <b>สินค้า/บริการ/โปร</b> อยากให้คนเห็นแล้ว <b>สั่ง / จอง / ซื้อ</b> ได้เลย',
+      'dec.provider':'<span class="tag">โฆษณาร้านของคุณ</span><br>ถ้าอยากให้คน <b>รู้จักร้าน + ติดต่อ + เห็นโปรทุกอันของร้าน</b> ในที่เดียว',
+      'colh.offer':'โฆษณาผลิตภัณฑ์ / บริการ', 'colh.provider':'โฆษณาร้านของคุณ',
+      'cols.offer':'เน้น <b>สินค้า 1 ชิ้น + ราคา</b> · พาดตรงไป "สั่ง/จอง/ซื้อ" — ข้อมูลร้านมีแค่แถบบาง ๆ ให้กดติดต่อ',
+      'cols.provider':'เน้น <b>แบรนด์ร้าน + ช่องทางติดต่อ + รวมทุกโปร</b> · ไม่มีราคาเดี่ยว — เป็นหน้าบ้านของร้าน',
+      'st.signage':'บนจอป้าย', 'st.mobile':'บนมือถือ', 'st.mobileOffer':'บนมือถือ · หน้าเว็บ Offer', 'st.mobileProvider':'บนมือถือ · หน้าเว็บ Provider',
+      'scan':'สแกน QR → เปิดบนมือถือ',
+      'spec.k.focus':'เน้นอะไร', 'spec.k.fit':'เหมาะกับ', 'spec.k.send':'คุณส่งอะไร',
+      'spec.offer.focus':'<b>ให้ลูกค้าตัดสินใจซื้อทันที</b><span class="fcat"><span class="fl">เหมาะกับ</span><span class="fchip">groceries</span><span class="fchip">shopping</span><span class="fchip">events</span><span class="fchip">education</span></span>',
+      'spec.offer.fit':'เมนูอาหารขายดี · โปรโมชันล่าสุด · บริการหลัก · สินค้าที่มีราคาชัด',
+      'spec.offer.send':'<span class="fchip">รูปภาพ</span><span class="fchip">ชื่อ</span><span class="fchip key">ราคา ฿</span><span class="fchip">หมวด</span><span class="fchip">คำอธิบาย</span><span class="fchip">เวลา</span><span class="fchip">ปุ่มคำสั่ง</span>',
+      'spec.provider.focus':'<b>ให้ลูกค้ารู้จักและอยากมา</b><span class="fcat"><span class="fl">เหมาะกับ</span><span class="fchip">dining</span><span class="fchip">services</span><span class="fchip">health &amp; beauty</span><span class="fchip">travel</span></span>',
+      'spec.provider.fit':'เมื่อต้องการสร้างการรับรู้แบรนด์ · ร้านค้าที่มีสินค้าและบริการหลากหลาย',
+      'spec.provider.send':'<span class="fchip">ชื่อร้าน</span><span class="fchip">โลโก้ + ปก</span><span class="fchip">แนะนำร้าน</span><span class="fchip">เบอร์ · LINE · เว็บ</span><span class="fchip">เวลาเปิด-ปิด</span><span class="fchip">ที่ตั้ง</span>',
+      'send.r.img':'รูปภาพ', 'send.r.info':'ข้อมูลทั่วไป', 'send.r.contact':'ข้อมูลติดต่อ', 'send.r.hours':'เวลาเปิด-ปิด',
+      'send.o.img':'รูปเมนูขายดี · โปรล่าสุด · บริการหลัก <span style="color:var(--muted)">(รูปเดียวต่อโฆษณา)</span>',
+      'send.p.img':'ภาพรวมร้าน + ภาพสินค้า/บริการของร้าน',
+      'send.o.info':'ข้อมูลของผลิตภัณฑ์/บริการนั้นโดยเฉพาะ',
+      'send.p.info':'ข้อมูลร้าน / บริการโดยภาพรวม',
+      'send.o.contact':'<b>ไม่ต้องกรอก</b> — ดึงจากข้อมูลร้านให้อัตโนมัติ',
+      'send.p.contact':'<b>กรอกครั้งเดียว</b> · เบอร์ · LINE · เว็บ',
+      'send.o.hours':'<b>ไม่ต้องกรอก</b> — ดึงจากข้อมูลร้าน',
+      'send.p.hours':'<b>กรอกครั้งเดียว</b>ที่ Provider',
+      'divider':'ข้อมูลที่ต้องกรอก · ไม่ซ้ำกัน',
+      'fillnote':'✓ <b>แทบไม่มีช่องซ้ำกัน</b> — ข้อมูลร้านกรอกที่ <b>Provider ครั้งเดียว</b> แล้วทุก Offer <b>ดึงไปใช้อัตโนมัติ</b>',
+      'cta.provider':'🏪 ตั้งร้านได้ที่นี่ →', 'cta.offer':'🎟️ ลงโฆษณาได้ที่นี่ →',
+      'link.h3':'🔗 ที่จริงทั้งสองเชื่อมกัน — กรอกครั้งเดียว ใช้ได้ทั้งคู่',
+      'link.it1':'<span class="em">🎟️</span> ทุกหน้า <b>Offer</b> มีปุ่ม "ดูร้านเต็ม ๆ" พาไปหน้า <b>Provider</b>',
+      'link.it2':'<span class="em">🏪</span> หน้า <b>Provider</b> รวม <b>Offer</b> ทุกอันไว้ กดดูได้',
+      'link.it3':'<span class="em">📇</span> ข้อมูลร้านกรอกที่ <b>Provider ครั้งเดียว</b> ทุก Offer ดึงไปใช้',
+      'xlink':'📐 วิธีสร้าง Poster Ad →',
+      'foot':'ราคาคือหัวใจของ Offer · แบรนด์และการติดต่อคือหัวใจของ Provider — เลือกให้ตรงกับสิ่งที่อยากสื่อ'
+    },
+    en: {
+      'nav.how':'How it works', 'nav.network':'Network', 'nav.contact':'Contact', 'nav.cta':'See Package →',
+      'eyebrow':'Offer vs Provider · pick what fits',
+      'h1':'Which way do you<br><span class="accent">want to advertise?</span>',
+      'lede':'Advertise your <b>best-sellers</b> like on <b>Shopee / TikTok</b>, or <b>introduce your shop</b> like on <b>Facebook / IG</b> — aquamx does both.',
+      'dec.offer':'<span class="tag">Advertise a product / service · Offer</span><br>If you have a <b>product/service/promo</b> and want people to <b>order / book / buy</b> right away',
+      'dec.provider':'<span class="tag">Advertise your shop · Provider</span><br>If you want people to <b>know your shop + reach you + see all its offers</b> in one place',
+      'colh.offer':'Advertise a product / service', 'colh.provider':'Advertise your shop',
+      'cols.offer':'Focuses on <b>one item + price</b> · drives straight to "order/book/buy" — shop info is just a thin contact bar',
+      'cols.provider':'Focuses on <b>your brand + contact + all offers</b> · no single price — it is your storefront',
+      'st.signage':'On the signage screen', 'st.mobile':'On mobile', 'st.mobileOffer':'On mobile · Offer page', 'st.mobileProvider':'On mobile · Provider page',
+      'scan':'Scan QR → open on mobile',
+      'spec.k.focus':'Focus', 'spec.k.fit':'Good for', 'spec.k.send':'What you provide',
+      'spec.offer.focus':'<b>Drive an instant purchase</b><span class="fcat"><span class="fl">great for</span><span class="fchip">groceries</span><span class="fchip">shopping</span><span class="fchip">events</span><span class="fchip">education</span></span>',
+      'spec.offer.fit':'Best-selling dishes · latest promotions · main services · products with a clear price',
+      'spec.offer.send':'<span class="fchip">Photos</span><span class="fchip">Name</span><span class="fchip key">Price ฿</span><span class="fchip">Category</span><span class="fchip">Description</span><span class="fchip">Hours</span><span class="fchip">Action button</span>',
+      'spec.provider.focus':'<b>Get known and bring people in</b><span class="fcat"><span class="fl">great for</span><span class="fchip">dining</span><span class="fchip">services</span><span class="fchip">health &amp; beauty</span><span class="fchip">travel</span></span>',
+      'spec.provider.fit':'When you want to build brand awareness · shops with a wide range of products and services',
+      'spec.provider.send':'<span class="fchip">Shop name</span><span class="fchip">Logo + cover</span><span class="fchip">About</span><span class="fchip">Phone · LINE · web</span><span class="fchip">Opening hours</span><span class="fchip">Location</span>',
+      'send.r.img':'Images', 'send.r.info':'General info', 'send.r.contact':'Contact', 'send.r.hours':'Opening hours',
+      'send.o.img':'Best-seller · latest promo · main service <span style="color:var(--muted)">(one per ad)</span>',
+      'send.p.img':'Shop cover + photos of products/services',
+      'send.o.info':'Details specific to that product/service',
+      'send.p.info':'Overall shop info & services',
+      'send.o.contact':'<b>No need to fill</b> — pulled from your shop info automatically',
+      'send.p.contact':'<b>Fill once</b> · phone · LINE · web',
+      'send.o.hours':'<b>No need to fill</b> — pulled from shop info',
+      'send.p.hours':'<b>Fill once</b> at Provider',
+      'divider':'What you fill in · no overlap',
+      'fillnote':'✓ <b>Almost no repeated fields</b> — fill shop info <b>once in Provider</b>, every Offer <b>reuses it automatically</b>',
+      'cta.provider':'🏪 Set up shop here →', 'cta.offer':'🎟️ Post an ad here →',
+      'link.h3':'🔗 The two are linked — fill once, use for both',
+      'link.it1':'<span class="em">🎟️</span> Every <b>Offer</b> page has a "View full shop" button to the <b>Provider</b>',
+      'link.it2':'<span class="em">🏪</span> The <b>Provider</b> page gathers all <b>Offers</b> — tap to view',
+      'link.it3':'<span class="em">📇</span> Fill shop info <b>once in Provider</b>; every Offer reuses it',
+      'xlink':'📐 How to build your poster ad →',
+      'foot':'Price is the heart of an Offer · brand & contact are the heart of a Provider — pick what matches your goal'
+    }
+  };
+  var lang = localStorage.getItem('aqLang') || 'th';
+  function applyLang(l) {
+    lang = l; localStorage.setItem('aqLang', l);
+    var d = T[l] || T.th;
+    document.querySelectorAll('[data-i18n]').forEach(function (el) {
+      if (d[el.dataset.i18n] !== undefined) el.textContent = d[el.dataset.i18n];
+    });
+    document.querySelectorAll('[data-i18n-html]').forEach(function (el) {
+      if (d[el.dataset.i18nHtml] !== undefined) el.innerHTML = d[el.dataset.i18nHtml];
+    });
+    var b = document.getElementById('langBtn'); if (b) b.textContent = l === 'th' ? 'EN' : 'ไทย';
+    document.documentElement.lang = l === 'th' ? 'th' : 'en';
+  }
+  document.addEventListener('DOMContentLoaded', function () {
+    applyLang(lang);
+    var b = document.getElementById('langBtn'); if (b) b.addEventListener('click', function () { applyLang(lang === 'th' ? 'en' : 'th'); });
+    var t = document.getElementById('navToggle'), links = document.querySelector('.nav-links');
+    if (t && links) {
+      t.addEventListener('click', function () {
+        var open = t.classList.toggle('open');
+        links.classList.toggle('open', open);
+        t.setAttribute('aria-expanded', open ? 'true' : 'false');
+      });
+      links.querySelectorAll('a').forEach(function (a) { a.addEventListener('click', function () {
+        links.classList.remove('open'); t.classList.remove('open'); t.setAttribute('aria-expanded', 'false');
+      }); });
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Web Offer Guide · What You Send → Web Page</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=Anton&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+:root {
+    --navy:#0E3361; --navy-deep:#072147;
+    --orange:#C9864C; --orange-strong:#A36738; --orange-soft:#F6E5D0;
+    --cream:#FAF6ED; --ink:#0B1B33; --muted:#5C6B82; --white:#fff;
+    --line:#EADFC9; --ink-40:#8B98AE;
+}
+html, body { background:var(--cream); color:var(--ink); font-family:'IBM Plex Sans Thai','Nunito',system-ui,sans-serif; -webkit-font-smoothing:antialiased; min-height:100vh; }
+a { color:inherit; text-decoration:none; }
+
+/* NAV */
+.container { max-width:1200px; margin:0 auto; padding:0 32px; }
+.nav-wrap { background:var(--white); border-bottom:1px solid var(--line); position:sticky; top:0; z-index:50; }
+.nav { height:76px; display:flex; align-items:center; justify-content:space-between; }
+.brand { font-family:'Nunito',sans-serif; font-weight:800; font-size:26px; color:var(--navy); letter-spacing:-0.02em; }
+.brand .x { color:var(--orange); }
+.nav-links { display:flex; gap:34px; }
+.nav-links a { color:var(--ink); font-weight:500; font-size:15.5px; }
+.nav-links a:hover { color:var(--orange-strong); }
+.nav-right { display:flex; align-items:center; gap:10px; }
+.lang-btn { background:none; border:1.5px solid var(--navy); border-radius:8px; padding:7px 14px; font-size:13px; font-weight:700; color:var(--navy); font-family:'Nunito',sans-serif; cursor:pointer; }
+.btn-primary { background:var(--navy); color:var(--white); border-radius:10px; padding:11px 20px; font-weight:700; font-family:'Nunito',sans-serif; }
+
+/* HEADER */
+.page { max-width:1400px; margin:0 auto; padding:64px 40px 80px; }
+.eyebrow { display:inline-flex; align-items:center; gap:10px; font-family:'Nunito',sans-serif; font-size:14px; color:var(--orange-strong); letter-spacing:0.06em; text-transform:uppercase; font-weight:700; margin-bottom:18px; }
+.eyebrow .dot { width:8px; height:8px; border-radius:50%; background:var(--orange); }
+h1.title { font-family:'Nunito',sans-serif; font-size:56px; font-weight:800; line-height:1.15; letter-spacing:-0.01em; color:var(--navy); margin-bottom:20px; }
+h1.title .accent { color:var(--orange); }
+.lede { font-size:18px; color:var(--muted); max-width:760px; line-height:1.65; }
+.lede b { color:var(--ink); font-weight:700; }
+.divider { display:flex; align-items:center; gap:16px; margin:48px 0 30px; color:var(--orange-strong); font-family:'Nunito',sans-serif; font-size:14px; letter-spacing:0.06em; text-transform:uppercase; font-weight:700; }
+.divider::after { content:''; flex:1; height:1px; background:var(--line); }
+
+/* FLOW (3 blocks) */
+.flow-intro { text-align:center; font-size:15px; color:var(--ink); max-width:720px; margin:0 auto 26px; }
+.flow { display:flex; flex-wrap:wrap; align-items:stretch; justify-content:center; gap:14px; }
+.fcard { flex:1 1 240px; max-width:320px; background:var(--white); border:1px solid var(--line); border-radius:18px; padding:20px; display:flex; flex-direction:column; }
+.fnum { font-family:'Anton',sans-serif; font-size:20px; color:var(--orange-strong); line-height:1; }
+.ftitle { font-family:'Nunito',sans-serif; font-weight:800; font-size:15px; color:var(--ink); margin:5px 0 2px; }
+.fsub { font-size:12px; color:var(--muted); margin-bottom:12px; }
+.conn { font-family:'Anton',sans-serif; font-size:28px; color:var(--orange); flex:0 0 auto; align-self:center; }
+
+/* field rows (block ②) */
+.fld { margin-bottom:7px; }
+.fld-lbl { display:flex; justify-content:space-between; align-items:baseline; gap:6px; font-size:9px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--ink-40); }
+.fld-lbl .th { text-transform:none; font-weight:400; letter-spacing:0; }
+.fld-lbl .lim { text-transform:none; font-weight:600; letter-spacing:0; color:#c2b39c; white-space:nowrap; }
+.fld-val { margin-top:2px; padding:5px 9px; background:var(--white); border:1px solid rgba(0,0,0,0.1); border-radius:6px; font-size:11.5px; color:var(--ink); }
+.fld-val.mono { font-family:'JetBrains Mono',monospace; font-size:10.5px; color:var(--muted); }
+.cta-chips { display:flex; flex-wrap:wrap; gap:4px; margin-top:5px; }
+.chip { padding:4px 9px; border-radius:20px; font-size:10px; font-weight:600; background:var(--white); border:1px solid rgba(0,0,0,0.12); color:var(--muted); }
+.chip.on { background:var(--orange); color:#fff; font-weight:700; border-color:var(--orange); }
+.auto-note { margin-top:11px; padding-top:11px; border-top:1px dashed rgba(0,0,0,0.14); font-size:10.5px; color:var(--muted); line-height:1.55; }
+.auto-note b { color:var(--orange-strong); }
+.pp-head { font-weight:800; color:var(--orange-strong); font-size:10.5px; letter-spacing:0.04em; text-transform:uppercase; margin-bottom:6px; }
+.pp-chips { display:flex; flex-wrap:wrap; gap:5px; margin-bottom:7px; }
+.pp-chip { display:inline-flex; align-items:center; gap:3px; font-size:10px; font-weight:600; color:var(--muted); background:var(--cream); border:1px solid var(--line); border-radius:14px; padding:3px 8px; }
+.share-head { font-size:10.5px; font-weight:800; text-transform:uppercase; letter-spacing:0.04em; color:#2E9E5B; }
+.done-list { display:flex; flex-direction:column; gap:4px; margin:8px 0 2px; }
+.done-item { font-size:11.5px; line-height:1.3; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.done-item .ck { color:#2E9E5B; font-weight:800; margin-right:5px; }
+.done-item .fn { font-weight:700; color:#9aa1ad; }
+.done-item .vv { color:var(--ink); }
+.new-head { font-size:10.5px; font-weight:800; text-transform:uppercase; letter-spacing:0.04em; color:var(--orange-strong); margin:13px 0 8px; padding-top:13px; border-top:1px dashed rgba(0,0,0,0.14); }
+.fld.new .fld-val { border-color:var(--orange); background:#fffdf8; }
+
+/* image card (block ①) */
+.img-wrap { flex:1; display:flex; align-items:center; justify-content:center; }
+.poster-img { width:100%; max-width:none; aspect-ratio:1/1; border-radius:16px; overflow:hidden; position:relative; background-size:cover; background-position:center; box-shadow:0 14px 28px -12px rgba(0,0,0,0.45); }
+.poster-img .lg { position:absolute; top:7px; right:7px; display:flex; align-items:center; gap:4px; color:#fff; text-shadow:0 1px 4px rgba(0,0,0,0.6); }
+.poster-img .lg .mk { width:14px; height:14px; border-radius:50%; background:#fff; color:#0e1d3a; display:flex; align-items:center; justify-content:center; font-family:'Anton',sans-serif; font-size:8px; }
+.poster-img .lg .nm { font-size:6.5px; font-weight:800; letter-spacing:0.3px; text-transform:uppercase; }
+.gallery-strip { display:flex; gap:8px; }
+.gallery-strip i { flex:1; aspect-ratio:1/1; border-radius:11px; background-size:cover; background-position:center; border:1px solid var(--line); box-shadow:0 4px 10px -6px rgba(0,0,0,0.35); }
+.ph-cap { display:flex; align-items:baseline; gap:7px; font-family:'Nunito',sans-serif; font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:0.05em; color:var(--orange-strong); margin:14px 0 6px; }
+.ph-cap:first-child { margin-top:0; }
+.ph-cap .sub { font-weight:400; text-transform:none; letter-spacing:0; color:var(--muted); font-size:10.5px; }
+.hero-tag { position:absolute; left:8px; bottom:8px; background:rgba(8,12,22,0.66); color:#fff; font-size:9px; font-weight:800; letter-spacing:0.1em; text-transform:uppercase; padding:3px 9px; border-radius:20px; }
+
+/* compact phone (block ③ — final web page) */
+.mphone-wrap { flex:1; display:flex; flex-direction:column; justify-content:center; align-items:center; }
+.mphone { width:188px; border:6px solid #11151c; border-radius:26px; overflow:hidden; background:#11151c; box-shadow:0 18px 36px -16px rgba(11,27,51,0.5); }
+.mscreen { background:var(--white); max-height:430px; overflow:hidden; position:relative; }
+.mbar { height:26px; background:var(--white); border-bottom:1px solid var(--line); display:flex; align-items:center; justify-content:space-between; padding:0 9px; }
+.mbar .l { font-size:8px; font-weight:700; color:var(--muted); }
+.mbar .r { font-family:'Nunito',sans-serif; font-weight:800; font-size:10px; color:var(--navy); }
+.mbar .r .x { color:var(--orange); }
+.mhero { position:relative; aspect-ratio:1/1; background-size:cover; background-position:center; }
+.mhero .chip { position:absolute; left:7px; bottom:8px; background:rgba(8,12,22,0.6); border:1px solid rgba(255,255,255,0.35); color:#fff; font-size:6px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; padding:3px 7px; border-radius:12px; }
+.mhero .lg { position:absolute; top:7px; right:7px; display:flex; align-items:center; gap:3px; color:#fff; text-shadow:0 1px 4px rgba(0,0,0,0.6); }
+.mhero .lg .mk { width:13px; height:13px; border-radius:50%; background:#fff; color:#0e1d3a; display:flex; align-items:center; justify-content:center; font-family:'Anton',sans-serif; font-size:8px; }
+.mhero .lg .nm { font-size:6px; font-weight:800; text-transform:uppercase; }
+.mbody { padding:9px 10px 12px; }
+.mprov { display:flex; align-items:center; gap:5px; }
+.mprov .pl { width:18px; height:18px; border-radius:6px; background:var(--navy); color:#fff; display:flex; align-items:center; justify-content:center; font-family:'Anton',sans-serif; font-size:10px; }
+.mprov .pn { font-size:8px; font-weight:700; color:var(--muted); }
+.mtitle { font-family:'Nunito',sans-serif; font-size:14px; font-weight:800; color:var(--ink); line-height:1.1; margin-top:4px; }
+.mbadges { display:flex; flex-wrap:wrap; gap:4px; margin-top:6px; }
+.mbadge { font-size:7px; font-weight:700; padding:3px 7px; border-radius:12px; }
+.mbadge.p { color:var(--orange-strong); background:var(--orange-soft); border:1px solid var(--orange); }
+.mbadge.a { color:var(--muted); background:var(--cream); border:1px solid var(--line); }
+.mbadge.a .o { color:#2E9E5B; }
+.mdesc { font-size:7.5px; color:var(--muted); line-height:1.55; margin-top:6px; }
+.mcta { display:flex; align-items:center; justify-content:center; gap:5px; background:var(--navy); color:#fff; font-family:'Nunito',sans-serif; font-weight:800; font-size:9px; padding:9px; border-radius:12px; margin-top:9px; }
+.mcontact { display:grid; grid-template-columns:repeat(4,1fr); gap:4px; margin-top:7px; }
+.mcontact .cb { display:flex; flex-direction:column; align-items:center; gap:3px; padding:6px 2px; border:1px solid var(--line); border-radius:9px; }
+.mcontact .cb .i { width:18px; height:18px; border-radius:50%; background:var(--orange-soft); display:flex; align-items:center; justify-content:center; font-size:9px; }
+.mcontact .cb .t { font-size:6.5px; font-weight:700; color:var(--muted); }
+.mfade { height:18px; background:linear-gradient(180deg, transparent, var(--white)); margin-top:-18px; position:relative; }
+.fcap { font-size:10px; color:var(--ink-40); line-height:1.5; margin-top:10px; text-align:center; }
+.fcap b { color:var(--muted); }
+
+/* ===== FULL phone (Section 1 — the web offer page explained) ===== */
+.stage { display:flex; flex-wrap:wrap; gap:48px; align-items:flex-start; justify-content:center; }
+.phone { width:380px; flex-shrink:0; border:11px solid #11151c; border-radius:46px; background:#000; box-shadow:0 40px 90px -30px rgba(11,27,51,0.55); overflow:hidden; position:relative; }
+.phone-notch { position:absolute; top:0; left:50%; transform:translateX(-50%); width:150px; height:26px; background:#11151c; border-radius:0 0 16px 16px; z-index:30; }
+.screen { background:var(--white); height:780px; overflow-y:auto; position:relative; }
+.screen::-webkit-scrollbar { width:0; }
+.app-bar { position:sticky; top:0; z-index:20; background:rgba(255,255,255,0.92); backdrop-filter:blur(10px); border-bottom:1px solid var(--line); height:52px; display:flex; align-items:center; justify-content:space-between; padding:0 14px; }
+.app-bar .back { width:34px; height:34px; border-radius:50%; background:var(--cream); display:flex; align-items:center; justify-content:center; font-size:18px; color:var(--ink); }
+.app-bar .ctx { font-size:12.5px; font-weight:700; color:var(--muted); }
+.app-bar .mark { font-family:'Nunito',sans-serif; font-weight:800; font-size:16px; color:var(--navy); }
+.app-bar .mark .x { color:var(--orange); }
+.hero { position:relative; width:100%; aspect-ratio:1/1; background:#0a0c10; }
+.hero img { width:100%; height:100%; object-fit:cover; display:block; }
+.hero-logo { position:absolute; top:12px; right:12px; display:flex; align-items:center; gap:5px; color:#fff; text-shadow:0 1px 5px rgba(0,0,0,0.6); }
+.hero-logo .mk { width:22px; height:22px; border-radius:50%; background:#fff; color:#0e1d3a; display:flex; align-items:center; justify-content:center; font-family:'Anton',sans-serif; font-size:13px; }
+.hero-logo .nm { font-size:11px; font-weight:800; letter-spacing:0.4px; text-transform:uppercase; }
+.hero-chip { position:absolute; left:12px; bottom:14px; background:rgba(8,12,22,0.62); backdrop-filter:blur(4px); border:1px solid rgba(255,255,255,0.35); color:#fff; font-size:10px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; padding:5px 11px; border-radius:20px; }
+.hero-dots { position:absolute; bottom:12px; left:50%; transform:translateX(-50%); display:flex; gap:5px; }
+.hero-dots i { width:6px; height:6px; border-radius:50%; background:rgba(255,255,255,0.5); }
+.hero-dots i.on { background:#fff; width:16px; border-radius:3px; }
+.body { padding:16px 18px 28px; }
+.prov-row { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+.prov-row .plogo { width:38px; height:38px; border-radius:12px; background:var(--navy); color:#fff; display:flex; align-items:center; justify-content:center; font-family:'Anton',sans-serif; font-size:19px; }
+.prov-row .pname { font-size:13.5px; font-weight:700; color:var(--muted); }
+.offer-title { font-family:'Nunito',sans-serif; font-size:25px; font-weight:800; color:var(--ink); line-height:1.12; letter-spacing:-0.01em; }
+.badges { display:flex; flex-wrap:wrap; gap:7px; margin-top:13px; }
+.badge { display:inline-flex; align-items:center; gap:5px; padding:6px 12px; border-radius:20px; font-size:13px; font-weight:600; }
+.badge.price { color:var(--orange-strong); background:var(--orange-soft); border:1px solid var(--orange); font-weight:700; }
+.badge.avail { color:var(--muted); background:var(--cream); border:1px solid var(--line); }
+.badge.avail .open { color:#2E9E5B; font-weight:700; }
+.desc { font-size:14px; line-height:1.7; color:var(--muted); margin-top:15px; }
+.facts { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:16px; }
+.fact { background:var(--cream); border:1px solid var(--line); border-radius:12px; padding:11px 8px; text-align:center; }
+.fact .v { font-family:'Nunito',sans-serif; font-size:18px; font-weight:800; color:var(--ink); line-height:1; }
+.fact .l { font-size:9.5px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); margin-top:5px; }
+.cta-primary { display:flex; align-items:center; justify-content:center; gap:8px; width:100%; background:var(--navy); color:#fff; font-family:'Nunito',sans-serif; font-weight:800; font-size:16px; padding:16px; border-radius:18px; margin-top:20px; box-shadow:0 12px 24px -10px rgba(14,51,97,0.5); }
+.cta-primary .ar { font-size:18px; }
+.contact { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:12px; }
+.cbtn { display:flex; flex-direction:column; align-items:center; gap:5px; padding:12px 4px; background:var(--white); border:1px solid var(--line); border-radius:14px; }
+.cbtn .ci { width:30px; height:30px; border-radius:50%; background:var(--orange-soft); display:flex; align-items:center; justify-content:center; font-size:15px; }
+.cbtn .cl { font-size:10.5px; font-weight:700; color:var(--muted); }
+.info { margin-top:18px; padding-top:16px; border-top:1px solid var(--line); }
+.info .h { font-size:11px; font-weight:800; letter-spacing:0.12em; text-transform:uppercase; color:var(--orange-strong); margin-bottom:6px; }
+.info .t { font-size:13.5px; color:var(--muted); line-height:1.6; }
+.view-prov { display:flex; align-items:center; justify-content:center; gap:8px; width:100%; margin-top:20px; padding:13px; border-radius:16px; border:1.5px solid var(--navy); color:var(--navy); font-family:'Nunito',sans-serif; font-weight:700; font-size:14px; }
+.pw { text-align:center; padding:18px 0 6px; font-size:11px; color:var(--ink-40); }
+.pw b { color:var(--muted); font-weight:800; }
+.pw .x { color:var(--orange); }
+.anno { flex:1 1 300px; max-width:400px; }
+.anno h2 { font-family:'Nunito',sans-serif; font-size:22px; font-weight:800; color:var(--navy); margin-bottom:4px; }
+.anno .asub { font-size:14px; color:var(--muted); margin-bottom:18px; }
+.map-row { display:flex; gap:12px; padding:12px 0; border-bottom:1px dashed var(--line); }
+.map-row:last-child { border-bottom:none; }
+.map-row .n { flex-shrink:0; width:26px; height:26px; border-radius:50%; background:var(--orange-soft); color:var(--orange-strong); font-family:'Nunito',sans-serif; font-weight:800; font-size:12px; display:flex; align-items:center; justify-content:center; }
+.map-row .ic { flex-shrink:0; width:30px; height:30px; border-radius:9px; background:var(--orange-soft); display:flex; align-items:center; justify-content:center; font-size:16px; }
+.map-row .txt { font-size:13.5px; line-height:1.5; }
+.map-row .txt b { color:var(--ink); }
+.map-row .txt .src { color:var(--muted); }
+.map-row .txt .fld { font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--orange-strong); background:var(--orange-soft); padding:1px 6px; border-radius:5px; }
+
+footer.site-footer { background:var(--white); border-top:1px solid var(--line); margin-top:64px; }
+.footer-inner { max-width:1200px; margin:0 auto; padding:28px 32px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:14px; }
+.footer-inner .copy { font-size:13px; color:var(--muted); }
+.footer-inner a { font-size:13.5px; color:var(--muted); margin-left:18px; }
+
+@media (max-width:600px){ .page{ padding:36px 18px 56px; } .container{ padding:0 18px; } .nav-links{ display:none; } }
+</style>
+</head>
+<body>
+
+<div class="nav-wrap"><div class="container"><nav class="nav">
+    <a href="https://aquamx.biz" class="brand">aqua<span class="x">mx</span></a>
+    <div class="nav-links">
+        <a href="https://aquamx.biz#how">วิธีทำงาน</a>
+        <a href="https://aquamx.biz#network">เครือข่าย</a>
+        <a href="https://aquamx.biz#contact">ติดต่อ</a>
+    </div>
+    <div class="nav-right">
+        <button class="lang-btn">EN</button>
+        <a href="https://aquamx.biz#contact" class="btn-primary">นัดเดโม →</a>
+    </div>
+</nav></div></div>
+
+<div class="page">
+
+    <div class="eyebrow"><span class="dot"></span>Web Offer · Mobile Handoff</div>
+    <h1 class="title">Your Offering<br><span class="accent">on the Web</span></h1>
+    <p class="lede">
+        เมื่อลูกบ้าน<b>สแกน QR / กด CTA</b> บนจอ signage จะมาเจอ<b>หน้า offer บนมือถือ</b> (handoff) ·
+        คู่มือนี้บอกว่า<b>ส่งข้อมูลอะไร</b> ถึงจะออกมาเป็นหน้าเว็บแบบในรูป — กรอกครั้งเดียว ใช้ได้ทั้ง<b>จอ + เว็บ</b>
+    </p>
+
+    <div class="divider">1 · The Web Offer Page</div>
+    <p class="flow-intro" style="margin-bottom:36px;">
+        หน้านี้คือสิ่งที่ลูกบ้าน<b style="color:var(--orange-strong);">เห็นบนมือถือ</b> หลังสแกน QR / กด CTA บนจอ —
+        แต่ละส่วนดึงจาก <b>offer + provider</b> (ชุดข้อมูลเดียวกับที่ขึ้นจอ signage)
+    </p>
+
+    <div class="stage">
+        <!-- FULL phone: the web offer page -->
+        <div class="phone">
+            <div class="phone-notch"></div>
+            <div class="screen">
+                <div class="app-bar">
+                    <div style="display:flex;align-items:center;gap:9px;"><span class="back">‹</span><span class="ctx">📍 Mahogany Tower</span></div>
+                    <span class="mark">aqua<span class="x">mx</span></span>
+                </div>
+                <div class="hero">
+                    <img src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=560&q=80" alt="Aurora Bistro">
+                    <div class="hero-logo"><span class="mk">A</span><span class="nm">Aurora</span></div>
+                    <div class="hero-chip">Featured Dining</div>
+                    <div class="hero-dots"><i class="on"></i><i></i><i></i><i></i></div>
+                </div>
+                <div class="body">
+                    <div class="prov-row"><div class="plogo">A</div><div class="pname">Aurora Bistro</div></div>
+                    <div class="offer-title">All-Day Brunch &amp; Specialty Coffee</div>
+                    <div class="badges">
+                        <span class="badge avail">🕐 08:00–22:00 · <span class="open">Open now</span></span>
+                    </div>
+                    <p class="desc">บรันช์ทั้งวันพร้อมกาแฟพิเศษคั่วเอง · เมนูซิกเนเจอร์เปลี่ยนตามฤดูกาล · นั่งสบายวิวสวน ชั้น 2 — เหมาะทั้งมื้อเช้าสายและประชุมแบบชิล ๆ</p>
+                    <div class="facts">
+                        <div class="fact"><div class="v">★ 4.8</div><div class="l">Rating</div></div>
+                        <div class="fact"><div class="v">Floor 2</div><div class="l">Location</div></div>
+                    </div>
+                    <a class="cta-primary">ดูเมนู · View Menu <span class="ar">→</span></a>
+                    <div class="contact">
+                        <div class="cbtn"><span class="ci">📞</span><span class="cl">Call</span></div>
+                        <div class="cbtn"><span class="ci">💬</span><span class="cl">LINE</span></div>
+                        <div class="cbtn"><span class="ci">📍</span><span class="cl">Map</span></div>
+                        <div class="cbtn"><span class="ci">🌐</span><span class="cl">Web</span></div>
+                    </div>
+                    <div class="info"><div class="h">เวลาเปิด-ปิด · Opening Hours</div><div class="t">จันทร์–อาทิตย์ · 08:00–22:00 น.</div></div>
+                    <div class="info"><div class="h">ที่ตั้ง · Location</div><div class="t">ชั้น 2, Mahogany Tower · Sukhumvit 24</div></div>
+                    <a class="view-prov">ดูข้อมูล Aurora Bistro →</a>
+                    <div class="pw">powered by <b>aqua<span class="x">mx</span></b></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- annotation: data → fields -->
+        <div class="anno">
+            <h2>ข้อมูลมาจากไหน</h2>
+            <div class="asub">อ่านไล่จากบนลงล่าง — เรียงตรงกับลำดับที่เห็นบนหน้าจอมือถือ · ทุกส่วนดึงจาก offer + provider ใน Sanity (ชุดเดียวกับที่ขึ้นจอ signage)</div>
+            <div class="map-row"><div class="ic">📸</div><div class="txt"><b>รูปใหญ่บนสุด</b> — hero + รูปแกลเลอรีปัดดูได้ · <span class="src">จาก</span> <span class="fld">offer.images[]</span></div></div>
+            <div class="map-row"><div class="ic">🏷️</div><div class="txt"><b>โลโก้มุมรูป + แถวชื่อร้าน</b> · <span class="src">จาก</span> <span class="fld">provider.logo · name</span></div></div>
+            <div class="map-row"><div class="ic">🍽️</div><div class="txt"><b>ชื่อ offer + ป้าย category</b> · <span class="src">จาก</span> <span class="fld">offer.title · category</span></div></div>
+            <div class="map-row"><div class="ic">🕐</div><div class="txt"><b>ป้ายเวลา/สถานะ</b> (ใต้ชื่อ) · <span class="src">จาก</span> <span class="fld">offer.availability</span></div></div>
+            <div class="map-row"><div class="ic">📝</div><div class="txt"><b>คำอธิบาย + key facts</b> (★ rating · ชั้น) · <span class="src">จาก</span> <span class="fld">offer.description · keyFacts</span></div></div>
+            <div class="map-row"><div class="ic">🔵</div><div class="txt"><b>ปุ่มใหญ่สีน้ำเงิน (CTA)</b> · <span class="src">จาก</span> <span class="fld">offer.ctaType · deepLink</span></div></div>
+            <div class="map-row"><div class="ic">☎️</div><div class="txt"><b>แถวปุ่ม Call · LINE · Map · Web</b> · <span class="src">จาก</span> <span class="fld">provider.phone · lineId · mapUrl · website</span></div></div>
+            <div class="map-row"><div class="ic">📍</div><div class="txt"><b>เวลาเปิด-ปิด · ที่ตั้ง · ดูข้อมูลร้าน</b> (ล่างสุด) · <span class="src">จาก</span> <span class="fld">provider.openingHours · locationText · slug</span></div></div>
+        </div>
+    </div>
+
+    <div class="divider">2 · What You Send → Web Page</div>
+
+    <p class="flow-intro">
+        คุณส่ง <b style="color:var(--orange-strong);">① รูป</b> + <b style="color:var(--orange-strong);">② Info</b> ·
+        ที่เหลือ — contact · เวลา · ที่ตั้ง — <b>ระบบดึงจาก provider profile ให้เอง</b> (③)
+    </p>
+
+    <div class="flow">
+
+        <!-- ① Photos -->
+        <div class="fcard">
+            <div class="fnum">①</div>
+            <div class="ftitle">Your Offering Photos</div>
+            <div class="fsub">รูปคุณภาพสูง สัดส่วน 1:1 · รวมสูงสุด ~5 รูป</div>
+            <div class="img-wrap">
+                <div style="width:100%;">
+                    <div class="ph-cap">รูป Hero <span class="sub">· รูปหลัก · ขึ้นใหญ่สุดด้านบนหน้า</span></div>
+                    <div class="poster-img" style="background-image:url('https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=400&q=72');">
+                        <div class="lg"><span class="mk">A</span><span class="nm">Aurora</span></div>
+                        <span class="hero-tag">Hero</span>
+                    </div>
+                    <div class="ph-cap">รูป Gallery <span class="sub">· รูปเสริม · ปัดดูได้ในหน้าเว็บ</span></div>
+                    <div class="gallery-strip">
+                        <i style="background-image:url('https://images.unsplash.com/photo-1481931098730-318b6f776db0?auto=format&fit=crop&w=200&q=62');"></i>
+                        <i style="background-image:url('https://images.unsplash.com/photo-1559339352-11d035aa65de?auto=format&fit=crop&w=200&q=62');"></i>
+                        <i style="background-image:url('https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=200&q=62');"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="conn">+</div>
+
+        <!-- ② Info -->
+        <div class="fcard" style="text-align:left;">
+            <div class="fnum">②</div>
+            <div class="ftitle">Your Offering Info</div>
+
+            <!-- shared from signage brief (already entered) -->
+            <div class="share-head">✓ ใช้ร่วมจาก signage brief · ไม่กรอกซ้ำ</div>
+            <div class="done-list">
+                <div class="done-item"><span class="ck">✓</span><span class="fn">Category</span> · <span class="vv">Featured Dining</span></div>
+                <div class="done-item"><span class="ck">✓</span><span class="fn">ชื่อ</span> · <span class="vv">All-Day Brunch &amp; Specialty Coffee</span></div>
+                <div class="done-item"><span class="ck">✓</span><span class="fn">คำอธิบาย</span> · <span class="vv">บรันช์ทั้งวันพร้อมกาแฟพิเศษคั่วเอง · เมนูซิกเนเจอร์…</span></div>
+                <div class="done-item"><span class="ck">✓</span><span class="fn">Key facts</span> · <span class="vv">★ 4.8 · Floor 2</span></div>
+                <div class="done-item"><span class="ck">✓</span><span class="fn">CTA</span> · <span class="vv">View Menu</span></div>
+                <div class="done-item"><span class="ck">✓</span><span class="fn">Destination Link</span> · <span class="vv">aurora.example/menu</span></div>
+            </div>
+
+            <!-- new — only for the web page -->
+            <div class="new-head">+ เพิ่มเฉพาะหน้าเว็บ</div>
+            <div class="fld new"><div class="fld-lbl"><span>Availability<span class="th"> · เวลา/สถานะ</span></span></div><div class="fld-val">08:00–22:00 · Open now</div></div>
+
+            <!-- contact — powers the Call / LINE / Map / Web buttons -->
+            <div class="new-head" style="color:var(--navy);border-top-color:rgba(14,51,97,0.18);">📇 ข้อมูลติดต่อ · กรอกครั้งเดียว ใช้ได้ทุก offer</div>
+            <div class="fld new"><div class="fld-lbl"><span>📞 Phone<span class="th"> · เบอร์โทร</span></span></div><div class="fld-val">02-123-4567</div></div>
+            <div class="fld new"><div class="fld-lbl"><span>💬 LINE<span class="th"> · ไอดีไลน์ / ลิงก์</span></span></div><div class="fld-val">@aurorabistro</div></div>
+            <div class="fld new"><div class="fld-lbl"><span>📍 Google Map<span class="th"> · ลิงก์แผนที่</span></span></div><div class="fld-val mono">maps.app.goo.gl/aurora</div></div>
+            <div class="fld new"><div class="fld-lbl"><span>🌐 Website<span class="th"> · เว็บไซต์</span></span></div><div class="fld-val mono">aurorabistro.com</div></div>
+            <div class="auto-note" style="margin-top:8px;">
+                ปุ่ม <b>Call · LINE · Map · Web</b> ในช่อง ③ มาจาก 4 ช่องนี้ — กรอกที่ Provider Profile ครั้งเดียว ใช้ได้ทุก offer
+            </div>
+        </div>
+
+        <div class="conn">→</div>
+
+        <!-- ③ Final web page -->
+        <div class="fcard">
+            <div class="fnum">③</div>
+            <div class="ftitle">Your Offering on Web</div>
+            <div class="fsub">ระบบประกอบเป็นหน้า offer บนมือถือให้</div>
+            <div class="mphone-wrap">
+                <div class="mphone"><div class="mscreen">
+                    <div class="mbar"><span class="l">📍 Mahogany Tower</span><span class="r">aqua<span class="x">mx</span></span></div>
+                    <div class="mhero" style="background-image:url('https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=400&q=75');">
+                        <div class="lg"><span class="mk">A</span><span class="nm">Aurora</span></div>
+                        <div class="chip">Featured Dining</div>
+                    </div>
+                    <div class="mbody">
+                        <div class="mprov"><span class="pl">A</span><span class="pn">Aurora Bistro</span></div>
+                        <div class="mtitle">All-Day Brunch &amp; Specialty Coffee</div>
+                        <div class="mbadges"><span class="mbadge a">🕐 <span class="o">Open now</span></span></div>
+                        <div class="mdesc">บรันช์ทั้งวันพร้อมกาแฟพิเศษคั่วเอง · เมนูซิกเนเจอร์เปลี่ยนตามฤดูกาล · นั่งสบายวิวสวน ชั้น 2</div>
+                        <div class="mcta">ดูเมนู · View Menu →</div>
+                        <div class="mcontact">
+                            <div class="cb"><span class="i">📞</span><span class="t">Call</span></div>
+                            <div class="cb"><span class="i">💬</span><span class="t">LINE</span></div>
+                            <div class="cb"><span class="i">📍</span><span class="t">Map</span></div>
+                            <div class="cb"><span class="i">🌐</span><span class="t">Web</span></div>
+                        </div>
+                    </div>
+                    <div class="mfade"></div>
+                </div></div>
+            </div>
+            <div class="fcap">สีที่ระบบเติม: <b>contact · เวลา · ที่ตั้ง · powered-by</b> (จาก provider)</div>
+        </div>
+
+    </div>
+</div>
+
+<footer class="site-footer"><div class="footer-inner">
+    <div class="copy">© 2026 AquaMx · All rights reserved</div>
+    <div><a href="https://aquamx.biz">หน้าหลัก</a><a href="https://aquamx.biz#contact">ติดต่อ</a></div>
+</div></footer>
+
+</body>
+</html>

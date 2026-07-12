@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Signage Player — Mockup v4 (Paper-style Notice)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&family=JetBrains+Mono:wght@400;500&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   RESET + TOKENS
+============================================================ */
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+html, body { width:100%; height:100%; overflow:hidden; }
+
+:root {
+    --bg-deep: #050608;
+    --bg-stage: #0a0c10;
+    --ink-100: #ffffff;
+    --ink-80:  rgba(255,255,255,0.82);
+    --ink-60:  rgba(255,255,255,0.58);
+    --ink-40:  rgba(255,255,255,0.38);
+    --ink-20:  rgba(255,255,255,0.18);
+
+    --accent:       #E08B3A;
+    --accent-soft:  rgba(224,139,58,0.18);
+    --accent-line:  rgba(224,139,58,0.45);
+
+    /* Paper notice palette (mirrors real announcement) */
+    --paper:        #fafaf6;
+    --paper-ink:    #222428;
+    --paper-ink-2:  #4a4d52;
+    --paper-line:   #d6d7d4;
+    --paper-navy:   #1a3d6e;
+    --paper-red:    #b3261e;
+    --paper-blue:   #2b6cb0;
+
+    --glass-bg:     rgba(255,255,255,0.06);
+    --glass-stroke: rgba(255,255,255,0.12);
+
+    --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+    --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+body {
+    font-family: 'Inter', 'Sarabun', system-ui, sans-serif;
+    background: var(--bg-deep);
+    color: var(--ink-100);
+    display: flex; align-items: center; justify-content: center;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* ============================================================
+   9:16 CONTAINER
+============================================================ */
+.signage {
+    position: relative;
+    width: 100%; height: 100%;
+    max-width: 56.25vh; max-height: 177.78vw;
+    background: var(--bg-deep);
+    overflow: hidden;
+    display: grid;
+    grid-template-rows: 7vh 1fr 4vh;
+}
+@media (aspect-ratio > 9/16) { .signage { width: 56.25vh; height: 100vh; } }
+@media (aspect-ratio < 9/16) { .signage { width: 100vw; height: 177.78vw; } }
+
+/* ============================================================
+   TOP BAR
+============================================================ */
+.topbar {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    padding: 0 3vh; gap: 2vh;
+    background: linear-gradient(180deg, rgba(5,6,8,0.95) 0%, rgba(5,6,8,0) 100%);
+    z-index: 50;
+}
+.topbar-time {
+    font-size: 1.95vh; font-weight: 600;
+    color: var(--ink-100);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.1vh;
+    justify-self: start;
+}
+.topbar-dot {
+    width: 0.45vh; height: 0.45vh; border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 0.8vh var(--accent);
+    animation: pulse-dot 2s ease-in-out infinite;
+}
+@keyframes pulse-dot {
+    0%,100% { opacity: 1; transform: scale(1); }
+    50%     { opacity: 0.4; transform: scale(0.7); }
+}
+.topbar-weather {
+    display: flex; align-items: center; gap: 0.8vh;
+    justify-self: end;
+    font-size: 1.55vh;
+    color: var(--ink-60); font-weight: 500;
+}
+.topbar-weather .icon { font-size: 2.2vh; line-height: 1; }
+.topbar-weather .temp {
+    color: var(--ink-100); font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+/* ============================================================
+   STAGE
+============================================================ */
+.stage {
+    position: relative;
+    perspective: 2200px;
+    perspective-origin: 50% 50%;
+    transform-style: preserve-3d;
+    background: var(--bg-stage);
+    overflow: hidden;
+}
+.slot {
+    position: absolute; inset: 0;
+    transform-style: preserve-3d;
+    backface-visibility: hidden;
+    will-change: transform, opacity;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.7s var(--ease-out), transform 0.9s var(--ease-out);
+}
+.slot.active { opacity: 1; pointer-events: auto; z-index: 2; }
+.slot.leaving { z-index: 1; }
+
+/* ============================================================
+   COMMERCIAL SLOT (unchanged from v3)
+============================================================ */
+.slot[data-kind="commercial"] .slot-media {
+    position: absolute; inset: 0;
+    background-size: cover; background-position: center;
+    background-color: #0a0c10;
+    transform-origin: center;
+}
+.slot[data-kind="commercial"].active .slot-media {
+    animation: ken-burns 14s ease-out forwards;
+}
+@keyframes ken-burns {
+    0%   { transform: scale(1.02) translate(0, 0); }
+    100% { transform: scale(1.14) translate(-2.5%, 2%); }
+}
+.slot[data-kind="commercial"] .slot-grad-top {
+    position: absolute; inset: 0 0 auto 0; height: 28%;
+    background: linear-gradient(180deg, rgba(5,6,8,0.85) 0%, transparent 100%);
+    pointer-events: none;
+}
+.slot[data-kind="commercial"] .slot-grad-bot {
+    position: absolute; inset: auto 0 0 0; height: 58%;
+    background: linear-gradient(0deg, rgba(5,6,8,0.92) 0%, rgba(5,6,8,0.4) 55%, transparent 100%);
+    pointer-events: none;
+}
+.slot-content {
+    position: absolute;
+    left: 3.5vh; right: 3.5vh; bottom: 16vh;
+    display: flex; flex-direction: column;
+    gap: 1.2vh; z-index: 5;
+}
+.slot-eyebrow {
+    display: inline-flex; align-items: center; gap: 0.8vh;
+    width: fit-content;
+    font-size: 1.25vh; font-weight: 600;
+    letter-spacing: 0.35vh; text-transform: uppercase;
+    color: var(--accent);
+    opacity: 0; transform: translateY(1.2vh);
+    transition: opacity 0.6s var(--ease-out) 0.4s, transform 0.6s var(--ease-out) 0.4s;
+}
+.slot-eyebrow::before {
+    content: ''; width: 2.5vh; height: 0.15vh;
+    background: var(--accent);
+}
+.slot-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 5.4vh; font-weight: 600;
+    line-height: 1.05; letter-spacing: -0.1vh;
+    color: var(--ink-100);
+    opacity: 0; transform: translateY(2vh);
+    transition: opacity 0.7s var(--ease-out) 0.55s, transform 0.7s var(--ease-out) 0.55s;
+    text-shadow: 0 0.3vh 1.5vh rgba(0,0,0,0.5);
+}
+.slot-sub {
+    font-size: 1.7vh; font-weight: 400;
+    line-height: 1.45; color: var(--ink-80);
+    max-width: 42vh;
+    opacity: 0; transform: translateY(1.5vh);
+    transition: opacity 0.6s var(--ease-out) 0.75s, transform 0.6s var(--ease-out) 0.75s;
+    text-shadow: 0 0.15vh 0.8vh rgba(0,0,0,0.5);
+}
+.slot.active .slot-eyebrow,
+.slot.active .slot-title,
+.slot.active .slot-sub { opacity: 1; transform: translateY(0); }
+
+/* Commercial CTAs */
+.cta-dock {
+    position: absolute;
+    left: 3.5vh; right: 3.5vh; bottom: 3.5vh;
+    display: flex; flex-direction: column;
+    gap: 1vh; z-index: 6;
+}
+.cta {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1.9vh 2.4vh;
+    border-radius: 1.6vh;
+    cursor: pointer;
+    touch-action: manipulation; user-select: none;
+    backdrop-filter: blur(20px) saturate(140%);
+    -webkit-backdrop-filter: blur(20px) saturate(140%);
+    opacity: 0; transform: translateY(3vh);
+    transition: opacity 0.55s var(--ease-out),
+                transform 0.55s var(--ease-spring),
+                background 0.18s ease;
+}
+.cta-primary {
+    background: linear-gradient(135deg, #E08B3A 0%, #C4682D 100%);
+    color: #fff;
+    border: 0.15vh solid rgba(255,255,255,0.18);
+    font-size: 2.1vh; font-weight: 700; letter-spacing: 0.05vh;
+    box-shadow: 0 1.2vh 3.5vh rgba(196,104,45,0.35),
+                0 0 0 0.15vh rgba(224,139,58,0.4) inset;
+}
+.cta-secondary {
+    background: var(--glass-bg);
+    color: var(--ink-100);
+    border: 0.15vh solid var(--glass-stroke);
+    font-size: 1.65vh; font-weight: 500;
+}
+.cta .arrow { font-size: 2.2vh; opacity: 0.9; transition: transform 0.3s var(--ease-out); }
+.cta-secondary .arrow { font-size: 1.6vh; color: var(--ink-60); }
+.slot.active .cta:nth-child(1) {
+    opacity: 1; transform: translateY(0);
+    transition-delay: 1.0s, 1.0s, 0s;
+}
+.slot.active .cta:nth-child(2) {
+    opacity: 1; transform: translateY(0);
+    transition-delay: 1.18s, 1.18s, 0s;
+}
+.slot.exiting .cta {
+    opacity: 0; transform: translateY(3vh);
+    transition-delay: 0s !important;
+    transition-duration: 0.35s, 0.35s, 0s;
+}
+
+/* ============================================================
+   PAPER NOTICE — mirrors real PPM announcement structure
+============================================================ */
+.slot[data-kind="notice"] {
+    background: radial-gradient(ellipse at 50% 30%,
+        #11151c 0%, #050608 70%);
+    display: flex; align-items: center; justify-content: center;
+    padding: 2vh;
+}
+
+/* The "paper card" */
+.notice-paper {
+    position: relative;
+    width: 100%; height: 100%;
+    background: var(--paper);
+    color: var(--paper-ink);
+    border-radius: 1.6vh;
+    padding: 0 3.5vh 3vh;
+    display: flex; flex-direction: column;
+    overflow: hidden;
+    box-shadow:
+        0 4vh 8vh rgba(0,0,0,0.55),
+        0 1vh 2vh rgba(0,0,0,0.35),
+        0 0 0 0.12vh rgba(0,0,0,0.06) inset;
+    font-family: 'Sarabun', 'Inter', sans-serif;
+    transform: translateY(2vh) scale(0.97);
+    opacity: 0;
+    transition: transform 0.85s var(--ease-spring) 0.05s,
+                opacity 0.6s var(--ease-out) 0.05s;
+}
+.slot.active .notice-paper { transform: translateY(0) scale(1); opacity: 1; }
+
+/* Top photo strip (building accent) */
+.notice-header-photo {
+    position: absolute; top: 0; left: 0; right: 0; height: 14vh;
+    background-image: url('https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=900&q=80');
+    background-size: cover; background-position: center;
+    z-index: 0;
+}
+.notice-header-photo::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(180deg,
+        rgba(250,250,246,0) 0%,
+        rgba(250,250,246,0.2) 55%,
+        rgba(250,250,246,0.85) 85%,
+        var(--paper) 100%);
+}
+
+/* Building logo + tagline */
+.notice-brand {
+    position: relative; z-index: 2;
+    padding: 1.6vh 0 1.4vh;
+    display: flex; align-items: center; gap: 1.2vh;
+}
+.notice-brand-mark {
+    width: 4.2vh; height: 4.2vh;
+    border-radius: 0.6vh;
+    background: var(--paper-navy);
+    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 2vh;
+    letter-spacing: -0.1vh;
+    font-family: 'Inter', sans-serif;
+    flex-shrink: 0;
+}
+.notice-brand-text { display: flex; flex-direction: column; gap: 0.2vh; }
+.notice-brand-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.1vh; font-weight: 700;
+    color: var(--paper-navy); line-height: 1;
+}
+.notice-brand-sub {
+    font-size: 1.1vh; color: var(--paper-ink-2);
+    letter-spacing: 0.08vh;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+/* Title block (ประกาศ / ANNOUNCEMENT) */
+.notice-title-block {
+    position: relative; z-index: 2;
+    margin-top: 0.8vh;
+}
+.notice-title-th {
+    font-family: 'Sarabun', sans-serif;
+    font-size: 3.8vh; font-weight: 700;
+    color: var(--paper-ink);
+    line-height: 1;
+    letter-spacing: -0.05vh;
+}
+.notice-title-en {
+    font-family: 'Inter', sans-serif;
+    font-size: 1.6vh; font-weight: 600;
+    color: var(--paper-ink-2);
+    letter-spacing: 0.4vh; text-transform: uppercase;
+    margin-top: 0.5vh;
+}
+
+/* Body sections (TH / EN) */
+.notice-body {
+    position: relative; z-index: 2;
+    margin-top: 2.2vh;
+    font-size: 1.55vh; line-height: 1.55;
+    color: var(--paper-ink);
+}
+.notice-body-th { font-family: 'Sarabun', sans-serif; }
+.notice-body-en { font-family: 'Inter', sans-serif; font-size: 1.5vh; }
+
+/* Highlighted dashed box (key info) */
+.notice-highlight {
+    margin-top: 1.6vh;
+    padding: 1.6vh 1.8vh;
+    border: 0.18vh dashed var(--paper-red);
+    border-radius: 1.4vh;
+    text-align: center;
+    background: rgba(179,38,30,0.025);
+}
+.notice-highlight-text {
+    font-family: 'Sarabun', sans-serif;
+    font-size: 1.85vh; font-weight: 700;
+    color: var(--paper-red);
+    line-height: 1.5;
+}
+.notice-highlight-text.en {
+    font-family: 'Inter', sans-serif;
+    font-size: 1.55vh; font-weight: 600;
+}
+
+/* Decorative divider (blue ribbon look) */
+.notice-divider {
+    position: relative; z-index: 2;
+    margin: 2.2vh auto 1.4vh;
+    display: flex; align-items: center; justify-content: center;
+    gap: 0.4vh; width: 65%;
+}
+.notice-divider-line {
+    height: 0.4vh; border-radius: 0.2vh;
+    background: linear-gradient(90deg, transparent, var(--paper-line) 30%, var(--paper-line) 70%, transparent);
+}
+.notice-divider-line.short {
+    flex: 1; max-width: 6vh;
+    background: linear-gradient(90deg, transparent, var(--paper-line));
+}
+.notice-divider-line.long {
+    flex: 3;
+    background: linear-gradient(90deg, var(--paper-blue), var(--paper-blue));
+}
+.notice-divider-line.tail {
+    flex: 1; max-width: 6vh;
+    background: linear-gradient(90deg, var(--paper-line), transparent);
+}
+
+/* Closing line */
+.notice-closing {
+    position: relative; z-index: 2;
+    margin-top: auto;
+    padding-top: 2vh;
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-size: 1.4vh;
+    color: var(--paper-ink-2);
+    text-align: center;
+    line-height: 1.55;
+}
+
+/* Footer (management logo) */
+.notice-footer {
+    position: relative; z-index: 2;
+    margin-top: 1.4vh;
+    padding-top: 1.4vh;
+    border-top: 0.1vh solid var(--paper-line);
+    display: flex; align-items: center; justify-content: space-between;
+}
+.notice-footer-logo {
+    display: flex; align-items: center; gap: 0.8vh;
+}
+.notice-footer-mark {
+    width: 2.6vh; height: 2.6vh;
+    border-radius: 0.4vh;
+    background: var(--paper-navy);
+    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 1.3vh;
+    font-family: 'Inter', sans-serif;
+}
+.notice-footer-name {
+    font-family: 'Inter', sans-serif;
+    font-size: 1.2vh; font-weight: 700;
+    color: var(--paper-ink);
+    letter-spacing: 0.1vh;
+}
+.notice-footer-posted {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.05vh;
+    color: var(--paper-ink-2);
+    letter-spacing: 0.08vh;
+}
+
+/* ============================================================
+   TRANSITIONS
+============================================================ */
+.stage[data-tx="cube"] .slot {
+    transition: transform 0.95s cubic-bezier(0.83, 0, 0.17, 1),
+                opacity 0.25s linear 0.7s;
+}
+.stage[data-tx="cube"] .slot.leaving {
+    transform: rotateY(-90deg);
+    transform-origin: left center;
+    animation: cube-fade-out 0.95s linear forwards;
+}
+.stage[data-tx="cube"] .slot.entering {
+    transform: rotateY(90deg);
+    transform-origin: right center; opacity: 1;
+}
+.stage[data-tx="cube"] .slot.active {
+    transform: rotateY(0deg); opacity: 1;
+}
+@keyframes cube-fade-out {
+    0%, 75% { opacity: 1; }
+    100%    { opacity: 0; }
+}
+.stage[data-tx="flip"] .slot.leaving {
+    transform: rotateX(180deg) translateZ(-20vh); opacity: 0;
+}
+.stage[data-tx="flip"] .slot.entering {
+    transform: rotateX(-180deg) translateZ(-20vh); opacity: 0;
+}
+.stage[data-tx="flip"] .slot.active { transform: rotateX(0); opacity: 1; }
+
+.stage[data-tx="zoom"] .slot.leaving { transform: scale(1.18) translateY(-2vh); opacity: 0; }
+.stage[data-tx="zoom"] .slot.entering { transform: scale(0.88) translateY(2vh); opacity: 0; }
+.stage[data-tx="zoom"] .slot.active { transform: scale(1) translateY(0); opacity: 1; }
+
+.stage[data-tx="push"] .slot.leaving {
+    transform: translateX(-35%) scale(0.92); opacity: 0; filter: blur(0.6vh);
+}
+.stage[data-tx="push"] .slot.entering {
+    transform: translateX(35%) scale(0.92); opacity: 0; filter: blur(0.6vh);
+}
+.stage[data-tx="push"] .slot.active {
+    transform: translateX(0) scale(1); opacity: 1; filter: blur(0);
+}
+
+/* ============================================================
+   BOTTOM TAGLINE
+============================================================ */
+.bottombar {
+    background: var(--bg-deep);
+    border-top: 0.1vh solid var(--ink-20);
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden; position: relative;
+}
+.bottombar-track {
+    display: flex; white-space: nowrap;
+    animation: marquee 38s linear infinite;
+}
+.bottombar-item {
+    font-size: 1.35vh; font-weight: 500;
+    color: var(--ink-60);
+    padding: 0 5vh;
+    letter-spacing: 0.25vh; text-transform: uppercase;
+}
+.bottombar-sep { color: var(--accent); font-size: 0.6vh; align-self: center; }
+@keyframes marquee {
+    0%   { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+}
+
+/* ============================================================
+   DEV BADGE
+============================================================ */
+.dev-badge {
+    position: absolute;
+    top: 9vh; right: 2vh;
+    z-index: 100;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(10px);
+    border: 0.1vh solid var(--ink-20);
+    color: var(--ink-60);
+    font-family: monospace;
+    font-size: 1.1vh;
+    padding: 0.6vh 1.2vh;
+    border-radius: 0.6vh;
+    pointer-events: none;
+    letter-spacing: 0.1vh;
+}
+.dev-badge .v { color: var(--accent); font-weight: 700; }
+.dev-badge .k { color: #6BA3D6; font-weight: 700; }
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01s !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.15s !important;
+    }
+}
+</style>
+</head>
+<body>
+
+<div class="signage">
+
+    <div class="topbar">
+        <div class="topbar-time" id="topTime">18:42</div>
+        <div class="topbar-dot" title="Live"></div>
+        <div class="topbar-weather">
+            <span class="icon">☀</span>
+            <span class="temp">28°</span>
+            <span>Bangkok</span>
+        </div>
+    </div>
+
+    <div class="stage" id="stage" data-tx="zoom"></div>
+
+    <div class="bottombar">
+        <div class="bottombar-track">
+            <span class="bottombar-item">Live in Balance</span>
+            <span class="bottombar-sep">●</span>
+            <span class="bottombar-item">Premium Living · Bangkok</span>
+            <span class="bottombar-sep">●</span>
+            <span class="bottombar-item">Touch screen to explore</span>
+            <span class="bottombar-sep">●</span>
+            <span class="bottombar-item">Live in Balance</span>
+            <span class="bottombar-sep">●</span>
+            <span class="bottombar-item">Premium Living · Bangkok</span>
+            <span class="bottombar-sep">●</span>
+            <span class="bottombar-item">Touch screen to explore</span>
+            <span class="bottombar-sep">●</span>
+        </div>
+    </div>
+
+    <div class="dev-badge" id="devBadge">
+        tx <span class="v" id="devTx">zoom</span> · kind <span class="k" id="devKind">commercial</span> · <span id="devIdx">1</span>/<span id="devTotal">5</span>
+    </div>
+
+</div>
+
+<script>
+/* ============================================================
+   MOCK SLOTS — commercial + paper-style notice
+============================================================ */
+const SLOTS = [
+    /* === Commercial === */
+    {
+        kind: 'commercial',
+        image: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=900&q=80',
+        eyebrow: 'Premium Residence',
+        title: 'Mahogany Tower',
+        sub: 'Penthouse-style 3-bedroom suites from 18.2M฿. Sky lounge access included.',
+        ctas: [
+            { kind: 'primary',   label: 'Book a Private Tour', icon: '→' },
+            { kind: 'secondary', label: 'See Floor Plans',     icon: '↗' }
+        ]
+    },
+
+    /* === PAPER NOTICE — holiday contractor restriction (the real one) === */
+    {
+        kind: 'notice',
+        building: {
+            mark: 'M',
+            name: 'Mahogany Tower',
+            sub: 'President Park · Harbour View · Sukhumvit 24',
+            photo: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=900&q=80'
+        },
+        titleTH: 'ประกาศ',
+        titleEN: 'ANNOUNCEMENT',
+        bodyTH: 'ฝ่ายบริหารจัดการ ขอความร่วมมืองดการเข้าทำงานของผู้รับเหมาในช่วงวันหยุดนักขัตฤกษ์ เพื่อป้องกันปัญหาเกี่ยวกับเสียงและกลิ่นที่รบกวนการพักอาศัยส่วนรวม',
+        highlightTH: 'วันที่ 1 มิถุนายน 2569 เป็นวันหยุดชดเชยวันวิสาขบูชา และวันที่ 3 มิถุนายน 2569 เป็นวันเฉลิมพระชนมพรรษา สมเด็จพระนางเจ้าฯ พระบรมราชินี',
+        bodyEN: 'To ensure zero pollution and quiet environment, the contractors are not allowed to enter the building on the following date:',
+        highlightEN: 'On June 1st, 2026: the substitute holiday for Visakha Bucha Day, and On June 3rd, 2026: the Birthday Anniversary of Her Majesty Queen Suthida Bajrasudhabimalalakshana',
+        closingTH: 'จึงเรียนมาเพื่อทราบ และขออภัยในความไม่สะดวก',
+        closingEN: 'Please be informed accordingly, and we apologize for any inconvenience this may cause.',
+        management: { mark: 'P', name: 'PPM MANAGEMENT' },
+        posted: 'Posted May 28, 2026'
+    },
+
+    /* === Commercial === */
+    {
+        kind: 'commercial',
+        image: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=900&q=80',
+        eyebrow: 'Featured Dining',
+        title: 'The Mahogany Kitchen',
+        sub: 'Chef-curated tasting menu, evenings 18:00–23:00. Reservations recommended.',
+        ctas: [
+            { kind: 'primary',   label: 'View Menu', icon: '→' },
+            { kind: 'secondary', label: 'Reserve a Table', icon: '↗' }
+        ]
+    },
+
+    /* === PAPER NOTICE — water maintenance === */
+    {
+        kind: 'notice',
+        building: {
+            mark: 'M',
+            name: 'Mahogany Tower',
+            sub: 'President Park · Harbour View · Sukhumvit 24',
+            photo: 'https://images.unsplash.com/photo-1582719188393-bb71ca45dbb9?auto=format&fit=crop&w=900&q=80'
+        },
+        titleTH: 'ประกาศ',
+        titleEN: 'WATER SUPPLY MAINTENANCE',
+        bodyTH: 'ฝ่ายบริหารจัดการขอแจ้งให้ทราบว่า จะมีการตรวจสอบและบำรุงรักษาระบบน้ำประปาภายในอาคาร A เพื่อรักษาคุณภาพการให้บริการ ในระหว่างช่วงเวลาดังกล่าวอาจส่งผลให้น้ำประปาในอาคาร A ไม่สามารถใช้งานได้ชั่วคราว',
+        highlightTH: 'วันที่ 5 มิถุนายน 2569 เวลา 09:00 – 12:00 น. เฉพาะอาคาร A เท่านั้น (อาคาร B และ C ใช้งานได้ตามปกติ)',
+        bodyEN: 'The Management would like to inform residents that scheduled water supply maintenance will be conducted to ensure service quality. Water supply may be temporarily unavailable during the listed period:',
+        highlightEN: 'June 5, 2026, from 09:00 to 12:00. Tower A only. Towers B and C will remain in full operation.',
+        closingTH: 'จึงเรียนมาเพื่อทราบ และขออภัยในความไม่สะดวก',
+        closingEN: 'Please be informed accordingly, and we apologize for any inconvenience this may cause.',
+        management: { mark: 'P', name: 'PPM MANAGEMENT' },
+        posted: 'Posted May 30, 2026'
+    },
+
+    /* === Commercial === */
+    {
+        kind: 'commercial',
+        image: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=900&q=80',
+        eyebrow: 'Lifestyle',
+        title: 'Live in Balance',
+        sub: 'Wellness, design and community — curated for the modern resident.',
+        ctas: [
+            { kind: 'primary',   label: 'Discover More', icon: '→' },
+            { kind: 'secondary', label: 'About Us',      icon: '↗' }
+        ]
+    }
+];
+
+const TRANSITIONS = ['cube', 'flip', 'zoom', 'push'];
+
+/* ============================================================
+   RENDER
+============================================================ */
+const stage = document.getElementById('stage');
+const devTx = document.getElementById('devTx');
+const devKind = document.getElementById('devKind');
+const devIdx = document.getElementById('devIdx');
+const devTotal = document.getElementById('devTotal');
+devTotal.textContent = SLOTS.length;
+
+function renderCommercial(s) {
+    const ctaHTML = (s.ctas || []).map(c =>
+        `<button class="cta cta-${c.kind}">
+            <span>${c.label}</span>
+            <span class="arrow">${c.icon}</span>
+        </button>`
+    ).join('');
+    return `
+        <div class="slot-media" style="background-image:url('${s.image}');"></div>
+        <div class="slot-grad-top"></div>
+        <div class="slot-grad-bot"></div>
+        <div class="slot-content">
+            <div class="slot-eyebrow">${s.eyebrow}</div>
+            <div class="slot-title">${s.title}</div>
+            <div class="slot-sub">${s.sub}</div>
+        </div>
+        ${ctaHTML ? `<div class="cta-dock">${ctaHTML}</div>` : ''}
+    `;
+}
+
+function renderNotice(s) {
+    return `
+        <div class="notice-paper">
+            <div class="notice-header-photo" style="background-image:url('${s.building.photo}');"></div>
+
+            <div class="notice-brand">
+                <div class="notice-brand-mark">${s.building.mark}</div>
+                <div class="notice-brand-text">
+                    <div class="notice-brand-name">${s.building.name}</div>
+                    <div class="notice-brand-sub">${s.building.sub}</div>
+                </div>
+            </div>
+
+            <div class="notice-title-block">
+                <div class="notice-title-th">${s.titleTH}</div>
+                <div class="notice-title-en">${s.titleEN}</div>
+            </div>
+
+            <div class="notice-body notice-body-th">${s.bodyTH}</div>
+            ${s.highlightTH ? `
+                <div class="notice-highlight">
+                    <div class="notice-highlight-text">${s.highlightTH}</div>
+                </div>` : ''}
+
+            <div class="notice-divider">
+                <span class="notice-divider-line short"></span>
+                <span class="notice-divider-line long"></span>
+                <span class="notice-divider-line tail"></span>
+            </div>
+
+            <div class="notice-body notice-body-en">${s.bodyEN}</div>
+            ${s.highlightEN ? `
+                <div class="notice-highlight">
+                    <div class="notice-highlight-text en">${s.highlightEN}</div>
+                </div>` : ''}
+
+            <div class="notice-closing">
+                ${s.closingTH ? `<div>${s.closingTH}</div>` : ''}
+                ${s.closingEN ? `<div>${s.closingEN}</div>` : ''}
+            </div>
+
+            <div class="notice-footer">
+                <div class="notice-footer-logo">
+                    <div class="notice-footer-mark">${s.management.mark}</div>
+                    <div class="notice-footer-name">${s.management.name}</div>
+                </div>
+                <div class="notice-footer-posted">${s.posted}</div>
+            </div>
+        </div>
+    `;
+}
+
+SLOTS.forEach((s, i) => {
+    const el = document.createElement('div');
+    el.className = 'slot';
+    el.dataset.index = i;
+    el.dataset.kind = s.kind;
+    el.innerHTML = s.kind === 'notice' ? renderNotice(s) : renderCommercial(s);
+    stage.appendChild(el);
+});
+
+const slots = Array.from(stage.querySelectorAll('.slot'));
+let cur = 0;
+let prevTxIdx = -1;
+let forcedTx = null;
+
+function pickTransition() {
+    let i;
+    do { i = Math.floor(Math.random() * TRANSITIONS.length); }
+    while (i === prevTxIdx && TRANSITIONS.length > 1);
+    prevTxIdx = i;
+    return TRANSITIONS[i];
+}
+
+function showSlot(idx, isFirst = false) {
+    const tx = isFirst ? 'zoom' : (forcedTx || pickTransition());
+    forcedTx = null;
+    stage.dataset.tx = tx;
+    devTx.textContent = tx;
+    devKind.textContent = SLOTS[idx].kind;
+    devIdx.textContent = idx + 1;
+
+    slots.forEach((el, i) => {
+        el.classList.remove('active', 'leaving', 'entering', 'exiting');
+        if (i === idx) el.classList.add('entering');
+        else if (el.classList.contains('active') || i === cur) el.classList.add('leaving');
+    });
+
+    void stage.offsetWidth;
+
+    requestAnimationFrame(() => {
+        slots[idx].classList.remove('entering');
+        slots[idx].classList.add('active');
+    });
+
+    cur = idx;
+}
+
+function preExitCurrent() {
+    if (slots[cur]) slots[cur].classList.add('exiting');
+}
+
+/* Notice slots get MUCH longer dwell — text-heavy, residents need time to read */
+function dwellMs() { return SLOTS[cur].kind === 'notice' ? 16000 : 8500; }
+const PRE_EXIT_MS = 600;
+
+showSlot(0, true);
+
+function scheduleNext() {
+    setTimeout(() => {
+        preExitCurrent();
+        setTimeout(() => {
+            const next = (cur + 1) % SLOTS.length;
+            showSlot(next);
+            scheduleNext();
+        }, PRE_EXIT_MS);
+    }, dwellMs());
+}
+scheduleNext();
+
+function updateTime() {
+    const d = new Date();
+    document.getElementById('topTime').textContent =
+        `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+updateTime();
+setInterval(updateTime, 30000);
+
+const TX_KEYS = { '1': 'cube', '2': 'flip', '3': 'zoom', '4': 'push' };
+document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight') {
+        preExitCurrent();
+        setTimeout(() => showSlot((cur + 1) % SLOTS.length), PRE_EXIT_MS);
+    }
+    if (e.key === 'ArrowLeft') {
+        preExitCurrent();
+        setTimeout(() => showSlot((cur - 1 + SLOTS.length) % SLOTS.length), PRE_EXIT_MS);
+    }
+    if (TX_KEYS[e.key]) {
+        forcedTx = TX_KEYS[e.key];
+        preExitCurrent();
+        setTimeout(() => showSlot((cur + 1) % SLOTS.length), PRE_EXIT_MS);
+    }
+    if (e.key === 'd' || e.key === 'D') {
+        const b = document.getElementById('devBadge');
+        b.style.display = b.style.display === 'none' ? '' : 'none';
+    }
+    /* Jump to next notice slot — useful for review */
+    if (e.key === 'n' || e.key === 'N') {
+        const nextNotice = SLOTS.findIndex((s, i) => i > cur && s.kind === 'notice');
+        const idx = nextNotice >= 0 ? nextNotice : SLOTS.findIndex(s => s.kind === 'notice');
+        if (idx >= 0) {
+            preExitCurrent();
+            setTimeout(() => showSlot(idx), PRE_EXIT_MS);
+        }
+    }
+});
+</script>
+
+</body>
+</html>

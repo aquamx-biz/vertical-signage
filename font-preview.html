@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>เทียบฟอนต์ชื่อบนจอ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bai+Jamjuree:wght@600;700&family=Kanit:wght@600;700;800&family=Anuphan:wght@600;700&family=Prompt:wght@600;700&family=IBM+Plex+Sans+Thai:wght@600;700&family=Sarabun:wght@700;800&family=Noto+Sans+Thai:wght@700;800&family=Mitr:wght@500;600&family=Chakra+Petch:wght@600;700&family=Sora:wght@700;800&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#0b0f1a; color:#fff; font-family:'IBM Plex Sans Thai',sans-serif; padding:24px 16px 60px; }
+  h1 { font-size:20px; font-weight:700; margin-bottom:4px; }
+  .sub { color:#8a94a6; font-size:13px; margin-bottom:22px; line-height:1.6; }
+  .grid { display:grid; gap:16px; max-width:560px; margin:0 auto; }
+  .card { background:linear-gradient(160deg,#1a2336,#0e1524); border:1px solid #283146; border-radius:16px; padding:18px 20px; position:relative; overflow:hidden; }
+  .num { position:absolute; top:12px; right:16px; font-size:34px; font-weight:800; color:rgba(255,255,255,0.07); font-family:'Sora',sans-serif; }
+  .name { font-size:12px; letter-spacing:0.05em; color:#ffb877; font-weight:700; font-family:'Sora',sans-serif; margin-bottom:2px; }
+  .meta { font-size:11px; color:#6b7689; margin-bottom:12px; }
+  .title { text-transform:uppercase; line-height:1.08; color:#fff; text-shadow:0 1px 6px rgba(0,0,0,0.5); font-size:22px; }
+  .price { margin-top:6px; font-size:16px; color:#ffcaa0; }
+  .price b { font-size:22px; }
+
+  .f1 .title,.f1 .price b { font-family:'Bai Jamjuree',sans-serif; font-weight:700; }
+  .f2 .title,.f2 .price b { font-family:'Kanit',sans-serif; font-weight:700; }
+  .f3 .title,.f3 .price b { font-family:'Kanit',sans-serif; font-weight:800; }
+  .f4 .title,.f4 .price b { font-family:'Anuphan',sans-serif; font-weight:700; }
+  .f5 .title,.f5 .price b { font-family:'Prompt',sans-serif; font-weight:700; }
+  .f6 .title,.f6 .price b { font-family:'Prompt',sans-serif; font-weight:600; }
+  .f7 .title,.f7 .price b { font-family:'IBM Plex Sans Thai',sans-serif; font-weight:700; }
+  .f8 .title,.f8 .price b { font-family:'Sarabun',sans-serif; font-weight:800; }
+  .f9 .title,.f9 .price b { font-family:'Noto Sans Thai',sans-serif; font-weight:800; }
+  .f10 .title,.f10 .price b { font-family:'Mitr',sans-serif; font-weight:600; }
+  .f11 .title,.f11 .price b { font-family:'Chakra Petch',sans-serif; font-weight:700; }
+</style>
+</head>
+<body>
+  <h1>เทียบฟอนต์ชื่อบนจอ 🪧</h1>
+  <p class="sub">ตัวอย่างชื่อจริงที่มีไทย+อังกฤษปนกัน · บอกผมแค่ <b style="color:#ffb877;">เบอร์</b> ที่ชอบ เดี๋ยวเปลี่ยนให้เลย<br>(ปัจจุบันใช้ เบอร์ 1 · Kanit 800 ที่ว่าอ้วน = เบอร์ 3)</p>
+  <div class="grid">
+    <div class="card f1"><div class="num">1</div><div class="name">BAI JAMJUREE · 700</div><div class="meta">คม เพรียว โมเดิร์น (ที่ใช้อยู่ตอนนี้)</div><div class="title">บริการ Digital Signage Advertiser</div><div class="price">เริ่มต้น <b>฿2.5M</b></div></div>
+    <div class="card f2"><div class="num">2</div><div class="name">KANIT · 700</div><div class="meta">Kanit แบบบางลง (ไม่หนา 800)</div><div class="title">บริการ Digital Signage Advertiser</div><div class="price">เริ่มต้น <b>฿2.5M</b></div></div>
+    <div class="card f3"><div class="num">3</div><div class="name">KANIT · 800</div><div class="meta">ตัวเดิมที่ว่าอ้วน — ไว้เทียบ</div><div class="title">บริการ Digital Signage Advertiser</div><div class="price">เริ่มต้น <b>฿2.5M</b></div></div>
+    <div class="card f4"><div class="num">4</div><div class="name">ANUPHAN · 700</div><div class="meta">สะอาด เรียบหรู ดูพรีเมียม</div><div class="title">บริการ Digital Signage Advertiser</div><div class="price">เริ่มต้น <b>฿2.5M</b></div></div>
+    <div class="card f5"><div class="num">5</div><div class="name">PROMPT · 700</div><div class="meta">เรขาคณิต กลม ทันสมัย</div><div class="title">บริการ Digital Signage Advertiser</div><div class="price">เริ่มต้น <b>฿2.5M</b></div></div>
+    <div class="card f6"><div class="num">6</div><div class="name">PROMPT · 600</div><div class="meta">Prompt แบบบางลง</div><div class="title">บริการ Digital Signage Advertiser</div><div class="price">เริ่มต้น <b>฿2.5M</b></div></div>
+    <div class="card f7"><div class="num">7</div><div class="name">IBM PLEX SANS THAI · 700</div><div class="meta">เข้าชุดกับ body ทั้งหน้า · มินิมอล</div><div class="title">บริการ Digital Signage Advertiser</div><div class="price">เริ่มต้น <b>฿2.5M</b></div></div>
+    <div class="card f8"><div class="num">8</div><div class="name">SARABUN · 800</div><div class="meta">เรียบ เป็นทางการ อ่านง่าย</div><div class="title">บริการ Digital Signage Advertiser</div><div class="price">เริ่มต้น <b>฿2.5M</b></div></div>
+    <div class="card f9"><div class="num">9</div><div class="name">NOTO SANS THAI · 800</div><div class="meta">กลาง ๆ คลีน ตัวหนาแน่น</div><div class="title">บริการ Digital Signage Advertiser</div><div class="price">เริ่มต้น <b>฿2.5M</b></div></div>
+    <div class="card f10"><div class="num">10</div><div class="name">MITR · 600</div><div class="meta">กลม เป็นกันเอง น่ารัก</div><div class="title">บริการ Digital Signage Advertiser</div><div class="price">เริ่มต้น <b>฿2.5M</b></div></div>
+    <div class="card f11"><div class="num">11</div><div class="name">CHAKRA PETCH · 700</div><div class="meta">เหลี่ยม เทค/ล้ำ futuristic</div><div class="title">บริการ Digital Signage Advertiser</div><div class="price">เริ่มต้น <b>฿2.5M</b></div></div>
+  </div>
+</body>
+</html>

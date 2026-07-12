@@ -1,0 +1,7 @@
+{
+  "files": ["*.html", "offer/**/*.html", "provider/**/*.html"],
+  "exclude": ["**/node_modules/**", "sanity-studio/**", "deploy/**"],
+  "insertBefore": "</body>",
+  "commentSyntax": "html",
+  "cspChecked": true
+}

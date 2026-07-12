@@ -1,0 +1,1670 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<!-- Category icons: Twemoji (c) Twitter — CC-BY 4.0 · https://github.com/twitter/twemoji · see icons/CREDITS.txt -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Signage Player — Mockup v5 · Hanuman-style</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Anton&family=JetBrains+Mono:wght@400;500&family=Sarabun:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   RESET + TOKENS · v5
+============================================================ */
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+html, body { width:100%; height:100%; overflow:hidden; }
+
+:root {
+    --bg-deep: #050608;
+    --bg-stage: #0a0c10;
+    --ink-100: #ffffff;
+    --ink-80:  rgba(255,255,255,0.82);
+    --ink-60:  rgba(255,255,255,0.58);
+    --ink-40:  rgba(255,255,255,0.38);
+    --ink-20:  rgba(255,255,255,0.18);
+
+    /* Hanuman-inspired palette */
+    --navy-deep: #0e1d3a;       /* deep navy header */
+    --navy-mid:  #1a2b4a;       /* mid navy */
+    --cta-bg:    rgba(8,12,22,0.55);   /* dark transparent CTA */
+    --cta-border: rgba(255,255,255,0.32);
+    --cta-border-hover: rgba(255,255,255,0.6);
+    --dot-cyan:  #6dd5e8;       /* eyebrow dot indicator */
+
+    /* Paper notice (unchanged from v4) */
+    --paper:        #fafaf6;
+    --paper-ink:    #222428;
+    --paper-ink-2:  #4a4d52;
+    --paper-line:   #d6d7d4;
+    --paper-navy:   #1a3d6e;
+    --paper-red:    #b3261e;
+    --paper-blue:   #2b6cb0;
+
+    --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+    --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+body {
+    font-family: 'Inter', 'Sarabun', system-ui, sans-serif;
+    background: var(--bg-deep);
+    color: var(--ink-100);
+    display: flex; align-items: center; justify-content: center;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* ============================================================
+   9:16 CONTAINER
+============================================================ */
+.signage {
+    position: relative;
+    width: 100%; height: 100%;
+    max-width: 56.25vh; max-height: 177.78vw;
+    background: var(--bg-deep);
+    overflow: hidden;
+    display: grid;
+    grid-template-rows: 7vh 1fr 4vh;
+}
+@media (aspect-ratio > 9/16) { .signage { width: 56.25vh; height: 100vh; } }
+@media (aspect-ratio < 9/16) { .signage { width: 100vw; height: 177.78vw; } }
+
+/* ============================================================
+   TOP BAR — navy band like Hanuman
+============================================================ */
+.topbar {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    padding: 0 3vh; gap: 2vh;
+    background: var(--navy-deep);
+    border-bottom: 0.15vh solid rgba(255,255,255,0.06);
+    z-index: 50;
+}
+.topbar-time {
+    font-size: 1.85vh; font-weight: 600;
+    color: var(--ink-100);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.1vh;
+    justify-self: start;
+}
+.topbar-dot {
+    width: 0.45vh; height: 0.45vh; border-radius: 50%;
+    background: var(--dot-cyan);
+    box-shadow: 0 0 0.8vh var(--dot-cyan);
+    animation: pulse-dot 2s ease-in-out infinite;
+}
+@keyframes pulse-dot {
+    0%,100% { opacity: 1; transform: scale(1); }
+    50%     { opacity: 0.4; transform: scale(0.7); }
+}
+.topbar-weather {
+    display: flex; align-items: center; gap: 0.8vh;
+    justify-self: end;
+    font-size: 1.5vh;
+    color: var(--ink-60); font-weight: 500;
+}
+.topbar-weather .icon { font-size: 2.1vh; line-height: 1; }
+.topbar-weather .temp {
+    color: var(--ink-100); font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+/* ============================================================
+   STAGE
+============================================================ */
+.stage {
+    position: relative;
+    perspective: 2200px;
+    perspective-origin: 50% 50%;
+    transform-style: preserve-3d;
+    background: var(--bg-stage);
+    overflow: hidden;
+}
+.slot {
+    position: absolute; inset: 0;
+    transform-style: preserve-3d;
+    backface-visibility: hidden;
+    will-change: transform, opacity;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.7s var(--ease-out), transform 0.9s var(--ease-out);
+}
+.slot.active { opacity: 1; pointer-events: auto; z-index: 2; }
+.slot.leaving { z-index: 1; }
+
+/* ============================================================
+   COMMERCIAL SLOT — Hanuman-style minimal
+============================================================ */
+.slot[data-kind="commercial"] .slot-media {
+    position: absolute; inset: 0;
+    background-size: cover; background-position: center;
+    background-color: #0a0c10;
+    transform-origin: center;
+}
+.slot[data-kind="commercial"].active .slot-media {
+    animation: ken-burns 14s ease-out forwards;
+}
+/* While the outgoing slide fades out, HOLD its zoomed transform instead of
+   letting it snap back to scale 1 (which happens when .active is removed and
+   the animation rule disappears). This keeps the crossfade smooth. */
+.slot[data-kind="commercial"].leaving .slot-media {
+    animation: none;
+    transform: scale(1.14) translate(-2.5%, 2%);   /* hold at the zoomed end — no snap back to 1.0 */
+}
+@keyframes ken-burns {
+    0%   { transform: scale(1.05) translate(0, 0); }
+    100% { transform: scale(1.14) translate(-2.5%, 2%); }
+}
+/* Gentler vignette — let photo breathe like Hanuman hero */
+.slot[data-kind="commercial"] .slot-grad-top {
+    position: absolute; inset: 0 0 auto 0; height: 22%;
+    background: linear-gradient(180deg, rgba(5,6,8,0.45) 0%, transparent 100%);
+    pointer-events: none;
+}
+.slot[data-kind="commercial"] .slot-grad-bot {
+    position: absolute; inset: auto 0 0 0; height: 65%;
+    background: linear-gradient(0deg, rgba(5,6,8,0.88) 0%, rgba(5,6,8,0.35) 50%, transparent 100%);
+    pointer-events: none;
+}
+
+/* Content block — left-aligned, big sans title */
+.slot-content {
+    position: absolute;
+    left: 3.5vh; right: 3.5vh;
+    bottom: 16vh;
+    display: flex; flex-direction: column;
+    gap: 1.6vh; z-index: 5;
+}
+
+/* Eyebrow pill — outlined, with cyan dot */
+.slot-eyebrow {
+    display: inline-flex; align-items: center; gap: 1.4vh;
+    width: fit-content;
+    padding: 0.9vh 2vh;
+    border: 0.15vh solid rgba(255,255,255,0.4);
+    border-radius: 5vh;
+    background: rgba(8,12,22,0.35);
+    backdrop-filter: blur(8px);
+    font-size: 1.3vh; font-weight: 600;
+    letter-spacing: 0.45vh; text-transform: uppercase;
+    color: var(--ink-100);
+    opacity: 0; transform: translateY(1.5vh);
+    transition: opacity 0.6s var(--ease-out) 0.3s, transform 0.6s var(--ease-out) 0.3s;
+}
+.slot-eyebrow::before {
+    content: ''; width: 0.7vh; height: 0.7vh;
+    border-radius: 50%;
+    background: var(--dot-cyan);
+    box-shadow: 0 0 1.2vh var(--dot-cyan);
+}
+.slot-eyebrow::after {
+    content: ''; width: 0.7vh; height: 0.7vh;
+    border-radius: 50%;
+    background: rgba(109,213,232,0.25);
+    margin-left: auto;
+}
+
+/* Title — Anton-style condensed bold (use Anton or Inter 900) */
+.slot-title {
+    font-family: 'Anton', 'Inter', sans-serif;
+    font-size: 9vh; font-weight: 400;  /* Anton is naturally heavy */
+    line-height: 0.92;
+    letter-spacing: -0.05vh;
+    color: var(--ink-100);
+    text-transform: uppercase;
+    opacity: 0; transform: translateY(2.2vh);
+    transition: opacity 0.7s var(--ease-out) 0.5s, transform 0.7s var(--ease-out) 0.5s;
+    text-shadow: 0 0.3vh 2vh rgba(0,0,0,0.6);
+}
+.slot-title .br { display: block; }
+
+/* Sub description */
+.slot-sub {
+    font-size: 1.75vh; font-weight: 400;
+    line-height: 1.45; color: var(--ink-80);
+    max-width: 42vh;
+    opacity: 0; transform: translateY(1.5vh);
+    transition: opacity 0.6s var(--ease-out) 0.7s, transform 0.6s var(--ease-out) 0.7s;
+    text-shadow: 0 0.15vh 0.8vh rgba(0,0,0,0.6);
+}
+
+.slot.active .slot-eyebrow,
+.slot.active .slot-title,
+.slot.active .slot-sub { opacity: 1; transform: translateY(0); }
+
+/* ============================================================
+   v6 — Dynamic text-overlay upgrades
+   (clean image + logo · ambient motion · per-line reveal · in/out)
+============================================================ */
+
+/* Brand logo on the clean poster (top-left) */
+.slot-logo {
+    position: absolute; top: 3vh; left: 3.5vh; z-index: 5;
+    font-family: 'Anton', 'Inter', sans-serif;
+    font-size: 2.4vh; letter-spacing: 0.5vh; text-transform: uppercase;
+    color: #fff; text-shadow: 0 0.2vh 1.4vh rgba(0,0,0,0.6);
+    opacity: 0; transform: translateY(-1.2vh);
+    transition: opacity 0.6s var(--ease-out) 0.15s, transform 0.6s var(--ease-out) 0.15s;
+}
+.slot.active .slot-logo { opacity: 1; transform: translateY(0); }
+
+/* Intentional EXIT for the main text (v5 only animated CTA/stats out) */
+.slot.exiting .slot-eyebrow,
+.slot.exiting .slot-title,
+.slot.exiting .slot-sub {
+    opacity: 0; transform: translateY(2vh);
+    transition-duration: 0.4s; transition-delay: 0s;
+}
+.slot.exiting .slot-logo {
+    opacity: 0; transform: translateY(-1.2vh);
+    transition-duration: 0.4s; transition-delay: 0s;
+}
+
+/* Title: plain crisp white — glint/metallic fully removed.
+   Uses the base .slot-title rules above (solid white, simple fade-up). */
+
+/* ── Ambient motion WHILE the slot is displayed (fixes the "frozen" feel) ── */
+/* Eyebrow dot: gentle breathing pulse */
+@keyframes v6-dot-pulse {
+    0%, 100% { transform: scale(1);    opacity: 1;    }
+    50%      { transform: scale(1.55); opacity: 0.6;  }
+}
+.slot.active .slot-eyebrow::before { animation: v6-dot-pulse 2.2s ease-in-out 1.3s infinite; }
+
+/* CTA arrow: continuous soft nudge — invites touch */
+@keyframes v6-arrow-nudge {
+    0%, 100% { transform: translateX(0); }
+    55%      { transform: translateX(0.55vh); }
+}
+.slot.active .cta .arrow { animation: v6-arrow-nudge 1.9s ease-in-out 1.8s infinite; }
+
+/* Primary CTA: soft cyan glow breathe — GPU-safe (animates a pseudo's opacity only) */
+.cta-primary { position: relative; isolation: isolate; }
+.cta-primary::after {
+    content: ''; position: absolute; inset: 0; z-index: -1;
+    border-radius: inherit;
+    box-shadow: 0 0 2.8vh rgba(109,213,232,0.45);
+    opacity: 0; pointer-events: none;
+}
+@keyframes v6-cta-glow { 0%, 100% { opacity: 0; } 50% { opacity: 1; } }
+.slot.active .cta-primary::after { animation: v6-cta-glow 2.8s ease-in-out 2s infinite; }
+
+/* ============================================================
+   CTA DOCK — outlined dark transparent (Hanuman style)
+   Snug fit (sized to content), but both buttons match widest one
+============================================================ */
+.cta-dock {
+    position: absolute;
+    left: 3.5vh; bottom: 3.5vh;
+    /* Grid sizes its column to the widest CTA's content;
+       each CTA fills the column via width:100% — so both end up equal width. */
+    display: grid;
+    grid-template-columns: max-content;
+    justify-content: start;
+    gap: 1vh; z-index: 6;
+}
+.cta {
+    width: 100%;                 /* fill the auto-sized grid column */
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 2.4vh;                  /* space between label and arrow */
+    padding: 1.7vh 2.2vh;
+    font-family: 'Inter', sans-serif;
+    border-radius: 1.4vh;
+    cursor: pointer;
+    touch-action: manipulation; user-select: none;
+    backdrop-filter: blur(14px) saturate(120%);
+    -webkit-backdrop-filter: blur(14px) saturate(120%);
+    white-space: nowrap;
+    opacity: 0; transform: translateY(3vh);
+    transition: opacity 0.55s var(--ease-out),
+                transform 0.55s var(--ease-spring),
+                background 0.18s ease,
+                border-color 0.18s ease;
+}
+
+/* Primary: same dark transparent style but with subtle glow */
+.cta-primary {
+    background: var(--cta-bg);
+    color: var(--ink-100);
+    border: 0.15vh solid var(--cta-border);
+    font-size: 1.85vh; font-weight: 700;
+    letter-spacing: 0.32vh; text-transform: uppercase;
+    box-shadow: 0 1.2vh 3vh rgba(0,0,0,0.45),
+                inset 0 0 0 0.05vh rgba(255,255,255,0.04);
+}
+.cta-primary:active {
+    transform: translateY(0) scale(0.98);
+    border-color: var(--cta-border-hover);
+    background: rgba(8,12,22,0.7);
+}
+
+/* Secondary: same SIZE as primary (uniform buttons); hierarchy comes from
+   the lighter weight + thinner border + the primary's cyan glow */
+.cta-secondary {
+    background: var(--cta-bg);
+    color: var(--ink-100);
+    border: 0.12vh solid rgba(255,255,255,0.28);
+    font-size: 1.85vh; font-weight: 600;
+    letter-spacing: 0.32vh; text-transform: uppercase;
+}
+.cta-secondary:active {
+    background: rgba(8,12,22,0.7);
+    border-color: var(--cta-border-hover);
+}
+
+.cta .arrow {
+    font-size: 1.85vh; font-weight: 500;
+    opacity: 0.95;
+    transition: transform 0.3s var(--ease-out);
+}
+.cta-secondary .arrow { font-size: 1.85vh; }
+.cta:active .arrow { transform: translateX(0.4vh); }
+
+/* Stagger enter */
+.slot.active .cta:nth-child(1) {
+    opacity: 1; transform: translateY(0);
+    transition-delay: 0.95s, 0.95s, 0s, 0s;
+}
+.slot.active .cta:nth-child(2) {
+    opacity: 1; transform: translateY(0);
+    transition-delay: 1.13s, 1.13s, 0s, 0s;
+}
+.slot.exiting .cta {
+    opacity: 0; transform: translateY(3vh);
+    transition-delay: 0s !important;
+    transition-duration: 0.35s, 0.35s, 0s, 0s;
+}
+
+/* ============================================================
+   STAT CARDS — optional bottom-right cluster (300M / 40M / 360°)
+============================================================ */
+.stat-row {
+    position: absolute;
+    right: 3.5vh; bottom: 3.5vh;
+    display: flex; gap: 1vh;
+    z-index: 6;
+}
+.stat-card {
+    min-width: 9vh;
+    padding: 1.4vh 1.6vh;
+    background: var(--cta-bg);
+    border: 0.12vh solid rgba(255,255,255,0.22);
+    border-radius: 1.2vh;
+    backdrop-filter: blur(10px);
+    text-align: left;
+    opacity: 0; transform: translateY(2vh);
+    transition: opacity 0.5s var(--ease-out), transform 0.5s var(--ease-spring);
+}
+.stat-num {
+    font-family: 'Inter', sans-serif;
+    font-size: 2.4vh; font-weight: 800;
+    color: var(--ink-100); line-height: 1;
+    letter-spacing: -0.05vh;
+}
+.stat-label {
+    font-size: 0.95vh; font-weight: 600;
+    color: var(--ink-60);
+    letter-spacing: 0.2vh; text-transform: uppercase;
+    margin-top: 0.5vh;
+}
+.slot.active .stat-card { opacity: 1; transform: translateY(0); }
+.slot.active .stat-card:nth-child(1) { transition-delay: 1.2s; }
+.slot.active .stat-card:nth-child(2) { transition-delay: 1.32s; }
+.slot.active .stat-card:nth-child(3) { transition-delay: 1.44s; }
+.slot.exiting .stat-card {
+    opacity: 0; transform: translateY(2vh);
+    transition-delay: 0s !important;
+    transition-duration: 0.35s;
+}
+
+/* When stat row is present, slot-content gets narrower so it doesn't collide */
+.slot[data-has-stats="true"] .slot-content { right: 32vh; }
+
+/* ============================================================
+   Rotating text-overlay anchor (per slot) — keeps it from feeling static.
+   CTA always stays bottom-left · client logo always stays top-right.
+   (placed AFTER the has-stats rule so these win on equal specificity)
+============================================================ */
+/* Bottom-left (Hanuman default) */
+.slot[data-pos="bl"] .slot-content {
+    left: 3.5vh; right: 3.5vh; bottom: 16vh; top: auto;
+    align-items: flex-start; text-align: left;
+}
+.slot[data-pos="bl"][data-has-stats="true"] .slot-content { right: 32vh; } /* clear stat cluster */
+
+/* Bottom-right */
+.slot[data-pos="br"] .slot-content {
+    left: 3.5vh; right: 3.5vh; bottom: 16vh; top: auto;
+    align-items: flex-end; text-align: right;
+}
+
+/* Top-left (sits below the MENU button) */
+.slot[data-pos="tl"] .slot-content {
+    left: 3.5vh; right: 3.5vh; top: 12vh; bottom: auto;
+    align-items: flex-start; text-align: left;
+}
+/* Stronger top scrim so top-left text stays readable over a bright sky */
+.slot[data-pos="tl"] .slot-grad-top {
+    height: 62%;
+    background: linear-gradient(180deg, rgba(5,6,8,0.85) 0%, rgba(5,6,8,0.32) 55%, transparent 100%);
+}
+
+/* ============================================================
+   PAPER NOTICE (unchanged from v4)
+============================================================ */
+.slot[data-kind="notice"] {
+    background: radial-gradient(ellipse at 50% 30%, #11151c 0%, #050608 70%);
+    display: flex; align-items: center; justify-content: center;
+    padding: 2vh;
+}
+.notice-paper {
+    position: relative;
+    width: 100%; height: 100%;
+    background: var(--paper);
+    color: var(--paper-ink);
+    border-radius: 1.6vh;
+    padding: 0 3.5vh 3vh;
+    display: flex; flex-direction: column;
+    overflow: hidden;
+    box-shadow:
+        0 4vh 8vh rgba(0,0,0,0.55),
+        0 1vh 2vh rgba(0,0,0,0.35),
+        0 0 0 0.12vh rgba(0,0,0,0.06) inset;
+    font-family: 'Sarabun', 'Inter', sans-serif;
+    transform: translateY(2vh) scale(0.97);
+    opacity: 0;
+    transition: transform 0.85s var(--ease-spring) 0.05s,
+                opacity 0.6s var(--ease-out) 0.05s;
+}
+.slot.active .notice-paper { transform: translateY(0) scale(1); opacity: 1; }
+.notice-header-photo {
+    position: absolute; top: 0; left: 0; right: 0; height: 14vh;
+    background-size: cover; background-position: center;
+    z-index: 0;
+}
+.notice-header-photo::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(180deg,
+        rgba(250,250,246,0) 0%,
+        rgba(250,250,246,0.2) 55%,
+        rgba(250,250,246,0.85) 85%,
+        var(--paper) 100%);
+}
+.notice-brand {
+    position: relative; z-index: 2;
+    padding: 1.6vh 0 1.4vh;
+    display: flex; align-items: center; gap: 1.2vh;
+}
+.notice-brand-mark {
+    width: 4.2vh; height: 4.2vh;
+    border-radius: 0.6vh;
+    background: var(--paper-navy);
+    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 2vh;
+    letter-spacing: -0.1vh;
+    font-family: 'Inter', sans-serif;
+    flex-shrink: 0;
+}
+.notice-brand-text { display: flex; flex-direction: column; gap: 0.2vh; }
+.notice-brand-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.1vh; font-weight: 700;
+    color: var(--paper-navy); line-height: 1;
+}
+.notice-brand-sub {
+    font-size: 1.1vh; color: var(--paper-ink-2);
+    letter-spacing: 0.08vh;
+    font-family: 'JetBrains Mono', monospace;
+}
+.notice-title-block { position: relative; z-index: 2; margin-top: 0.8vh; }
+.notice-title-th {
+    font-family: 'Sarabun', sans-serif;
+    font-size: 3.8vh; font-weight: 700;
+    color: var(--paper-ink); line-height: 1;
+    letter-spacing: -0.05vh;
+}
+.notice-title-en {
+    font-family: 'Inter', sans-serif;
+    font-size: 1.6vh; font-weight: 600;
+    color: var(--paper-ink-2);
+    letter-spacing: 0.4vh; text-transform: uppercase;
+    margin-top: 0.5vh;
+}
+.notice-body {
+    position: relative; z-index: 2;
+    margin-top: 2.2vh;
+    font-size: 1.55vh; line-height: 1.55;
+    color: var(--paper-ink);
+}
+.notice-body-th { font-family: 'Sarabun', sans-serif; }
+.notice-body-en { font-family: 'Inter', sans-serif; font-size: 1.5vh; }
+.notice-highlight {
+    margin-top: 1.6vh;
+    padding: 1.6vh 1.8vh;
+    border: 0.18vh dashed var(--paper-red);
+    border-radius: 1.4vh;
+    text-align: center;
+    background: rgba(179,38,30,0.025);
+}
+.notice-highlight-text {
+    font-family: 'Sarabun', sans-serif;
+    font-size: 1.85vh; font-weight: 700;
+    color: var(--paper-red); line-height: 1.5;
+}
+.notice-highlight-text.en {
+    font-family: 'Inter', sans-serif;
+    font-size: 1.55vh; font-weight: 600;
+}
+.notice-divider {
+    position: relative; z-index: 2;
+    margin: 2.2vh auto 1.4vh;
+    display: flex; align-items: center; justify-content: center;
+    gap: 0.4vh; width: 65%;
+}
+.notice-divider-line {
+    height: 0.4vh; border-radius: 0.2vh;
+    background: linear-gradient(90deg, transparent, var(--paper-line) 30%, var(--paper-line) 70%, transparent);
+}
+.notice-divider-line.short {
+    flex: 1; max-width: 6vh;
+    background: linear-gradient(90deg, transparent, var(--paper-line));
+}
+.notice-divider-line.long {
+    flex: 3;
+    background: linear-gradient(90deg, var(--paper-blue), var(--paper-blue));
+}
+.notice-divider-line.tail {
+    flex: 1; max-width: 6vh;
+    background: linear-gradient(90deg, var(--paper-line), transparent);
+}
+.notice-closing {
+    position: relative; z-index: 2;
+    margin-top: auto;
+    padding-top: 2vh;
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-size: 1.4vh;
+    color: var(--paper-ink-2);
+    text-align: center; line-height: 1.55;
+}
+.notice-footer {
+    position: relative; z-index: 2;
+    margin-top: 1.4vh;
+    padding-top: 1.4vh;
+    border-top: 0.1vh solid var(--paper-line);
+    display: flex; align-items: center; justify-content: space-between;
+}
+.notice-footer-logo { display: flex; align-items: center; gap: 0.8vh; }
+.notice-footer-mark {
+    width: 2.6vh; height: 2.6vh;
+    border-radius: 0.4vh;
+    background: var(--paper-navy); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 1.3vh;
+    font-family: 'Inter', sans-serif;
+}
+.notice-footer-name {
+    font-family: 'Inter', sans-serif;
+    font-size: 1.2vh; font-weight: 700;
+    color: var(--paper-ink); letter-spacing: 0.1vh;
+}
+.notice-footer-posted {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.05vh;
+    color: var(--paper-ink-2);
+    letter-spacing: 0.08vh;
+}
+
+/* ============================================================
+   TRANSITIONS
+============================================================ */
+.stage[data-tx="cube"] .slot {
+    transition: transform 0.95s cubic-bezier(0.83, 0, 0.17, 1),
+                opacity 0.25s linear 0.7s;
+}
+.stage[data-tx="cube"] .slot.leaving {
+    transform: rotateY(-90deg);
+    transform-origin: left center;
+    animation: cube-fade-out 0.95s linear forwards;
+}
+.stage[data-tx="cube"] .slot.entering {
+    transform: rotateY(90deg);
+    transform-origin: right center; opacity: 1;
+}
+.stage[data-tx="cube"] .slot.active { transform: rotateY(0deg); opacity: 1; }
+@keyframes cube-fade-out {
+    0%, 75% { opacity: 1; }
+    100%    { opacity: 0; }
+}
+.stage[data-tx="flip"] .slot.leaving { transform: rotateX(180deg) translateZ(-20vh); opacity: 0; }
+.stage[data-tx="flip"] .slot.entering { transform: rotateX(-180deg) translateZ(-20vh); opacity: 0; }
+.stage[data-tx="flip"] .slot.active { transform: rotateX(0); opacity: 1; }
+
+.stage[data-tx="zoom"] .slot.leaving { transform: scale(1.18) translateY(-2vh); opacity: 0; }
+.stage[data-tx="zoom"] .slot.entering { transform: scale(0.88) translateY(2vh); opacity: 0; }
+.stage[data-tx="zoom"] .slot.active { transform: scale(1) translateY(0); opacity: 1; }
+
+.stage[data-tx="push"] .slot.leaving { transform: translateX(-35%) scale(0.92); opacity: 0; filter: blur(0.6vh); }
+.stage[data-tx="push"] .slot.entering { transform: translateX(35%) scale(0.92); opacity: 0; filter: blur(0.6vh); }
+.stage[data-tx="push"] .slot.active { transform: translateX(0) scale(1); opacity: 1; filter: blur(0); }
+
+/* ============================================================
+   BOTTOM TAGLINE
+============================================================ */
+.bottombar {
+    background: var(--navy-deep);
+    border-top: 0.15vh solid rgba(255,255,255,0.06);
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden; position: relative;
+}
+.bottombar-track {
+    display: flex; white-space: nowrap;
+    animation: marquee 38s linear infinite;
+}
+.bottombar-item {
+    font-size: 1.3vh; font-weight: 600;
+    color: var(--ink-60);
+    padding: 0 5vh;
+    letter-spacing: 0.3vh; text-transform: uppercase;
+}
+.bottombar-sep { color: var(--dot-cyan); font-size: 0.6vh; align-self: center; }
+@keyframes marquee {
+    0%   { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+}
+
+/* ============================================================
+   DEV BADGE
+============================================================ */
+.dev-badge {
+    position: absolute;
+    top: 9vh; right: 2vh;
+    z-index: 100;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(10px);
+    border: 0.1vh solid var(--ink-20);
+    color: var(--ink-60);
+    font-family: monospace;
+    font-size: 1.1vh;
+    padding: 0.6vh 1.2vh;
+    border-radius: 0.6vh;
+    pointer-events: none;
+    letter-spacing: 0.1vh;
+}
+.dev-badge .v { color: var(--dot-cyan); font-weight: 700; }
+.dev-badge .k { color: #6BA3D6; font-weight: 700; }
+
+/* ============================================================
+   HAMBURGER MENU + CATEGORY PANEL (top-left, like classic web)
+============================================================ */
+/* Menu button — same shape & typography as CTA primary */
+.menu-btn {
+    position: absolute;
+    top: 2.2vh; left: 2.5vh;
+    z-index: 220;
+    display: flex; align-items: center;
+    gap: 1.4vh;
+    padding: 1.7vh 2.2vh;
+    background: var(--cta-bg);
+    border: 0.15vh solid var(--cta-border);
+    border-radius: 1.4vh;
+    backdrop-filter: blur(14px) saturate(120%);
+    -webkit-backdrop-filter: blur(14px) saturate(120%);
+    cursor: pointer;
+    touch-action: manipulation; user-select: none;
+    font-family: 'Inter', sans-serif;
+    color: var(--ink-100);
+    transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
+    /* Subtle floating motion — never fully still */
+    animation: menu-float 5s ease-in-out infinite;
+    box-shadow: 0 1.2vh 3vh rgba(0,0,0,0.45),
+                inset 0 0 0 0.05vh rgba(255,255,255,0.04);
+    overflow: visible;
+}
+.menu-btn:active {
+    background: rgba(8,12,22,0.75);
+    border-color: var(--cta-border-hover);
+    transform: scale(0.97);
+}
+/* Layer 1 — Cyan halo ring pulses outward (like wifi ping) */
+.menu-btn::before {
+    content: '';
+    position: absolute;
+    inset: -0.15vh;
+    border-radius: inherit;
+    pointer-events: none;
+    box-shadow: 0 0 0 0 rgba(109,213,232,0.55);
+    animation: halo-pulse 2.6s ease-out infinite;
+}
+@keyframes halo-pulse {
+    0%   { box-shadow: 0 0 0 0    rgba(109,213,232,0.55); }
+    70%  { box-shadow: 0 0 0 2vh  rgba(109,213,232,0);    }
+    100% { box-shadow: 0 0 0 2vh  rgba(109,213,232,0);    }
+}
+/* Layer 2 — Live dot indicator, top-right corner */
+.menu-btn::after {
+    content: '';
+    position: absolute;
+    top: -0.4vh; right: -0.4vh;
+    width: 1.2vh; height: 1.2vh;
+    border-radius: 50%;
+    background: var(--dot-cyan);
+    box-shadow: 0 0 1.4vh var(--dot-cyan),
+                0 0 0 0.25vh rgba(8,12,22,0.7);
+    animation: dot-pulse 1.6s ease-in-out infinite;
+}
+@keyframes dot-pulse {
+    0%, 100% { transform: scale(1);    opacity: 1;   }
+    50%       { transform: scale(0.55); opacity: 0.45; }
+}
+/* Subtle float — vertical breathing */
+@keyframes menu-float {
+    0%, 100% { transform: translateY(0); }
+    50%       { transform: translateY(-0.4vh); }
+}
+
+.hamburger {
+    display: flex; flex-direction: column;
+    gap: 0.5vh; flex-shrink: 0;
+    width: 2.2vh; height: 1.86vh;
+    align-items: flex-start;
+    justify-content: center;
+    position: relative;
+}
+.hamburger span {
+    display: block; height: 0.28vh; width: 2.2vh;
+    background: var(--ink-100);
+    border-radius: 0.2vh;
+    transition: transform 0.25s var(--ease-out), opacity 0.2s ease, width 0.4s ease;
+    transform-origin: left center;
+}
+/* Layer 3 — bars wave: width oscillates with stagger so it looks alive */
+.hamburger span:nth-child(1) { animation: bar-wave 2.4s ease-in-out infinite; animation-delay: 0s;   }
+.hamburger span:nth-child(2) { animation: bar-wave 2.4s ease-in-out infinite; animation-delay: 0.18s; }
+.hamburger span:nth-child(3) { animation: bar-wave 2.4s ease-in-out infinite; animation-delay: 0.36s; }
+@keyframes bar-wave {
+    0%, 100% { width: 2.2vh; }
+    50%       { width: 1.3vh; }
+}
+
+/* When menu opens, stop the dynamic noise — user is now in control */
+.menu-btn.open { animation: none; transform: none; }
+.menu-btn.open::before,
+.menu-btn.open::after { animation: none; opacity: 0; }
+.menu-btn.open .hamburger span { animation: none; width: 2.2vh; }
+.menu-btn.open .hamburger span:nth-child(1) {
+    transform: translateY(0.78vh) rotate(45deg);
+}
+.menu-btn.open .hamburger span:nth-child(2) { opacity: 0; }
+.menu-btn.open .hamburger span:nth-child(3) {
+    transform: translateY(-0.78vh) rotate(-45deg);
+}
+
+/* Label typography mirrors CTA primary exactly */
+.menu-btn-label {
+    font-size: 1.85vh; font-weight: 700;
+    letter-spacing: 0.32vh; text-transform: uppercase;
+    color: var(--ink-100);
+    line-height: 1;
+}
+
+/* Category dropdown panel */
+/* REACH ZONE — interactive menu sits in the UPPER area (near MENU),
+   because on a ~180cm-tall 43" screen the top is at eye level · capped width */
+.category-panel {
+    position: absolute;
+    left: 0; right: 0; top: 10vh; bottom: auto;
+    margin-left: auto; margin-right: auto;
+    width: 74%; max-width: 30vh;            /* ~A3-ish · doesn't balloon */
+    z-index: 219;
+    background: transparent;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    column-gap: 2vh;
+    row-gap: 2.4vh;
+    opacity: 0; transform: translateY(-2vh) scale(0.97);   /* drop down from MENU */
+    pointer-events: none;
+    transition: opacity 0.22s var(--ease-out),
+                transform 0.25s var(--ease-spring);
+}
+.category-panel.open {
+    opacity: 1; transform: translateY(0) scale(1);
+    pointer-events: auto;
+}
+.cat-item {
+    display: flex; flex-direction: column; align-items: center; gap: 0.8vh;
+    cursor: pointer;
+    touch-action: manipulation; user-select: none;
+    transition: transform 0.15s ease, filter 0.15s ease;
+}
+.cat-item:active { transform: scale(0.94); filter: brightness(1.12); }
+.ci-box {
+    display: block;
+    width: 100%;                         /* fills cell; spacing comes from margins/gap */
+    position: relative;                  /* square enforced via padding hack */
+    border-radius: 2.4vh;
+    background: rgba(38,46,62,0.62);      /* dark frosted · a touch more opaque than the dim */
+    border: 0.12vh solid rgba(255,255,255,0.1);
+    backdrop-filter: blur(8px) saturate(120%);
+    -webkit-backdrop-filter: blur(8px) saturate(120%);
+    box-shadow: 0 1.2vh 2.4vh -0.6vh rgba(0,0,0,0.45);
+}
+.ci-box::before { content: ""; display: block; padding-top: 100%; }  /* height = width → square */
+.cat-item-icon {
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0; margin: auto;
+    width: 58%; height: 58%;
+    object-fit: contain;
+    filter: drop-shadow(0 0.2vh 0.4vh rgba(0,0,0,0.28));
+}
+.ci-label {
+    font-size: 1.4vh; font-weight: 700; color: #fff;
+    text-align: center; line-height: 1.15; letter-spacing: 0.03vh;
+    text-shadow: 0 0.1vh 0.5vh rgba(0,0,0,0.55);
+}
+
+/* Backdrop dimmer when menu opens (subtle, only over media) */
+.menu-backdrop {
+    position: absolute; inset: 0;
+    z-index: 210;
+    background: rgba(0,0,0,0);
+    pointer-events: none;
+    transition: background 0.3s ease;
+}
+.menu-backdrop.open {
+    background: rgba(0,0,0,0.6);
+    -webkit-backdrop-filter: blur(2px);
+    backdrop-filter: blur(2px);
+    pointer-events: auto;
+}
+
+/* ============================================================
+   CATEGORY SCREEN — full overlay with grid of cards
+============================================================ */
+.cat-screen {
+    position: absolute; inset: 0;
+    z-index: 240;
+    background: linear-gradient(165deg, #050608 0%, #0e1d3a 100%);
+    display: flex; flex-direction: column;
+    opacity: 0; transform: translateY(100%);
+    pointer-events: none;
+    transition: opacity 0.4s var(--ease-out),
+                transform 0.55s var(--ease-spring);
+}
+.cat-screen.open {
+    opacity: 1; transform: translateY(0);
+    pointer-events: auto;
+}
+.cat-screen-header {
+    flex-shrink: 0;
+    padding: 2.5vh 2.5vh 2vh;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 1.6vh;
+    border-bottom: 0.1vh solid rgba(255,255,255,0.08);
+}
+.back-btn {
+    width: 5vh; height: 5vh;
+    border-radius: 50%;
+    background: var(--cta-bg);
+    border: 0.15vh solid var(--cta-border);
+    color: var(--ink-100);
+    font-size: 2.2vh;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    backdrop-filter: blur(8px);
+    transition: background 0.15s ease, transform 0.15s ease;
+}
+.back-btn:active { background: rgba(8,12,22,0.8); transform: scale(0.95); }
+.cat-screen-title {
+    font-family: 'Anton', 'Inter', sans-serif;
+    font-size: 3.4vh; font-weight: 400;
+    color: var(--ink-100);
+    letter-spacing: 0.15vh; text-transform: uppercase;
+}
+.lang-toggle {
+    padding: 0.7vh 1.6vh;
+    background: var(--cta-bg);
+    border: 0.15vh solid var(--cta-border);
+    color: var(--ink-100);
+    font-size: 1.3vh; font-weight: 700;
+    border-radius: 1vh;
+    letter-spacing: 0.2vh;
+    cursor: pointer;
+    backdrop-filter: blur(8px);
+}
+.lang-toggle:active { background: rgba(8,12,22,0.8); }
+
+.cat-screen-body {
+    flex: 1; overflow-y: auto;
+    padding: 2vh 2.5vh 3vh;
+}
+.cat-screen-body::-webkit-scrollbar { width: 0; }
+.cat-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.6vh;
+}
+.cat-card {
+    background: rgba(255,255,255,0.04);
+    border: 0.1vh solid rgba(255,255,255,0.1);
+    border-radius: 1.4vh;
+    overflow: hidden;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+.cat-card:active {
+    background: rgba(255,255,255,0.08);
+    border-color: rgba(255,255,255,0.22);
+    transform: scale(0.98);
+}
+.cat-card-img {
+    width: 100%; height: 18vh;
+    background-size: cover; background-position: center;
+    background-color: #0a0c10;
+}
+.cat-card-info { padding: 1.4vh 1.5vh 1.6vh; }
+.cat-card-name {
+    font-size: 1.55vh; font-weight: 700;
+    color: var(--ink-100); line-height: 1.25;
+}
+.cat-card-sub {
+    font-size: 1.15vh; font-weight: 500;
+    color: var(--ink-60);
+    margin-top: 0.5vh;
+    letter-spacing: 0.05vh;
+}
+.cat-card-meta {
+    margin-top: 0.8vh;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.05vh; color: var(--dot-cyan);
+    letter-spacing: 0.08vh;
+}
+
+/* Empty state when no items in category */
+.cat-empty {
+    grid-column: 1 / -1;
+    padding: 8vh 2vh;
+    text-align: center;
+    color: var(--ink-40);
+    font-size: 1.55vh;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01s !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.15s !important;
+    }
+}
+
+/* ============================================================
+   DETAIL POPUP — CTA / card tap → detail + QR
+============================================================ */
+.detail-overlay {
+    position: absolute; inset: 0; z-index: 300;
+    background: rgba(4,6,10,0.78);
+    backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    display: flex; align-items: flex-start; justify-content: center;
+    padding-top: 12vh;                /* top edge around the MENU level · not higher */
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.25s var(--ease-out);
+}
+.detail-overlay.open { opacity: 1; pointer-events: auto; }
+.detail-card {
+    position: relative;
+    width: 66%; max-width: 42vh;
+    background: rgba(20,26,40,0.97);
+    border: 0.15vh solid rgba(255,255,255,0.12);
+    border-radius: 2.6vh; overflow: hidden;
+    box-shadow: 0 4vh 9vh rgba(0,0,0,0.6);
+    transform: translateY(2vh) scale(0.95);
+    transition: transform 0.3s var(--ease-spring);
+}
+.detail-overlay.open .detail-card { transform: translateY(0) scale(1); }
+.detail-close {
+    position: absolute; top: 1.4vh; right: 1.4vh; z-index: 5;
+    width: 4.2vh; height: 4.2vh; border-radius: 50%;
+    background: rgba(8,12,22,0.6); border: 0.15vh solid rgba(255,255,255,0.34);
+    color: #fff; font-size: 2vh; line-height: 1; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    backdrop-filter: blur(8px);
+}
+.detail-img { width: 100%; aspect-ratio: 16/10; background-size: cover; background-position: center; background-color: #11151c; }
+.detail-body { padding: 2.4vh 2.6vh 2.8vh; color: #fff; }
+.detail-eyebrow { font-size: 1.2vh; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--dot-cyan); }
+.detail-title { font-family: 'Anton','Inter',sans-serif; font-size: 3.4vh; line-height: 1; text-transform: uppercase; margin: 0.7vh 0; }
+.detail-sub { font-size: 1.55vh; line-height: 1.45; color: rgba(255,255,255,0.82); margin-bottom: 2vh; }
+/* "View on mobile" button — QR is a later step (matches /offer · /provider) */
+.detail-vm { background: #C9864C; color: #fff; text-align: center; font-family: 'Nunito','Inter',sans-serif; font-weight: 800; letter-spacing: 0.02em; font-size: 1.7vh; padding: 1.5vh; border-radius: 1.4vh; display: flex; align-items: center; justify-content: center; gap: 0.8vh; }
+.detail-contact { display: flex; gap: 1vh; margin-top: 1.4vh; }
+.detail-cb { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 0.5vh; background: rgba(255,255,255,0.06); border: 0.12vh solid rgba(255,255,255,0.14); border-radius: 1.2vh; padding: 1.2vh 0; font-size: 1.1vh; color: rgba(255,255,255,0.82); }
+.detail-cb .i { font-size: 1.9vh; }
+</style>
+</head>
+<body>
+
+<!-- icon set (line · currentColor) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <symbol id="ic-dining" viewBox="0 0 24 24"><path d="M6 3v7a1.5 1.5 0 0 0 3 0V3M7.5 10v11M16 3c-2 0-2.5 4-2.5 6.5S15 12 16 12v9"/></symbol>
+  <symbol id="ic-groceries" viewBox="0 0 24 24"><circle cx="9" cy="19" r="1.4"/><circle cx="17" cy="19" r="1.4"/><path d="M3 4h2l2 11h10l2-8H6.5"/></symbol>
+  <symbol id="ic-health" viewBox="0 0 24 24"><path d="M12 3l1.6 4.4L18 9l-4.4 1.6L12 15l-1.6-4.4L6 9l4.4-1.6z"/><path d="M18.5 14l.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7z"/></symbol>
+  <symbol id="ic-leisure" viewBox="0 0 24 24"><rect x="4" y="8" width="16" height="11" rx="2"/><path d="M9 8V6a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M9 8v11M15 8v11"/></symbol>
+  <symbol id="ic-shopping" viewBox="0 0 24 24"><path d="M6 8h12l-1 11a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1z"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8"/></symbol>
+  <symbol id="ic-services" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21M5.6 5.6l1.8 1.8M16.6 16.6l1.8 1.8M18.4 5.6l-1.8 1.8M7.4 16.6l-1.8 1.8"/></symbol>
+  <symbol id="ic-education" viewBox="0 0 24 24"><path d="M3 9l9-4 9 4-9 4z"/><path d="M7 10.7V16c0 1.1 2.2 2 5 2s5-.9 5-2v-5.3M21 9v5"/></symbol>
+  <symbol id="ic-events" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M4 9h16M8 3v4M16 3v4M9 14l1.3 1.3L15 11"/></symbol>
+  <symbol id="ic-rent" viewBox="0 0 24 24"><circle cx="8" cy="9" r="4"/><path d="M11 12l8 8M16 17l2-2M19 20l1.5-1.5"/></symbol>
+  <symbol id="ic-sale" viewBox="0 0 24 24"><path d="M11 3H6a3 3 0 0 0-3 3v5l9 9 8-8z"/><circle cx="8" cy="8" r="1.3"/></symbol>
+  <symbol id="ic-notices" viewBox="0 0 24 24"><path d="M6 10a6 6 0 0 1 12 0c0 4 1.5 5.5 2 6H4c.5-.5 2-2 2-6z"/><path d="M10 20a2 2 0 0 0 4 0"/></symbol>
+</defs></svg>
+
+<div class="signage">
+
+    <div class="topbar">
+        <div class="topbar-time" id="topTime">18:42</div>
+        <div class="topbar-dot" title="Live"></div>
+        <div class="topbar-weather">
+            <span class="icon">☀</span>
+            <span class="temp">28°</span>
+            <span>Bangkok</span>
+        </div>
+    </div>
+
+    <div class="stage" id="stage" data-tx="zoom">
+
+        <!-- Backdrop dimmer (covers media when menu/panel open) -->
+        <div class="menu-backdrop" id="menuBackdrop"></div>
+
+        <!-- Hamburger menu button (top-left) -->
+        <button class="menu-btn" id="menuBtn" aria-label="Open menu">
+            <div class="hamburger"><span></span><span></span><span></span></div>
+            <div class="menu-btn-label">MENU</div>
+        </button>
+
+        <!-- Category dropdown panel -->
+        <div class="category-panel" id="categoryPanel">
+            <div class="cat-item" data-cat="dining"><span class="ci-box"><img class="cat-item-icon" alt="" src="icons/dining.svg"></span><span class="ci-label">Dining</span></div>
+            <div class="cat-item" data-cat="groceries"><span class="ci-box"><img class="cat-item-icon" alt="" src="icons/groceries.svg"></span><span class="ci-label">Groceries</span></div>
+            <div class="cat-item" data-cat="health-beauty"><span class="ci-box"><img class="cat-item-icon" alt="" src="icons/health-beauty.svg"></span><span class="ci-label">Health &amp; Beauty</span></div>
+            <div class="cat-item" data-cat="leisure-travel"><span class="ci-box"><img class="cat-item-icon" alt="" src="icons/leisure-travel.svg"></span><span class="ci-label">Leisure &amp; Travel</span></div>
+            <div class="cat-item" data-cat="shopping"><span class="ci-box"><img class="cat-item-icon" alt="" src="icons/shopping.svg"></span><span class="ci-label">Shopping</span></div>
+            <div class="cat-item" data-cat="services"><span class="ci-box"><img class="cat-item-icon" alt="" src="icons/services.svg"></span><span class="ci-label">Services</span></div>
+            <div class="cat-item" data-cat="education"><span class="ci-box"><img class="cat-item-icon" alt="" src="icons/education.svg"></span><span class="ci-label">Education</span></div>
+            <div class="cat-item" data-cat="events"><span class="ci-box"><img class="cat-item-icon" alt="" src="icons/events.svg"></span><span class="ci-label">Events</span></div>
+            <div class="cat-item" data-cat="for-rent"><span class="ci-box"><img class="cat-item-icon" alt="" src="icons/for-rent.svg"></span><span class="ci-label">For Rent</span></div>
+            <div class="cat-item" data-cat="for-sale"><span class="ci-box"><img class="cat-item-icon" alt="" src="icons/for-sale.svg"></span><span class="ci-label">For Sale</span></div>
+            <div class="cat-item" data-cat="notices"><span class="ci-box"><img class="cat-item-icon" alt="" src="icons/notices.svg"></span><span class="ci-label">Notices</span></div>
+        </div>
+
+        <!-- Category full screen (slides up) -->
+        <div class="cat-screen" id="catScreen">
+            <div class="cat-screen-header">
+                <button class="back-btn" id="catBackBtn" aria-label="Back">←</button>
+                <div class="cat-screen-title" id="catScreenTitle">DINING</div>
+                <button class="lang-toggle" id="langToggle">EN</button>
+            </div>
+            <div class="cat-screen-body">
+                <div class="cat-grid" id="catGrid"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- DETAIL POPUP — opens on CTA / category-card tap -->
+    <div class="detail-overlay" id="detailOverlay">
+        <div class="detail-card">
+            <button class="detail-close" id="detailClose" aria-label="Close">✕</button>
+            <div class="detail-img" id="detailImg"></div>
+            <div class="detail-body">
+                <div class="detail-eyebrow" id="detailCat">Category</div>
+                <div class="detail-title" id="detailTitle">Title</div>
+                <div class="detail-sub" id="detailSub"></div>
+                <div class="detail-vm">📱 View on mobile</div>
+                <div class="detail-contact">
+                    <div class="detail-cb"><span class="i">📞</span>Call</div>
+                    <div class="detail-cb"><span class="i">💬</span>LINE</div>
+                    <div class="detail-cb"><span class="i">📍</span>Map</div>
+                    <div class="detail-cb"><span class="i">🌐</span>Web</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="bottombar">
+        <div class="bottombar-track">
+            <span class="bottombar-item">Live in Balance</span>
+            <span class="bottombar-sep">●</span>
+            <span class="bottombar-item">Premium Living · Bangkok</span>
+            <span class="bottombar-sep">●</span>
+            <span class="bottombar-item">Touch screen to explore</span>
+            <span class="bottombar-sep">●</span>
+            <span class="bottombar-item">Live in Balance</span>
+            <span class="bottombar-sep">●</span>
+            <span class="bottombar-item">Premium Living · Bangkok</span>
+            <span class="bottombar-sep">●</span>
+            <span class="bottombar-item">Touch screen to explore</span>
+            <span class="bottombar-sep">●</span>
+        </div>
+    </div>
+
+    <div class="dev-badge" id="devBadge">
+        tx <span class="v" id="devTx">zoom</span> · kind <span class="k" id="devKind">commercial</span> · <span id="devIdx">1</span>/<span id="devTotal">5</span>
+    </div>
+
+</div>
+
+<script>
+/* ============================================================
+   MOCK SLOTS
+============================================================ */
+const SLOTS = [
+    /* Commercial: Mahogany Tower — with stats */
+    {
+        kind: 'commercial',
+        logo: 'MAHOGANY',
+        image: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=900&q=80',
+        eyebrow: 'Premium Residence',
+        pos: 'bl',
+        titleLines: ['Mahogany', 'Tower'],
+        sub: 'Penthouse-style 3-bedroom suites with sky lounge access and panoramic harbour views.',
+        ctas: [
+            { kind: 'primary',   label: 'Book Tour',   icon: '→' },
+            { kind: 'secondary', label: 'Floor Plans', icon: '↗' }
+        ],
+        stats: [
+            { num: '3 BR', label: 'Layout' },
+            { num: '89 m²', label: 'Avg Size' },
+            { num: '18M฿', label: 'From' }
+        ]
+    },
+
+    /* Paper notice — holiday contractor restriction */
+    {
+        kind: 'notice',
+        building: {
+            mark: 'M',
+            name: 'Mahogany Tower',
+            sub: 'President Park · Harbour View · Sukhumvit 24',
+            photo: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=900&q=80'
+        },
+        titleTH: 'ประกาศ',
+        titleEN: 'ANNOUNCEMENT',
+        bodyTH: 'ฝ่ายบริหารจัดการ ขอความร่วมมืองดการเข้าทำงานของผู้รับเหมาในช่วงวันหยุดนักขัตฤกษ์ เพื่อป้องกันปัญหาเกี่ยวกับเสียงและกลิ่นที่รบกวนการพักอาศัยส่วนรวม',
+        highlightTH: 'วันที่ 1 มิถุนายน 2569 เป็นวันหยุดชดเชยวันวิสาขบูชา และวันที่ 3 มิถุนายน 2569 เป็นวันเฉลิมพระชนมพรรษา สมเด็จพระนางเจ้าฯ พระบรมราชินี',
+        bodyEN: 'To ensure zero pollution and quiet environment, the contractors are not allowed to enter the building on the following date:',
+        highlightEN: 'On June 1st, 2026: the substitute holiday for Visakha Bucha Day, and On June 3rd, 2026: the Birthday Anniversary of Her Majesty Queen Suthida Bajrasudhabimalalakshana',
+        closingTH: 'จึงเรียนมาเพื่อทราบ และขออภัยในความไม่สะดวก',
+        closingEN: 'Please be informed accordingly, and we apologize for any inconvenience this may cause.',
+        management: { mark: 'P', name: 'PPM MANAGEMENT' },
+        posted: 'Posted May 28, 2026'
+    },
+
+    /* Commercial: dining */
+    {
+        kind: 'commercial',
+        logo: 'MAHOGANY',
+        image: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=900&q=80',
+        eyebrow: 'Featured Dining',
+        pos: 'br',
+        titleLines: ['Mahogany', 'Kitchen'],
+        sub: 'Chef-curated tasting menu, evenings 18:00–23:00. Reservations recommended.',
+        ctas: [
+            { kind: 'primary',   label: 'View Menu',  icon: '→' },
+            { kind: 'secondary', label: 'Reserve',    icon: '↗' }
+        ]
+        /* no stats — content-only slot */
+    },
+
+    /* Paper notice — water maintenance */
+    {
+        kind: 'notice',
+        building: {
+            mark: 'M',
+            name: 'Mahogany Tower',
+            sub: 'President Park · Harbour View · Sukhumvit 24',
+            photo: 'https://images.unsplash.com/photo-1582719188393-bb71ca45dbb9?auto=format&fit=crop&w=900&q=80'
+        },
+        titleTH: 'ประกาศ',
+        titleEN: 'WATER SUPPLY MAINTENANCE',
+        bodyTH: 'ฝ่ายบริหารจัดการขอแจ้งให้ทราบว่า จะมีการตรวจสอบและบำรุงรักษาระบบน้ำประปาภายในอาคาร A เพื่อรักษาคุณภาพการให้บริการ ในระหว่างช่วงเวลาดังกล่าวอาจส่งผลให้น้ำประปาในอาคาร A ไม่สามารถใช้งานได้ชั่วคราว',
+        highlightTH: 'วันที่ 5 มิถุนายน 2569 เวลา 09:00 – 12:00 น. เฉพาะอาคาร A เท่านั้น (อาคาร B และ C ใช้งานได้ตามปกติ)',
+        bodyEN: 'The Management would like to inform residents that scheduled water supply maintenance will be conducted to ensure service quality. Water supply may be temporarily unavailable during the listed period:',
+        highlightEN: 'June 5, 2026, from 09:00 to 12:00. Tower A only. Towers B and C will remain in full operation.',
+        closingTH: 'จึงเรียนมาเพื่อทราบ และขออภัยในความไม่สะดวก',
+        closingEN: 'Please be informed accordingly, and we apologize for any inconvenience this may cause.',
+        management: { mark: 'P', name: 'PPM MANAGEMENT' },
+        posted: 'Posted May 30, 2026'
+    },
+
+    /* Commercial: lifestyle hero — with stats */
+    {
+        kind: 'commercial',
+        logo: 'MAHOGANY',
+        image: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=900&q=80',
+        eyebrow: 'Lifestyle',
+        pos: 'tl',
+        titleLines: ['Live in', 'Balance'],
+        sub: 'Wellness, design and community — curated for the modern resident.',
+        ctas: [
+            { kind: 'primary',   label: 'Discover', icon: '→' },
+            { kind: 'secondary', label: 'About',    icon: '↗' }
+        ],
+        stats: [
+            { num: '38F', label: 'Sky Lounge' },
+            { num: '24/7', label: 'Concierge' },
+            { num: '5★', label: 'Amenities' }
+        ]
+    },
+
+    /* Commercial: MISSING description — demo that an empty field collapses cleanly
+       (client left the Description blank → title goes straight to CTA, no floating gap) */
+    {
+        kind: 'commercial',
+        logo: 'MAHOGANY',
+        image: 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=900&q=80',
+        eyebrow: 'Wellness',
+        pos: 'bl',
+        titleLines: ['Serene', 'Spa'],
+        /* sub intentionally omitted — Description field left blank by the client */
+        ctas: [
+            { kind: 'primary',   label: 'Book Now',   icon: '→' },
+            { kind: 'secondary', label: 'Treatments', icon: '↗' }
+        ]
+    }
+];
+
+const TRANSITIONS = ['cube', 'flip', 'zoom', 'push'];
+
+const stage = document.getElementById('stage');
+const devTx = document.getElementById('devTx');
+const devKind = document.getElementById('devKind');
+const devIdx = document.getElementById('devIdx');
+const devTotal = document.getElementById('devTotal');
+devTotal.textContent = SLOTS.length;
+
+function renderCommercial(s) {
+    const titleHTML = (s.titleLines || [s.title]).map(line => `<span class="br">${line}</span>`).join('');
+    const ctaHTML = (s.ctas || []).map(c =>
+        `<button class="cta cta-${c.kind}">
+            <span>${c.label}</span>
+            <span class="arrow">${c.icon}</span>
+        </button>`
+    ).join('');
+    return `
+        <div class="slot-media" style="background-image:url('${s.image}');"></div>
+        <div class="slot-grad-top"></div>
+        <div class="slot-grad-bot"></div>
+        ${s.logo ? `<div class="slot-logo">${s.logo}</div>` : ''}
+        <div class="slot-content">
+            ${s.eyebrow ? `<div class="slot-eyebrow">${s.eyebrow}</div>` : ''}
+            <div class="slot-title">${titleHTML}</div>
+            ${s.sub ? `<div class="slot-sub">${s.sub}</div>` : ''}
+        </div>
+        ${ctaHTML ? `<div class="cta-dock">${ctaHTML}</div>` : ''}
+    `;
+}
+
+function renderNotice(s) {
+    return `
+        <div class="notice-paper">
+            <div class="notice-header-photo" style="background-image:url('${s.building.photo}');"></div>
+            <div class="notice-brand">
+                <div class="notice-brand-mark">${s.building.mark}</div>
+                <div class="notice-brand-text">
+                    <div class="notice-brand-name">${s.building.name}</div>
+                    <div class="notice-brand-sub">${s.building.sub}</div>
+                </div>
+            </div>
+            <div class="notice-title-block">
+                <div class="notice-title-th">${s.titleTH}</div>
+                <div class="notice-title-en">${s.titleEN}</div>
+            </div>
+            <div class="notice-body notice-body-th">${s.bodyTH}</div>
+            ${s.highlightTH ? `<div class="notice-highlight"><div class="notice-highlight-text">${s.highlightTH}</div></div>` : ''}
+            <div class="notice-divider">
+                <span class="notice-divider-line short"></span>
+                <span class="notice-divider-line long"></span>
+                <span class="notice-divider-line tail"></span>
+            </div>
+            <div class="notice-body notice-body-en">${s.bodyEN}</div>
+            ${s.highlightEN ? `<div class="notice-highlight"><div class="notice-highlight-text en">${s.highlightEN}</div></div>` : ''}
+            <div class="notice-closing">
+                ${s.closingTH ? `<div>${s.closingTH}</div>` : ''}
+                ${s.closingEN ? `<div>${s.closingEN}</div>` : ''}
+            </div>
+            <div class="notice-footer">
+                <div class="notice-footer-logo">
+                    <div class="notice-footer-mark">${s.management.mark}</div>
+                    <div class="notice-footer-name">${s.management.name}</div>
+                </div>
+                <div class="notice-footer-posted">${s.posted}</div>
+            </div>
+        </div>
+    `;
+}
+
+SLOTS.forEach((s, i) => {
+    const el = document.createElement('div');
+    el.className = 'slot';
+    el.dataset.index = i;
+    el.dataset.kind = s.kind;
+    if (s.pos) el.dataset.pos = s.pos;
+    el.innerHTML = s.kind === 'notice' ? renderNotice(s) : renderCommercial(s);
+    stage.appendChild(el);
+});
+
+const slots = Array.from(stage.querySelectorAll('.slot'));
+let cur = 0;
+let prevTxIdx = -1;
+let forcedTx = null;
+
+function pickTransition() {
+    let i;
+    do { i = Math.floor(Math.random() * TRANSITIONS.length); }
+    while (i === prevTxIdx && TRANSITIONS.length > 1);
+    prevTxIdx = i;
+    return TRANSITIONS[i];
+}
+
+function showSlot(idx, isFirst = false) {
+    const tx = isFirst ? 'zoom' : (forcedTx || pickTransition());
+    forcedTx = null;
+    stage.dataset.tx = tx;
+    devTx.textContent = tx;
+    devKind.textContent = SLOTS[idx].kind;
+    devIdx.textContent = idx + 1;
+
+    slots.forEach((el, i) => {
+        el.classList.remove('active', 'leaving', 'entering', 'exiting');
+        if (i === idx) el.classList.add('entering');
+        else if (el.classList.contains('active') || i === cur) el.classList.add('leaving');
+    });
+
+    void stage.offsetWidth;
+
+    requestAnimationFrame(() => {
+        slots[idx].classList.remove('entering');
+        slots[idx].classList.add('active');
+    });
+
+    cur = idx;
+}
+
+function preExitCurrent() {
+    if (slots[cur]) slots[cur].classList.add('exiting');
+}
+
+function dwellMs() { return SLOTS[cur].kind === 'notice' ? 16000 : 8500; }
+const PRE_EXIT_MS = 600;
+
+let advanceTimer = null;
+let isMenuOpen = false;     // category panel or full category screen open
+
+showSlot(0, true);
+
+function scheduleNext() {
+    clearTimeout(advanceTimer);
+    if (isMenuOpen) return;  // auto-advance paused while menu open
+    advanceTimer = setTimeout(() => {
+        preExitCurrent();
+        setTimeout(() => {
+            const next = (cur + 1) % SLOTS.length;
+            showSlot(next);
+            scheduleNext();
+        }, PRE_EXIT_MS);
+    }, dwellMs());
+}
+scheduleNext();
+
+function updateTime() {
+    const d = new Date();
+    document.getElementById('topTime').textContent =
+        `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+updateTime();
+setInterval(updateTime, 30000);
+
+const TX_KEYS = { '1': 'cube', '2': 'flip', '3': 'zoom', '4': 'push' };
+document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight') {
+        preExitCurrent();
+        setTimeout(() => showSlot((cur + 1) % SLOTS.length), PRE_EXIT_MS);
+    }
+    if (e.key === 'ArrowLeft') {
+        preExitCurrent();
+        setTimeout(() => showSlot((cur - 1 + SLOTS.length) % SLOTS.length), PRE_EXIT_MS);
+    }
+    if (TX_KEYS[e.key]) {
+        forcedTx = TX_KEYS[e.key];
+        preExitCurrent();
+        setTimeout(() => showSlot((cur + 1) % SLOTS.length), PRE_EXIT_MS);
+    }
+    if (e.key === 'd' || e.key === 'D') {
+        const b = document.getElementById('devBadge');
+        b.style.display = b.style.display === 'none' ? '' : 'none';
+    }
+    if (e.key === 'n' || e.key === 'N') {
+        const nextNotice = SLOTS.findIndex((s, i) => i > cur && s.kind === 'notice');
+        const idx = nextNotice >= 0 ? nextNotice : SLOTS.findIndex(s => s.kind === 'notice');
+        if (idx >= 0) {
+            preExitCurrent();
+            setTimeout(() => showSlot(idx), PRE_EXIT_MS);
+        }
+    }
+    if (e.key === 'Escape') closeAll();
+});
+
+/* ============================================================
+   MENU + CATEGORY interactions
+============================================================ */
+const menuBtn       = document.getElementById('menuBtn');
+const menuBackdrop  = document.getElementById('menuBackdrop');
+const categoryPanel = document.getElementById('categoryPanel');
+const catScreen     = document.getElementById('catScreen');
+const catBackBtn    = document.getElementById('catBackBtn');
+const catScreenTitle= document.getElementById('catScreenTitle');
+const catGrid       = document.getElementById('catGrid');
+const langToggle    = document.getElementById('langToggle');
+
+/* ── Mock category content ───────────────────────────────── */
+const CATEGORIES = {
+    'health-beauty': {
+        title: 'HEALTH & BEAUTY',
+        items: [
+            { name: 'Serene Spa', sub: 'Massage & Facial · Floor 35', meta: '10:00–22:00', img: 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=400&q=70' },
+            { name: 'Glow Clinic', sub: 'Skin & Wellness · Floor 7', meta: 'By appointment', img: 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&w=400&q=70' },
+            { name: 'FitZone Gym', sub: 'Floor 36 · Members', meta: '24/7 Access', img: 'https://images.unsplash.com/photo-1571902943202-507ec2618e8f?auto=format&fit=crop&w=400&q=70' }
+        ]
+    },
+    'leisure-travel': {
+        title: 'LEISURE & TRAVEL',
+        items: [
+            { name: 'Aurora Hotel', sub: 'Staycation Package · Tower D', meta: 'From ฿2,900', img: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=400&q=70' },
+            { name: 'Adventure Park', sub: 'Day Pass · Family', meta: 'From ฿590', img: 'https://images.unsplash.com/photo-1505731110654-99d7f7f1f9d0?auto=format&fit=crop&w=400&q=70' },
+            { name: 'City Tour', sub: 'Half-day · Pickup lobby', meta: 'From ฿1,200', img: 'https://images.unsplash.com/photo-1502920917128-1aa500764cbd?auto=format&fit=crop&w=400&q=70' }
+        ]
+    },
+    'shopping': {
+        title: 'SHOPPING',
+        items: [
+            { name: 'Urban Threads', sub: 'Fashion · G/F', meta: '10:00–21:00', img: 'https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?auto=format&fit=crop&w=400&q=70' },
+            { name: 'Tech Corner', sub: 'Gadgets · Floor 2', meta: '11:00–20:00', img: 'https://images.unsplash.com/photo-1498049794561-7780e7231661?auto=format&fit=crop&w=400&q=70' }
+        ]
+    },
+    'education': {
+        title: 'EDUCATION',
+        items: [
+            { name: 'Little Scholars', sub: 'Kids Courses · Floor 5', meta: 'Weekends', img: 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=400&q=70' },
+            { name: 'Language Hub', sub: 'EN · CN · JP', meta: 'Eve classes', img: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=400&q=70' }
+        ]
+    },
+    'events': {
+        title: 'EVENTS',
+        items: [
+            { name: 'Rooftop Jazz Night', sub: 'Sky Bar · Sat 20:00', meta: 'Jun 14 · Free', img: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=400&q=70' },
+            { name: 'Weekend Market', sub: 'Plaza · Local goods', meta: 'Jun 21–22', img: 'https://images.unsplash.com/photo-1555529669-e69e7aa0ba9a?auto=format&fit=crop&w=400&q=70' }
+        ]
+    },
+    'dining': {
+        title: 'DINING',
+        items: [
+            { name: 'The Mahogany Kitchen', sub: 'Modern Thai · Floor 38', meta: '18:00–23:00', img: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=400&q=70' },
+            { name: 'Sky Bar', sub: 'Cocktails · Rooftop', meta: 'Open 17:00', img: 'https://images.unsplash.com/photo-1572116469696-31de0f17cc34?auto=format&fit=crop&w=400&q=70' },
+            { name: 'Coffee Lab', sub: 'Specialty Coffee · G/F', meta: '07:00–18:00', img: 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=400&q=70' },
+            { name: 'Garden Bistro', sub: 'European · Pool Deck', meta: '11:00–22:00', img: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=400&q=70' },
+            { name: 'Wine Cellar', sub: 'Wine & Tapas · B1', meta: '17:00–01:00', img: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?auto=format&fit=crop&w=400&q=70' },
+            { name: 'Sushi Counter', sub: 'Omakase · Floor 12', meta: 'By reservation', img: 'https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?auto=format&fit=crop&w=400&q=70' }
+        ]
+    },
+    'for-rent': {
+        title: 'FOR RENT',
+        items: [
+            { name: '1 BR Suite · Tower B', sub: '52 m² · Harbour View', meta: '฿45,000/mo', img: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=400&q=70' },
+            { name: '2 BR Suite · Tower A', sub: '78 m² · Pool Access', meta: '฿65,000/mo', img: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=400&q=70' },
+            { name: 'Penthouse · 38F', sub: '160 m² · Skyline', meta: '฿180,000/mo', img: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=400&q=70' },
+            { name: 'Studio · Tower C', sub: '38 m² · City View', meta: '฿28,000/mo', img: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=400&q=70' }
+        ]
+    },
+    'for-sale': {
+        title: 'FOR SALE',
+        items: [
+            { name: '3 BR Penthouse', sub: 'Tower A · 38F', meta: '฿18.2M', img: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=400&q=70' },
+            { name: '2 BR Suite', sub: 'Tower B · 24F', meta: '฿9.8M', img: 'https://images.unsplash.com/photo-1493809842364-78817add7ffb?auto=format&fit=crop&w=400&q=70' },
+            { name: 'Sky Villa', sub: 'Duplex · 36–37F', meta: '฿42M', img: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=400&q=70' }
+        ]
+    },
+    'services': {
+        title: 'SERVICES',
+        items: [
+            { name: 'Concierge', sub: 'Lobby · 24/7', meta: 'Lobby Desk', img: 'https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&w=400&q=70' },
+            { name: 'Spa & Wellness', sub: 'Floor 35', meta: '10:00–22:00', img: 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=400&q=70' },
+            { name: 'Laundry Service', sub: 'B1 · Self & Pickup', meta: '08:00–20:00', img: 'https://images.unsplash.com/photo-1545173168-9f1947eebb7f?auto=format&fit=crop&w=400&q=70' },
+            { name: 'Fitness Club', sub: 'Floor 36', meta: '24/7 Access', img: 'https://images.unsplash.com/photo-1571902943202-507ec2618e8f?auto=format&fit=crop&w=400&q=70' }
+        ]
+    },
+    'groceries': {
+        title: 'GROCERIES',
+        items: [
+            { name: 'Premium Mart', sub: 'G/F · Imported goods', meta: '07:00–23:00', img: 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=400&q=70' },
+            { name: 'Fresh Market', sub: 'B1 · Daily produce', meta: '06:00–21:00', img: 'https://images.unsplash.com/photo-1488459716781-31db52582fe9?auto=format&fit=crop&w=400&q=70' }
+        ]
+    },
+    'notices': {
+        title: 'BUILDING UPDATES',
+        items: [
+            { name: 'Holiday Contractor Notice', sub: 'Jun 1 & Jun 3, 2026', meta: 'PPM Management', img: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=400&q=70' },
+            { name: 'Water Supply Maintenance', sub: 'Jun 5 · Tower A', meta: '09:00–12:00', img: 'https://images.unsplash.com/photo-1582719188393-bb71ca45dbb9?auto=format&fit=crop&w=400&q=70' }
+        ]
+    }
+};
+
+function openMenu() {
+    isMenuOpen = true;
+    menuBtn.classList.add('open');
+    categoryPanel.classList.add('open');
+    menuBackdrop.classList.add('open');
+    clearTimeout(advanceTimer);
+}
+function closeMenu() {
+    menuBtn.classList.remove('open');
+    categoryPanel.classList.remove('open');
+    menuBackdrop.classList.remove('open');
+    /* If full screen still open, keep paused; otherwise resume */
+    if (!catScreen.classList.contains('open')) {
+        isMenuOpen = false;
+        scheduleNext();
+    }
+}
+function openCategory(catKey) {
+    const cat = CATEGORIES[catKey];
+    if (!cat) return;
+    catScreenTitle.textContent = cat.title;
+    currentCatItems = cat.items;
+    catGrid.innerHTML = cat.items.length
+        ? cat.items.map((it, i) => `
+            <div class="cat-card" data-idx="${i}">
+                <div class="cat-card-img" style="background-image:url('${it.img}');"></div>
+                <div class="cat-card-info">
+                    <div class="cat-card-name">${it.name}</div>
+                    <div class="cat-card-sub">${it.sub}</div>
+                    ${it.meta ? `<div class="cat-card-meta">${it.meta}</div>` : ''}
+                </div>
+            </div>`).join('')
+        : `<div class="cat-empty">No items in this category yet.</div>`;
+    catScreen.classList.add('open');
+    isMenuOpen = true;
+    clearTimeout(advanceTimer);
+    /* Close the dropdown panel underneath */
+    menuBtn.classList.remove('open');
+    categoryPanel.classList.remove('open');
+}
+function closeCategoryScreen() {
+    catScreen.classList.remove('open');
+    isMenuOpen = false;
+    menuBackdrop.classList.remove('open');
+    scheduleNext();
+}
+function closeAll() {
+    closeMenu();
+    closeCategoryScreen();
+}
+
+menuBtn.addEventListener('click', () => {
+    if (categoryPanel.classList.contains('open')) closeMenu();
+    else openMenu();
+});
+menuBackdrop.addEventListener('click', closeMenu);
+categoryPanel.querySelectorAll('.cat-item').forEach(el => {
+    el.addEventListener('click', () => openCategory(el.dataset.cat));
+});
+catBackBtn.addEventListener('click', closeCategoryScreen);
+langToggle.addEventListener('click', () => {
+    langToggle.textContent = langToggle.textContent === 'EN' ? 'TH' : 'EN';
+});
+
+/* ============================================================
+   DETAIL POPUP — opens on CTA tap & category-card tap
+============================================================ */
+let currentCatItems = [];
+const detailOverlay = document.getElementById('detailOverlay');
+
+function openDetail({ img, eyebrow, title, sub }) {
+    document.getElementById('detailImg').style.backgroundImage = img ? `url('${img}')` : 'none';
+    document.getElementById('detailCat').textContent = eyebrow || 'Offering';
+    document.getElementById('detailTitle').textContent = title || '';
+    document.getElementById('detailSub').textContent = sub || '';
+    detailOverlay.classList.add('open');
+    clearTimeout(advanceTimer);            // pause auto-advance while open
+}
+function closeDetail() {
+    detailOverlay.classList.remove('open');
+    if (!isMenuOpen) scheduleNext();       // resume rotation
+}
+document.getElementById('detailClose').addEventListener('click', closeDetail);
+detailOverlay.addEventListener('click', e => { if (e.target === detailOverlay) closeDetail(); });
+
+/* CTA on the current commercial slide → detail of that offer */
+stage.addEventListener('click', e => {
+    if (!e.target.closest('.cta')) return;
+    const s = SLOTS[cur];
+    openDetail({
+        img: s.image,
+        eyebrow: s.eyebrow || (s.category || 'Offering'),
+        title: s.titleLines ? s.titleLines.join(' ') : (s.title || ''),
+        sub: s.sub || ''
+    });
+});
+
+/* Category card → detail of that listing */
+catGrid.addEventListener('click', e => {
+    const card = e.target.closest('.cat-card');
+    if (!card) return;
+    const it = currentCatItems[+card.dataset.idx];
+    if (it) openDetail({ img: it.img, eyebrow: it.meta || '', title: it.name, sub: it.sub });
+});
+</script>
+
+</body>
+</html>

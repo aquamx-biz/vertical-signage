@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>aquamx · Mobile Experience Flows</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=Nunito:wght@600;700;800;900&family=Anton&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#0E3361; --navy-deep:#072147; --orange:#C9864C; --orange-strong:#A36738; --orange-soft:#F6E5D0;
+  --cream:#FAF6ED; --ink:#0B1B33; --muted:#5C6B82; --line:#EADFC9; --bg-card-2:#F4EEDF;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'IBM Plex Sans Thai','Nunito',sans-serif;background:var(--cream);color:var(--ink);-webkit-font-smoothing:antialiased;}
+
+/* header */
+.nav{position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;padding:18px 40px;background:rgba(250,246,237,0.9);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);}
+.nav .logo{font-family:'Nunito';font-weight:900;font-size:26px;color:var(--navy);}
+.nav .logo b{color:var(--orange);}
+.nav .menu{display:flex;gap:34px;font-weight:600;color:var(--ink);font-size:15px;}
+.nav .right{display:flex;gap:14px;align-items:center;}
+.nav .lang{border:1px solid var(--line);border-radius:10px;padding:8px 14px;font-weight:700;font-size:13px;color:var(--ink);background:none;}
+.nav .demo{background:var(--navy);color:#fff;border:none;border-radius:12px;padding:11px 22px;font-weight:700;font-size:15px;}
+
+.wrap{max-width:1500px;margin:0 auto;padding:46px 40px 90px;}
+h1.page{font-family:'Nunito';font-weight:900;font-size:34px;color:var(--navy);letter-spacing:-0.02em;}
+.sub{font-size:17px;color:var(--muted);margin-top:10px;line-height:1.6;max-width:900px;}
+
+/* roadmap banner */
+.roadmap{margin:28px 0 6px;display:flex;gap:14px;align-items:flex-start;background:#FFF6E9;border:1px solid var(--orange);border-left:5px solid var(--orange);border-radius:14px;padding:16px 20px;}
+.roadmap .ic{font-size:24px;line-height:1;}
+.roadmap b{color:var(--orange-strong);}
+.roadmap p{font-size:14px;color:var(--ink);line-height:1.6;}
+
+/* divide note */
+.divide{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin:26px 0 6px;}
+.divide .col{border-radius:16px;padding:18px 20px;}
+.divide .screen{background:#fff;border:1px solid var(--line);}
+.divide .phone-c{background:var(--navy);color:#fff;}
+.divide h4{font-family:'Nunito';font-size:16px;margin-bottom:8px;}
+.divide .screen h4{color:var(--navy);}
+.divide .li{font-size:14px;line-height:1.8;}
+.divide .screen .li{color:var(--muted);}
+.divide .phone-c .li{color:rgba(255,255,255,0.9);}
+
+.section-h{font-family:'Nunito';font-weight:800;font-size:13px;letter-spacing:0.12em;text-transform:uppercase;color:var(--orange-strong);margin:54px 0 6px;display:flex;align-items:center;gap:16px;}
+.section-h::after{content:"";flex:1;height:1px;background:var(--line);}
+.flow-lede{font-size:16px;color:var(--ink);line-height:1.7;margin-bottom:30px;}
+.flow-lede b{color:var(--navy);}
+.tag-rm{display:inline-block;background:var(--orange);color:#fff;font-size:11px;font-weight:800;padding:2px 9px;border-radius:20px;vertical-align:middle;margin-left:8px;letter-spacing:0.04em;}
+
+/* flow row */
+.flow{display:flex;flex-wrap:wrap;align-items:flex-start;gap:6px;}
+.pstep{display:flex;flex-direction:column;align-items:center;width:168px;}
+.conn{display:flex;flex-direction:column;align-items:center;justify-content:center;align-self:center;min-width:54px;padding-top:120px;color:var(--orange);}
+.conn .ar{font-size:22px;}
+.conn .lb{font-size:11px;color:var(--muted);margin-top:4px;text-align:center;line-height:1.3;}
+
+/* ── phone ── */
+.phone{width:168px;background:#0c111c;border-radius:30px;padding:8px;box-shadow:0 12px 30px rgba(7,18,40,0.28);border:1px solid #20262e;}
+.pscr{position:relative;background:#fff;border-radius:23px;overflow:hidden;aspect-ratio:9/19;display:flex;flex-direction:column;}
+.notch{position:absolute;top:7px;left:50%;transform:translateX(-50%);width:54px;height:15px;background:#0c111c;border-radius:10px;z-index:20;}
+.status{display:flex;justify-content:space-between;align-items:center;padding:7px 16px 3px;font-size:8px;font-weight:700;color:var(--ink);flex:0 0 auto;}
+.bat{display:inline-block;width:14px;height:8px;border:1px solid var(--ink);border-radius:2px;position:relative;}
+.bat::after{content:"";position:absolute;right:-2px;top:2px;width:1.5px;height:4px;background:var(--ink);border-radius:0 1px 1px 0;}
+.home{width:50px;height:4px;background:#0c111c;border-radius:4px;margin:6px auto 9px;flex:0 0 auto;}
+.body{flex:1;overflow:hidden;}
+
+/* offer page (real layout) */
+.p-pad{padding:0 11px;}
+.p-gallery{margin:8px 11px 0;border-radius:12px;overflow:hidden;height:96px;background-size:cover;background-position:center;position:relative;}
+.p-gallery .dots{position:absolute;bottom:5px;left:50%;transform:translateX(-50%);display:flex;gap:3px;}
+.p-gallery .dots i{width:4px;height:4px;border-radius:50%;background:rgba(255,255,255,0.6);}
+.p-gallery .dots i.on{background:#fff;}
+.p-provrow{display:flex;align-items:center;gap:7px;padding:8px 11px 0;}
+.p-provrow .lg{width:22px;height:22px;border-radius:7px;background-size:cover;background-position:center;border:1px solid var(--line);flex-shrink:0;}
+.p-provrow .nm{font-size:9px;font-weight:700;color:var(--muted);}
+.p-title{font-family:'Nunito';font-weight:800;font-size:15px;color:var(--ink);padding:5px 11px 0;line-height:1.15;}
+.p-badges{display:flex;gap:5px;padding:7px 11px 0;flex-wrap:wrap;}
+.p-b{font-size:9px;font-weight:700;padding:3px 9px;border-radius:20px;}
+.p-b.price{color:var(--orange-strong);background:var(--orange-soft);border:1px solid var(--orange);}
+.p-b.avail{color:var(--muted);background:var(--cream);border:1px solid var(--line);}
+.p-desc{font-size:9px;color:var(--muted);line-height:1.5;padding:8px 11px 0;}
+.p-cta{display:block;margin:11px 11px 0;background:var(--navy);color:#fff;text-align:center;font-weight:800;font-size:11px;padding:11px;border-radius:14px;}
+.p-contact{display:flex;flex-wrap:wrap;gap:5px;padding:9px 11px 0;}
+.p-cpill{display:flex;align-items:center;gap:4px;background:var(--navy);color:#fff;font-size:8.5px;font-weight:700;padding:6px 11px;border-radius:20px;}
+.p-sec{padding:9px 11px 0;margin-top:9px;border-top:1px solid var(--line);}
+.p-sec .h{font-size:8px;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;color:var(--orange-strong);margin-bottom:2px;}
+.p-sec .t{font-size:9px;color:var(--muted);line-height:1.4;}
+
+/* in-app commerce (roadmap) */
+.scrtitle{font-family:'Nunito';font-weight:800;font-size:12px;color:var(--ink);padding:10px 11px 0;display:flex;align-items:center;justify-content:space-between;}
+.scrtitle .bk{color:var(--muted);font-size:13px;}
+.hero-sq{margin:8px 11px 0;border-radius:12px;height:96px;background-size:cover;background-position:center;}
+.qty{display:flex;align-items:center;justify-content:space-between;margin:10px 11px 0;border:1px solid var(--line);border-radius:12px;padding:8px 12px;}
+.qty .lab{font-size:9px;color:var(--muted);}
+.qty .ctrl{display:flex;align-items:center;gap:14px;}
+.qty .b{width:24px;height:24px;border-radius:50%;background:var(--bg-card-2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:15px;color:var(--ink);line-height:1;}
+.qty .n{font-size:13px;font-weight:800;color:var(--ink);min-width:14px;text-align:center;}
+.opt{margin:10px 11px 0;}
+.opt .h{font-size:8px;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);margin-bottom:5px;}
+.opt .chips{display:flex;gap:5px;flex-wrap:wrap;}
+.opt .chip{font-size:9px;border:1px solid var(--line);border-radius:8px;padding:5px 9px;color:var(--ink);}
+.opt .chip.on{background:var(--orange);border-color:var(--orange);color:#fff;font-weight:800;}
+.cart-it{display:flex;align-items:center;gap:8px;margin:0 11px;padding:9px 0;border-bottom:1px solid var(--line);}
+.cart-it .th{width:34px;height:34px;border-radius:8px;background-size:cover;background-position:center;flex-shrink:0;}
+.cart-it .nm{flex:1;font-size:10px;color:var(--ink);font-weight:600;line-height:1.3;}
+.cart-it .pr{font-size:10px;font-weight:800;color:var(--orange-strong);}
+.sum{margin:8px 11px 0;}
+.sum .r{display:flex;justify-content:space-between;font-size:9.5px;color:var(--muted);padding:3px 0;}
+.sum .r.total{border-top:1px solid var(--line);margin-top:3px;padding-top:5px;color:var(--ink);font-weight:800;font-size:12px;}
+.field{margin:9px 11px 0;}
+.field .h{font-size:8px;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);margin-bottom:4px;}
+.field .box{border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:9.5px;color:var(--ink);display:flex;align-items:center;gap:6px;}
+.field .box.sel{border-color:var(--navy);background:#F3F6FB;font-weight:700;}
+.field .seg{display:flex;gap:6px;}
+.field .seg .s{flex:1;border:1px solid var(--line);border-radius:10px;padding:7px 0;text-align:center;font-size:9px;color:var(--ink);}
+.field .seg .s.on{background:var(--navy);border-color:var(--navy);color:#fff;font-weight:800;}
+.pay-qr{margin:14px auto 0;width:96px;height:96px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:8px;display:block;}
+.pay-qr svg{width:100%;height:100%;}
+.pay-amt{text-align:center;font-family:'Nunito';font-weight:900;font-size:18px;color:var(--ink);margin-top:8px;}
+.pay-note{text-align:center;font-size:9px;color:var(--muted);margin-top:3px;}
+.confirm{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;padding:0 16px;text-align:center;}
+.confirm .ck{width:54px;height:54px;border-radius:50%;background:#e9f7ef;color:#1f9d55;display:flex;align-items:center;justify-content:center;font-size:30px;border:2px solid #b6e6c9;}
+.confirm .t{font-family:'Nunito';font-weight:800;font-size:14px;color:var(--ink);margin-top:12px;}
+.confirm .d{font-size:9.5px;color:var(--muted);margin-top:5px;line-height:1.5;}
+.confirm .oid{margin-top:10px;font-size:9px;font-weight:700;color:var(--orange-strong);background:var(--orange-soft);border:1px solid var(--orange);border-radius:20px;padding:4px 12px;}
+.btn-foot{margin:auto 11px 0;}
+.btn-navy{display:block;background:var(--navy);color:#fff;text-align:center;font-weight:800;font-size:11px;padding:11px;border-radius:14px;}
+
+/* caption */
+.cap{margin-top:14px;text-align:center;width:100%;}
+.cap .n{display:inline-flex;width:22px;height:22px;border-radius:50%;background:var(--orange-soft);border:1px solid var(--orange);color:var(--orange-strong);font-weight:800;font-size:11px;align-items:center;justify-content:center;}
+.cap .t{display:block;font-family:'Nunito';font-weight:800;font-size:13px;color:var(--ink);margin-top:7px;}
+.cap .d{display:block;font-size:11px;color:var(--muted);margin-top:3px;line-height:1.4;}
+.cap .rm{display:inline-block;background:#FFF1DD;color:var(--orange-strong);font-size:9px;font-weight:800;border:1px solid var(--orange);border-radius:12px;padding:1px 7px;margin-top:5px;}
+
+svg.qrdef{position:absolute;width:0;height:0;}
+
+/* routing map */
+.rmap{margin:26px 0 10px;background:#fff;border:1px solid var(--line);border-radius:18px;padding:26px 28px;}
+.rmap-h{font-family:'Nunito';font-weight:800;font-size:18px;color:var(--navy);margin-bottom:4px;}
+.rmap-sub{font-size:13.5px;color:var(--muted);margin-bottom:22px;line-height:1.6;}
+.rmap-row{display:grid;grid-template-columns:1fr 56px 1fr;gap:18px;align-items:center;}
+.cta-grp{border:1px dashed var(--line);border-radius:14px;padding:14px 16px;}
+.cta-grp.prov{border-color:var(--navy);}
+.cta-grp .lbl{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.06em;color:var(--orange-strong);margin-bottom:11px;}
+.cta-grp.prov .lbl{color:var(--navy);}
+.cta-chips{display:flex;flex-wrap:wrap;gap:7px;}
+.cchip{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;font-weight:700;border-radius:20px;padding:7px 13px;border:1px solid var(--line);background:var(--cream);color:var(--ink);}
+.cchip.prov{background:var(--navy);color:#fff;border-color:var(--navy);}
+.rmap-arrows{display:flex;align-items:center;justify-content:center;color:var(--orange);font-size:26px;font-weight:700;}
+.pcard{border:1px solid var(--line);border-radius:14px;overflow:hidden;}
+.pcard .top{padding:11px 15px;font-family:'Nunito';font-weight:800;font-size:15px;display:flex;align-items:center;gap:8px;}
+.pcard.offer .top{background:var(--orange-soft);color:var(--orange-strong);}
+.pcard.provp .top{background:var(--navy);color:#fff;}
+.pcard .body2{padding:12px 15px;font-size:12.5px;color:var(--muted);line-height:1.7;}
+.pcard .url{font-family:monospace;font-size:11.5px;color:var(--ink);background:var(--cream);border:1px solid var(--line);border-radius:6px;padding:2px 7px;display:inline-block;margin-top:6px;}
+.xlink{margin-top:20px;background:var(--bg-card-2);border-radius:12px;padding:15px 18px;font-size:13px;color:var(--ink);line-height:1.7;}
+.xlink b{color:var(--navy);}
+</style>
+</head>
+<body>
+
+<!-- QR sprite -->
+<svg class="qrdef"><symbol id="qr" viewBox="0 0 100 100"><rect width="100" height="100" fill="#fff"/><path fill="#0c111c" d="M8 8h26v26H8zM14 14v14h14V14zM66 8h26v26H66zM72 14v14h14V14zM8 66h26v26H8zM14 72v14h14V72zM40 8h6v6h-6zM52 8h6v12h-6zM40 20h12v6H40zM40 32h6v8h-6zM52 26h6v6h-6zM64 40h6v6h-6zM40 46h6v6h-6zM52 46h12v6H52zM8 40h6v6H8zM20 40h12v6H20zM8 52h6v8H8zM20 52h6v6h-6zM66 40h6v6h-6zM78 46h6v6h-6zM88 40h4v12h-4zM66 52h6v6h-6zM40 66h6v6h-6zM52 66h6v6h-6zM64 66h8v6h-8zM40 78h6v14h-6zM52 78h6v6h-6zM64 78h6v6h-6zM76 66h6v6h-6zM86 72h6v6h-6zM76 78h16v6H76zM86 86h6v6h-6z"/></symbol></svg>
+
+<header class="nav">
+  <div class="logo">aquam<b>x</b></div>
+  <nav class="menu"><span>วิธีทำงาน</span><span>เครือข่าย</span><span>ติดต่อ</span></nav>
+  <div class="right"><button class="lang">EN</button><button class="demo">นัดเดโม →</button></div>
+</header>
+
+<div class="wrap">
+  <h1 class="page">Mobile Experience Flows</h1>
+  <p class="sub">สิ่งที่เกิดขึ้น <b>บนมือถือ</b> หลังสแกน QR จากจอ — ผู้ใช้ลงมือทำทุกอย่างที่นี่ (จอ signage แค่ดู/เลือก) · สเตปแรกคือหน้าจริงใน aquamx-handoff (Offer / Provider) · สเตปถัดไปเป็น <b>ระบบในแอป</b></p>
+
+  <div class="roadmap">
+    <span class="ic">🚧</span>
+    <p><b>ROADMAP — ยังไม่มีในระบบปัจจุบัน:</b> ตอนนี้ aquamx-handoff หน้า Offer มีปุ่ม CTA เดียวที่ <b>ลิงก์ออกไประบบของร้าน</b> (LINE OA / เว็บสั่งอาหาร / หน้าจองของร้าน) — ยังไม่มีตะกร้า/checkout/จองในแอป · flow ด้านล่างคือภาพ "ถ้าทำระบบในแอปเอง" เพื่อวางแผนต่อ</p>
+  </div>
+
+  <div class="divide">
+    <div class="col screen"><h4>📺 บนจอ signage</h4><div class="li">ดู · เลือกคร่าว ๆ · สแกน QR<br>ไม่มีการกรอกข้อมูล / จ่ายเงิน</div></div>
+    <div class="col phone-c"><h4>📱 บนมือถือ (ที่นี่)</h4><div class="li">ดูเต็ม · เลือกจำนวน/วันเวลา · ตะกร้า · กรอกข้อมูล · จ่ายเงิน · รับใบยืนยัน</div></div>
+  </div>
+
+  <!-- ============================================================
+       ROUTING MAP — CTA → which page
+  ============================================================ -->
+  <div class="rmap">
+    <div class="rmap-h">📍 CTA ไหน → ไปหน้าไหน</div>
+    <div class="rmap-sub">หน้าปลายทางขึ้นกับ <b>ชนิดโฆษณา</b> ไม่ใช่ตัว CTA — Offer (มีราคา) → หน้า Offer · Provider (ร้าน ไม่มีราคา) → หน้า Provider</div>
+
+    <div class="rmap-row">
+      <div class="cta-grp">
+        <div class="lbl">โฆษณาแบบ Offer (มีราคา) · CTA 5 แบบ</div>
+        <div class="cta-chips">
+          <span class="cchip">🍽️ View Menu</span><span class="cchip">🛒 Order</span><span class="cchip">📅 Book</span><span class="cchip">🏠 View Listing</span><span class="cchip">📞 Contact</span>
+        </div>
+      </div>
+      <div class="rmap-arrows">➜</div>
+      <div class="pcard offer">
+        <div class="top">📄 Offer page</div>
+        <div class="body2">รูป · ราคา · คำอธิบาย · ปุ่ม CTA · ติดต่อ · ปุ่มไปหน้าร้าน<span class="url">/m/o/[slug]</span></div>
+      </div>
+    </div>
+
+    <div style="height:18px;"></div>
+
+    <div class="rmap-row">
+      <div class="cta-grp prov">
+        <div class="lbl">โฆษณาแบบ Provider (ไม่มีราคา) · CTA เดียว</div>
+        <div class="cta-chips"><span class="cchip prov">🏪 View Store</span></div>
+      </div>
+      <div class="rmap-arrows">➜</div>
+      <div class="pcard provp">
+        <div class="top">🏪 Provider page</div>
+        <div class="body2">ปกร้าน · โลโก้ · เกี่ยวกับ · ติดต่อ · กริดโปร/บริการ<span class="url">/m/p/[slug]</span></div>
+      </div>
+    </div>
+
+    <div class="xlink">🔗 <b>เชื่อมกัน 2 ทาง:</b> หน้า Offer มีปุ่มล่าง "ดูข้อมูลร้าน" → ไปหน้า Provider · หน้า Provider มีกริด offers → กดการ์ด → กลับไปหน้า Offer</div>
+  </div>
+
+  <!-- ============================================================
+       ORDER — mobile flow
+  ============================================================ -->
+  <div class="section-h">Order · Mobile flow</div>
+  <p class="flow-lede">สแกนจากปุ่ม Order บนจอ → <b>เปิดหน้า Offer จริง</b> → กด Order Now → <span class="tag-rm">ROADMAP</span> เลือกจำนวน → ตะกร้า → กรอก/จ่าย → ใบยืนยัน</p>
+
+  <div class="flow">
+
+    <!-- 1 offer page (REAL) -->
+    <div class="pstep">
+      <div class="phone"><div class="pscr">
+        <div class="notch"></div>
+        <div class="status"><span>9:41</span><span style="display:flex;align-items:center;gap:3px;">5G<span class="bat"></span></span></div>
+        <div class="body">
+          <div class="p-gallery" style="background-image:url('https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=400&q=70');"><div class="dots"><i class="on"></i><i></i><i></i></div></div>
+          <div class="p-provrow"><span class="lg" style="background-image:url('https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=60&q=60');"></span><span class="nm">Aurora Bistro</span></div>
+          <div class="p-title">Margherita Pizza</div>
+          <div class="p-badges"><span class="p-b price">฿ 320</span><span class="p-b avail">🕐 พร้อมส่ง</span></div>
+          <div class="p-desc">พิซซ่ามาร์เกอริต้า ชีสมอสซาเรลล่าแท้ ซอสมะเขือเทศโฮมเมด อบเตาฟืน</div>
+          <a class="p-cta">สั่งซื้อเลย · Order Now</a>
+          <div class="p-contact"><span class="p-cpill">📞 Call</span><span class="p-cpill">💬 LINE</span></div>
+        </div>
+        <div class="home"></div>
+      </div></div>
+      <div class="cap"><span class="n">1</span><span class="t">หน้า Offer (จริง)</span><span class="d">Gallery · ราคา · คำอธิบาย · ปุ่ม Order Now · ติดต่อ</span></div>
+    </div>
+
+    <div class="conn"><span class="ar">→</span><span class="lb">กด Order Now</span></div>
+
+    <!-- 2 qty + options -->
+    <div class="pstep">
+      <div class="phone"><div class="pscr">
+        <div class="notch"></div>
+        <div class="status"><span>9:41</span><span style="display:flex;align-items:center;gap:3px;">5G<span class="bat"></span></span></div>
+        <div class="body">
+          <div class="scrtitle"><span class="bk">←</span><span>สั่งซื้อ</span><span style="width:13px;"></span></div>
+          <div class="hero-sq" style="background-image:url('https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=400&q=70');"></div>
+          <div class="p-title" style="padding-top:9px;">Margherita Pizza</div>
+          <div class="p-badges"><span class="p-b price">฿ 320</span></div>
+          <div class="opt"><div class="h">ขนาด</div><div class="chips"><span class="chip">S</span><span class="chip on">M</span><span class="chip">L</span></div></div>
+          <div class="qty"><span class="lab">จำนวน</span><span class="ctrl"><span class="b">−</span><span class="n">2</span><span class="b">+</span></span></div>
+        </div>
+        <a class="btn-navy btn-foot">เพิ่มลงตะกร้า · ฿640</a>
+        <div class="home"></div>
+      </div></div>
+      <div class="cap"><span class="n">2</span><span class="t">เลือกจำนวน/ตัวเลือก</span><span class="d">ขนาด · จำนวน → เพิ่มลงตะกร้า</span><span class="rm">🚧 ROADMAP</span></div>
+    </div>
+
+    <div class="conn"><span class="ar">→</span></div>
+
+    <!-- 3 cart -->
+    <div class="pstep">
+      <div class="phone"><div class="pscr">
+        <div class="notch"></div>
+        <div class="status"><span>9:41</span><span style="display:flex;align-items:center;gap:3px;">5G<span class="bat"></span></span></div>
+        <div class="body">
+          <div class="scrtitle"><span class="bk">←</span><span>ตะกร้า</span><span style="width:13px;"></span></div>
+          <div class="cart-it"><span class="th" style="background-image:url('https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=80&q=60');"></span><span class="nm">Margherita Pizza (M) ×2</span><span class="pr">฿640</span></div>
+          <div class="cart-it"><span class="th" style="background-image:url('https://images.unsplash.com/photo-1559314809-0d155014e29e?auto=format&fit=crop&w=80&q=60');"></span><span class="nm">Flat White ×1</span><span class="pr">฿110</span></div>
+          <div class="sum">
+            <div class="r"><span>ยอดสินค้า</span><span>฿750</span></div>
+            <div class="r"><span>ค่าส่ง</span><span>฿40</span></div>
+            <div class="r total"><span>รวม</span><span>฿790</span></div>
+          </div>
+        </div>
+        <a class="btn-navy btn-foot">ดำเนินการต่อ · Checkout</a>
+        <div class="home"></div>
+      </div></div>
+      <div class="cap"><span class="n">3</span><span class="t">ตะกร้า</span><span class="d">รายการ · ค่าส่ง · ยอดรวม</span><span class="rm">🚧 ROADMAP</span></div>
+    </div>
+
+    <div class="conn"><span class="ar">→</span></div>
+
+    <!-- 4 checkout -->
+    <div class="pstep">
+      <div class="phone"><div class="pscr">
+        <div class="notch"></div>
+        <div class="status"><span>9:41</span><span style="display:flex;align-items:center;gap:3px;">5G<span class="bat"></span></span></div>
+        <div class="body">
+          <div class="scrtitle"><span class="bk">←</span><span>ชำระเงิน</span><span style="width:13px;"></span></div>
+          <div class="field"><div class="h">รับสินค้า</div><div class="seg"><span class="s on">เดลิเวอรี่</span><span class="s">รับเอง</span></div></div>
+          <div class="field"><div class="h">ที่อยู่จัดส่ง</div><div class="box">📍 คอนโด Tower A ชั้น 24 ห้อง 2401</div></div>
+          <div class="field"><div class="h">วิธีจ่าย</div><div class="box sel">🅿️ PromptPay QR</div></div>
+          <div class="sum"><div class="r total"><span>ยอดชำระ</span><span>฿790</span></div></div>
+        </div>
+        <a class="btn-navy btn-foot">จ่ายเงิน · Pay ฿790</a>
+        <div class="home"></div>
+      </div></div>
+      <div class="cap"><span class="n">4</span><span class="t">กรอก + เลือกจ่าย</span><span class="d">รับของ · ที่อยู่ · วิธีจ่าย</span><span class="rm">🚧 ROADMAP</span></div>
+    </div>
+
+    <div class="conn"><span class="ar">→</span><span class="lb">จ่ายเงิน</span></div>
+
+    <!-- 5 confirmation -->
+    <div class="pstep">
+      <div class="phone"><div class="pscr">
+        <div class="notch"></div>
+        <div class="status"><span>9:41</span><span style="display:flex;align-items:center;gap:3px;">5G<span class="bat"></span></span></div>
+        <div class="confirm">
+          <div class="ck">✓</div>
+          <div class="t">สั่งซื้อสำเร็จ!</div>
+          <div class="d">ร้านกำลังเตรียมอาหารของคุณ<br>ประมาณ 25–35 นาที</div>
+          <div class="oid">ออเดอร์ #AQ-10428</div>
+        </div>
+        <a class="btn-navy btn-foot" style="margin-bottom:14px;">ติดตามสถานะ →</a>
+        <div class="home"></div>
+      </div></div>
+      <div class="cap"><span class="n">5</span><span class="t">ใบยืนยัน</span><span class="d">เลขออเดอร์ · เวลา · ติดตามสถานะ — สุดทาง</span><span class="rm">🚧 ROADMAP</span></div>
+    </div>
+
+  </div>
+
+</div>
+
+</body>
+</html>

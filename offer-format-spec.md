@@ -30,6 +30,7 @@ Load: `Nunito:400;600;700;800` + `IBM Plex Sans Thai:400;500;600;700` + `Mitr:50
 ## Preview components — copy, don't rebuild
 - **Media** = `.tt-*` totem (offer/index.html ~209–267): `.totem`(width:230) → `.tt-screen`(9/16) [topbar · stage · ] + `.tt-base` stand. Stage has `.tt-bg`(ken-burns) `.tt-grad` `.tt-menu` `.tt-content`(eyebrow→title→price→sub) `.tt-dock`(CTA) and `.tt-bottombar` marquee.
 - **Catalog/Menu** = `.pm-*` screen (offer/index.html ~214–229): `.pm-head`(back · title · lang) + `.pm-body` → `.pm-grid` of `.pm-card`(img · name · meta).
+  - **Menu/Catalog Ad is NOT a standalone per-shop menu.** It is the kiosk **category directory**: `pm-title` = the **category name** (e.g. "บริการ"), and `.pm-grid` shows the advertiser's single card **highlighted** (`.pm-card.me`, orange ring) among other listings (placeholder peers `— — —`). The card = one listing (name · sub · price meta · image), not the shop's whole menu. See `pmGrid` build in offer/index.html (~1883) + foot "ลูกค้ากดหมวดแล้วเลือกจากการ์ด · การ์ดของคุณไฮไลต์".
 - **Thumbnails / scaled previews**: the preview text is absolute + fixed-px, so it can NOT reflow at a smaller width. Scale the WHOLE totem with `transform:scale()` inside a sized, `overflow:hidden` wrapper — never just shrink `width`.
 - **CTA continuity**: the CTA reads as part of the content block (eyebrow → title → sub → CTA), not pinned far below with a gap.
 - **Catalog sits in the same signage totem as Media** (user override of /offer, where `.pm-screen` is standalone): wrap `.pm-screen` in `.totem` with the `.tt-base` stand + top-only rounded screen + bottom marquee, so both ad types read as the same device.
@@ -38,6 +39,17 @@ Load: `Nunito:400;600;700;800` + `IBM Plex Sans Thai:400;500;600;700` + `Mitr:50
 - Primary: `--navy` bg, white, radius 12, weight 800 (`.btn-submit`).
 - Selected card/chip: border `--orange`, bg `#fffdf8`, soft orange shadow (`.type-seg .ts.on`).
 - Inputs: 1.5px `--line` border, focus border `--orange`.
+
+## /offer field inventory — diff against this before claiming "matches /offer"
+Source: `aquamx-landing/offer/index.html` (section 2 = the ad, section 3 = after-CTA). The prototype must cover (or consciously skip) each:
+- **Format**: Media Ad / Menu(Catalog) Ad. **Category** (10: Dining/Groceries/Health & Beauty/Leisure & Travel/Shopping/Services/Education/Events/For Rent/For Sale — note "Dining" not "Food").
+- **Type** (ชนิด) filtered by category — `CAT_TYPES`; drives CTA via `TYPE_CTAS`/`typeCtas` [[offer-cta-type-matrix]].
+- **Title** (max 40, +AI) · **Description** (max 120, +AI).
+- **Price**: number · **unit** (เริ่มต้น//ครั้ง//ชม.//วัน//เดือน//ไตรมาส//ปี//คน/custom, shown for service|listing) · **free toggle**+word (Events/Education or service) · **original price** strikethrough (promotion).
+- **Availability** (เวลา/สถานะ) + **valid period** (ช่วงโปร). **Subcategory** (from category-config.json).
+- **Hero images** (first = hero). **Primary CTA** (+label, +AI, 👑 premium) · **Secondary CTA** (optional).
+- **After-CTA (section 3)** — destination content that switches by CTA: View Listing→property spec (img/area/floor/bed/bath/parking/furnish) · View Menu→menu rows+link · Order→items+fulfillment(dinein/pickup/delivery)+delivery fee+min+link · Book→schedule(open/close/slot/ahead/break/capacity) · Sign Up/Event→dates/time/place/capacity · contact/viewStore→auto-open + optional link.
+- 👑 premium CTAs gate by ratecard package (menu/gallery=Booster+ · booking=Pro+).
 
 ## Recurring mistakes to avoid (do not repeat)
 1. Centering text/headings — they must be LEFT-flush.

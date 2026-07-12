@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Why AquaMx Signage · Before → After</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=Anton&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+:root {
+    --navy:#0E3361; --navy-deep:#072147;
+    --orange:#C9864C; --orange-strong:#A36738; --orange-soft:#F6E5D0;
+    --cream:#FAF6ED; --ink:#0B1B33; --muted:#5C6B82; --white:#fff;
+    --line:#EADFC9; --ink-40:#8B98AE; --faded:#9a8f7d;
+}
+html, body { background:var(--cream); color:var(--ink); font-family:'IBM Plex Sans Thai','Nunito',system-ui,sans-serif; -webkit-font-smoothing:antialiased; min-height:100vh; }
+a { color:inherit; text-decoration:none; }
+
+/* NAV */
+.container { max-width:1200px; margin:0 auto; padding:0 32px; }
+.nav-wrap { background:var(--white); border-bottom:1px solid var(--line); position:sticky; top:0; z-index:50; }
+.nav { height:76px; display:flex; align-items:center; justify-content:space-between; }
+.brand { font-family:'Nunito',sans-serif; font-weight:800; font-size:26px; color:var(--navy); letter-spacing:-0.02em; }
+.brand .x { color:var(--orange); }
+.nav-links { display:flex; gap:34px; }
+.nav-links a { color:var(--ink); font-weight:500; font-size:15.5px; }
+.nav-right { display:flex; align-items:center; gap:10px; }
+.lang-btn { background:none; border:1.5px solid var(--navy); border-radius:8px; padding:7px 14px; font-size:13px; font-weight:700; color:var(--navy); font-family:'Nunito',sans-serif; cursor:pointer; }
+.btn-primary { background:var(--navy); color:var(--white); border-radius:10px; padding:11px 20px; font-weight:700; font-family:'Nunito',sans-serif; }
+
+/* HEADER */
+.page { max-width:1400px; margin:0 auto; padding:64px 40px 80px; }
+.eyebrow { display:inline-flex; align-items:center; gap:10px; font-family:'Nunito',sans-serif; font-size:14px; color:var(--orange-strong); letter-spacing:0.06em; text-transform:uppercase; font-weight:700; margin-bottom:18px; }
+.eyebrow .dot { width:8px; height:8px; border-radius:50%; background:var(--orange); }
+h1.title { font-family:'Nunito',sans-serif; font-size:56px; font-weight:800; line-height:1.15; letter-spacing:-0.01em; color:var(--navy); margin-bottom:20px; }
+h1.title .accent { color:var(--orange); }
+.lede { font-size:18px; color:var(--muted); max-width:760px; line-height:1.65; }
+.lede b { color:var(--ink); font-weight:700; }
+.divider { display:flex; align-items:center; gap:16px; margin:52px 0 16px; color:var(--orange-strong); font-family:'Nunito',sans-serif; font-size:14px; letter-spacing:0.06em; text-transform:uppercase; font-weight:700; }
+.divider::after { content:''; flex:1; height:1px; background:var(--line); }
+
+/* col headers */
+.cols { display:grid; grid-template-columns:1fr 48px 1fr; gap:16px; margin:18px 0 10px; }
+.col-h { font-family:'Nunito',sans-serif; font-weight:800; font-size:13px; letter-spacing:0.08em; text-transform:uppercase; }
+.col-h.b { color:var(--faded); }
+.col-h.a { color:var(--orange-strong); }
+
+/* before/after list */
+.why-list { display:flex; flex-direction:column; gap:14px; }
+.why-row { display:grid; grid-template-columns:1fr 48px 1fr; gap:16px; align-items:stretch; }
+.wcard { border-radius:16px; padding:17px 19px; display:flex; gap:13px; align-items:flex-start; }
+.wcard.before { background:#fbf9f4; border:1px dashed #d8cdb8; }
+.wcard.after  { background:var(--orange-soft); border:1px solid var(--orange); }
+.wic { font-size:23px; line-height:1; flex-shrink:0; margin-top:1px; }
+.wbody .wh { font-family:'Nunito',sans-serif; font-weight:800; font-size:14.5px; line-height:1.25; }
+.wcard.before .wh { color:var(--faded); }
+.wcard.after  .wh { color:var(--ink); }
+.wbody .wt { font-size:12.5px; line-height:1.5; margin-top:4px; }
+.wcard.before .wt { color:#b0a691; }
+.wcard.after  .wt { color:var(--orange-strong); }
+.warrow { display:flex; align-items:center; justify-content:center; font-family:'Anton',sans-serif; font-size:24px; color:var(--orange); }
+
+/* benefit strip */
+.benefits { display:flex; flex-wrap:wrap; gap:12px; margin-top:14px; }
+.ben { flex:1 1 150px; background:var(--white); border:1px solid var(--line); border-radius:14px; padding:16px; text-align:center; }
+.ben .bi { font-size:24px; }
+.ben .bn { font-family:'Nunito',sans-serif; font-weight:800; font-size:14px; color:var(--ink); margin-top:7px; }
+.ben .bd { font-size:11.5px; color:var(--muted); margin-top:3px; line-height:1.45; }
+
+/* strategic advantages grid */
+.adv-intro { font-size:15px; color:var(--muted); max-width:760px; margin:0 0 24px; line-height:1.6; }
+.adv-intro b { color:var(--ink); font-weight:700; }
+.adv-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:18px; }
+.adv { background:var(--white); border:1px solid var(--line); border-radius:16px; padding:22px; display:flex; flex-direction:column; }
+.adv .ai { width:46px; height:46px; border-radius:13px; background:var(--orange-soft); display:flex; align-items:center; justify-content:center; font-size:23px; margin-bottom:13px; }
+.adv .at { font-family:'Nunito',sans-serif; font-weight:800; font-size:16px; color:var(--ink); line-height:1.2; }
+.adv .ad { font-size:13px; color:var(--muted); line-height:1.6; margin-top:8px; }
+@media (max-width:900px){ .adv-grid{ grid-template-columns:1fr 1fr; } }
+@media (max-width:600px){ .adv-grid{ grid-template-columns:1fr; } }
+
+/* comparison boxes — 2 per row, each box = before + after pair (4 images / row) */
+.cmp-grid { display:grid; grid-template-columns:1fr 1fr; gap:22px; margin-top:30px; }
+.cmp-box { background:var(--white); border:1px solid var(--line); border-radius:18px; padding:18px 18px 16px; box-shadow:0 12px 28px -20px rgba(11,27,51,0.25); }
+.cmp-box .bt { font-family:'Nunito',sans-serif; font-weight:800; font-size:15px; color:var(--ink); }
+.cmp-box .bt .ar { color:var(--orange); margin:0 5px; }
+.cmp-pair { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:11px; }
+.cmp-img { position:relative; border-radius:12px; overflow:hidden; border:1.5px solid; }
+.cmp-img img { width:100%; aspect-ratio:1/1; object-fit:cover; display:block; }
+.cmp-img .lbl { position:absolute; top:8px; left:8px; padding:3px 9px; border-radius:14px; font-family:'Nunito',sans-serif; font-weight:800; font-size:10px; }
+.cmp-img.before { border-color:#d8cdb8; }
+.cmp-img.before .lbl { background:rgba(124,114,99,0.92); color:#fff; }
+.cmp-img.after { border-color:var(--orange); }
+.cmp-img.after .lbl { background:var(--orange); color:#fff; }
+.cmp-cap { font-size:12px; color:var(--muted); margin-top:9px; line-height:1.5; }
+@media (max-width:760px){ .cmp-grid{ grid-template-columns:1fr; } }
+
+/* hero band + card photos */
+.hero-band { position:relative; margin-top:28px; height:300px; border-radius:20px; overflow:hidden; background:var(--navy-deep); box-shadow:0 24px 50px -24px rgba(11,27,51,0.45); }
+.hero-band img { width:100%; height:100%; object-fit:cover; display:block; }
+.hero-band::after { content:''; position:absolute; inset:0; background:linear-gradient(90deg, rgba(7,21,40,0.86) 0%, rgba(7,21,40,0.45) 55%, rgba(7,21,40,0.1) 100%); }
+.hero-band .cap { position:absolute; left:36px; right:36px; bottom:32px; z-index:2; color:#fff; }
+.hero-band .cap h3 { font-family:'Nunito',sans-serif; font-size:27px; font-weight:800; line-height:1.2; }
+.hero-band .cap p { font-size:14.5px; opacity:0.92; margin-top:8px; max-width:480px; line-height:1.5; }
+.wthumb { width:44px; height:44px; border-radius:11px; object-fit:cover; flex-shrink:0; margin-top:1px; }
+@media (max-width:600px){ .hero-band{ height:240px; } .hero-band .cap h3{ font-size:21px; } }
+
+footer.site-footer { background:var(--white); border-top:1px solid var(--line); margin-top:64px; }
+.footer-inner { max-width:1200px; margin:0 auto; padding:28px 32px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:14px; }
+.footer-inner .copy { font-size:13px; color:var(--muted); }
+.footer-inner a { font-size:13.5px; color:var(--muted); margin-left:18px; }
+
+@media (max-width:760px){
+    .cols { display:none; }
+    .why-row { grid-template-columns:1fr; gap:8px; }
+    .warrow { transform:rotate(90deg); font-size:20px; }
+}
+@media (max-width:600px){ .page{ padding:36px 18px 56px; } .container{ padding:0 18px; } .nav-links{ display:none; } }
+</style>
+</head>
+<body>
+
+<div class="nav-wrap"><div class="container"><nav class="nav">
+    <a href="https://aquamx.biz" class="brand">aqua<span class="x">mx</span></a>
+    <div class="nav-links"><a href="https://aquamx.biz#how">วิธีทำงาน</a><a href="https://aquamx.biz#network">เครือข่าย</a><a href="https://aquamx.biz#contact">ติดต่อ</a></div>
+    <div class="nav-right"><button class="lang-btn">EN</button><a href="https://aquamx.biz#contact" class="btn-primary">นัดเดโม →</a></div>
+</nav></div></div>
+
+<div class="page">
+
+    <div class="eyebrow"><span class="dot"></span>Why AquaMx · Value</div>
+    <h1 class="title">ทำไมต้อง<br><span class="accent">AquaMx Signage</span></h1>
+    <p class="lede">
+        เปลี่ยนวิธีสื่อสารในอาคารจากของเดิมที่<b>คนไม่เห็น · กดต่อไม่ได้ · หายาก</b> —
+        มาเป็นจอ <b>interactive</b> ที่คนเห็นทุกวัน แตะเลือกเอง และ<b>ส่งต่อไปมือถือ</b>ได้ทันที
+    </p>
+
+    <div class="cmp-grid">
+
+        <div class="cmp-box">
+            <div class="bt">โบรชัวร์ <span class="ar">→</span> จอ signage</div>
+            <div class="cmp-pair">
+                <div class="cmp-img before"><div class="lbl">เดิม</div><img src="img/before-brochure.png" alt="โบรชัวร์ในที่ใส่อะคริลิก"></div>
+                <div class="cmp-img after"><div class="lbl">AquaMx</div><img src="img/after-signage.jpg" alt="จอ signage ในล็อบบี้"></div>
+            </div>
+            <div class="cmp-cap">โบรชัวร์ในที่ใส่อะคริลิก ถูกมองข้าม → ขึ้นจอที่ลูกบ้านเห็นทุกวัน · กดต่อได้</div>
+        </div>
+
+        <div class="cmp-box">
+            <div class="bt">ดูเฉย ๆ <span class="ar">→</span> แตะ-เลือกได้</div>
+            <div class="cmp-pair">
+                <div class="cmp-img before"><div class="lbl">เดิม</div><img src="img/before-interactive.png" alt="จอ broadcast ดูเฉย ๆ"></div>
+                <div class="cmp-img after"><div class="lbl">AquaMx</div><img src="img/after-interactive.jpg" alt="จอ interactive แตะเลือก"></div>
+            </div>
+            <div class="cmp-cap">จอ broadcast ดูผ่านตา กดอะไรไม่ได้ → แตะค้นหา·เลือก แล้วสแกน QR ไปต่อบนมือถือ</div>
+        </div>
+
+        <!-- เพิ่มกล่องที่ 3, 4, ... ได้: เจนภาพคู่ใหม่ (before/after) วางใน img/ แล้ว copy โครง .cmp-box นี้ -->
+
+    </div>
+
+    <div class="divider">เดิม → ด้วย AquaMx</div>
+
+    <div class="cols">
+        <div class="col-h b">✕ แบบเดิม</div>
+        <div></div>
+        <div class="col-h a">✓ ด้วย AquaMx</div>
+    </div>
+
+    <div class="why-list">
+
+        <div class="why-row">
+            <div class="wcard before"><span class="wic">🤷</span><div class="wbody"><div class="wh">ไม่รู้ว่าในตึกมีร้าน/บริการอะไรบ้าง</div><div class="wt">ต้องเดินหาเอง หรือถามนิติฯ ทีละเรื่อง</div></div></div>
+            <div class="warrow">→</div>
+            <div class="wcard after"><span class="wic">🗂️</span><div class="wbody"><div class="wh">directory รวม essentials ของคอนโด</div><div class="wt">ร้าน · บริการ · ของใช้ — explore เองได้ในที่เดียว</div></div></div>
+        </div>
+
+        <div class="why-row">
+            <div class="wcard before"><span class="wic">📌</span><div class="wbody"><div class="wh">ประกาศติดบอร์ด / ไลน์กลุ่ม</div><div class="wt">เลื่อนหาย · หายาก · ลูกบ้านพลาดเรื่องสำคัญ</div></div></div>
+            <div class="warrow">→</div>
+            <div class="wcard after"><span class="wic">🔔</span><div class="wbody"><div class="wh">รวมประกาศนิติฯ ค้นหาได้ง่าย</div><div class="wt">อยู่ที่เดียว · ค้นย้อนหลังได้ · ไม่ตกหล่น</div></div></div>
+        </div>
+
+        <div class="why-row">
+            <div class="wcard before"><span class="wic">🕐</span><div class="wbody"><div class="wh">หาห้องเช่าได้เฉพาะตอนเซลล์อยู่</div><div class="wt">นอกเวลาทำการ = พลาดลูกค้าที่สนใจ</div></div></div>
+            <div class="warrow">→</div>
+            <div class="wcard after"><img class="wthumb" src="https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=160&q=70" alt="" onerror="this.outerHTML='<span class=&quot;wic&quot;>🏠</span>'"><div class="wbody"><div class="wh">ดูห้องว่าง + นัดหมายได้ทุกวัน 06:00–22:00</div><div class="wt">ปิดการขายต่อได้แม้เซลล์ไม่อยู่หน้างาน</div></div></div>
+        </div>
+
+        <div class="why-row">
+            <div class="wcard before"><span class="wic">📞</span><div class="wbody"><div class="wh">โทร / วอล์กอินเพื่อจองคิว</div><div class="wt">ยุ่งยาก · สายไม่ว่าง · ลืมนัด</div></div></div>
+            <div class="warrow">→</div>
+            <div class="wcard after"><span class="wic">📅</span><div class="wbody"><div class="wh">นัดหมาย / จองผ่านหน้าจอได้เลย</div><div class="wt">เลือกวัน-เวลาเองทันที · ยืนยันต่อบนมือถือ</div></div></div>
+        </div>
+
+        <div class="why-row">
+            <div class="wcard before"><span class="wic">🛒</span><div class="wbody"><div class="wh">ต้องเดินไปที่ร้าน</div><div class="wt">ไม่สะดวก · เสียเวลา · ร้านปิดก็จบ</div></div></div>
+            <div class="warrow">→</div>
+            <div class="wcard after"><img class="wthumb" src="https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=160&q=70" alt="" onerror="this.outerHTML='<span class=&quot;wic&quot;>🖥️</span>'"><div class="wbody"><div class="wh">สั่งซื้อผ่านจอเหมือน kiosk หน้าร้าน</div><div class="wt">เลือกสินค้า · สั่ง · ส่งถึงห้อง</div></div></div>
+        </div>
+
+    </div>
+
+    <div class="divider">สรุปสิ่งที่ได้</div>
+    <div class="benefits">
+        <div class="ben"><div class="bi">👁️</div><div class="bn">เห็นมากขึ้น</div><div class="bd">อยู่ในจุดที่คนเดินผ่านทุกวัน</div></div>
+        <div class="ben"><div class="bi">👆</div><div class="bn">กดต่อได้</div><div class="bd">interactive + handoff สู่มือถือ</div></div>
+        <div class="ben"><div class="bi">🗂️</div><div class="bn">รวมทุกอย่าง</div><div class="bd">directory + ประกาศ ที่เดียว</div></div>
+        <div class="ben"><div class="bi">🕐</div><div class="bn">เปิดทุกวัน</div><div class="bd">06:00–22:00 · จอง·สั่ง·นัด</div></div>
+        <div class="ben"><div class="bi">📊</div><div class="bn">วัดผลได้</div><div class="bd">รู้ว่าอะไรถูกดู/ถูกแตะ</div></div>
+    </div>
+
+    <!-- ===================== STRATEGIC ADVANTAGES ===================== -->
+    <div class="divider">ข้อได้เปรียบเชิงกลยุทธ์ · สำหรับแบรนด์ / ผู้ลงโฆษณา</div>
+    <p class="adv-intro">
+        นอกจากแทนสื่อเดิม — AquaMx signage ยังมี<b>ข้อได้เปรียบที่สื่อออฟไลน์ทั่วไปทำไม่ได้</b>
+        โดยเฉพาะสำหรับแบรนด์/เอเจนต์ที่ต้องการเข้าถึงลูกบ้านอย่างตรงกลุ่มและวัดผลได้
+    </p>
+    <div class="adv-grid">
+
+        <div class="adv">
+            <div class="ai">🔗</div>
+            <div class="at">O2O — ออนไลน์ + ออฟไลน์</div>
+            <div class="ad">ใช้คู่กับสื่อออนไลน์ (LINE · โซเชียล · เว็บ) — จอสร้างการรับรู้ออฟไลน์ · QR พาเข้าออนไลน์ เสริมกันทั้งสองทาง</div>
+        </div>
+
+        <div class="adv">
+            <div class="ai">🎯</div>
+            <div class="at">กลุ่มเป้าหมายชัดเจน</div>
+            <div class="ad">เข้าถึง “ลูกบ้านในอาคาร” โดยตรง — captive audience ที่ดีโมกราฟิกชัด ไม่หว่านกว้างแบบบิลบอร์ด</div>
+        </div>
+
+        <div class="adv">
+            <div class="ai">🖥️</div>
+            <div class="at">จอเป็น kiosk ทำรายการ</div>
+            <div class="ad">จอง · สั่งซื้อ · นัดหมาย · รับโปร — จบในจอเดียว ไม่ต้องไปเคาน์เตอร์หรือหน้าร้าน</div>
+        </div>
+
+        <div class="adv">
+            <div class="ai">📊</div>
+            <div class="at">เก็บ engagement ได้</div>
+            <div class="ad">รู้ว่าอะไรถูก ดู · แตะ · สแกน — วัดผลเป็นตัวเลขได้จริง ต่างจากจอ broadcast ที่ไม่รู้อะไรเลย</div>
+        </div>
+
+        <div class="adv">
+            <div class="ai">🧑‍💼</div>
+            <div class="at">ลดภาระพนักงาน</div>
+            <div class="ad">ลูกค้าหาข้อมูลเองบนจอ — ทดแทนการตอบคำถามซ้ำ ๆ ของ staff · เปิดให้ข้อมูลทุกวัน 06:00–22:00</div>
+        </div>
+
+        <div class="adv">
+            <div class="ai">🎁</div>
+            <div class="at">แจกโปร / ทำกิจกรรมกับคนสนใจจริง</div>
+            <div class="ad">มอบโปรโมชั่น/คูปองเฉพาะคนที่แตะดูเอง = high-intent ตรงกลุ่ม ไม่เปลืองงบกับคนที่ไม่สนใจ</div>
+        </div>
+
+    </div>
+
+</div>
+
+<footer class="site-footer"><div class="footer-inner">
+    <div class="copy">© 2026 AquaMx · All rights reserved</div>
+    <div><a href="https://aquamx.biz">หน้าหลัก</a><a href="https://aquamx.biz#contact">ติดต่อ</a></div>
+</div></footer>
+
+</body>
+</html>

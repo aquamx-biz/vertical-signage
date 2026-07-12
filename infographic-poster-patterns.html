@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Poster + CTA Patterns · Infographic</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=Anton&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.5.0/dist/tabler-icons.min.css" />
+<style>
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+:root {
+    /* AQUAMX brand tokens */
+    --navy:          #0E3361;
+    --navy-deep:     #072147;
+    --orange:        #C9864C;
+    --orange-strong: #A36738;
+    --orange-soft:   #F6E5D0;
+    --cream:         #FAF6ED;
+    --ink:           #0B1B33;
+    --muted:         #5C6B82;
+    --line:          #EADFC9;
+    --white:         #ffffff;
+
+    /* Compat remap — original var names → light brand values */
+    --bg-deep:    var(--cream);
+    --bg-card:    var(--white);
+    --bg-card-2:  #FBF7EE;
+    --ink-80:     #2a3a55;
+    --ink-60:     var(--muted);
+    --ink-40:     #8B98AE;
+    --ink-20:     #C5CCD8;
+
+    /* Accent + semantic colours (distinct for good/mid/bad meaning) */
+    --cyan:       #C9864C;   /* primary brand accent (was cyan) */
+    --green:      #2E9E5B;   /* good / high */
+    --amber:      #B07A12;   /* medium / warning */
+    --red:        #C73E3E;   /* low / bad */
+    --gold:       var(--orange-strong);
+}
+
+html, body {
+    background: var(--cream);
+    color: var(--ink);
+    font-family: 'IBM Plex Sans Thai', 'Nunito', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+}
+a { color: inherit; text-decoration: none; }
+
+/* ============================================================
+   NAV + FOOTER — replicated from aquamx.biz landing
+============================================================ */
+.container { max-width: 1200px; margin: 0 auto; padding: 0 32px; }
+.nav-wrap {
+    background: var(--white);
+    border-bottom: 1px solid var(--line);
+    position: sticky; top: 0; z-index: 50;
+}
+.nav {
+    display: flex; align-items: center; justify-content: space-between;
+    height: 76px;
+}
+.brand {
+    display: flex; align-items: baseline;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 800; font-size: 26px;
+    color: var(--navy); letter-spacing: -0.02em;
+}
+.brand img { display: block; height: 72px; width: auto; }
+.brand-text .x-mark { color: var(--orange); }
+.nav-links { display: flex; align-items: center; gap: 32px; }
+.nav-links a {
+    color: var(--ink); font-weight: 500; font-size: 15.5px;
+    transition: color .15s;
+}
+.nav-links a:hover { color: var(--orange-strong); }
+.lang-btn {
+    background: none; border: 1.5px solid var(--navy);
+    border-radius: 8px; padding: 5px 13px;
+    font-size: 13px; font-weight: 700; color: var(--navy);
+    cursor: pointer; letter-spacing: 0.05em;
+    font-family: 'Nunito', sans-serif;
+    transition: background .15s, color .15s; margin-left: 8px;
+}
+.lang-btn:hover { background: var(--navy); color: #fff; }
+.btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 11px 22px; border-radius: 10px;
+    font-weight: 600; font-size: 15px; cursor: pointer; border: none;
+    transition: transform .12s, background .15s, color .15s;
+    font-family: 'Nunito', sans-serif;
+}
+.btn-primary { background: var(--navy); color: var(--white); }
+.btn-primary:hover { background: #001E40; transform: translateY(-1px); }
+
+.site-footer {
+    background: var(--white); border-top: 1px solid var(--line);
+    padding: 32px 40px; text-align: center; margin-top: 24px;
+}
+.site-footer .footer-inner {
+    max-width: 1200px; margin: 0 auto;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 16px; flex-wrap: wrap;
+}
+.site-footer .copy { font-size: 13px; color: var(--muted); }
+.site-footer .footer-links { display: flex; gap: 22px; }
+.site-footer .footer-links a { font-size: 13.5px; color: var(--muted); transition: color .15s; }
+.site-footer .footer-links a:hover { color: var(--orange-strong); }
+
+@media (max-width: 700px) {
+    .container { padding: 0 18px; }
+    .nav { height: 64px; }
+    .brand img { height: 52px; }
+    .nav-links { display: none; }
+    .site-footer { padding: 24px 20px; }
+    .site-footer .footer-inner { flex-direction: column; gap: 12px; }
+}
+
+.page {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 64px 40px 80px;
+}
+
+/* ============================================================
+   HEADER
+============================================================ */
+.eyebrow {
+    display: inline-flex; align-items: center; gap: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--cyan);
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    margin-bottom: 18px;
+}
+.eyebrow::before {
+    content: ''; width: 24px; height: 1px;
+    background: var(--cyan);
+}
+.eyebrow .dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--cyan);
+    box-shadow: 0 0 10px var(--cyan);
+}
+h1.title {
+    font-family: 'Anton', 'Inter', sans-serif;
+    font-size: 72px;
+    font-weight: 400;
+    line-height: 0.95;
+    letter-spacing: 0.01em;
+    text-transform: uppercase;
+    margin-bottom: 18px;
+}
+h1.title .accent { color: var(--cyan); }
+.lede {
+    font-size: 17px;
+    color: var(--ink-60);
+    max-width: 720px;
+    line-height: 1.55;
+}
+.lede b { color: var(--ink); font-weight: 600; }
+
+/* Divider rule */
+.divider {
+    display: flex; align-items: center; gap: 16px;
+    margin: 56px 0 32px;
+    color: var(--ink-40);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+}
+.divider::before { content: ''; height: 1px; width: 32px; background: var(--ink-20); }
+.divider::after  { content: ''; flex: 1; height: 1px; background: var(--ink-20); }
+
+/* ============================================================
+   PATTERNS GRID
+============================================================ */
+.grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 28px;
+    align-items: stretch;
+}
+@media (max-width: 980px) {
+    .grid { grid-template-columns: 1fr; }
+}
+
+.pattern {
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: 24px;
+    padding: 28px 26px 30px;
+    display: flex; flex-direction: column;
+    backdrop-filter: blur(20px);
+}
+.pattern.recommended {
+    background: linear-gradient(180deg, rgba(201,134,76,0.08) 0%, rgba(255,255,255,0.04) 60%);
+    border-color: rgba(201,134,76,0.35);
+    box-shadow:
+        0 0 60px rgba(201,134,76,0.08),
+        inset 0 0 0 1px rgba(201,134,76,0.06);
+}
+.pattern-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    align-self: flex-start;
+    padding: 5px 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(201,134,76,0.45);
+    background: rgba(201,134,76,0.12);
+    color: var(--cyan);
+    font-size: 10px; font-weight: 700;
+    letter-spacing: 0.2em; text-transform: uppercase;
+    margin-bottom: 16px;
+}
+
+/* Pattern header (label + number) */
+.pattern-head {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 14px;
+    align-items: center;
+    margin-bottom: 6px;
+}
+.pattern-num {
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid var(--line);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Anton', sans-serif;
+    font-size: 18px;
+    color: var(--ink-80);
+}
+.pattern.recommended .pattern-num {
+    background: rgba(201,134,76,0.18);
+    border-color: rgba(201,134,76,0.5);
+    color: var(--cyan);
+}
+.pattern-name {
+    font-family: 'Anton', 'Inter', sans-serif;
+    font-size: 26px;
+    line-height: 1;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+.pattern-sub {
+    font-size: 13px;
+    color: var(--ink-60);
+    margin-bottom: 20px;
+    line-height: 1.5;
+}
+
+/* ============================================================
+   MINI MOCKUP (9:16 phone-ish frame)
+============================================================ */
+.mockup-wrap {
+    display: flex; flex-direction: column; align-items: center;
+    margin: 8px 0 24px;
+}
+/* Solid black floor-totem base (no stand), with a seam line — matches other pages */
+.mockup-wrap::after {
+    content: '';
+    width: 168px; max-width: 100%; height: 46px;
+    background: linear-gradient(180deg, #1b2740 0%, #05080d 100%);
+    border-top: 2px solid #36486a;
+    border-radius: 0 0 7px 7px;
+    box-shadow: inset 0 2px 6px -1px rgba(0,0,0,0.55), 0 14px 24px -10px rgba(0,0,0,0.55);
+}
+.mockup {
+    width: 168px;
+    aspect-ratio: 9 / 16;
+    border-radius: 7px 7px 0 0;
+    border: 3px solid #0c111c; border-bottom: none;   /* slim signage bezel */
+    background: #0c0f1a;
+    position: relative;
+    overflow: hidden;
+    box-shadow:
+        0 22px 44px -18px rgba(0,0,0,0.55),
+        inset 0 0 0 1px rgba(255,255,255,0.05);
+}
+
+/* Common mockup elements */
+.m-topbar {
+    position: absolute; top: 0; left: 0; right: 0;
+    height: 18px;
+    background: var(--navy);
+    display: flex; align-items: center;
+    padding: 0 8px;
+    gap: 4px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.m-topbar .m-dot {
+    width: 4px; height: 4px; border-radius: 50%;
+    background: var(--cyan);
+    box-shadow: 0 0 4px var(--cyan);
+}
+.m-topbar .m-time {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 7px; color: var(--ink); font-weight: 600;
+}
+.m-bottombar {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    height: 10px;
+    background: var(--navy);
+    border-top: 1px solid rgba(255,255,255,0.05);
+}
+
+/* Hamburger menu chip — top-left, same on all patterns (matches v5) */
+.m-menu {
+    position: absolute;
+    top: 24px; left: 6px;
+    z-index: 5;
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 4px 6px;
+    background: rgba(8,12,22,0.7);
+    border: 1px solid rgba(255,255,255,0.35);
+    border-radius: 4px;
+    backdrop-filter: blur(4px);
+    font-size: 5.5px; font-weight: 700;
+    letter-spacing: 0.18em;
+    color: #fff;
+    box-shadow: 0 0 0 0 rgba(201,134,76,0.5);
+    animation: m-menu-halo 2.6s ease-out infinite;
+}
+.m-menu::before {
+    content: '';
+    width: 7px; height: 5px;
+    background:
+        linear-gradient(#fff,#fff) center / 100% 1px no-repeat,
+        linear-gradient(#fff,#fff) center 0   / 100% 1px no-repeat,
+        linear-gradient(#fff,#fff) center 100%/ 100% 1px no-repeat;
+}
+.m-menu::after {
+    content: '';
+    position: absolute;
+    top: -2px; right: -2px;
+    width: 4px; height: 4px;
+    border-radius: 50%;
+    background: var(--cyan);
+    box-shadow: 0 0 4px var(--cyan), 0 0 0 1px rgba(8,12,22,0.7);
+    animation: fab-pulse 1.6s ease-in-out infinite;
+}
+@keyframes m-menu-halo {
+    0%   { box-shadow: 0 0 0 0   rgba(201,134,76,0.55); }
+    70%  { box-shadow: 0 0 0 8px rgba(201,134,76,0);    }
+    100% { box-shadow: 0 0 0 8px rgba(201,134,76,0);    }
+}
+
+/* CTA dock — bottom-left, same on all patterns (matches v5) */
+.m-cta-dock {
+    position: absolute;
+    bottom: 16px; left: 6px;
+    z-index: 5;
+    display: flex; flex-direction: column;
+    gap: 3px;
+    align-items: flex-start;
+}
+.m-cta-dock .m-cta {
+    position: static;
+    min-width: 58px;
+}
+.m-cta-dock .m-cta.secondary {
+    background: rgba(8,12,22,0.55);
+    font-size: 5.5px;
+    padding: 3px 6px;
+}
+
+/* Photo background of slot */
+.m-photo {
+    position: absolute; top: 18px; bottom: 10px; left: 0; right: 0;
+    background-size: cover;
+    background-position: center;
+}
+
+/* Mock client logo (simulated) */
+.m-logo-blob {
+    position: absolute;
+    background: rgba(255,255,255,0.92);
+    color: var(--navy);
+    font-family: 'Anton', sans-serif;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 8px;
+    border-radius: 3px;
+    letter-spacing: 0.05em;
+}
+.m-text {
+    position: absolute;
+    color: #fff;
+    font-family: 'Anton', sans-serif;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.6);
+}
+
+/* CTA mock chips */
+.m-cta {
+    position: absolute;
+    background: rgba(8,12,22,0.7);
+    border: 1px solid rgba(255,255,255,0.35);
+    backdrop-filter: blur(4px);
+    color: #fff;
+    font-size: 6.5px; font-weight: 700;
+    letter-spacing: 0.15em; text-transform: uppercase;
+    border-radius: 4px;
+    padding: 5px 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.m-cta::after { content: '→'; }
+
+/* Safe zones (Pattern 1) */
+.m-zone {
+    position: absolute; left: 6px; right: 6px;
+    border: 1px dashed;
+    border-radius: 4px;
+    font-size: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    color: rgba(255,255,255,0.6);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    display: flex; align-items: center; justify-content: center;
+    text-align: center;
+    padding: 2px;
+}
+.m-zone.top    { top: 22px;    height: 18px;  border-color: rgba(245,183,64,0.5); color: rgba(245,183,64,0.85); background: rgba(245,183,64,0.04); }
+.m-zone.canvas { top: 44px;    bottom: 82px;  border-color: rgba(201,134,76,0.4); color: rgba(201,134,76,0.9);  background: rgba(201,134,76,0.04); flex-direction: column; gap: 4px; }
+.m-zone.bottom { bottom: 14px; height: 64px;  border-color: rgba(245,183,64,0.5); color: rgba(245,183,64,0.85); background: rgba(245,183,64,0.04); flex-direction: column; gap: 2px; padding: 6px; }
+
+/* FAB (Pattern 2) */
+.m-fab {
+    position: absolute;
+    bottom: 16px; right: 8px;
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    background: rgba(8,12,22,0.7);
+    border: 1px solid rgba(255,255,255,0.4);
+    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 700;
+    backdrop-filter: blur(6px);
+    box-shadow:
+        0 4px 12px rgba(0,0,0,0.5),
+        0 0 0 0 rgba(201,134,76,0.5);
+    animation: fab-pulse 2s ease-out infinite;
+}
+@keyframes fab-pulse {
+    0%   { box-shadow: 0 4px 12px rgba(0,0,0,0.5), 0 0 0 0    rgba(201,134,76,0.6); }
+    70%  { box-shadow: 0 4px 12px rgba(0,0,0,0.5), 0 0 0 10px rgba(201,134,76,0);   }
+    100% { box-shadow: 0 4px 12px rgba(0,0,0,0.5), 0 0 0 10px rgba(201,134,76,0);   }
+}
+
+/* Tap hint (Pattern 3) */
+.m-tap-hint {
+    position: absolute;
+    left: 50%; bottom: 18px;
+    transform: translateX(-50%);
+    font-size: 6.5px; font-weight: 600;
+    letter-spacing: 0.2em; text-transform: uppercase;
+    color: rgba(255,255,255,0.85);
+    text-shadow: 0 1px 3px rgba(0,0,0,0.7);
+    animation: hint-pulse 1.8s ease-in-out infinite;
+    white-space: nowrap;
+}
+@keyframes hint-pulse {
+    0%, 100% { opacity: 1;   }
+    50%       { opacity: 0.45; }
+}
+.m-tap-hint::before {
+    content: '✦ ';
+    color: var(--cyan);
+}
+
+/* ============================================================
+   PROS / CONS LIST
+============================================================ */
+.section-label {
+    display: flex; align-items: center; gap: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-40);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin: 18px 0 10px;
+}
+.list { display: flex; flex-direction: column; gap: 8px; }
+.list-item {
+    display: grid;
+    grid-template-columns: 16px 1fr;
+    gap: 10px;
+    font-size: 13px;
+    line-height: 1.45;
+    color: var(--ink-80);
+}
+.icon-check {
+    width: 16px; height: 16px;
+    color: var(--green);
+    font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+}
+.icon-cross {
+    width: 16px; height: 16px;
+    color: var(--red);
+    font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+}
+
+/* Use case footer */
+.use-case {
+    margin-top: auto;
+    padding-top: 20px;
+    border-top: 1px solid var(--line);
+    margin-top: 22px;
+}
+.use-case-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-40);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+}
+.use-case-text {
+    font-size: 13px;
+    color: var(--ink);
+    line-height: 1.5;
+    font-weight: 500;
+}
+
+/* ============================================================
+   COMPARISON MATRIX
+============================================================ */
+.matrix {
+    margin-top: 56px;
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    overflow: hidden;
+    backdrop-filter: blur(20px);
+}
+.matrix table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+.matrix th, .matrix td {
+    padding: 16px 20px;
+    text-align: left;
+    border-bottom: 1px solid var(--line);
+}
+.matrix th {
+    background: rgba(255,255,255,0.02);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-60);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+.matrix th:first-child { width: 32%; }
+.matrix tr:last-child td { border-bottom: none; }
+.matrix td { color: var(--ink-80); }
+.matrix td.metric { color: var(--ink); font-weight: 500; }
+.matrix .score-high { color: var(--green); font-weight: 600; }
+.matrix .score-mid  { color: var(--amber); font-weight: 600; }
+.matrix .score-low  { color: var(--red); font-weight: 600; }
+
+/* ============================================================
+   RECOMMENDATION CALLOUT
+============================================================ */
+.callout {
+    margin-top: 48px;
+    background: linear-gradient(135deg, var(--orange-soft) 0%, var(--white) 100%);
+    border: 1px solid rgba(201,134,76,0.35);
+    border-radius: 20px;
+    padding: 32px 36px;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 28px;
+    align-items: center;
+    backdrop-filter: blur(20px);
+}
+.callout-mark {
+    width: 64px; height: 64px;
+    border-radius: 16px;
+    background: rgba(201,134,76,0.18);
+    border: 1px solid rgba(201,134,76,0.45);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Anton', sans-serif;
+    font-size: 36px;
+    color: var(--cyan);
+}
+.callout-body h3 {
+    font-family: 'Anton', sans-serif;
+    font-size: 28px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 6px;
+}
+.callout-body p {
+    font-size: 14px;
+    color: var(--ink-80);
+    line-height: 1.6;
+    max-width: 740px;
+}
+.callout-body p b { color: var(--cyan); font-weight: 600; }
+
+/* Print friendliness */
+@media print {
+    body { background: #fff; color: #000; }
+    .pattern, .matrix, .callout { background: #fff; border-color: #ccc; }
+}
+
+/* ============================================================
+   aquamx.biz typography overrides (match ratecard-sme)
+   — Nunito display headings; Anton kept only for graphic
+     mockup text inside the signage screens.
+============================================================ */
+.divider, .eyebrow { color: var(--orange-strong); }
+h1.title, .pattern-name, .callout-body h3 {
+    font-family: 'Nunito', sans-serif;
+    font-weight: 800;
+    text-transform: none;
+    letter-spacing: -0.01em;
+}
+/* Mockups are dark signage screens — keep the clock text light */
+.m-topbar .m-time { color: rgba(255,255,255,0.92); }
+</style>
+</head>
+<body>
+
+<!-- ============ NAV (same look as aquamx.biz) ============ -->
+<div class="nav-wrap">
+    <div class="container">
+        <nav class="nav">
+            <a href="https://aquamx.biz" class="brand" aria-label="AquaMx">
+                <img src="https://aquamx.biz/img/logo.png" alt="AquaMx" height="72" style="display:block;"
+                     onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-flex';">
+                <span class="brand-text" style="display:none;">Aqua<span class="x-mark">Mx</span></span>
+            </a>
+            <div class="nav-links">
+                <a href="https://aquamx.biz#how">วิธีทำงาน</a>
+                <a href="https://aquamx.biz#network">เครือข่าย</a>
+                <a href="https://aquamx.biz#contact">ติดต่อ</a>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;">
+                <button class="lang-btn" id="langToggle" aria-label="Switch language">EN</button>
+                <a href="https://aquamx.biz#contact" class="btn btn-primary">
+                    <span>นัดเดโม</span>
+                    <i class="ti ti-arrow-right"></i>
+                </a>
+            </div>
+        </nav>
+    </div>
+</div>
+
+<div class="page">
+
+    <!-- ===================== HEADER ===================== -->
+    <div class="eyebrow">
+        <span class="dot"></span>
+        Signage UX · Decision Guide
+    </div>
+    <h1 class="title">Poster + CTA<br><span class="accent">Patterns</span></h1>
+    <p class="lede">
+        เมื่อลูกค้าส่ง <b>poster ที่มีโลโก้/ข้อความเต็มใบ</b>
+        ปุ่ม CTA จะวางตรงไหนเพื่อไม่บัง content ของลูกค้า?
+        เปรียบเทียบ 3 ทางเลือกพร้อมข้อดี-ข้อเสีย
+    </p>
+
+    <div class="divider">3 PATTERNS · COMPARED</div>
+
+    <!-- ===================== PATTERN GRID ===================== -->
+    <div class="grid">
+
+        <!-- ▰▰▰ PATTERN 1: Safe Zone ▰▰▰ -->
+        <div class="pattern recommended">
+            <div class="pattern-badge">★ Recommended Default</div>
+            <div class="pattern-head">
+                <div class="pattern-num">01</div>
+                <div class="pattern-name">Safe Zone</div>
+            </div>
+            <div class="pattern-sub">
+                Designer ได้พื้นที่ canvas ตรงกลาง — บน/ล่างกันไว้ให้ chrome + CTA
+            </div>
+
+            <div class="mockup-wrap">
+                <div class="mockup">
+                    <div class="m-topbar">
+                        <span class="m-time">18:42</span>
+                        <span class="m-dot"></span>
+                    </div>
+                    <div class="m-zone top">TOP RESERVED</div>
+                    <div class="m-zone canvas">
+                        <div style="font-size:13px;letter-spacing:0.06em;">YOUR<br>POSTER</div>
+                        <div style="font-size:6px;opacity:0.7;">CANVAS · 67vh</div>
+                    </div>
+                    <div class="m-zone bottom">
+                        <div>CTA RESERVED</div>
+                    </div>
+                    <div class="m-menu">MENU</div>
+                    <div class="m-cta-dock">
+                        <div class="m-cta">BOOK</div>
+                        <div class="m-cta secondary">PLANS</div>
+                    </div>
+                    <div class="m-bottombar"></div>
+                </div>
+            </div>
+
+            <div class="section-label">▲ Pros</div>
+            <div class="list">
+                <div class="list-item"><span class="icon-check">✓</span>Designer ทำงานเป็นระบบ — รู้ขอบเขตล่วงหน้า</div>
+                <div class="list-item"><span class="icon-check">✓</span>CTA visible ทุก slot → conversion สูงสุด</div>
+                <div class="list-item"><span class="icon-check">✓</span>Position แน่นอน — ไม่บังข้อความลูกค้า</div>
+                <div class="list-item"><span class="icon-check">✓</span>Template (PSD/Figma) ใช้ซ้ำได้</div>
+            </div>
+
+            <div class="section-label">▼ Cons</div>
+            <div class="list">
+                <div class="list-item"><span class="icon-cross">✕</span>Designer เหลือ canvas 67vh (จาก 100vh)</div>
+                <div class="list-item"><span class="icon-cross">✕</span>ต้อง brief ลูกค้าให้เคารพ safe zone</div>
+            </div>
+
+            <div class="use-case">
+                <div class="use-case-label">เหมาะกับ</div>
+                <div class="use-case-text">Daily content · ห้อง · ร้านอาหาร · บริการ — 80% ของ slot ใช้แบบนี้</div>
+            </div>
+        </div>
+
+        <!-- ▰▰▰ PATTERN 2: FAB ▰▰▰ -->
+        <div class="pattern">
+            <div class="pattern-head">
+                <div class="pattern-num">02</div>
+                <div class="pattern-name">Floating FAB</div>
+            </div>
+            <div class="pattern-sub">
+                Poster เต็มจอ — มี action button กลมเล็กลอยมุมขวาล่าง
+            </div>
+
+            <div class="mockup-wrap">
+                <div class="mockup">
+                    <div class="m-topbar">
+                        <span class="m-time">18:42</span>
+                        <span class="m-dot"></span>
+                    </div>
+                    <div class="m-photo" style="background-image:linear-gradient(135deg,#1a3d6e 0%,#0e1d3a 100%);">
+                        <div class="m-logo-blob" style="top: 28px; left: 50%; transform: translateX(-50%); padding: 4px 10px;">MAHOGANY</div>
+                        <div class="m-text" style="top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 16px; text-align: center; letter-spacing: 0.05em;">LIVE<br>IN<br>BALANCE</div>
+                        <div style="position:absolute; bottom:46px; left:50%; transform:translateX(-50%); font-size:6px; color:rgba(255,255,255,0.7); letter-spacing:0.2em; text-transform:uppercase; white-space:nowrap;">— Designer's full art —</div>
+                    </div>
+                    <div class="m-menu">MENU</div>
+                    <div class="m-fab">→</div>
+                    <div class="m-bottombar"></div>
+                </div>
+            </div>
+
+            <div class="section-label">▲ Pros</div>
+            <div class="list">
+                <div class="list-item"><span class="icon-check">✓</span>Designer ได้พื้นที่เต็ม 100%</div>
+                <div class="list-item"><span class="icon-check">✓</span>Poster ดู cinematic premium</div>
+                <div class="list-item"><span class="icon-check">✓</span>FAB ใช้พื้นที่น้อยมาก</div>
+                <div class="list-item"><span class="icon-check">✓</span>Glow animation ดึง attention</div>
+            </div>
+
+            <div class="section-label">▼ Cons</div>
+            <div class="list">
+                <div class="list-item"><span class="icon-cross">✕</span>Conversion ต่ำกว่า — คนต้องสังเกต FAB</div>
+                <div class="list-item"><span class="icon-cross">✕</span>มีแค่ 1 action ไม่สามารถมี primary+secondary</div>
+                <div class="list-item"><span class="icon-cross">✕</span>Designer ต้องเว้นมุมขวาล่าง 8vh</div>
+            </div>
+
+            <div class="use-case">
+                <div class="use-case-label">เหมาะกับ</div>
+                <div class="use-case-text">Brand campaign · launch event · lifestyle hero — 15% ของ slot</div>
+            </div>
+        </div>
+
+        <!-- ▰▰▰ PATTERN 3: Tap Anywhere ▰▰▰ -->
+        <div class="pattern">
+            <div class="pattern-head">
+                <div class="pattern-num">03</div>
+                <div class="pattern-name">Tap Anywhere</div>
+            </div>
+            <div class="pattern-sub">
+                Poster สวยที่สุด — ไม่มี CTA เลย, hint pulse บอกให้แตะ
+            </div>
+
+            <div class="mockup-wrap">
+                <div class="mockup">
+                    <div class="m-topbar">
+                        <span class="m-time">18:42</span>
+                        <span class="m-dot"></span>
+                    </div>
+                    <div class="m-photo" style="background-image:linear-gradient(160deg,#6b4423 0%,#3d2817 100%);">
+                        <div class="m-logo-blob" style="top: 28px; right: 12px; padding: 3px 7px; font-size: 6.5px;">BRAND</div>
+                        <div class="m-text" style="top: 38%; left: 50%; transform: translate(-50%,-50%); font-size: 16px; line-height: 1; letter-spacing: 0.02em; text-align:center;">PURE<br>POSTER<br>ART</div>
+                        <div style="position:absolute; bottom:38px; left:12px; right:12px; font-size:6px; color:rgba(255,255,255,0.55); letter-spacing:0.15em; text-transform:uppercase; text-align:center;">— Zero overlay —</div>
+                    </div>
+                    <div class="m-menu">MENU</div>
+                    <div class="m-tap-hint">Touch to explore</div>
+                    <div class="m-bottombar"></div>
+                </div>
+            </div>
+
+            <div class="section-label">▲ Pros</div>
+            <div class="list">
+                <div class="list-item"><span class="icon-check">✓</span>Poster ไม่มีอะไรทับ — สวยที่สุด</div>
+                <div class="list-item"><span class="icon-check">✓</span>Designer อิสระเต็ม 100%</div>
+                <div class="list-item"><span class="icon-check">✓</span>Tap area ใหญ่ที่สุด (= ทั้งจอ)</div>
+            </div>
+
+            <div class="section-label">▼ Cons</div>
+            <div class="list">
+                <div class="list-item"><span class="icon-cross">✕</span>Conversion ต่ำสุด — คนไม่รู้ว่า tap ได้</div>
+                <div class="list-item"><span class="icon-cross">✕</span>Action ไม่ชัด — ต้องอ่าน hint</div>
+                <div class="list-item"><span class="icon-cross">✕</span>ลูกค้าใหม่อาจมองเป็นแค่ static ad</div>
+            </div>
+
+            <div class="use-case">
+                <div class="use-case-label">เหมาะกับ</div>
+                <div class="use-case-text">Brand statement · art piece · awareness — 5% ของ slot</div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ===================== COMPARISON MATRIX ===================== -->
+    <div class="divider">Quick Comparison</div>
+    <div class="matrix">
+        <table>
+            <thead>
+                <tr>
+                    <th>Criteria</th>
+                    <th>01 Safe Zone</th>
+                    <th>02 FAB</th>
+                    <th>03 Tap Anywhere</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="metric">Designer freedom</td>
+                    <td><span class="score-mid">●●○ Medium</span> (67vh canvas)</td>
+                    <td><span class="score-high">●●● High</span> (เกือบเต็ม)</td>
+                    <td><span class="score-high">●●● Full</span> (100%)</td>
+                </tr>
+                <tr>
+                    <td class="metric">Conversion rate</td>
+                    <td><span class="score-high">●●● High</span></td>
+                    <td><span class="score-mid">●●○ Medium</span></td>
+                    <td><span class="score-low">●○○ Low</span></td>
+                </tr>
+                <tr>
+                    <td class="metric">Number of CTAs</td>
+                    <td>1–2 ปุ่ม</td>
+                    <td>1 ปุ่ม</td>
+                    <td>0 (popup เด้ง)</td>
+                </tr>
+                <tr>
+                    <td class="metric">Action clarity</td>
+                    <td><span class="score-high">●●● Clear</span></td>
+                    <td><span class="score-mid">●●○ Need attention</span></td>
+                    <td><span class="score-low">●○○ Hidden</span></td>
+                </tr>
+                <tr>
+                    <td class="metric">Setup effort</td>
+                    <td>ต้องทำ template brief</td>
+                    <td>Brief สั้น (มุมเว้น)</td>
+                    <td>ไม่มี brief</td>
+                </tr>
+                <tr>
+                    <td class="metric">Best for slot %</td>
+                    <td><b>80%</b> daily</td>
+                    <td><b>15%</b> campaign</td>
+                    <td><b>5%</b> art piece</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- ===================== RECOMMENDATION ===================== -->
+    <div class="callout">
+        <div class="callout-mark">✓</div>
+        <div class="callout-body">
+            <h3>คำแนะนำ — ใช้ทั้ง 3 ได้ ระบุใน CMS</h3>
+            <p>
+                ตั้ง <b>Safe Zone</b> เป็น default — เหมาะกับ poster ปกติ 80% ของ slot
+                <br>
+                ให้ admin เลือก <b>FAB</b> สำหรับ campaign launch ที่ลูกค้าทำ poster พิเศษมา
+                <br>
+                สงวน <b>Tap Anywhere</b> ไว้สำหรับ art piece / brand statement เท่านั้น
+                <br><br>
+                ใน Sanity CMS เพิ่ม field: <code style="font-family:'JetBrains Mono',monospace; background:var(--orange-soft); color:var(--orange-strong); padding:2px 8px; border-radius:4px; font-size:12px;">slot.posterLayout = "safe-zone" | "fab" | "tap-anywhere"</code>
+            </p>
+        </div>
+    </div>
+
+</div>
+
+<!-- ============ FOOTER ============ -->
+<footer class="site-footer">
+    <div class="footer-inner">
+        <div class="copy">© 2026 AquaMx · All rights reserved</div>
+        <div class="footer-links">
+            <a href="https://aquamx.biz">หน้าหลัก</a>
+            <a href="https://aquamx.biz#contact">ติดต่อ</a>
+            <a href="https://aquamx.biz">aquamx.biz</a>
+        </div>
+    </div>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ลงข้อมูล Offer · Submit Form</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=Anton&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+:root {
+    --navy:#0E3361; --navy-deep:#072147;
+    --orange:#C9864C; --orange-strong:#A36738; --orange-soft:#F6E5D0;
+    --cream:#FAF6ED; --ink:#0B1B33; --muted:#5C6B82; --white:#fff;
+    --line:#EADFC9; --ink-40:#8B98AE; --green:#2E9E5B;
+}
+html, body { background:var(--cream); color:var(--ink); font-family:'IBM Plex Sans Thai','Nunito',system-ui,sans-serif; -webkit-font-smoothing:antialiased; min-height:100vh; }
+a { color:inherit; text-decoration:none; }
+
+/* NAV */
+.container { max-width:1200px; margin:0 auto; padding:0 32px; }
+.nav-wrap { background:var(--white); border-bottom:1px solid var(--line); position:sticky; top:0; z-index:50; }
+.nav { height:76px; display:flex; align-items:center; justify-content:space-between; }
+.brand { font-family:'Nunito',sans-serif; font-weight:800; font-size:26px; color:var(--navy); letter-spacing:-0.02em; }
+.brand .x { color:var(--orange); }
+.nav-links { display:flex; gap:34px; }
+.nav-links a { color:var(--ink); font-weight:500; font-size:15.5px; }
+.nav-right { display:flex; align-items:center; gap:10px; }
+.lang-btn { background:none; border:1.5px solid var(--navy); border-radius:8px; padding:7px 14px; font-size:13px; font-weight:700; color:var(--navy); font-family:'Nunito',sans-serif; cursor:pointer; }
+
+/* HEADER */
+.page { max-width:1180px; margin:0 auto; padding:48px 40px 80px; }
+.eyebrow { display:inline-flex; align-items:center; gap:10px; font-family:'Nunito',sans-serif; font-size:14px; color:var(--orange-strong); letter-spacing:0.06em; text-transform:uppercase; font-weight:700; margin-bottom:14px; }
+.eyebrow .dot { width:8px; height:8px; border-radius:50%; background:var(--orange); }
+h1.title { font-family:'Nunito',sans-serif; font-size:42px; font-weight:800; line-height:1.15; color:var(--navy); margin-bottom:14px; }
+h1.title .accent { color:var(--orange); }
+.lede { font-size:16px; color:var(--muted); max-width:680px; line-height:1.6; }
+
+/* provider context banner */
+.who { display:flex; align-items:center; gap:14px; background:#eef3f9; border:1.5px solid #cdd9ea; border-radius:14px; padding:14px 18px; margin:24px 0 6px; }
+.who .lg { width:42px; height:42px; border-radius:11px; background:var(--navy); background-size:cover; background-position:center; color:#fff; display:flex; align-items:center; justify-content:center; font-family:'Anton',sans-serif; font-size:22px; flex-shrink:0; }
+.who .tx { font-size:14px; color:var(--muted); line-height:1.4; }
+.who .tx b { display:block; font-family:'Nunito',sans-serif; font-weight:800; font-size:17px; color:var(--navy); }
+.who .lock { margin-left:auto; font-size:11px; color:var(--navy); background:#dde7f3; border-radius:20px; padding:5px 12px; font-weight:700; white-space:nowrap; }
+
+/* layout */
+.wrap { display:grid; grid-template-columns:1.4fr 1fr; gap:34px; margin-top:26px; align-items:start; }
+
+/* FORM */
+.form-card { background:var(--white); border:1px solid var(--line); border-radius:20px; padding:28px 26px; }
+.sec-h { font-family:'Nunito',sans-serif; font-weight:800; font-size:13px; text-transform:uppercase; letter-spacing:0.05em; color:var(--orange-strong); margin:22px 0 12px; padding-bottom:7px; border-bottom:1px solid var(--line); }
+.sec-h:first-child { margin-top:0; }
+.fld { margin-bottom:16px; }
+.row { display:flex; gap:14px; }
+.row .fld { flex:1; }
+label { display:flex; justify-content:space-between; align-items:baseline; gap:8px; font-size:12px; font-weight:700; color:var(--ink); margin-bottom:6px; }
+label .req { color:var(--orange); }
+label .cnt { font-size:11px; font-weight:600; color:var(--ink-40); }
+input[type=text], input[type=url], input[type=date], select, textarea {
+    width:100%; border:1.5px solid var(--line); border-radius:10px; padding:11px 13px;
+    font-family:inherit; font-size:14px; color:var(--ink); background:#fff; transition:border-color 0.15s;
+}
+input:focus, select:focus, textarea:focus { outline:none; border-color:var(--orange); }
+input::placeholder, textarea::placeholder { color:#bcc4d0; }
+textarea { resize:vertical; min-height:84px; line-height:1.5; }
+select { cursor:pointer; appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%235C6B82' d='M6 8 0 0h12z'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 14px center; padding-right:34px; }
+
+/* price field with ฿ prefix */
+.price-wrap { display:flex; align-items:stretch; border:1.5px solid var(--orange); border-radius:10px; overflow:hidden; background:#fffdf8; }
+.price-wrap .cur { display:flex; align-items:center; padding:0 15px; background:var(--orange-soft); color:var(--orange-strong); font-weight:800; font-size:17px; border-right:1.5px solid var(--orange); }
+.price-wrap input { border:none; background:transparent; font-weight:800; color:var(--orange-strong); font-size:15px; }
+.price-wrap input:focus { outline:none; }
+.hint { font-size:11.5px; color:var(--muted); margin-top:5px; }
+.sec-note { font-weight:400; text-transform:none; letter-spacing:0; color:var(--muted); font-size:11px; }
+.add-cta { display:inline-flex; align-items:center; gap:6px; background:none; border:1.5px dashed var(--orange); color:var(--orange-strong); border-radius:10px; padding:10px 16px; font-family:'Nunito',sans-serif; font-weight:700; font-size:13px; cursor:pointer; transition:background 0.15s; }
+.add-cta:hover { background:#fffdf8; }
+.cta2-head { display:flex; justify-content:space-between; align-items:center; font-size:12px; font-weight:700; color:var(--ink); margin:16px 0 8px; }
+.cta2-head .rm { color:#b23b2e; font-size:11.5px; cursor:pointer; font-weight:600; }
+.tt-cta.sec { font-weight:600; border-color:rgba(255,255,255,0.26); }
+.prem-note { margin-top:13px; background:#fff7ec; border:1.5px solid var(--orange); border-radius:11px; padding:11px 14px; font-size:12.5px; color:var(--orange-strong); line-height:1.5; }
+.prem-note b { font-weight:800; }
+.prov-link { display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap; background:#f6f8fb; border:1px solid var(--line); border-radius:12px; padding:13px 16px; margin-top:8px; }
+.prov-link .t { font-size:13px; color:var(--muted); }
+.prov-link a { font-family:'Nunito',sans-serif; font-weight:700; font-size:13px; color:var(--navy); white-space:nowrap; }
+.prov-link a:hover { color:var(--orange-strong); }
+/* type selector */
+.type-seg { display:flex; gap:9px; flex-wrap:wrap; }
+.type-seg .ts { flex:1 1 110px; border:1.5px solid var(--line); border-radius:13px; padding:13px 10px; cursor:pointer; text-align:center; background:#fff; transition:all 0.15s; }
+.type-seg .ts:hover { border-color:var(--orange-soft); }
+.type-seg .ts .em { font-size:22px; }
+.type-seg .ts .t { font-family:'Nunito',sans-serif; font-weight:800; font-size:13.5px; color:var(--ink); margin-top:3px; }
+.type-seg .ts .d { font-size:10.5px; color:var(--muted); margin-top:2px; line-height:1.3; }
+.type-seg .ts.on { border-color:var(--orange); background:#fffdf8; box-shadow:0 3px 12px -5px rgba(201,134,76,0.5); }
+.type-seg .ts.on .t { color:var(--orange-strong); }
+/* preview strikethrough (promotion) */
+.tt-price s { font-size:11px; font-weight:400; opacity:0.7; }
+.wp-orig { font-size:8px; color:var(--ink-40); text-decoration:line-through; margin-left:5px; }
+
+/* upload */
+.up { border:1.5px dashed var(--line); border-radius:12px; padding:18px; text-align:center; cursor:pointer; transition:border-color 0.15s, background 0.15s; }
+.up:hover { border-color:var(--orange); background:#fffdf8; }
+.up .ic { font-size:24px; }
+.up .t { font-size:13px; color:var(--muted); margin-top:4px; }
+.up .t b { color:var(--orange-strong); }
+.up input { display:none; }
+.thumbs { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+.thumbs .th { width:64px; height:64px; border-radius:10px; background-size:cover; background-position:center; border:1px solid var(--line); position:relative; }
+.thumbs .th.hero::after { content:'HERO'; position:absolute; left:0; bottom:0; right:0; background:rgba(8,12,22,0.7); color:#fff; font-size:7px; font-weight:800; text-align:center; padding:2px 0; letter-spacing:0.1em; }
+
+/* locked auto section */
+.locked { margin-top:8px; background:#f3faf5; border:1.5px solid #cfe9d8; border-radius:14px; padding:16px 18px; }
+.locked .lh { display:flex; align-items:center; gap:8px; font-weight:800; font-size:12.5px; color:#1f7a45; margin-bottom:10px; }
+.locked .chips { display:flex; flex-wrap:wrap; gap:7px; }
+.locked .chip { font-size:12px; color:#5b7a66; background:#fff; border:1px solid #cfe9d8; border-radius:8px; padding:5px 10px; }
+.locked .note { font-size:12px; color:var(--muted); margin-top:9px; line-height:1.45; }
+
+/* submit */
+.submit-row { margin-top:24px; display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+.btn-submit { background:var(--navy); color:#fff; border:none; border-radius:12px; padding:15px 32px; font-family:'Nunito',sans-serif; font-weight:800; font-size:16px; cursor:pointer; transition:background 0.15s, transform 0.1s; }
+.btn-submit:hover { background:var(--navy-deep); }
+.btn-submit:active { transform:scale(0.98); }
+.submit-note { font-size:12.5px; color:var(--muted); }
+.submit-note b { color:#1f7a45; }
+.ok { display:none; align-items:center; gap:12px; background:#f3faf5; border:1.5px solid #9fd9b4; border-radius:14px; padding:18px 22px; margin-top:20px; }
+.ok.show { display:flex; }
+.ok .em { font-size:30px; }
+.ok .tx b { display:block; font-family:'Nunito',sans-serif; font-weight:800; font-size:17px; color:#1f7a45; }
+.ok .tx span { font-size:13px; color:var(--muted); }
+
+/* ===== LIVE PREVIEW (signage totem v6) ===== */
+.preview { position:sticky; top:100px; }
+.pv-label { display:flex; align-items:center; gap:8px; font-family:'Nunito',sans-serif; font-weight:800; font-size:12px; text-transform:uppercase; letter-spacing:0.05em; color:var(--muted); margin-bottom:12px; justify-content:center; }
+.pv-label .live { display:inline-flex; align-items:center; gap:5px; color:var(--green); }
+.pv-label .live::before { content:''; width:7px; height:7px; border-radius:50%; background:var(--green); animation:blink 1.4s ease-in-out infinite; }
+@keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+.totem-wrap { display:flex; justify-content:center; }
+.totem { width:230px; }
+.tt-screen { width:100%; aspect-ratio:9/16; border:3px solid #0c111c; border-bottom:none; border-radius:9px 9px 0 0; position:relative; overflow:hidden; background:#0a0c10; }
+.tt-base { width:100%; height:26px; background:linear-gradient(180deg,#1b2740 0%,#05080d 100%); border-top:2px solid #36486a; border-radius:0 0 9px 9px; box-shadow:inset 0 2px 5px -1px rgba(0,0,0,0.5), 0 14px 24px -8px rgba(0,0,0,0.5); }
+.tt-bg { position:absolute; inset:0; background-size:cover; background-position:center; background-color:#11151c; }
+.tt-bg.empty::after { content:'รูป Hero จะขึ้นตรงนี้'; position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:#3a4456; font-size:9px; }
+.tt-grad { position:absolute; inset:auto 0 0 0; height:72%; background:linear-gradient(0deg,rgba(5,6,8,0.92) 0%,rgba(5,6,8,0.35) 50%,transparent 100%); }
+.tt-menu { position:absolute; top:10px; left:10px; z-index:6; display:flex; align-items:center; gap:4px; background:rgba(8,12,22,0.5); border:1px solid rgba(255,255,255,0.32); color:#fff; font-size:7px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; padding:5px 8px; border-radius:6px; }
+.tt-logo { position:absolute; top:10px; right:11px; z-index:6; width:28px; height:28px; border-radius:8px; background:#fff; background-size:cover; background-position:center; box-shadow:0 2px 7px rgba(0,0,0,0.35); }
+.tt-content { position:absolute; left:12px; right:12px; bottom:78px; z-index:5; display:flex; flex-direction:column; align-items:flex-start; gap:7px; }
+.tt-eyebrow { display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border:1px solid rgba(255,255,255,0.4); border-radius:20px; background:rgba(8,12,22,0.35); font-size:7px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:#fff; }
+.tt-eyebrow::before { content:''; width:4px; height:4px; border-radius:50%; background:#6DD5E8; box-shadow:0 0 5px #6DD5E8; }
+.tt-title { font-family:'Anton',sans-serif; font-size:19px; line-height:0.95; text-transform:uppercase; color:#fff; text-shadow:0 1px 6px rgba(0,0,0,0.5); }
+.tt-price { display:flex; align-items:baseline; gap:5px; font-family:'IBM Plex Sans Thai','Nunito',sans-serif; font-weight:700; font-size:23px; color:#FBD7A8; line-height:1; text-shadow:0 1px 7px rgba(0,0,0,0.6); }
+.tt-price small { font-size:9px; font-weight:600; color:#fff; opacity:0.88; }
+.tt-sub { font-size:9px; line-height:1.4; color:rgba(255,255,255,0.88); text-shadow:0 1px 4px rgba(0,0,0,0.55); }
+.tt-dock { position:absolute; left:12px; bottom:12px; z-index:6; display:grid; grid-template-columns:max-content; gap:5px; }
+.tt-cta { width:100%; display:flex; align-items:center; justify-content:space-between; gap:16px; background:rgba(8,12,22,0.5); border:1px solid rgba(255,255,255,0.4); color:#fff; font-family:'Nunito',sans-serif; font-weight:700; font-size:8.5px; letter-spacing:0.08em; text-transform:uppercase; padding:7px 11px; border-radius:8px; backdrop-filter:blur(4px); }
+.pv-foot { text-align:center; font-size:11.5px; color:var(--ink-40); margin-top:16px; line-height:1.5; }
+/* toggle */
+.pv-toggle-wrap { display:flex; justify-content:center; margin-bottom:16px; }
+.pv-toggle { display:inline-flex; background:#eef0f4; border-radius:11px; padding:3px; gap:3px; }
+.pv-toggle button { border:none; background:none; font-family:'Nunito',sans-serif; font-weight:700; font-size:12.5px; color:var(--muted); padding:8px 18px; border-radius:8px; cursor:pointer; transition:all 0.15s; }
+.pv-toggle button.on { background:#fff; color:var(--navy); box-shadow:0 1px 4px rgba(0,0,0,0.12); }
+/* web phone */
+.webphone { display:flex; justify-content:center; }
+.wp-frame { width:230px; background:#0c111c; border-radius:28px; padding:8px; box-shadow:0 18px 36px -14px rgba(0,0,0,0.5); }
+.wp-scr { background:#fff; border-radius:22px; overflow:hidden; }
+.wp-bar { height:24px; display:flex; align-items:center; justify-content:space-between; padding:0 11px; font-size:8px; color:var(--muted); font-weight:600; }
+.wp-bar b { color:var(--orange); font-weight:800; }
+.wp-hero { position:relative; aspect-ratio:1/1; background-size:cover; background-position:center; background-color:#11151c; }
+.wp-hero.empty::before { content:'รูป Hero'; position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:#3a4456; font-size:10px; }
+.wp-logo { position:absolute; top:8px; right:9px; width:24px; height:24px; border-radius:7px; background:#fff; background-size:cover; background-position:center; box-shadow:0 2px 6px rgba(0,0,0,0.3); }
+.wp-chip { position:absolute; left:8px; bottom:8px; background:rgba(8,12,22,0.6); border:1px solid rgba(255,255,255,0.3); color:#fff; font-size:6.5px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; padding:3px 8px; border-radius:11px; }
+.wp-body { padding:10px 11px 12px; }
+.wp-prov { display:flex; align-items:center; gap:5px; font-size:8px; color:var(--muted); font-weight:700; margin-bottom:3px; }
+.wp-prov .pl { width:13px; height:13px; border-radius:50%; background:var(--navy); color:#fff; display:flex; align-items:center; justify-content:center; font-family:'Anton',sans-serif; font-size:7px; }
+.wp-title { font-family:'Nunito',sans-serif; font-weight:800; font-size:14px; line-height:1.2; color:var(--ink); margin-bottom:6px; }
+.wp-badges { display:flex; flex-wrap:wrap; gap:4px; margin-bottom:7px; }
+.wp-badge { font-size:8px; padding:3px 8px; border-radius:11px; font-weight:700; }
+.wp-badge.pr { color:var(--orange-strong); background:var(--orange-soft); border:1px solid var(--orange); }
+.wp-badge.av { color:#26794a; background:#f3faf5; border:1px solid #cfe9d8; }
+.wp-desc { font-size:8.5px; line-height:1.5; color:var(--muted); margin-bottom:9px; }
+.wp-cta { display:block; text-align:center; background:var(--navy); color:#fff; font-family:'Nunito',sans-serif; font-weight:800; font-size:9.5px; padding:9px; border-radius:10px; margin-bottom:6px; }
+.wp-cta.sec { background:#fff; color:var(--navy); border:1.4px solid var(--navy); }
+.wp-contact { display:flex; gap:4px; margin-top:3px; }
+.wp-contact .wcb { flex:1; border:1px solid var(--line); border-radius:8px; padding:6px 0; display:flex; flex-direction:column; align-items:center; gap:2px; font-size:6px; color:var(--muted); font-weight:600; }
+.wp-contact .wcb span { font-size:11px; }
+.wp-auto { font-size:7.5px; color:var(--ink-40); text-align:center; margin-top:8px; }
+
+@media (max-width:900px){ .wrap{ grid-template-columns:1fr; } .preview{ position:static; order:-1; margin-bottom:10px; } }
+@media (max-width:600px){ .page{ padding:32px 18px 56px; } .container{ padding:0 18px; } .nav-links{ display:none; } .row{ flex-direction:column; gap:0; } }
+</style>
+</head>
+<body>
+
+<div class="nav-wrap"><div class="container"><nav class="nav">
+    <a href="https://aquamx.biz" class="brand">aqua<span class="x">mx</span></a>
+    <div class="nav-links"><a href="https://aquamx.biz#how">วิธีทำงาน</a><a href="https://aquamx.biz#network">เครือข่าย</a><a href="https://aquamx.biz#contact">ติดต่อ</a></div>
+    <div class="nav-right"><button class="lang-btn">EN</button></div>
+</nav></div></div>
+
+<div class="page">
+
+    <div class="eyebrow"><span class="dot"></span>Submit Offer · ลงข้อมูลโปร/สินค้า</div>
+    <h1 class="title">ลงข้อมูล <span class="accent">Offer</span> ของคุณ</h1>
+    <p class="lede">กรอกข้อมูลสินค้า/โปรของคุณ — กรอกเสร็จส่งเข้าระบบ ทีมงานตรวจแล้วขึ้นจอป้าย + หน้าเว็บให้อัตโนมัติ ไม่ต้องกรอกซ้ำ</p>
+
+    <!-- provider context (from magic link) -->
+    <div class="who" id="whoBanner">
+        <label class="lg" id="whoLg" for="whoLogoInput" title="อัปโหลด/เปลี่ยนโลโก้ร้าน" style="cursor:pointer;">?</label>
+        <input type="file" id="whoLogoInput" accept="image/*" style="display:none;">
+        <div class="tx">กำลังลงข้อมูลในนามร้าน <b id="whoName">ร้านของคุณ</b><label for="whoLogoInput" id="whoLogoHint" style="display:none; margin-left:8px; font-size:11px; color:var(--orange-strong); font-weight:700; cursor:pointer; text-decoration:underline;">＋ อัปโหลดโลโก้</label></div>
+        <div class="lock">🔒 ผูกจากลิงก์ของคุณ</div>
+    </div>
+    <div class="who" id="whoGate" style="display:none; background:#fff7ec; border-color:var(--orange);">
+        <div class="lg" style="background:var(--orange-soft); color:var(--orange-strong);">⚠️</div>
+        <div class="tx"><b>ยังไม่ได้ตั้งโปรไฟล์ร้าน</b><br>แนะนำกรอก<b>โปรไฟล์ร้าน</b>ก่อน เพื่อใช้โลโก้ · ติดต่อ · เวลา อัตโนมัติทุก offer</div>
+        <a href="form-provider-submit.html" class="lock" style="background:var(--orange); color:#fff; text-decoration:none;">ไปกรอกโปรไฟล์ร้าน →</a>
+    </div>
+
+    <div class="wrap">
+
+        <!-- ===== FORM ===== -->
+        <form class="form-card" id="offerForm" autocomplete="off">
+
+            <style>
+              .cat-chips { display:flex; flex-wrap:wrap; gap:8px; }
+              .cat-chip { display:inline-flex; align-items:center; gap:5px; padding:8px 14px; border:1.5px solid var(--line); border-radius:20px; font-size:14px; font-weight:600; color:var(--ink); background:#fff; cursor:pointer; transition:background .15s,border-color .15s,color .15s; user-select:none; }
+              .cat-chip:hover { border-color:var(--orange); }
+              .cat-chip.on { background:var(--orange); border-color:var(--orange); color:#fff; box-shadow:0 3px 9px rgba(201,134,76,0.3); }
+              .cat-chips.locked .cat-chip { opacity:0.5; pointer-events:none; cursor:not-allowed; background:#f1eee6; border-color:var(--line); color:var(--muted); box-shadow:none; }
+              .free-tog { display:inline-flex; align-items:center; gap:7px; margin-top:9px; font-size:12.5px; font-weight:700; color:var(--ink); cursor:pointer; }
+              .free-tog input { width:auto; height:16px; margin:0; accent-color:var(--orange); cursor:pointer; }
+              .price-wrap.off { opacity:0.45; }
+              .cta-chips .cat-chip { font-size:13px; padding:7px 12px; }
+              .cat-chip.prem { border-color:#d4af5a; background:#fffaf2; }
+              .cat-chip.prem.on { background:var(--orange); border-color:var(--orange); color:#fff; }
+              .cat-chip .crown { font-size:11px; }
+            </style>
+
+            <div class="sec-h">1 · หมวด · Category <span class="sec-note">แตะเลือก · ขับชนิด + ป้าย</span></div>
+            <div class="cat-chips" id="fCatChips" style="margin-bottom:20px;">
+                <span class="cat-chip" data-cat="Dining">🍽️ Dining</span>
+                <span class="cat-chip" data-cat="Groceries">🛒 Groceries</span>
+                <span class="cat-chip" data-cat="Health & Beauty">💆 Health &amp; Beauty</span>
+                <span class="cat-chip" data-cat="Leisure & Travel">🏖️ Leisure &amp; Travel</span>
+                <span class="cat-chip" data-cat="Shopping">🛍️ Shopping</span>
+                <span class="cat-chip" data-cat="Services">🔧 Services</span>
+                <span class="cat-chip" data-cat="Education">🎓 Education</span>
+                <span class="cat-chip" data-cat="Events">🎉 Events</span>
+                <span class="cat-chip" data-cat="For Rent">🏠 For Rent</span>
+                <span class="cat-chip" data-cat="For Sale">🏷️ For Sale</span>
+            </div>
+
+            <div class="sec-h">2 · ชนิดโฆษณา · Type <span class="sec-note" id="typeNote">🔒 เลือกหมวดก่อน</span></div>
+            <div class="cat-chips locked" id="typeSeg">
+                <span class="cat-chip on" data-type="product">🛍️ สินค้า</span>
+                <span class="cat-chip" data-type="service">🛠️ บริการ</span>
+                <span class="cat-chip" data-type="promotion">🏷️ โปรโมชั่น</span>
+                <span class="cat-chip" data-type="listing">🏠 ประกาศ</span>
+                <span class="cat-chip" data-type="store">🏪 ร้าน/แบรนด์</span>
+            </div>
+
+            <div class="sec-h" id="secDetail">รายละเอียดสินค้า / โปร</div>
+
+            <div class="fld">
+                <label><span id="titleLbl">ชื่อ offer</span> <span class="req">*</span><span class="cnt"><span id="cTitle">0</span>/40</span></label>
+                <input type="text" id="fTitle" maxlength="40" placeholder="เช่น All-Day Brunch &amp; Specialty Coffee">
+            </div>
+
+            <div class="row">
+                <div class="fld" id="priceFld">
+                    <label><span id="priceLbl">ราคา</span> <span class="req">*</span><span class="cnt" id="priceHint">ใส่แค่ตัวเลข</span></label>
+                    <div class="price-wrap"><span class="cur">฿</span><input type="text" id="fPrice" inputmode="numeric" placeholder="250"></div>
+                    <label class="free-tog" id="freeTog" style="display:none;"><input type="checkbox" id="fFree"> ฟรี / Free <span style="color:var(--ink-40);font-weight:400;">— ไม่มีราคา (เช่น งานฟรี)</span></label>
+                </div>
+            </div>
+
+            <div class="fld" id="origRow" style="display:none;">
+                <label>ราคาเดิม (ก่อนลด) <span class="cnt">โชว์ขีดฆ่าคู่ราคาโปร</span></label>
+                <div class="price-wrap"><span class="cur">฿</span><input type="text" id="fOrigPrice" inputmode="numeric" placeholder="350"></div>
+            </div>
+
+            <div class="fld">
+                <label>คำอธิบาย <span class="cnt"><span id="cDesc">0</span>/120</span></label>
+                <textarea id="fDesc" maxlength="120" placeholder="รายละเอียดสินค้า/โปรนี้ จุดเด่น สั้น ๆ กระชับ"></textarea>
+            </div>
+
+            <div class="row" id="availRow">
+                <div class="fld">
+                    <label>เวลา / สถานะ</label>
+                    <input type="text" id="fAvail" placeholder="เช่น 08:00–22:00 หรือ มีของพร้อมส่ง">
+                </div>
+                <div class="fld">
+                    <label>ช่วงโปร <span class="cnt">ถ้ามี</span></label>
+                    <input type="text" id="fValid" placeholder="เช่น 1–31 ก.ค.">
+                </div>
+            </div>
+
+            <div class="sec-h">รูปภาพ</div>
+            <div class="fld">
+                <label>รูป Hero + Gallery <span class="cnt">hero 1:1 · รวม ~5 รูป</span></label>
+                <label class="up" for="fImg">
+                    <div class="ic">⬆️</div>
+                    <div class="t"><b>เลือกรูป</b> หรือ ลากมาวาง · รูปแรก = Hero</div>
+                    <input type="file" id="fImg" accept="image/*" multiple>
+                </label>
+                <div class="thumbs" id="thumbs"></div>
+            </div>
+
+            <div class="sec-h">ปุ่มลงมือ (CTA) <span class="sec-note">สูงสุด 2 ปุ่ม</span></div>
+            <!-- primary -->
+            <div class="fld">
+                <label>ปุ่มหลัก (Primary) <span class="req">*</span> <span class="sec-note">กรองตามหมวด · 👑 = พรีเมียม</span></label>
+                <div class="cat-chips cta-chips" id="fCtaChips">
+                    <span class="cat-chip" data-cta="viewListing">🏠 View Listing</span>
+                    <span class="cat-chip" data-cta="viewStore">🏪 View Store</span>
+                    <span class="cat-chip" data-cta="contact">📞 Contact</span>
+                    <span class="cat-chip" data-cta="signup">📝 Sign Up</span>
+                    <span class="cat-chip prem" data-cta="viewMenu">🍽️ View Menu <span class="crown">👑</span></span>
+                    <span class="cat-chip prem" data-cta="order">🛒 Order <span class="crown">👑</span></span>
+                    <span class="cat-chip prem" data-cta="book">📅 Book <span class="crown">👑</span></span>
+                </div>
+            </div>
+            <div class="fld">
+                <label>ลิงก์ปลายทาง <span class="req">*</span></label>
+                <input type="url" id="fLink" placeholder="https://… (เมนู/สั่งซื้อ/จอง)">
+                <div class="hint" id="destHint">ปลายทาง: หน้า offer ของคุณ</div>
+            </div>
+            <div class="fld" style="margin-top:10px;">
+                <label>ป้ายปุ่ม · ชื่อที่แสดง <span style="color:var(--muted);font-weight:400;">— ตั้ง default ตามหมวด · พิมพ์ทับได้</span></label>
+                <input type="text" id="fCtaLabel" placeholder="View Menu">
+                <div class="hint">เปลี่ยนหมวด/ปุ่ม ระบบจะตั้งชื่อให้อัตโนมัติ เช่น <b>Book</b> + อสังหา → <b>Schedule Viewing</b> · Dining → <b>Reserve Table</b></div>
+            </div>
+            <!-- add second -->
+            <button type="button" class="add-cta" id="addCta">＋ เพิ่มปุ่มที่ 2 (ไม่บังคับ)</button>
+            <!-- secondary (hidden until added) -->
+            <div id="cta2Block" style="display:none;">
+                <div class="cta2-head">ปุ่มรอง (Secondary) <span class="rm" id="rmCta">✕ เอาออก</span></div>
+                <div class="fld">
+                    <label>ปุ่ม</label>
+                    <div class="cat-chips cta-chips" id="fCta2Chips">
+                        <span class="cat-chip" data-cta="viewListing">🏠 View Listing</span>
+                        <span class="cat-chip" data-cta="viewStore">🏪 View Store</span>
+                        <span class="cat-chip" data-cta="contact">📞 Contact</span>
+                        <span class="cat-chip" data-cta="signup">📝 Sign Up</span>
+                        <span class="cat-chip prem" data-cta="viewMenu">🍽️ View Menu <span class="crown">👑</span></span>
+                        <span class="cat-chip prem" data-cta="order">🛒 Order <span class="crown">👑</span></span>
+                        <span class="cat-chip prem" data-cta="book">📅 Book <span class="crown">👑</span></span>
+                    </div>
+                </div>
+                <div class="fld">
+                    <label>ลิงก์ปลายทาง</label>
+                    <input type="url" id="fLink2" placeholder="https://…">
+                </div>
+            </div>
+
+            <div class="prem-note" id="ctaPremNote" style="display:none;">👑 ปุ่มที่เลือกเป็น <b>ฟีเจอร์พรีเมียม</b> — มีค่าบริการเพิ่ม · ทีมขายจะติดต่อยืนยันราคา</div>
+
+            <!-- provider link (contact/hours/location come from the store profile) -->
+            <div class="prov-link">
+                <span class="t">📇 ข้อมูลติดต่อ · เวลา · ที่ตั้ง ดึงจากโปรไฟล์ร้านอัตโนมัติ</span>
+                <a href="form-provider-submit.html">ดู / แก้ไขโปรไฟล์ร้าน →</a>
+            </div>
+
+            <div class="submit-row">
+                <button type="submit" class="btn-submit">ส่งเข้าระบบ →</button>
+                <div class="submit-note">ส่งแล้วจะเข้าคิว <b>รอทีมตรวจอนุมัติ</b> ก่อนขึ้นจริง</div>
+            </div>
+
+            <div class="ok" id="ok">
+                <span class="em">✅</span>
+                <div class="tx"><b>ส่งเรียบร้อย — เข้าคิวรออนุมัติแล้ว</b><span>ทีมงานจะตรวจและขึ้นจอ+เว็บให้ · นี่คือฟอร์มตัวอย่าง (ยังไม่เชื่อม Sanity จริง)</span></div>
+            </div>
+
+        </form>
+
+        <!-- ===== LIVE PREVIEW ===== -->
+        <div class="preview">
+            <div class="pv-label">ตัวอย่าง · <span class="live">LIVE</span></div>
+            <div class="pv-toggle-wrap">
+                <div class="pv-toggle">
+                    <button type="button" class="on" data-view="sign">📺 จอป้าย</button>
+                    <button type="button" data-view="web">📱 มือถือ</button>
+                </div>
+            </div>
+
+            <!-- SIGNAGE -->
+            <div id="pvSign">
+                <div class="totem-wrap"><div class="totem">
+                    <div class="tt-screen">
+                        <div class="tt-bg empty" id="pvBg"></div>
+                        <div class="tt-grad"></div>
+                        <div class="tt-menu">☰ Menu</div>
+                        <div class="tt-logo" id="pvLogo" style="display:none;"></div>
+                        <div class="tt-content">
+                            <div class="tt-eyebrow" id="pvEyebrow">Category</div>
+                            <div class="tt-title" id="pvTitle">ชื่อ offer ของคุณ</div>
+                            <div class="tt-price" id="pvPrice" style="display:none;"></div>
+                            <div class="tt-sub" id="pvSub"></div>
+                        </div>
+                        <div class="tt-dock">
+                            <span class="tt-cta"><span id="pvCta">View Menu</span><span>→</span></span>
+                            <span class="tt-cta sec" id="pvCta2Wrap" style="display:none;"><span id="pvCta2">Book Now</span><span>↗</span></span>
+                        </div>
+                    </div>
+                    <div class="tt-base"></div>
+                </div></div>
+                <div class="pv-foot">จอป้าย = teaser สะอาด · กดสแกน QR ไปต่อบนมือถือ</div>
+            </div>
+
+            <!-- WEB (mobile page after scan) -->
+            <div id="pvWeb" style="display:none;">
+                <div class="webphone"><div class="wp-frame"><div class="wp-scr">
+                    <div class="wp-bar"><span>📍 Mahogany Tower</span><span>aqua<b>mx</b></span></div>
+                    <div class="wp-hero empty" id="wpHero">
+                        <div class="wp-logo" id="wpLogo" style="display:none;"></div>
+                        <div class="wp-chip" id="wpChip">Category</div>
+                    </div>
+                    <div class="wp-body">
+                        <div class="wp-prov"><span class="pl" id="wpPl">?</span> <span id="wpProvName">ร้านของคุณ</span></div>
+                        <div class="wp-title" id="wpTitle">ชื่อ offer ของคุณ</div>
+                        <div class="wp-badges">
+                            <span class="wp-badge pr" id="wpPrice" style="display:none;"></span>
+                            <span class="wp-badge av" id="wpAvail" style="display:none;"></span>
+                        </div>
+                        <div class="wp-desc" id="wpDesc">คำอธิบาย offer จะขึ้นตรงนี้</div>
+                        <a class="wp-cta" id="wpCta">View Menu →</a>
+                        <a class="wp-cta sec" id="wpCta2" style="display:none;">Book Now ↗</a>
+                        <div class="wp-contact">
+                            <div class="wcb"><span>📞</span>Call</div>
+                            <div class="wcb"><span>💬</span>LINE</div>
+                            <div class="wcb"><span>📍</span>Map</div>
+                            <div class="wcb"><span>🌐</span>Web</div>
+                        </div>
+                        <div class="wp-auto">🔒 ติดต่อ · เวลา · ที่ตั้ง — ดึงจากร้านอัตโนมัติ</div>
+                    </div>
+                </div></div></div>
+                <div class="pv-foot">หน้าเว็บ = รายละเอียดเต็ม + ราคา + ปุ่มติดต่อ (จากโปรไฟล์ร้าน)</div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const CTA_LABEL = { viewMenu:'View Menu', order:'Order Now', book:'Book Now', viewListing:'View Listing', viewStore:'View Store', contact:'Contact', signup:'Sign Up' };
+
+// ── per-category CTA labels (ชื่อปุ่มเปลี่ยนตามหมวด · ctaType เดิม) ──
+const CTA_LABELS = {
+    viewMenu:    { _def:'View Menu',  'Groceries':'View Products', 'Health & Beauty':'View Services', 'Services':'View Services', 'Shopping':'View Catalog', 'Education':'View Courses' },
+    order:       { _def:'Order Now',  'Dining':'Order', 'Groceries':'Shop', 'Shopping':'Shop Now', 'Events':'Buy Tickets', 'Leisure & Travel':'Buy Tickets', 'Education':'Buy Course', 'Health & Beauty':'Buy' },
+    book:        { _def:'Book Now',   'Dining':'Reserve Table', 'Health & Beauty':'Book Appt', 'Leisure & Travel':'Book', 'Services':'Book Service', 'Education':'Enroll', 'Events':'Get Tickets', 'For Rent':'Schedule Viewing', 'For Sale':'Schedule Viewing' },
+    viewListing: { _def:'View Listing', 'For Rent':'View Unit', 'For Sale':'View Property', 'Leisure & Travel':'View Rooms' },
+    viewStore:   { _def:'Visit Shop', 'Education':'About Academy', 'For Rent':'View Developer', 'For Sale':'View Agency', 'Events':'View Organizer' },
+    contact:     { _def:'Contact',    'For Rent':'Contact Agent', 'For Sale':'Contact Agent', 'Services':'Get Quote' },
+    signup:      { _def:'Sign Up',    'Events':'Register', 'Education':'Sign Up' },
+};
+const ctaLabel = (cta, cat) => { const m = CTA_LABELS[cta] || {}; return m[cat] || m._def || CTA_LABEL[cta] || cta; };
+
+// ── CTA เป็นชิป + กรองตามหมวด (ตัวแรก = เหมาะสุด) ──
+const ALL_CTAS = ['viewMenu','order','book','viewListing','viewStore','contact','signup'];
+const CTA_FIT = {
+    'Dining':           ['viewMenu','order','book','viewStore','contact'],
+    'Groceries':        ['order','viewMenu','viewStore','contact'],
+    'Health & Beauty':  ['book','viewMenu','order','viewStore','contact'],
+    'Leisure & Travel': ['book','order','viewListing','viewStore','contact'],
+    'Shopping':         ['order','viewStore','viewMenu','contact'],
+    'Services':         ['book','contact','viewMenu','viewStore'],
+    'Education':        ['book','signup','viewMenu','order','viewStore','contact'],
+    'Events':           ['signup','book','order','viewStore','contact'],
+    'For Rent':         ['viewListing','contact','book','viewStore'],
+    'For Sale':         ['viewListing','contact','book','viewStore'],
+};
+const curCta  = () => { const el = document.querySelector('#fCtaChips .cat-chip.on');  return el ? el.dataset.cta : 'order'; };
+const curCta2 = () => { const el = document.querySelector('#fCta2Chips .cat-chip.on'); return el ? el.dataset.cta : 'contact'; };
+const setCta  = v => document.querySelectorAll('#fCtaChips .cat-chip').forEach(c => c.classList.toggle('on', c.dataset.cta === v));
+const setCta2 = v => document.querySelectorAll('#fCta2Chips .cat-chip').forEach(c => c.classList.toggle('on', c.dataset.cta === v));
+function filterCtas(cat) {
+    const fit = CTA_FIT[cat] || ALL_CTAS;
+    document.querySelectorAll('#fCtaChips .cat-chip, #fCta2Chips .cat-chip').forEach(c => { c.style.display = fit.includes(c.dataset.cta) ? '' : 'none'; });
+    return fit;
+}
+
+// ── category → ป้าย field (noun) + ชนิดที่แนะนำ ──
+const CAT_NOUN = { 'Dining':'เมนู/สินค้า','Groceries':'สินค้า','Health & Beauty':'บริการ','Leisure & Travel':'แพ็กเกจ','Shopping':'สินค้า','Services':'บริการ','Education':'คอร์ส','Events':'อีเวนต์','For Rent':'ประกาศ/ห้อง','For Sale':'ประกาศ/ทรัพย์' };
+// ชนิดที่อนุญาตต่อหมวด (ตัวแรก = default/แนะนำ) — ล็อกไม่ให้เลือกชนิดที่ไม่เข้ากับหมวด
+const CAT_TYPES = {
+    'Dining':           ['product','promotion','store'],
+    'Groceries':        ['product','promotion','store'],
+    'Health & Beauty':  ['service','product','promotion','store'],
+    'Leisure & Travel': ['service','promotion','store'],
+    'Shopping':         ['product','promotion','store'],
+    'Services':         ['service','promotion','store'],
+    'Education':        ['service','promotion','store'],
+    'Events':           ['product','service','promotion','store'],
+    'For Rent':         ['listing','store'],
+    'For Sale':         ['listing','store'],
+};
+const ALL_TYPES = ['product','service','promotion','listing','store'];
+const FREE_CATS = ['Events','Education'];   // หมวดที่ให้ติ๊ก "ฟรี" ได้
+function filterTypes(cat) {
+    const allowed = CAT_TYPES[cat] || ALL_TYPES;
+    document.querySelectorAll('#typeSeg .cat-chip').forEach(t => { t.style.display = allowed.includes(t.dataset.type) ? '' : 'none'; });
+    return allowed;
+}
+const curCat = () => { const el = document.querySelector('#fCatChips .cat-chip.on'); return el ? el.dataset.cat : ''; };
+function titleNoun() {
+    if (currentType === 'store') return 'ร้าน/แบรนด์';
+    const cat = curCat();
+    if (cat && CAT_NOUN[cat]) return CAT_NOUN[cat];
+    return ({ product:'สินค้า', service:'บริการ', promotion:'โปรโมชั่น', listing:'ประกาศ' })[currentType] || 'offer';
+}
+
+const ctaLabelDefault = () => ctaLabel(curCta(), curCat());
+function applyCtaLabel(reset) {
+    if (reset) $('fCtaLabel').value = ctaLabelDefault();
+    $('fCtaLabel').placeholder = ctaLabelDefault();
+    const lbl = $('fCtaLabel').value.trim() || ctaLabelDefault();
+    $('pvCta').textContent = lbl;
+    $('wpCta').textContent = lbl + ' →';
+}
+function applyCta2Label() {
+    const lbl = ctaLabel(curCta2(), curCat());
+    $('pvCta2').textContent = lbl;
+    $('wpCta2').textContent = lbl + ' ↗';
+}
+
+// ── offer type → conditional fields / labels ──
+let currentType = 'product';
+const TYPE_CFG = {
+    product:   { price:true,  orig:false, avail:true,  cta:'order',     priceLbl:'ราคา',        priceHint:'ใส่แค่ตัวเลข', dest:'ปลายทาง: หน้า offer ของคุณ',
+                 sec:'รายละเอียดสินค้า', titleLbl:'ชื่อสินค้า', titlePh:'เช่น All-Day Brunch &amp; Specialty Coffee', descPh:'รายละเอียดสินค้านี้ จุดเด่น สั้น ๆ', ph:'ชื่อสินค้าของคุณ' },
+    service:   { price:true,  orig:false, avail:true,  cta:'book',      priceLbl:'ราคาเริ่มต้น', priceHint:'เริ่มต้น / แพ็กเกจ', dest:'ปลายทาง: หน้า offer ของคุณ',
+                 sec:'รายละเอียดบริการ', titleLbl:'ชื่อบริการ', titlePh:'เช่น นวดแผนไทย 60 นาที', descPh:'รายละเอียดบริการ จุดเด่น สั้น ๆ', ph:'ชื่อบริการของคุณ' },
+    promotion: { price:true,  orig:true,  avail:true,  cta:'order',     priceLbl:'ราคาโปร',     priceHint:'ใส่แค่ตัวเลข', dest:'ปลายทาง: หน้า offer ของคุณ',
+                 sec:'รายละเอียดโปรโมชั่น', titleLbl:'ชื่อโปรโมชั่น', titlePh:'เช่น ลด 20% เฉพาะสมาชิก', descPh:'รายละเอียดโปร เงื่อนไข สั้น ๆ', ph:'ชื่อโปรของคุณ' },
+    store:     { price:false, orig:false, avail:false, cta:'viewStore', priceLbl:'ราคา',        priceHint:'', dest:'ปลายทาง: หน้าร้านของคุณ /m/p (อัตโนมัติ)',
+                 sec:'รายละเอียดร้าน', titleLbl:'ชื่อร้าน / แบรนด์', titlePh:'เช่น Aurora Bistro', descPh:'แนะนำร้าน บรรยากาศ จุดเด่น สั้น ๆ', ph:'ชื่อร้านของคุณ' },
+    listing:   { price:true,  orig:false, avail:false, cta:'viewListing', priceLbl:'ราคา',      priceHint:'เช่า/เดือน หรือ ขาย', dest:'ปลายทาง: หน้าประกาศของคุณ',
+                 sec:'รายละเอียดประกาศ', titleLbl:'ชื่อประกาศ', titlePh:'เช่น ห้อง 2 นอน วิวเมือง 78 ตร.ม.', descPh:'สเปก · ขนาด · ชั้น · จุดเด่น สั้น ๆ', ph:'ชื่อประกาศของคุณ' },
+};
+let currentTitlePh = TYPE_CFG.product.ph;
+
+// premium CTAs (มีค่าบริการเพิ่ม) — ดูเมนู / สั่งซื้อ / จอง
+const PREMIUM_CTA = new Set(['viewMenu', 'order', 'book']);
+function updatePremNote() {
+    const sec = $('cta2Block').style.display !== 'none';
+    const prem = PREMIUM_CTA.has(curCta()) || (sec && PREMIUM_CTA.has(curCta2()));
+    $('ctaPremNote').style.display = prem ? 'block' : 'none';
+}
+function refreshPrice() {
+    const cfg = TYPE_CFG[currentType];
+    if (cfg.price && $('fFree') && $('fFree').checked) {
+        $('pvPrice').style.display = 'flex';        $('pvPrice').innerHTML = 'ฟรี';
+        $('wpPrice').style.display = 'inline-block'; $('wpPrice').innerHTML = 'Free';
+        return;
+    }
+    const v = $('fPrice').value.replace(/[^0-9.,]/g, '');
+    const o = $('fOrigPrice').value.replace(/[^0-9.,]/g, '');
+    if (!cfg.price || !v) { $('pvPrice').style.display = 'none'; $('wpPrice').style.display = 'none'; return; }
+    const strikeSign = (currentType === 'promotion' && o);
+    $('pvPrice').style.display = 'flex';
+    $('pvPrice').innerHTML = '฿' + v + (strikeSign ? ` <s>฿${o}</s>` : (currentType === 'service' ? ' <small>เริ่มต้น</small>' : ''));
+    $('wpPrice').style.display = 'inline-block';
+    $('wpPrice').innerHTML = '฿ ' + v + (strikeSign ? ` <span class="wp-orig">฿${o}</span>` : '');
+}
+function applyType(type) {
+    currentType = type;
+    const cfg = TYPE_CFG[type];
+    document.querySelectorAll('#typeSeg .cat-chip').forEach(t => t.classList.toggle('on', t.dataset.type === type));
+    $('priceFld').style.display = cfg.price ? 'block' : 'none';
+    $('origRow').style.display  = cfg.orig  ? 'block' : 'none';
+    $('availRow').style.display = cfg.avail ? 'flex'  : 'none';
+    $('priceLbl').textContent  = cfg.priceLbl;
+    $('priceHint').textContent = cfg.priceHint;
+    $('destHint').textContent  = cfg.dest;
+    // labels that adapt to the chosen type
+    $('secDetail').textContent = cfg.sec;
+    $('titleLbl').textContent  = 'ชื่อ' + titleNoun();
+    $('fTitle').placeholder    = cfg.titlePh.replace('&amp;', '&');
+    $('fDesc').placeholder     = cfg.descPh;
+    currentTitlePh = cfg.ph;
+    if (!$('fTitle').value) { $('pvTitle').textContent = currentTitlePh; $('wpTitle').textContent = currentTitlePh; }
+    setCta(cfg.cta);
+    applyCtaLabel(true);
+    refreshPrice();
+    updatePremNote();
+}
+document.querySelectorAll('#typeSeg .cat-chip').forEach(ts => ts.addEventListener('click', () => applyType(ts.dataset.type)));
+
+// ── bound provider — pulled from the store profile (set once in form-provider-submit) ──
+let providerData = {};
+function applyProvider(){
+    const p = providerData;
+    const name = (p.name || '').trim();
+    const initial = (name[0] || '?').toUpperCase();
+    // banner
+    $('whoName').textContent = name || 'ร้านของคุณ';
+    $('whoLg').textContent = p.logo ? '' : initial;
+    $('whoLg').style.backgroundImage = p.logo ? `url('${p.logo}')` : '';
+    $('whoLogoHint').style.display = p.logo ? 'none' : 'inline-block';   // เตือนให้อัปโหลดถ้ายังไม่มี
+    // gate: ยังไม่มีโปรไฟล์ร้าน (ไม่มีชื่อ) → แนะนำกรอก provider ก่อน
+    const setup = !!name;
+    $('whoBanner').style.display = setup ? 'flex' : 'none';
+    $('whoGate').style.display = setup ? 'none' : 'flex';
+    // web provider row
+    $('wpProvName').textContent = name || 'ร้านของคุณ';
+    $('wpPl').textContent = initial;
+    // logo ในพรีวิว — โชว์เมื่อมีโลโก้เท่านั้น
+    const has = !!p.logo;
+    $('pvLogo').style.display = has ? 'block' : 'none';
+    $('wpLogo').style.display = has ? 'block' : 'none';
+    if (has) { $('pvLogo').style.backgroundImage = `url('${p.logo}')`; $('wpLogo').style.backgroundImage = `url('${p.logo}')`; }
+}
+(function loadProvider(){
+    try { providerData = JSON.parse(localStorage.getItem('aqProvider') || '{}'); } catch (e) { providerData = {}; }
+    applyProvider();
+})();
+// อัปโหลดโลโก้จากหน้า offer → เซฟเข้าโปรไฟล์ร้าน (aqProvider) · ใช้ร่วมทุก offer · preview เห็นทันที
+$('whoLogoInput').addEventListener('change', e => {
+    const f = e.target.files[0]; if (!f) return;
+    const r = new FileReader();
+    r.onload = ev => {
+        providerData.logo = ev.target.result;
+        try { localStorage.setItem('aqProvider', JSON.stringify(providerData)); } catch (err) {}
+        applyProvider();
+    };
+    r.readAsDataURL(f);
+});
+
+// ── preview toggle (signage / web) ──
+document.querySelectorAll('.pv-toggle button').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.pv-toggle button').forEach(b => b.classList.remove('on'));
+        btn.classList.add('on');
+        const web = btn.dataset.view === 'web';
+        $('pvWeb').style.display  = web ? 'block' : 'none';
+        $('pvSign').style.display = web ? 'none'  : 'block';
+    });
+});
+
+// title → signage + web
+$('fTitle').addEventListener('input', e => {
+    $('cTitle').textContent = e.target.value.length;
+    const v = e.target.value || currentTitlePh;
+    $('pvTitle').textContent = v; $('wpTitle').textContent = v;
+});
+// category → eyebrow + web chip
+document.querySelectorAll('#fCatChips .cat-chip').forEach(c => c.addEventListener('click', () => {
+    document.querySelectorAll('#fCatChips .cat-chip').forEach(x => x.classList.remove('on'));
+    c.classList.add('on');
+    const cat = c.dataset.cat;
+    $('pvEyebrow').textContent = cat; $('wpChip').textContent = cat;
+    $('typeSeg').classList.remove('locked');                            // ปลดล็อกชนิดหลังเลือกหมวด
+    $('typeNote').textContent = 'auto จากหมวด · แตะแก้ได้';
+    const allowed = filterTypes(cat);                                   // โชว์เฉพาะชนิดที่เข้ากับหมวด
+    filterCtas(cat);                                                    // โชว์เฉพาะ CTA ที่เข้ากับหมวด
+    applyType(allowed.includes(currentType) ? currentType : allowed[0]); // คงไว้ถ้ายังใช้ได้ · ไม่งั้นเด้งตัวแนะนำ
+    // "ฟรี" เฉพาะ Events / Education
+    const showFree = FREE_CATS.includes(cat);
+    $('freeTog').style.display = showFree ? 'inline-flex' : 'none';
+    if (!showFree && $('fFree').checked) {
+        $('fFree').checked = false; $('fPrice').disabled = false;
+        $('fPrice').closest('.price-wrap').classList.remove('off');
+        refreshPrice();
+    }
+    if ($('cta2Block').style.display !== 'none') {
+        const fit2 = (CTA_FIT[cat] || ALL_CTAS).filter(x => x !== curCta());
+        if (!fit2.includes(curCta2())) setCta2(fit2[0] || 'contact');
+        applyCta2Label();
+    }
+}));
+// price + original price (numbers only) → signage line + web badge
+$('fPrice').addEventListener('input', e => { e.target.value = e.target.value.replace(/[^0-9.,]/g, ''); refreshPrice(); });
+$('fFree').addEventListener('change', e => {
+    const free = e.target.checked;
+    $('fPrice').disabled = free;
+    if (free) $('fPrice').value = '';
+    $('fPrice').closest('.price-wrap').classList.toggle('off', free);
+    refreshPrice();
+});
+$('fOrigPrice').addEventListener('input', e => { e.target.value = e.target.value.replace(/[^0-9.,]/g, ''); refreshPrice(); });
+// availability → web badge only (signage stays clean)
+$('fAvail').addEventListener('input', e => {
+    const v = e.target.value.trim();
+    if (v) { $('wpAvail').style.display = 'inline-block'; $('wpAvail').textContent = '🕐 ' + v; }
+    else { $('wpAvail').style.display = 'none'; }
+});
+// description → signage sub + web desc
+$('fDesc').addEventListener('input', e => {
+    $('cDesc').textContent = e.target.value.length;
+    $('pvSub').textContent = e.target.value;
+    $('wpDesc').textContent = e.target.value || 'คำอธิบาย offer จะขึ้นตรงนี้';
+});
+// cta primary → signage + web
+document.querySelectorAll('#fCtaChips .cat-chip').forEach(c => c.addEventListener('click', () => {
+    setCta(c.dataset.cta);
+    applyCtaLabel(true);
+    updatePremNote();
+}));
+$('fCtaLabel').addEventListener('input', () => applyCtaLabel(false));
+// cta secondary — add / remove (max 2)
+$('addCta').addEventListener('click', () => {
+    $('cta2Block').style.display = 'block';
+    $('addCta').style.display = 'none';
+    $('pvCta2Wrap').style.display = 'flex';
+    $('wpCta2').style.display = 'block';
+    const fit = (CTA_FIT[curCat()] || ALL_CTAS).filter(x => x !== curCta());
+    setCta2(fit[0] || 'contact');
+    applyCta2Label();
+    updatePremNote();
+});
+$('rmCta').addEventListener('click', () => {
+    $('cta2Block').style.display = 'none';
+    $('addCta').style.display = 'inline-flex';
+    $('pvCta2Wrap').style.display = 'none';
+    $('wpCta2').style.display = 'none';
+    updatePremNote();
+});
+document.querySelectorAll('#fCta2Chips .cat-chip').forEach(c => c.addEventListener('click', () => {
+    setCta2(c.dataset.cta);
+    applyCta2Label();
+    updatePremNote();
+}));
+
+// images → signage bg + web hero
+$('fImg').addEventListener('change', e => {
+    const files = [...e.target.files].slice(0, 5);
+    const box = $('thumbs'); box.innerHTML = '';
+    files.forEach((f, i) => {
+        const url = URL.createObjectURL(f);
+        const d = document.createElement('div');
+        d.className = 'th' + (i === 0 ? ' hero' : '');
+        d.style.backgroundImage = `url('${url}')`;
+        box.appendChild(d);
+        if (i === 0) {
+            $('pvBg').style.backgroundImage = `url('${url}')`; $('pvBg').classList.remove('empty');
+            $('wpHero').style.backgroundImage = `url('${url}')`; $('wpHero').classList.remove('empty');
+        }
+    });
+});
+
+// submit (demo)
+$('offerForm').addEventListener('submit', e => {
+    e.preventDefault();
+    $('ok').classList.add('show');
+    $('ok').scrollIntoView({ behavior:'smooth', block:'center' });
+});
+
+// init default type
+applyType('product');
+</script>
+</body>
+</html>

@@ -1,0 +1,1565 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>External Link Tracking · Infographic</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Anton&family=Sarabun:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+:root {
+    --bg-deep:    #060814;
+    --bg-card:    rgba(255,255,255,0.04);
+    --bg-card-2:  rgba(255,255,255,0.06);
+    --ink:        #ffffff;
+    --ink-80:     rgba(255,255,255,0.82);
+    --ink-60:     rgba(255,255,255,0.58);
+    --ink-40:     rgba(255,255,255,0.38);
+    --line:       rgba(255,255,255,0.12);
+    --cyan:       #6dd5e8;
+    --green:      #5ed395;
+    --amber:      #f5b740;
+    --red:        #ed6868;
+    --purple:     #b88dff;
+    --navy:       #0e1d3a;
+}
+
+html, body {
+    background:
+        radial-gradient(ellipse at 20% 0%, rgba(14,29,58,0.65) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 100%, rgba(109,213,232,0.08) 0%, transparent 50%),
+        var(--bg-deep);
+    color: var(--ink);
+    font-family: 'Inter', 'Sarabun', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+}
+.page {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 56px 40px 80px;
+}
+
+/* HEADER */
+.eyebrow {
+    display: inline-flex; align-items: center; gap: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--cyan);
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    margin-bottom: 18px;
+}
+.eyebrow::before { content: ''; width: 24px; height: 1px; background: var(--cyan); }
+.eyebrow .dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--cyan);
+    box-shadow: 0 0 10px var(--cyan);
+}
+h1.title {
+    font-family: 'Anton', sans-serif;
+    font-size: 72px;
+    line-height: 0.95;
+    letter-spacing: 0.01em;
+    text-transform: uppercase;
+    margin-bottom: 18px;
+}
+h1.title .accent { color: var(--cyan); }
+.lede {
+    font-size: 17px;
+    color: var(--ink-60);
+    max-width: 760px;
+    line-height: 1.55;
+}
+.lede b { color: var(--ink); font-weight: 600; }
+
+.divider {
+    display: flex; align-items: center; gap: 16px;
+    margin: 56px 0 28px;
+    color: var(--ink-40);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+}
+.divider::before { content: ''; height: 1px; width: 32px; background: var(--line); }
+.divider::after  { content: ''; flex: 1; height: 1px; background: var(--line); }
+
+/* ============================================================
+   SECTION 1 — Funnel visualization
+============================================================ */
+.funnel-wrap {
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: 22px;
+    padding: 40px;
+    backdrop-filter: blur(20px);
+}
+.funnel {
+    display: flex; flex-direction: column;
+    gap: 4px;
+    margin-top: 14px;
+}
+.funnel-stage {
+    position: relative;
+    display: grid;
+    grid-template-columns: 220px 1fr 80px;
+    gap: 20px;
+    align-items: center;
+    padding: 18px 24px;
+    border-radius: 10px;
+    background: var(--bg-card-2);
+    border: 1px solid var(--line);
+}
+.funnel-stage.we-own  { border-color: rgba(94,211,149,0.35); background: rgba(94,211,149,0.05); }
+.funnel-stage.handoff { border-color: rgba(245,183,64,0.35); background: rgba(245,183,64,0.05); }
+.funnel-stage.partner { border-color: rgba(237,104,104,0.35); background: rgba(237,104,104,0.05); }
+.funnel-stage.conversion { border-color: rgba(184,141,255,0.35); background: rgba(184,141,255,0.05); }
+
+.fs-name {
+    display: flex; flex-direction: column; gap: 3px;
+}
+.fs-name .nm {
+    font-family: 'Anton', sans-serif;
+    font-size: 20px;
+    color: var(--ink);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    line-height: 1;
+}
+.fs-name .desc {
+    font-size: 11.5px;
+    color: var(--ink-60);
+    letter-spacing: 0.02em;
+}
+
+.fs-bar-wrap {
+    height: 30px;
+    border-radius: 6px;
+    background: rgba(255,255,255,0.04);
+    position: relative;
+    overflow: hidden;
+}
+.fs-bar {
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    border-radius: 6px;
+    display: flex; align-items: center;
+    padding-left: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    color: rgba(0,0,0,0.65);
+    letter-spacing: 0.05em;
+}
+.we-own .fs-bar    { background: linear-gradient(90deg, var(--green), #3d9c6a); }
+.handoff .fs-bar   { background: linear-gradient(90deg, var(--amber), #b78624); }
+.partner .fs-bar   { background: linear-gradient(90deg, var(--red), #b03a3a); }
+.conversion .fs-bar { background: linear-gradient(90deg, var(--purple), #6e4dad); }
+
+.fs-pct {
+    font-family: 'Anton', sans-serif;
+    font-size: 22px;
+    text-align: right;
+    color: var(--ink);
+    line-height: 1;
+}
+.fs-pct .ofbase {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: var(--ink-40);
+    letter-spacing: 0.1em;
+    display: block;
+    margin-top: 4px;
+}
+
+/* Ownership tag */
+.fs-tag {
+    position: absolute;
+    top: -10px; right: 20px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    padding: 4px 9px;
+    border-radius: 4px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    font-weight: 700;
+    border: 1px solid;
+    background: var(--bg-deep);
+}
+.we-own .fs-tag    { color: var(--green);  border-color: var(--green); }
+.handoff .fs-tag   { color: var(--amber);  border-color: var(--amber); }
+.partner .fs-tag   { color: var(--red);    border-color: var(--red); }
+.conversion .fs-tag { color: var(--purple); border-color: var(--purple); }
+
+/* Boundary marker between we-own and partner */
+.boundary-mark {
+    margin: 18px 0 14px;
+    display: flex; align-items: center; gap: 16px;
+    padding: 12px 20px;
+    background: rgba(255,255,255,0.03);
+    border: 1px dashed var(--line);
+    border-radius: 8px;
+}
+.boundary-mark .bicon {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: rgba(245,183,64,0.18);
+    border: 1px solid rgba(245,183,64,0.45);
+    color: var(--amber);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Anton', sans-serif;
+    font-size: 16px;
+    flex-shrink: 0;
+}
+.boundary-mark .btext {
+    font-size: 13px; color: var(--ink-80);
+    line-height: 1.5;
+}
+.boundary-mark .btext b { color: var(--amber); font-weight: 600; }
+
+/* Funnel legend */
+.funnel-legend {
+    margin-top: 26px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+}
+@media (max-width: 900px) { .funnel-legend { grid-template-columns: repeat(2, 1fr); } }
+.legend-item {
+    padding: 12px 14px;
+    background: var(--bg-card-2);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    display: flex; flex-direction: column; gap: 4px;
+}
+.legend-swatch {
+    width: 12px; height: 12px;
+    border-radius: 3px;
+    margin-bottom: 4px;
+}
+.legend-swatch.green  { background: var(--green); box-shadow: 0 0 6px rgba(94,211,149,0.5); }
+.legend-swatch.amber  { background: var(--amber); box-shadow: 0 0 6px rgba(245,183,64,0.5); }
+.legend-swatch.red    { background: var(--red);   box-shadow: 0 0 6px rgba(237,104,104,0.5); }
+.legend-swatch.purple { background: var(--purple); box-shadow: 0 0 6px rgba(184,141,255,0.5); }
+.legend-name {
+    font-family: 'Anton', sans-serif;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--ink);
+}
+.legend-desc {
+    font-size: 11.5px;
+    color: var(--ink-60);
+    line-height: 1.4;
+}
+
+/* ============================================================
+   SECTION 2 — Architecture flow
+============================================================ */
+.arch-wrap {
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: 22px;
+    padding: 40px;
+    backdrop-filter: blur(20px);
+}
+.arch-flow {
+    display: flex; flex-direction: column;
+    gap: 0;
+    margin-top: 20px;
+}
+.arch-node {
+    position: relative;
+    background: var(--bg-card-2);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 18px 24px;
+    display: grid;
+    grid-template-columns: 44px 1fr 220px;
+    gap: 20px;
+    align-items: center;
+}
+.arch-node.green  { border-color: rgba(94,211,149,0.35); background: rgba(94,211,149,0.06); }
+.arch-node.cyan   { border-color: rgba(109,213,232,0.35); background: rgba(109,213,232,0.06); }
+.arch-node.amber  { border-color: rgba(245,183,64,0.35); background: rgba(245,183,64,0.06); }
+.arch-node.purple { border-color: rgba(184,141,255,0.35); background: rgba(184,141,255,0.06); }
+
+.arch-node .anum {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid var(--line);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Anton', sans-serif;
+    font-size: 18px;
+    color: var(--ink);
+}
+.arch-node.green .anum  { background: rgba(94,211,149,0.18); border-color: var(--green); color: var(--green); }
+.arch-node.cyan .anum   { background: rgba(109,213,232,0.18); border-color: var(--cyan); color: var(--cyan); }
+.arch-node.amber .anum  { background: rgba(245,183,64,0.18); border-color: var(--amber); color: var(--amber); }
+.arch-node.purple .anum { background: rgba(184,141,255,0.18); border-color: var(--purple); color: var(--purple); }
+
+.arch-node .abody .atitle {
+    font-family: 'Anton', sans-serif;
+    font-size: 18px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--ink);
+    margin-bottom: 4px;
+}
+.arch-node .abody .acode {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-60);
+    background: rgba(0,0,0,0.25);
+    padding: 4px 8px;
+    border-radius: 4px;
+    display: inline-block;
+    margin-bottom: 6px;
+    word-break: break-all;
+}
+.arch-node .abody .adesc {
+    font-size: 12.5px;
+    color: var(--ink-80);
+    line-height: 1.5;
+}
+
+.arch-node .alog {
+    font-size: 11px;
+    color: var(--ink-60);
+    line-height: 1.55;
+    padding: 10px 12px;
+    background: rgba(0,0,0,0.25);
+    border-radius: 6px;
+    border-left: 3px solid var(--line);
+}
+.arch-node.green .alog  { border-left-color: var(--green); }
+.arch-node.cyan .alog   { border-left-color: var(--cyan); }
+.arch-node.amber .alog  { border-left-color: var(--amber); }
+.arch-node.purple .alog { border-left-color: var(--purple); }
+.arch-node .alog b { color: var(--ink); font-weight: 600; }
+.arch-node .alog .ltitle {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: var(--ink-40);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    display: block;
+}
+
+.arch-arrow {
+    display: flex; align-items: center; justify-content: center;
+    height: 30px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-40);
+    letter-spacing: 0.15em;
+}
+.arch-arrow .ai {
+    color: var(--cyan);
+    font-size: 16px;
+    margin-right: 6px;
+}
+
+/* ============================================================
+   SECTION 3 — Partner tier comparison
+============================================================ */
+.tier-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+}
+@media (max-width: 900px) { .tier-grid { grid-template-columns: 1fr; } }
+
+.tier-card {
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 28px 26px;
+    display: flex; flex-direction: column;
+    backdrop-filter: blur(20px);
+}
+.tier-card.recommended {
+    border-color: rgba(109,213,232,0.4);
+    background: linear-gradient(180deg, rgba(109,213,232,0.08) 0%, rgba(255,255,255,0.03) 60%);
+    box-shadow: 0 0 50px rgba(109,213,232,0.08);
+}
+
+.tier-badge {
+    align-self: flex-start;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+    border: 1px solid;
+}
+.tier-card.free .tier-badge       { background: rgba(94,211,149,0.12); color: var(--green); border-color: rgba(94,211,149,0.4); }
+.tier-card.postback .tier-badge   { background: rgba(109,213,232,0.12); color: var(--cyan); border-color: rgba(109,213,232,0.4); }
+.tier-card.api .tier-badge        { background: rgba(184,141,255,0.12); color: var(--purple); border-color: rgba(184,141,255,0.4); }
+
+.tier-name {
+    font-family: 'Anton', sans-serif;
+    font-size: 30px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    line-height: 1;
+    margin-bottom: 6px;
+}
+.tier-sub {
+    font-size: 13px;
+    color: var(--ink-60);
+    line-height: 1.5;
+    margin-bottom: 20px;
+}
+.tier-stat {
+    margin: 8px 0 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--line);
+}
+.tier-stat .sval {
+    font-family: 'Anton', sans-serif;
+    font-size: 36px;
+    line-height: 1;
+    margin-right: 6px;
+}
+.tier-card.free .tier-stat .sval     { color: var(--green); }
+.tier-card.postback .tier-stat .sval { color: var(--cyan); }
+.tier-card.api .tier-stat .sval      { color: var(--purple); }
+.tier-stat .slabel {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-60);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+}
+
+.tier-features {
+    display: flex; flex-direction: column;
+    gap: 10px;
+}
+.tf {
+    display: flex; gap: 10px;
+    align-items: flex-start;
+    font-size: 13px;
+    color: var(--ink-80);
+    line-height: 1.5;
+}
+.tf::before {
+    content: '✓';
+    color: var(--green);
+    font-weight: 800;
+    font-size: 14px;
+    flex-shrink: 0;
+    width: 14px;
+}
+.tf.no::before { content: '✕'; color: var(--red); }
+.tf b { color: var(--ink); font-weight: 600; }
+
+.tier-foot {
+    margin-top: auto;
+    padding-top: 20px;
+    border-top: 1px solid var(--line);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-60);
+    letter-spacing: 0.05em;
+}
+.tier-foot b { color: var(--ink); }
+
+/* ============================================================
+   SECTION 4 — Dashboard preview
+============================================================ */
+.dash-card {
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: 22px;
+    padding: 32px 36px;
+    backdrop-filter: blur(20px);
+}
+.dash-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 22px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--line);
+}
+.dash-title {
+    font-family: 'Anton', sans-serif;
+    font-size: 24px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+.dash-meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-60);
+    letter-spacing: 0.1em;
+}
+.dash-rows {
+    display: flex; flex-direction: column;
+    gap: 8px;
+}
+.dash-row {
+    display: grid;
+    grid-template-columns: 200px 1fr 130px 80px;
+    gap: 16px;
+    align-items: center;
+    padding: 10px 14px;
+    border-radius: 6px;
+    background: rgba(255,255,255,0.02);
+}
+.dash-row .dlabel {
+    font-size: 13px;
+    color: var(--ink-80);
+    font-weight: 500;
+}
+.dash-row .dlabel b { color: var(--ink); }
+.dash-row .dbar-wrap {
+    height: 18px;
+    background: rgba(255,255,255,0.04);
+    border-radius: 3px;
+    overflow: hidden;
+}
+.dash-row .dbar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--cyan), #3a9aaf);
+    border-radius: 3px;
+}
+.dash-row.tier-shift .dbar { background: linear-gradient(90deg, var(--amber), #b07a18); }
+.dash-row.tier-partner .dbar { background: linear-gradient(90deg, var(--purple), #6e4dad); }
+.dash-row .dvalue {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--ink);
+    font-weight: 700;
+    text-align: right;
+}
+.dash-row .dpct {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--cyan);
+    font-weight: 700;
+    text-align: right;
+    letter-spacing: 0.05em;
+}
+.dash-row.tier-shift .dpct   { color: var(--amber); }
+.dash-row.tier-partner .dpct { color: var(--purple); }
+
+.dash-sep {
+    margin: 4px 0;
+    padding: 8px 14px;
+    background: rgba(245,183,64,0.06);
+    border-left: 3px solid var(--amber);
+    border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--amber);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    font-weight: 700;
+}
+
+/* ============================================================
+   SECTION 5 — Visibility Boundary
+============================================================ */
+.boundary-wrap {
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: 22px;
+    padding: 40px;
+    backdrop-filter: blur(20px);
+}
+.boundary-viz {
+    margin-top: 24px;
+    display: grid;
+    grid-template-columns: 1fr 140px 1fr;
+    gap: 20px;
+    align-items: stretch;
+}
+@media (max-width: 980px) {
+    .boundary-viz { grid-template-columns: 1fr; }
+    .boundary-bridge { transform: rotate(90deg); margin: 20px auto; }
+}
+
+.boundary-side {
+    border-radius: 14px;
+    padding: 24px;
+    display: flex; flex-direction: column;
+    gap: 16px;
+}
+.boundary-side.ours {
+    background: rgba(94,211,149,0.06);
+    border: 1px solid rgba(94,211,149,0.3);
+}
+.boundary-side.theirs {
+    background: rgba(237,104,104,0.06);
+    border: 1px solid rgba(237,104,104,0.3);
+}
+
+.bs-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--line);
+}
+.bs-zone {
+    font-family: 'Anton', sans-serif;
+    font-size: 22px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+.bs-status {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    padding: 4px 9px;
+    border-radius: 4px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    font-weight: 700;
+    border: 1px solid;
+}
+.bs-status.visible { color: var(--green); border-color: var(--green); background: rgba(94,211,149,0.12); }
+.bs-status.blind   { color: var(--red);   border-color: var(--red);   background: rgba(237,104,104,0.12); }
+
+/* Visual mockup containers */
+.bs-mock-wrap { display: flex; justify-content: center; padding: 8px 0; }
+
+/* Signage frame (ours) */
+.signage-mini {
+    width: 110px;
+    aspect-ratio: 9 / 16;
+    border-radius: 10px;
+    background: var(--bg-stage);
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5), 0 0 0 3px #1a1f2e, 0 0 30px rgba(109,213,232,0.25);
+}
+.signage-mini::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(109,213,232,0.18) 0%, transparent 60%),
+                linear-gradient(180deg, rgba(14,29,58,0.7) 0%, rgba(8,12,22,0.95) 100%);
+}
+.signage-mini .sm-top {
+    position: absolute; top: 0; left: 0; right: 0;
+    height: 12px;
+    background: var(--navy);
+    z-index: 2;
+}
+.signage-mini .sm-bot {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    height: 8px;
+    background: var(--navy);
+    z-index: 2;
+}
+.signage-mini .sm-cta {
+    position: absolute; bottom: 18px; left: 8px;
+    background: rgba(8,12,22,0.85);
+    border: 1px solid rgba(255,255,255,0.4);
+    padding: 4px 7px;
+    border-radius: 3px;
+    font-family: 'Inter', sans-serif;
+    font-size: 6px;
+    color: white;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    z-index: 3;
+    box-shadow: 0 0 12px rgba(109,213,232,0.4);
+}
+.signage-mini .sm-label {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 7px;
+    color: rgba(109,213,232,0.95);
+    letter-spacing: 0.2em;
+    z-index: 3;
+    text-align: center;
+    text-shadow: 0 0 8px rgba(109,213,232,0.6);
+}
+
+/* Browser frame (theirs - blind zone) */
+.browser-mini {
+    width: 240px;
+    aspect-ratio: 4 / 3;
+    border-radius: 8px;
+    background: var(--bg-stage);
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(237,104,104,0.25);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+.browser-mini .bm-chrome {
+    height: 22px;
+    background: rgba(255,255,255,0.04);
+    border-bottom: 1px solid var(--line);
+    display: flex; align-items: center;
+    padding: 0 8px;
+    gap: 6px;
+}
+.browser-mini .bm-dots { display: flex; gap: 3px; }
+.browser-mini .bm-dots span {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+}
+.browser-mini .bm-url {
+    flex: 1;
+    background: rgba(255,255,255,0.05);
+    border-radius: 2px;
+    padding: 2px 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 7px;
+    color: var(--ink-40);
+    letter-spacing: 0.05em;
+}
+.browser-mini .bm-content {
+    position: absolute;
+    top: 22px; left: 0; right: 0; bottom: 0;
+    overflow: hidden;
+}
+.browser-mini .bm-content::before {
+    content: '';
+    position: absolute; inset: 0;
+    background:
+        linear-gradient(180deg, #1a2540 0%, #0c1424 100%);
+}
+.browser-mini .bm-content::after {
+    content: '';
+    position: absolute;
+    top: 8px; left: 8px; right: 8px;
+    height: 14px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 2px;
+    box-shadow:
+        0 22px 0 0 rgba(255,255,255,0.05),
+        12px 22px 0 -3px rgba(255,255,255,0.04),
+        0 50px 0 -2px rgba(255,255,255,0.06),
+        0 76px 0 -2px rgba(255,255,255,0.05);
+    filter: blur(3px);
+}
+.browser-mini .bm-label {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: 'Anton', sans-serif;
+    font-size: 14px;
+    color: rgba(237,104,104,0.95);
+    background: rgba(0,0,0,0.7);
+    padding: 6px 14px;
+    border-radius: 4px;
+    border: 1px solid rgba(237,104,104,0.5);
+    letter-spacing: 0.15em;
+    z-index: 3;
+    white-space: nowrap;
+    text-shadow: 0 0 8px rgba(237,104,104,0.4);
+}
+.browser-mini .bm-label::before {
+    content: '🔒 ';
+    margin-right: 2px;
+}
+
+/* Events list */
+.bs-events {
+    display: flex; flex-direction: column;
+    gap: 6px;
+}
+.bs-event {
+    display: flex; align-items: baseline;
+    gap: 10px;
+    font-size: 13px;
+    line-height: 1.4;
+    padding: 6px 0;
+}
+.bs-event .ev-mark {
+    flex-shrink: 0;
+    width: 16px;
+    font-size: 14px;
+    font-weight: 800;
+}
+.boundary-side.ours .bs-event .ev-mark   { color: var(--green); }
+.boundary-side.theirs .bs-event .ev-mark { color: var(--red); }
+.bs-event .ev-text { color: var(--ink-80); }
+.boundary-side.theirs .bs-event .ev-text { color: var(--ink-60); }
+
+/* Bridge */
+.boundary-bridge {
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 10px;
+    padding: 20px 0;
+}
+.boundary-bridge .br-arrow {
+    font-family: 'Anton', sans-serif;
+    font-size: 36px;
+    color: var(--cyan);
+    line-height: 0.8;
+    text-shadow: 0 0 12px rgba(109,213,232,0.4);
+}
+.boundary-bridge .br-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--cyan);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    text-align: center;
+    line-height: 1.5;
+}
+.boundary-bridge .br-link {
+    font-size: 9px;
+    color: var(--ink-60);
+    background: rgba(255,255,255,0.06);
+    padding: 3px 6px;
+    border-radius: 3px;
+    font-weight: 600;
+}
+
+.boundary-note {
+    margin-top: 24px;
+    padding: 16px 20px;
+    background: var(--bg-card-2);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    font-size: 13px;
+    color: var(--ink-80);
+    line-height: 1.55;
+}
+.boundary-note b { color: var(--ink); }
+.boundary-note .same { color: var(--cyan); font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.05em; }
+
+/* ============================================================
+   SECTION 6 — 5 Milestones flow
+============================================================ */
+.ms-wrap {
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: 22px;
+    padding: 40px;
+    backdrop-filter: blur(20px);
+}
+.ms-flow {
+    margin-top: 22px;
+    display: grid;
+    grid-template-columns: 1fr 20px 1fr 20px 1fr 20px 1fr 20px 1fr;
+    gap: 0;
+    align-items: stretch;
+}
+@media (max-width: 1100px) {
+    .ms-flow {
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+    .ms-flow .ms-arrow { display: none; }
+}
+
+.ms-step {
+    background: var(--bg-card-2);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 18px 14px;
+    display: flex; flex-direction: column;
+    align-items: center; text-align: center;
+    gap: 8px;
+    position: relative;
+}
+.ms-step.primary {
+    border-color: rgba(184,141,255,0.4);
+    background: rgba(184,141,255,0.06);
+    box-shadow: 0 0 30px rgba(184,141,255,0.12);
+}
+.ms-step.primary::before {
+    content: '★';
+    position: absolute;
+    top: -10px; right: -10px;
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    background: var(--purple);
+    color: var(--bg-deep);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 800;
+    box-shadow: 0 4px 12px rgba(184,141,255,0.5);
+}
+
+.ms-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-40);
+    letter-spacing: 0.2em;
+    font-weight: 700;
+}
+.ms-step.primary .ms-num { color: var(--purple); }
+
+.ms-name {
+    font-family: 'Anton', sans-serif;
+    font-size: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--ink);
+    line-height: 1;
+}
+.ms-step.primary .ms-name { color: var(--purple); }
+
+.ms-desc {
+    font-size: 11.5px;
+    color: var(--ink-80);
+    line-height: 1.4;
+    min-height: 30px;
+}
+
+.ms-how {
+    margin-top: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: var(--cyan);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 4px 8px;
+    background: rgba(109,213,232,0.1);
+    border-radius: 4px;
+    border: 1px solid rgba(109,213,232,0.25);
+    white-space: nowrap;
+}
+
+.ms-arrow {
+    display: flex; align-items: center; justify-content: center;
+    color: var(--cyan);
+    font-size: 16px;
+    font-family: 'Anton', sans-serif;
+}
+
+.ms-note {
+    margin-top: 26px;
+    padding: 18px 22px;
+    background: rgba(245,183,64,0.06);
+    border-left: 3px solid var(--amber);
+    border-radius: 6px;
+    font-size: 13px;
+    color: var(--ink-80);
+    line-height: 1.6;
+}
+.ms-note b { color: var(--amber); font-weight: 700; }
+
+/* ============================================================
+   SECTION 7 — 4 Methods to extend visibility
+============================================================ */
+.methods-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 18px;
+}
+@media (max-width: 1100px) { .methods-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 600px)  { .methods-grid { grid-template-columns: 1fr; } }
+
+.method-card {
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 22px 20px;
+    display: flex; flex-direction: column;
+    gap: 12px;
+    backdrop-filter: blur(20px);
+}
+.method-card.green   { border-color: rgba(94,211,149,0.3); }
+.method-card.cyan    { border-color: rgba(109,213,232,0.3); }
+.method-card.amber   { border-color: rgba(245,183,64,0.3); }
+.method-card.dim     { opacity: 0.65; }
+
+.mc-num {
+    font-family: 'Anton', sans-serif;
+    font-size: 32px;
+    line-height: 1;
+    color: var(--ink-40);
+}
+.method-card.green .mc-num { color: var(--green); }
+.method-card.cyan .mc-num  { color: var(--cyan); }
+.method-card.amber .mc-num { color: var(--amber); }
+
+.mc-name {
+    font-family: 'Anton', sans-serif;
+    font-size: 18px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    line-height: 1.05;
+}
+.mc-desc {
+    font-size: 12px;
+    color: var(--ink-80);
+    line-height: 1.5;
+}
+.mc-effort {
+    margin-top: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9.5px;
+    color: var(--ink-60);
+    letter-spacing: 0.1em;
+    padding: 8px 10px;
+    background: rgba(255,255,255,0.04);
+    border-radius: 4px;
+}
+.mc-effort b { color: var(--ink); }
+</style>
+</head>
+<body>
+
+<div class="page">
+
+    <!-- HEADER -->
+    <div class="eyebrow">
+        <span class="dot"></span>
+        Analytics · External link tracking
+    </div>
+    <h1 class="title">Tracking<br><span class="accent">External Clicks</span></h1>
+    <p class="lede">
+        เวลาลูกค้ากด CTA แล้วระบบส่ง <b>QR ไปเว็บ partner</b> — เราติดตามได้แค่ไหน
+        และจะได้ <b>conversion report</b> กลับมายังไง
+    </p>
+
+    <!-- ===================== SECTION 1 — FUNNEL ===================== -->
+    <div class="divider">1 · Conversion Funnel · Real-world numbers</div>
+
+    <div class="funnel-wrap">
+        <div style="font-family:'Anton',sans-serif; font-size:24px; text-transform:uppercase; letter-spacing:0.03em; margin-bottom:6px;">
+            จาก 12,450 impressions → 24 bookings
+        </div>
+        <p style="font-size:13px; color:var(--ink-60); line-height:1.6;">
+            ตัวอย่าง funnel ของ spa slot 1 วัน — แสดงว่าเก็บได้/ไม่ได้ตรงไหน
+        </p>
+
+        <div class="funnel">
+
+            <div class="funnel-stage we-own">
+                <div class="fs-tag">We see ✓</div>
+                <div class="fs-name">
+                    <div class="nm">Impressions</div>
+                    <div class="desc">Poster เล่นเป็น slot — log ทุกครั้ง</div>
+                </div>
+                <div class="fs-bar-wrap"><div class="fs-bar" style="width:100%;">100%</div></div>
+                <div class="fs-pct">12,450<span class="ofbase">events</span></div>
+            </div>
+
+            <div class="funnel-stage we-own">
+                <div class="fs-tag">We see ✓</div>
+                <div class="fs-name">
+                    <div class="nm">Tap CTA</div>
+                    <div class="desc">User แตะปุ่มบนจอ</div>
+                </div>
+                <div class="fs-bar-wrap"><div class="fs-bar" style="width:6.6%;">6.6%</div></div>
+                <div class="fs-pct">823<span class="ofbase">of imp</span></div>
+            </div>
+
+            <div class="funnel-stage we-own">
+                <div class="fs-tag">We see ✓</div>
+                <div class="fs-name">
+                    <div class="nm">Popup opened</div>
+                    <div class="desc">Detail/Gallery/Booking ขึ้น</div>
+                </div>
+                <div class="fs-bar-wrap"><div class="fs-bar" style="width:6.4%;">6.4%</div></div>
+                <div class="fs-pct">798<span class="ofbase">of imp</span></div>
+            </div>
+
+            <div class="funnel-stage we-own">
+                <div class="fs-tag">We see ✓</div>
+                <div class="fs-name">
+                    <div class="nm">QR scanned / SMS sent</div>
+                    <div class="desc">Shortlink redirect ผ่านระบบเรา</div>
+                </div>
+                <div class="fs-bar-wrap"><div class="fs-bar" style="width:3.5%;">3.5%</div></div>
+                <div class="fs-pct">431<span class="ofbase">of imp</span></div>
+            </div>
+
+            <div class="boundary-mark">
+                <div class="bicon">⇉</div>
+                <div class="btext">
+                    <b>Boundary — ลูกค้าออกจากระบบเรา</b><br>
+                    หลังจุดนี้ = ขึ้นกับ <b>partner เปิด data ให้เห็นมั้ย</b>
+                </div>
+            </div>
+
+            <div class="funnel-stage handoff">
+                <div class="fs-tag">Partner GA</div>
+                <div class="fs-name">
+                    <div class="nm">Landed on partner</div>
+                    <div class="desc">Partner เห็น UTM ใน GA ของเขา · เราเห็นถ้าทำ tracking pixel</div>
+                </div>
+                <div class="fs-bar-wrap"><div class="fs-bar" style="width:3.4%;">3.4%</div></div>
+                <div class="fs-pct">418<span class="ofbase">of imp</span></div>
+            </div>
+
+            <div class="funnel-stage partner">
+                <div class="fs-tag">Partner only</div>
+                <div class="fs-name">
+                    <div class="nm">Started booking</div>
+                    <div class="desc">User กรอกฟอร์มที่เว็บ partner · เราไม่เห็นโดยตรง</div>
+                </div>
+                <div class="fs-bar-wrap"><div class="fs-bar" style="width:1.1%;">1.1%</div></div>
+                <div class="fs-pct">132<span class="ofbase">of imp</span></div>
+            </div>
+
+            <div class="funnel-stage conversion">
+                <div class="fs-tag">Postback</div>
+                <div class="fs-name">
+                    <div class="nm">Booking complete</div>
+                    <div class="desc">Conversion จริง · ต้องตกลง postback กับ partner</div>
+                </div>
+                <div class="fs-bar-wrap"><div class="fs-bar" style="width:0.2%; padding-left:6px;">0.2%</div></div>
+                <div class="fs-pct">24<span class="ofbase">฿60,000</span></div>
+            </div>
+
+        </div>
+
+        <!-- Funnel legend -->
+        <div class="funnel-legend">
+            <div class="legend-item">
+                <div class="legend-swatch green"></div>
+                <div class="legend-name">We own ✓</div>
+                <div class="legend-desc">Firestore log โดยตรง · ครบ event ทุกตัว</div>
+            </div>
+            <div class="legend-item">
+                <div class="legend-swatch amber"></div>
+                <div class="legend-name">Partner GA</div>
+                <div class="legend-desc">Partner เห็น UTM · เราต้องขอจากเขา</div>
+            </div>
+            <div class="legend-item">
+                <div class="legend-swatch red"></div>
+                <div class="legend-name">Partner only</div>
+                <div class="legend-desc">เราเห็นไม่ได้เลย ถ้าไม่มี integration</div>
+            </div>
+            <div class="legend-item">
+                <div class="legend-swatch purple"></div>
+                <div class="legend-name">Postback ✓</div>
+                <div class="legend-desc">Partner ส่ง conversion event กลับมา = match clickId</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================== SECTION 2 — ARCHITECTURE ===================== -->
+    <div class="divider">2 · Shortlink Architecture · How tracking works</div>
+
+    <div class="arch-wrap">
+        <div style="font-family:'Anton',sans-serif; font-size:24px; text-transform:uppercase; letter-spacing:0.03em; margin-bottom:6px;">
+            Shortlink redirect = key ของระบบ
+        </div>
+        <p style="font-size:13px; color:var(--ink-60); line-height:1.6;">
+            แทน QR ที่ชี้ตรงไป partner — ให้ <b>QR ชี้มาที่ <code style="font-family:'JetBrains Mono',monospace; background:rgba(255,255,255,0.08); padding:2px 6px; border-radius:3px; color:var(--cyan);">aqmx.co/r/xxx</code> ก่อน</b> → log → redirect ออก
+        </p>
+
+        <div class="arch-flow">
+
+            <div class="arch-node green">
+                <div class="anum">1</div>
+                <div class="abody">
+                    <div class="atitle">User scans QR / sends SMS</div>
+                    <div class="acode">aqmx.co/r/abc123</div>
+                    <div class="adesc">QR ที่จอ shows <b>shortlink ของเรา</b> ไม่ใช่ partner URL ตรงๆ</div>
+                </div>
+                <div class="alog">
+                    <span class="ltitle">Logged</span>
+                    QR/SMS event already captured at popup level
+                </div>
+            </div>
+
+            <div class="arch-arrow"><span class="ai">↓</span> HTTP request to our function</div>
+
+            <div class="arch-node cyan">
+                <div class="anum">2</div>
+                <div class="abody">
+                    <div class="atitle">Firebase Function · /r/:id</div>
+                    <div class="acode">GET https://aqmx.co/r/abc123</div>
+                    <div class="adesc">
+                        Lookup linkId → log event → 302 redirect
+                    </div>
+                </div>
+                <div class="alog">
+                    <span class="ltitle">Logged to Firestore</span>
+                    <b>clickId, slotId, projectId, ts, ua, ip-hash, geo</b>
+                </div>
+            </div>
+
+            <div class="arch-arrow"><span class="ai">↓</span> 302 redirect + append UTM</div>
+
+            <div class="arch-node amber">
+                <div class="anum">3</div>
+                <div class="abody">
+                    <div class="atitle">Partner site (booking page)</div>
+                    <div class="acode">partner.com/book?room=A38&amp;utm_source=mahogany-signage&amp;utm_medium=qr&amp;utm_campaign=spa-may26&amp;utm_content=slot-7&amp;clickId=abc123</div>
+                    <div class="adesc">Partner GA เห็น UTM · เรายังไม่เห็นอะไรเพิ่ม</div>
+                </div>
+                <div class="alog">
+                    <span class="ltitle">Partner sees</span>
+                    Traffic จาก mahogany-signage<br>Source/campaign/content ครบ
+                </div>
+            </div>
+
+            <div class="arch-arrow"><span class="ai">↓</span> (optional) Postback after conversion</div>
+
+            <div class="arch-node purple">
+                <div class="anum">4</div>
+                <div class="abody">
+                    <div class="atitle">Conversion postback (optional)</div>
+                    <div class="acode">POST https://aqmx.co/api/conversion?clickId=abc123&amp;value=2500&amp;eventType=booking</div>
+                    <div class="adesc">Partner webhook → ระบบ match clickId → conversion event</div>
+                </div>
+                <div class="alog">
+                    <span class="ltitle">We now know</span>
+                    <b>Conversion + revenue + ROI per slot</b>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ===================== SECTION 3 — TIERS ===================== -->
+    <div class="divider">3 · 3 Partner Integration Tiers</div>
+
+    <div class="tier-grid">
+
+        <!-- Tier 1: Free -->
+        <div class="tier-card free">
+            <div class="tier-badge">Tier 1 · Free</div>
+            <div class="tier-name">UTM Only</div>
+            <div class="tier-sub">No partner dev work · ใช้ได้ทันที</div>
+
+            <div class="tier-stat">
+                <span class="sval">~70%</span>
+                <span class="slabel">of partners</span>
+            </div>
+
+            <div class="tier-features">
+                <div class="tf">Shortlink ของเรา <b>log scan event</b></div>
+                <div class="tf">Partner GA เห็น <b>traffic source</b></div>
+                <div class="tf">Partner รายงาน manual (weekly/monthly)</div>
+                <div class="tf no">เห็น conversion real-time</div>
+                <div class="tf no">Calculate ROI ทันที</div>
+            </div>
+
+            <div class="tier-foot">
+                <b>Partner effort:</b> 0 · ไม่ต้อง dev อะไร
+            </div>
+        </div>
+
+        <!-- Tier 2: Postback (recommended) -->
+        <div class="tier-card postback recommended">
+            <div class="tier-badge">★ Recommended</div>
+            <div class="tier-name">Postback</div>
+            <div class="tier-sub">Webhook callback หลัง booking · มาตรฐาน affiliate tracking</div>
+
+            <div class="tier-stat">
+                <span class="sval">~25%</span>
+                <span class="slabel">of partners</span>
+            </div>
+
+            <div class="tier-features">
+                <div class="tf">ทั้งหมดของ Tier 1</div>
+                <div class="tf"><b>Conversion real-time</b> ภายในวินาที</div>
+                <div class="tf"><b>Revenue + ROI</b> per slot ทันที</div>
+                <div class="tf">Match clickId กลับ slot</div>
+                <div class="tf">HMAC signature verify (secure)</div>
+            </div>
+
+            <div class="tier-foot">
+                <b>Partner effort:</b> 1 endpoint to call · 1-2 hr dev
+            </div>
+        </div>
+
+        <!-- Tier 3: API -->
+        <div class="tier-card api">
+            <div class="tier-badge">Tier 3 · Full API</div>
+            <div class="tier-name">Realtime API</div>
+            <div class="tier-sub">Bi-directional · API token exchange · embed booking flow</div>
+
+            <div class="tier-stat">
+                <span class="sval">~5%</span>
+                <span class="slabel">of partners</span>
+            </div>
+
+            <div class="tier-features">
+                <div class="tf">ทั้งหมดของ Tier 2</div>
+                <div class="tf"><b>Embed booking</b> ในจอ signage ตรงๆ</div>
+                <div class="tf">Real-time availability sync</div>
+                <div class="tf">Multi-step conversion tracking</div>
+                <div class="tf">Refund/cancel events</div>
+            </div>
+
+            <div class="tier-foot">
+                <b>Partner effort:</b> API integration · 1-2 weeks dev
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ===================== SECTION 4 — DASHBOARD PREVIEW ===================== -->
+    <div class="divider">4 · Admin Dashboard · What we see</div>
+
+    <div class="dash-card">
+        <div class="dash-header">
+            <div class="dash-title">Mahogany Tower · Slot 7 (Spa)</div>
+            <div class="dash-meta">Last 24h · Updated 18:42</div>
+        </div>
+
+        <div class="dash-rows">
+
+            <div class="dash-row">
+                <div class="dlabel"><b>Impressions</b></div>
+                <div class="dbar-wrap"><div class="dbar" style="width:100%;"></div></div>
+                <div class="dvalue">12,450</div>
+                <div class="dpct">100%</div>
+            </div>
+
+            <div class="dash-row">
+                <div class="dlabel">Tap CTA</div>
+                <div class="dbar-wrap"><div class="dbar" style="width:6.6%;"></div></div>
+                <div class="dvalue">823</div>
+                <div class="dpct">6.6%</div>
+            </div>
+
+            <div class="dash-row">
+                <div class="dlabel">Popup opened</div>
+                <div class="dbar-wrap"><div class="dbar" style="width:6.4%;"></div></div>
+                <div class="dvalue">798</div>
+                <div class="dpct">6.4%</div>
+            </div>
+
+            <div class="dash-row">
+                <div class="dlabel">QR scanned + SMS</div>
+                <div class="dbar-wrap"><div class="dbar" style="width:3.5%;"></div></div>
+                <div class="dvalue">431</div>
+                <div class="dpct">3.5%</div>
+            </div>
+
+            <div class="dash-sep">⇉  Handoff cutoff — partner zone starts</div>
+
+            <div class="dash-row tier-shift">
+                <div class="dlabel">Landed on partner site</div>
+                <div class="dbar-wrap"><div class="dbar" style="width:3.4%;"></div></div>
+                <div class="dvalue">418</div>
+                <div class="dpct">3.4%</div>
+            </div>
+
+            <div class="dash-row tier-partner">
+                <div class="dlabel"><b>Conversion (postback)</b></div>
+                <div class="dbar-wrap"><div class="dbar" style="width:0.2%;"></div></div>
+                <div class="dvalue">24</div>
+                <div class="dpct">0.2%</div>
+            </div>
+
+            <div class="dash-row tier-partner">
+                <div class="dlabel"><b>Revenue (est)</b></div>
+                <div class="dbar-wrap"><div class="dbar" style="width:5%;"></div></div>
+                <div class="dvalue">฿60,000</div>
+                <div class="dpct">฿72/imp</div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ===================== SECTION 5 — BOUNDARY ===================== -->
+    <div class="divider">5 · Visibility Boundary · เห็นกับไม่เห็น</div>
+
+    <div class="boundary-wrap">
+        <div style="font-family:'Anton',sans-serif; font-size:24px; text-transform:uppercase; letter-spacing:0.03em; margin-bottom:6px;">
+            หลัง click ออกไป = เราตาบอด
+        </div>
+        <p style="font-size:13px; color:var(--ink-60); line-height:1.6;">
+            หลัง user scan QR แล้ว — เราเห็นแค่ <b>moment ที่ redirect ออก</b> หลังจากนั้น
+            ทุกการ navigate ในเว็บ partner = blind zone (ถ้า partner ไม่ส่ง signal กลับ)
+        </p>
+
+        <div class="boundary-viz">
+
+            <!-- LEFT — OUR SYSTEM -->
+            <div class="boundary-side ours">
+                <div class="bs-head">
+                    <div class="bs-zone">Our System</div>
+                    <div class="bs-status visible">✓ Visible</div>
+                </div>
+                <div class="bs-mock-wrap">
+                    <div class="signage-mini">
+                        <div class="sm-top"></div>
+                        <div class="sm-label">SIGNAGE<br>9:16</div>
+                        <div class="sm-cta">CTA</div>
+                        <div class="sm-bot"></div>
+                    </div>
+                </div>
+                <div class="bs-events">
+                    <div class="bs-event"><span class="ev-mark">✓</span><span class="ev-text">Poster impression</span></div>
+                    <div class="bs-event"><span class="ev-mark">✓</span><span class="ev-text">CTA tap</span></div>
+                    <div class="bs-event"><span class="ev-mark">✓</span><span class="ev-text">Popup opened</span></div>
+                    <div class="bs-event"><span class="ev-mark">✓</span><span class="ev-text">Language toggled</span></div>
+                    <div class="bs-event"><span class="ev-mark">✓</span><span class="ev-text">QR scanned</span></div>
+                    <div class="bs-event"><span class="ev-mark">✓</span><span class="ev-text">SMS sent (phone entered)</span></div>
+                </div>
+            </div>
+
+            <!-- BRIDGE -->
+            <div class="boundary-bridge">
+                <div class="br-arrow">⇉</div>
+                <div class="br-label">Redirect<br>(handoff)</div>
+                <div class="br-link">aqmx.co/r/xxx</div>
+            </div>
+
+            <!-- RIGHT — PARTNER SITE -->
+            <div class="boundary-side theirs">
+                <div class="bs-head">
+                    <div class="bs-zone">Partner Site</div>
+                    <div class="bs-status blind">✕ Blind</div>
+                </div>
+                <div class="bs-mock-wrap">
+                    <div class="browser-mini">
+                        <div class="bm-chrome">
+                            <div class="bm-dots"><span></span><span></span><span></span></div>
+                            <div class="bm-url">partner.com/booking</div>
+                        </div>
+                        <div class="bm-content">
+                            <div class="bm-label">Blind Zone</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bs-events">
+                    <div class="bs-event"><span class="ev-mark">✕</span><span class="ev-text">Click nav links</span></div>
+                    <div class="bs-event"><span class="ev-mark">✕</span><span class="ev-text">Browse other pages</span></div>
+                    <div class="bs-event"><span class="ev-mark">✕</span><span class="ev-text">Add to cart / wishlist</span></div>
+                    <div class="bs-event"><span class="ev-mark">✕</span><span class="ev-text">Fill form fields</span></div>
+                    <div class="bs-event"><span class="ev-mark">✕</span><span class="ev-text">Scroll / time on page</span></div>
+                    <div class="bs-event"><span class="ev-mark">✕</span><span class="ev-text">Complete booking</span></div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="boundary-note">
+            <b>นี่คือข้อจำกัดของทั้งวงการ — ไม่ใช่แค่เรา</b><br>
+            <span class="same">Google · Meta · Adobe</span> ก็เจอ boundary เดียวกันเป๊ะ —
+            เห็นได้แค่ click บน wrapped URL · หลังจากนั้น <b>site owner ต้อง opt-in</b>
+            (ติด GA, Pixel, tag) ถึงจะเห็นต่อ
+        </div>
+    </div>
+
+    <!-- ===================== SECTION 6 — METHODS ===================== -->
+    <div class="divider">6 · 4 Ways to See Deeper · ถ้าอยากเห็นข้าม boundary</div>
+
+    <div class="methods-grid">
+
+        <div class="method-card green">
+            <div class="mc-num">01</div>
+            <div class="mc-name">JS SDK<br>Install</div>
+            <div class="mc-desc">
+                Partner ติด <code style="font-family:'JetBrains Mono',monospace; font-size:10px; background:rgba(0,0,0,0.3); padding:1px 4px; border-radius:2px;">aqmx.js</code> ครั้งเดียว — auto-track ทุก page view + click + scroll
+                <br><br>
+                เหมือน Google Analytics
+            </div>
+            <div class="mc-effort"><b>Partner:</b> 1 line HTML · ~5 min</div>
+        </div>
+
+        <div class="method-card cyan">
+            <div class="mc-num">02</div>
+            <div class="mc-name">Webhook<br>Milestones ★</div>
+            <div class="mc-desc">
+                Partner ส่ง event เฉพาะ milestone สำคัญ (view → engaged → converted)
+                <br><br>
+                เหมือน Facebook Pixel · เลือก track เฉพาะที่จำเป็น
+            </div>
+            <div class="mc-effort"><b>Partner:</b> 2-3 hr dev · recommended</div>
+        </div>
+
+        <div class="method-card amber">
+            <div class="mc-num">03</div>
+            <div class="mc-name">Embed<br>Widget</div>
+            <div class="mc-desc">
+                แทนที่จะ redirect ออก — embed booking widget ของ partner ใน popup ของเรา
+                <br><br>
+                เราเป็น host = เห็นทุก interaction ในนั้น
+            </div>
+            <div class="mc-effort"><b>Partner:</b> ต้องมี widget API</div>
+        </div>
+
+        <div class="method-card dim">
+            <div class="mc-num">04</div>
+            <div class="mc-name">Browser<br>Fingerprint</div>
+            <div class="mc-desc">
+                Probabilistic match ระหว่าง click กับ partner record ผ่าน device fingerprint
+                <br><br>
+                <span style="color:var(--red);">⚠ ไม่แนะนำ</span> · privacy/PDPA risk
+            </div>
+            <div class="mc-effort"><b>Partner:</b> ต้องเก็บ fingerprint เหมือนกัน</div>
+        </div>
+
+    </div>
+
+    <!-- ===================== SECTION 7 — MILESTONES ===================== -->
+    <div class="divider">7 · Track 5 Milestones · ไม่ใช่ทุก click</div>
+
+    <div class="ms-wrap">
+        <div style="font-family:'Anton',sans-serif; font-size:24px; text-transform:uppercase; letter-spacing:0.03em; margin-bottom:6px;">
+            อย่าพยายาม track ทุก click
+        </div>
+        <p style="font-size:13px; color:var(--ink-60); line-height:1.6;">
+            track เฉพาะ <b>5 milestone events</b> ที่ใช้ตัดสินใจ business ได้ → ครอบคลุม 95%
+            ของ insight ที่ต้องการ · partner ทำงานน้อยลงเยอะ
+        </p>
+
+        <div class="ms-flow">
+
+            <div class="ms-step">
+                <div class="ms-num">01</div>
+                <div class="ms-name">Landed</div>
+                <div class="ms-desc">User scan + arrived ที่ partner site</div>
+                <div class="ms-how">Auto · shortlink log</div>
+            </div>
+
+            <div class="ms-arrow">→</div>
+
+            <div class="ms-step">
+                <div class="ms-num">02</div>
+                <div class="ms-name">Engaged</div>
+                <div class="ms-desc">เริ่ม action (เปิด form, ดู product)</div>
+                <div class="ms-how">Partner webhook</div>
+            </div>
+
+            <div class="ms-arrow">→</div>
+
+            <div class="ms-step">
+                <div class="ms-num">03</div>
+                <div class="ms-name">Started</div>
+                <div class="ms-desc">กำลังกรอกฟอร์ม / configuring</div>
+                <div class="ms-how">Partner webhook</div>
+            </div>
+
+            <div class="ms-arrow">→</div>
+
+            <div class="ms-step primary">
+                <div class="ms-num">04 ★ Critical</div>
+                <div class="ms-name">Converted</div>
+                <div class="ms-desc">Booking / order complete</div>
+                <div class="ms-how">Postback · email · pixel</div>
+            </div>
+
+            <div class="ms-arrow">→</div>
+
+            <div class="ms-step">
+                <div class="ms-num">05</div>
+                <div class="ms-name">Revenue</div>
+                <div class="ms-desc">Amount + currency</div>
+                <div class="ms-how">มากับ #4</div>
+            </div>
+
+        </div>
+
+        <div class="ms-note">
+            <b>ทำไมไม่ track ทุก click?</b>
+            Google / Facebook / Adobe ก็ไม่ทำ — มันไม่ scale, privacy regulation บล็อก, และข้อมูล noise ไม่ช่วย decision จริง<br>
+            แทนที่จะนั้น <b>5 milestone × 1 endpoint = 2-3 ชม.</b> partner dev → ได้ insight 95% ที่ใช้งานได้
+        </div>
+    </div>
+
+</div>
+
+</body>
+</html>

@@ -25,7 +25,7 @@ button:focus-visible,.fld:focus-visible,select:focus-visible{outline:2px solid v
 
 .app{height:100dvh;max-width:480px;margin:0 auto;background:var(--cream);display:flex;flex-direction:column;position:relative;box-shadow:0 0 50px -10px rgba(0,0,0,.2);}
 .appbar{flex:0 0 auto;padding:13px 18px 0;background:var(--white);display:flow-root;}
-/* แถบ stepper แยกจาก header (โครงเดียวกับ version responsive) — บนมือถือขาวต่อเนื่องกับ header เหมือนเดิม */
+/* แถบ stepper แยกจาก header — มือถือ: ขาวต่อเนื่องกับ header เหมือนเดิม · desktop: ลอยบนพื้นครีมกว้างเท่าคอลัมน์เนื้อหา */
 .railbar{flex:0 0 auto;background:var(--white);border-bottom:1px solid var(--line);padding:0 18px 9px;}
 .appbar-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:11px;gap:10px;}
 /* ── header ตามเว็บจริง (จำลอง nav-wrap ของ aquamx.biz/offer): โลโก้ภาพ + ลิงก์ + hamburger ── */
@@ -42,7 +42,7 @@ button:focus-visible,.fld:focus-visible,select:focus-visible{outline:2px solid v
 .site-menu{display:none;flex-direction:column;border-top:1px solid var(--line);margin:8px -18px 2px;padding:6px 18px 2px;}
 .site-menu.open{display:flex;}
 .site-menu a{color:var(--ink);font-weight:600;font-size:14.5px;text-decoration:none;padding:11px 2px;}
-/* ไฟล์นี้จำลองมือถือ (แอปล็อก 480px) — header เป็น hamburger เสมอ ไม่กางลิงก์ตามความกว้างเบราว์เซอร์ · ดีไซน์จอกว้างดูไฟล์ -responsive */
+@media (min-width:768px){.site-links{display:flex;}.nav-toggle{display:none;}}
 .brand{font-family:'Nunito','IBM Plex Sans Thai',sans-serif;font-weight:800;font-size:20px;color:var(--navy);letter-spacing:-.02em;}
 .brand .x{color:var(--orange);}
 .exit{font-size:12px;color:var(--muted);background:none;border:none;padding:11px 8px;margin:-11px -8px;}
@@ -322,10 +322,91 @@ video.tt-bg{object-fit:cover;width:100%;height:100%;}
 .lb-nav.l{left:14px;} .lb-nav.r{right:14px;}
 .lb-cnt{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);color:#fff;font-size:12.5px;font-weight:700;opacity:.85;font-variant-numeric:tabular-nums;}
 .img-cell{cursor:zoom-in;}
+
+/* ═══ RESPONSIVE LAYER (ไฟล์ทดลอง) — ฐานมือถือคงเดิม 100% · จอกว้างได้ของเพิ่มอย่างเดียว ═══ */
+.s3-wrap{display:flex;flex-direction:column;align-items:center;}   /* base = เหมือน inline เดิม */
+/* มือถือ: wrapper ฝั่งซ้ายล่องหน — ลำดับตาม DOM (หัวข้อ → ตัวเลือก → จอ) */
+.s3-left{display:contents;}
+.tmini .totem{transform-origin:top center;margin:0 auto;}   /* จอตัวอย่างย่อ/ขยายจากกึ่งกลาง อยู่กลางกรอบเสมอ */
+
+/* ── แท็บเล็ต ≥768px: ขยายคอลัมน์ + ฉากหลังตั้งใจขึ้น ── */
+@media (min-width:768px){
+  body{background:linear-gradient(160deg,#E9EDF5,#D9E0EB);}
+  .app{max-width:640px;box-shadow:0 24px 70px -28px rgba(14,51,97,.35);}
+  .fmt-wrap,.pkg-wrap{max-width:560px;}
+  .sum{max-width:440px;}
+}
+
+/* ── Desktop ≥1024px: หน้าเว็บเต็มจอแบบ landing page (ไม่ใช่หน้าต่างแอปลอย) + step 3 สองคอลัมน์ + sheet เป็น dialog ── */
+@media (min-width:1024px){
+  html,body{height:auto;overflow:auto;}
+  body{background:var(--cream);}
+  .app{max-width:none;height:auto;min-height:100dvh;margin:0;border-radius:0;box-shadow:none;}
+  /* แถบขาวบน-ล่างกว้างเต็มจอ แต่ของข้างในคุมเป็นคอลัมน์ 1200 เหมือน nav-wrap เว็บจริง */
+  .appbar{padding:13px max(24px,calc((100% - 1200px)/2));border-bottom:1px solid var(--line);}
+  .appbar-top{margin-bottom:0;}
+  .actbar{padding-inline:max(24px,calc((100% - 920px)/2));}   /* ปุ่มเกาะขอบคอลัมน์เนื้อหา ไม่ลอยไปสุดจอ */
+  /* stepper ลงมาจาก header: ลอยบนพื้นครีม กว้างเท่าคอลัมน์เนื้อหา 920 */
+  .railbar{background:transparent;border-bottom:none;max-width:920px;margin:26px auto 0;padding:0 24px;width:100%;}
+  .canvas{overflow:visible;padding:18px 24px;}
+  .canvas-body{overflow:visible !important;}
+  .fmt-wrap{max-width:720px;}
+  /* step 4: สองฝั่งเท่ากัน คนละกล่อง — จอ preview ตรึงซ้าย · ตารางสรุป+เงื่อนไขขวา (มือถือเรียงแนวตั้งเหมือนเดิม) */
+  .sum{max-width:920px;display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start;}
+  .sum>div:first-child{position:sticky;top:24px;margin-bottom:0;background:var(--white);border:1px solid var(--line);border-radius:22px;padding:24px 22px;box-shadow:0 8px 24px -14px rgba(14,51,97,.18);}
+  .sum-right{background:var(--white);border:1px solid var(--line);border-radius:22px;padding:4px 22px 14px;box-shadow:0 8px 24px -14px rgba(14,51,97,.18);}
+  /* บีบแนวตั้งให้ step 4 จบในจอเดียว (desktop ใช้เมาส์ — ปุ่มเล็กลงได้ ไม่ผิดกติกา touch 44px ของมือถือ) */
+  .sum-row{padding:7px 0;}
+  .stp button{width:34px;height:34px;font-size:15px;}
+  .sum-total{margin-top:9px;}
+  .agree{margin-top:10px;font-size:12px;line-height:1.5;}
+  /* step 2: แพ็กเกจเป็นการ์ดแนวตั้ง 4 ใบเรียงกัน (pricing table) — มือถือยังเป็นแถวแนวนอน */
+  .pkg-wrap{max-width:880px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;align-items:stretch;}
+  .pkg{position:relative;flex-direction:column;align-items:center;text-align:center;gap:6px;margin-bottom:0;padding:24px 14px 18px;}
+  .pkg .pick{position:absolute;top:10px;right:10px;}
+  .pkg .tier{order:1;min-width:0;font-size:17px;}
+  .pkg .pr{order:2;font-size:22px;}
+  .pkg .pr small{text-align:center;}
+  .pkg .feat{order:3;font-size:12px;line-height:1.45;}
+  .pkg-wrap .canvas-head{grid-column:1/-1;margin-top:8px;}
+  .pkg-wrap .free-card{grid-column:1/-1;}
+  /* step 3: ฟอร์มซ้าย · จอ preview ตรึงขวา (เลย์เอาต์เดียวกับฟอร์ม /offer เว็บจริง)
+     จอกว้างพอ → โชว์สองจอเต็มขนาดเคียงกัน ไม่ย่อใบ inactive ไม่ต้องแตะสลับ */
+  /* สองกล่องเท่ากันแบบ step 4 — ฝั่งซ้าย = wrapper กล่องเดียว (.s3-left) · ฝั่งขวา = กล่องจอคู่ */
+  .s3-wrap{display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start;max-width:920px;background:none;border:none;box-shadow:none;padding:0;}
+  .s3-left{display:block;grid-column:1;background:var(--white);border:1px solid var(--line);border-radius:22px;padding:22px;box-shadow:0 8px 24px -14px rgba(14,51,97,.18);}
+  .s3-wrap .deck{grid-column:2;grid-row:1;position:sticky;top:24px;display:flex;gap:20px;justify-content:center;background:var(--white);border:1px solid var(--line);border-radius:22px;padding:20px;width:auto;box-shadow:0 8px 24px -14px rgba(14,51,97,.18);}
+  .s3-wrap .deck-card{position:static;top:0;transform:none;}
+  .s3-wrap .deck-card:not(.on){transform:none;top:0;cursor:default;}
+  .s3-wrap .deck-card:not(.on)::after{display:none;}   /* เอาฟิล์มขาวคลุมใบ inactive ออก */
+  .s3-wrap .deck-card:not(.on) .peek-tag{display:none;}   /* ตัดป้าย "แตะเพื่อ..." — จอกว้างเห็นทั้งสองจอเต็มๆ อยู่แล้ว (selector ต้องแรงกว่ากฎโชว์ฝั่งมือถือ) */
+  /* sheet → dialog กลางจอ (มือถือยังเป็น bottom sheet เหมือนเดิม) */
+  .sheet{left:50%;right:auto;bottom:auto;top:50%;width:540px;max-width:92vw;max-height:84vh;border-radius:20px;
+    transform:translate(-50%,-50%) scale(.96);opacity:0;pointer-events:none;transition:opacity .2s ease,transform .2s ease;
+    padding:8px 22px 22px;}
+  .sheet.open{transform:translate(-50%,-50%) scale(1);opacity:1;pointer-events:auto;}
+  .sheet .grab{display:none;}
+}
+/* ── จอกว้างแต่เตี้ย (โน้ตบุ๊ก 1366×768 ฯลฯ): บีบแนวตั้งอีกขั้นให้ step 4 ใกล้จบจอเดียว ── */
+@media (min-width:1024px) and (max-height:760px){
+  .railbar{margin-top:8px;}
+  .canvas{padding:12px 24px;}
+  .canvas-head{margin-bottom:8px;}
+  .canvas-head p{display:none;}   /* จอเตี้ย: ตัดบรรทัดคำอธิบายรอง เหลือหัวข้อหลัก */
+  .actbar{padding-block:8px;}
+  /* ย่อจอพรีวิวใน step 4 ลง 80% ให้กล่องซ้ายไม่เป็นตัวดันหน้า */
+  .sum-prev .totem{transform:scale(.8);transform-origin:top center;}
+  .sum-prev .totem-wrap{height:306px;}
+  .sum-row{padding:5px 0;font-size:13.5px;}
+  .stp button{width:28px;height:28px;font-size:14px;}
+  .sum-right{padding-bottom:10px;}
+  .sum-total .v{font-size:21px;}
+  .agree{margin-top:8px;}
+}
 </style>
 </head>
 <body>
-<div class="proto-tag">PROTOTYPE · mock data</div>
+<div class="proto-tag">PROTOTYPE · mock data · ไฟล์รวม (มือถือ+desktop)</div>
 <div class="app">
   <div class="appbar">
     <div class="appbar-top">
@@ -360,6 +441,32 @@ const PKGS=[
   {id:'pro',name:'Pro',price:128,maxImg:3,vid:true,feat:'รูป 3 ใบ หรือ วิดีโอ · เล่น 18 วิ',featEn:'3 photos or video · 18s play',pop:true},
   {id:'premium',name:'Premium',price:160,maxImg:4,vid:true,feat:'รูป 4 ใบ หรือ วิดีโอ · เล่น 24 วิ',featEn:'4 photos or video · 24s play'},
 ];
+/* ── ราคาแพ็กเกจดึงสดจาก ratecard-sme ใน Sanity (แหล่งเดียวกับหน้า Ratecard บนเว็บ — ห้าม hardcode เพิ่ม)
+   ค่าใน PKGS ด้านบนเป็นแค่ fallback ตอนออฟไลน์ · dataset เปิดอ่าน public จึง fetch ตรงได้ ไม่มี key ── */
+(function loadRatecard(){
+  const q=encodeURIComponent('*[_id=="ratecard-sme"][0]{rows}');
+  fetch('https://awjj9g8u.apicdn.sanity.io/v2024-01-01/data/query/production?query='+q)
+    .then(r=>r.json())
+    .then(({result})=>{
+      if(!result||!result.rows)return;
+      const row=k=>result.rows.find(r=>r._key===k);
+      const price=row('row_price'),disp=row('row_display'),poster=row('row_poster'),video=row('row_video');
+      PKGS.forEach((p,i)=>{
+        const pc=price&&price.cells&&price.cells[i];
+        if(pc){p.price=parseInt(String(pc.big).replace(/[^\d]/g,''),10)||p.price;p.priceMonth=pc.sub||null;}
+        const po=poster&&poster.cells&&poster.cells[i];
+        if(po){const n=parseInt(String(po.text||'').replace(/[^\d]/g,''),10);if(n)p.maxImg=n;}
+        const vc=video&&video.cells&&video.cells[i];
+        if(vc)p.vid=vc.type==='check';
+        const sec=disp&&disp.cells&&disp.cells[i]&&disp.cells[i].big;
+        if(sec)  {p.feat=`รูป ${p.maxImg} ใบ${p.vid?' หรือ วิดีโอ':''} · เล่น ${sec} วิ`;
+                  p.featEn=`${p.maxImg} photo${p.maxImg>1?'s':''}${p.vid?' or video':''} · ${sec}s play`;}
+      });
+      PKGS._live=true;   /* ธงไว้เช็คว่าใช้ราคาสดแล้ว */
+      if(S.step===2||S.step===4)renderStep();
+    })
+    .catch(()=>{/* ออฟไลน์/CORS พลาด → ใช้ค่า fallback เดิม เดโมต่อได้ */});
+})();
 /* CTA set — matches /offer (id, label, emoji, premium) */
 const CTAS=[
   {id:'viewListing',label:'View Listing',e:'🏠'},
@@ -371,12 +478,28 @@ const CTAS=[
   {id:'book',label:'Book',e:'📅',prem:true},
   {id:'event',label:'Event',e:'🎉',prem:true},
 ];
-const CATS=[
-  {en:'Dining',th:'อาหาร'},{en:'Groceries',th:'ของใช้/ของชำ'},{en:'Services',th:'บริการ'},
-  {en:'For Rent',th:'ให้เช่า'},{en:'For Sale',th:'ขาย'},{en:'Health & Beauty',th:'สุขภาพ & ความงาม'},
-  {en:'Leisure & Travel',th:'ท่องเที่ยว & พักผ่อน'},{en:'Shopping',th:'ช้อปปิ้ง'},{en:'Education',th:'การศึกษา'},
-  {en:'Events',th:'อีเวนต์'},{en:'Building Updates',th:'ประกาศอาคาร'},
+/* ── หมวด/หมวดย่อย: แหล่งเดียวคือ category-config.json (ไฟล์เดียวกับที่ kiosk ใช้จัดกลุ่ม — ห้าม hardcode เพิ่ม)
+   state เก็บเป็น id จริง (food, cleaning, …) ให้ตรงกับ Sanity/kiosk · ลิสต์ข้างล่างเป็นแค่ snapshot fallback ตอนเปิดแบบ file:// */
+let CATS=[
+  {id:'food',th:'อาหาร',en:'Food',subs:[{id:'dine_in',th:'ทานที่ร้าน',en:'Dine-in'},{id:'delivery',th:'เดลิเวอรี่',en:'Delivery'},{id:'recommended',th:'แนะนำ',en:'Recommended'},{id:'thai_cuisine',th:'อาหารไทย',en:'Thai Cuisine'},{id:'vegan',th:'วีแกน',en:'Vegan'},{id:'coffee',th:'กาแฟ',en:'Coffee'},{id:'dessert',th:'ของหวาน',en:'Dessert'},{id:'promotions',th:'โปรโมชั่น',en:'Promotions'}]},
+  {id:'groceries',th:'ของใช้/ของชำ',en:'Groceries',subs:[{id:'fresh_produce',th:'ผักผลไม้',en:'Fresh Produce'},{id:'dairy_eggs',th:'นมและไข่',en:'Dairy & Eggs'},{id:'meat_seafood',th:'เนื้อและซีฟู้ด',en:'Meat & Seafood'},{id:'snack_drinks',th:'ขนมและเครื่องดื่ม',en:'Snack & Drinks'},{id:'ready_to_eat',th:'อาหารพร้อมทาน',en:'Ready-to-Eat'},{id:'household',th:'ของใช้ในบ้าน',en:'Household'},{id:'organic',th:'ออร์แกนิก',en:'Organic'},{id:'drug_store',th:'ร้านยา/ของดูแลสุขภาพ',en:'Drug Store'},{id:'promotions',th:'โปรโมชั่น',en:'Promotions'},{id:'store_24hr',th:'เปิด 24 ชม.',en:'24-hr Store'}]},
+  {id:'services',th:'บริการ',en:'Services',subs:[{id:'cleaning',th:'ทำความสะอาด',en:'Cleaning'},{id:'repair_maintenance',th:'ซ่อมและบำรุงรักษา',en:'Repair & Maintenance'},{id:'renovation_interior',th:'รีโนเวทและตกแต่งภายใน',en:'Renovation & Interior'},{id:'moving_delivery',th:'ขนย้ายและส่งของ',en:'Moving & Delivery'},{id:'laundry_dry_clean',th:'ซักรีด',en:'Laundry & Dry Clean'},{id:'pet_services',th:'บริการสัตว์เลี้ยง',en:'Pet Services'}]},
+  {id:'healthBeauty',th:'สุขภาพ & ความงาม',en:'Health & Beauty',subs:[{id:'recommended',th:'แนะนำ',en:'Recommended'}]},
+  {id:'leisureTravel',th:'ท่องเที่ยว & พักผ่อน',en:'Leisure & Travel',subs:[{id:'recommended',th:'แนะนำ',en:'Recommended'}]},
+  {id:'shopping',th:'ช้อปปิ้ง',en:'Shopping',subs:[{id:'recommended',th:'แนะนำ',en:'Recommended'}]},
+  {id:'education',th:'การศึกษา',en:'Education',subs:[{id:'recommended',th:'แนะนำ',en:'Recommended'}]},
+  {id:'events',th:'อีเวนต์',en:'Events',subs:[{id:'recommended',th:'แนะนำ',en:'Recommended'}]},
+  {id:'updates',th:'ประกาศอาคาร',en:'Building Updates',subs:[{id:'most_recent',th:'ล่าสุด',en:'Most recent'},{id:'alert',th:'แจ้งเตือน',en:'Alert'}]},
 ];
+const HIDDEN_CATS=['rent','sale'];   /* อสังหาแยกไป /offer-listing */
+fetch('category-config.json').then(r=>r.json()).then(cfg=>{
+  if(!cfg||!cfg.categories||!cfg.categories.length)return;
+  CATS=cfg.categories.filter(c=>HIDDEN_CATS.indexOf(c.id)<0).map(c=>({id:c.id,th:c.label.th,en:c.label.en,
+    subs:(c.subcategories||[]).slice().sort((a,b)=>(a.order||0)-(b.order||0)).map(s=>({id:s.id,th:s.label.th,en:s.label.en}))}));
+  CATS._live=true;
+  if(!CATS.find(c=>c.id===S.category)){S.category=CATS[0].id;S.subcat=CATS[0].subs[0]?CATS[0].subs[0].id:'';}
+  renderStep();
+}).catch(()=>{});
 /* ad type + CTA matrix — copied from /offer (TYPE×category) */
 const TYPES=[{id:'product',th:'ขายสินค้า',en:'Sell a product',e:'🛍️'},{id:'service',th:'โปรโมทบริการ',en:'Promote a service',e:'🛠️'},{id:'promotion',th:'จัดโปรโมชั่น',en:'Run a promotion',e:'🏷️'},{id:'listing',th:'ลงประกาศ',en:'Post an announcement',e:'🏠'},{id:'store',th:'โปรโมทร้าน/แบรนด์',en:'Promote your store',e:'🏪'}];
 /* คำอธิบายชนิดโฆษณา — โชว์ใน dropdown ให้เข้าใจก่อนเลือก */
@@ -387,9 +510,9 @@ const TYPE_DESC={
   listing:{th:'ประกาศ เช่น อีเวนต์ รับสมัคร คอร์สเรียน',en:'An announcement — events, sign-ups, courses'},
   store:{th:'โปรโมทร้านทั้งร้าน ไม่เจาะสินค้าตัวเดียว',en:'Promote the whole store, not one item'},
 };
-const CAT_TYPES={'Dining':['product','promotion','store'],'Groceries':['product','promotion','store'],'Services':['service','promotion','store'],'For Rent':['listing'],'For Sale':['listing'],'Health & Beauty':['service','product','promotion','store'],'Leisure & Travel':['service','promotion','store'],'Shopping':['product','promotion','store'],'Education':['listing'],'Events':['listing'],'Building Updates':['store']};
+const CAT_TYPES={food:['product','promotion','store'],groceries:['product','promotion','store'],services:['service','promotion','store'],rent:['listing'],sale:['listing'],healthBeauty:['service','product','promotion','store'],leisureTravel:['service','promotion','store'],shopping:['product','promotion','store'],education:['listing'],events:['listing'],updates:['store']};
 const TYPE_CTAS={product:['order','viewMenu','contact','viewStore'],service:['book','signup','event','viewMenu','contact','viewStore'],promotion:['contact','order','event','viewStore'],store:['viewStore','contact']};
-function typeCtas(type,cat){if(type==='listing')return(cat==='Education'||cat==='Events')?['event','signup','contact']:['viewListing','book','contact'];return TYPE_CTAS[type]||['contact'];}
+function typeCtas(type,cat){if(type==='listing')return(cat==='education'||cat==='events')?['event','signup','contact']:['viewListing','book','contact'];return TYPE_CTAS[type]||['contact'];}
 const typesOf=cat=>CAT_TYPES[cat]||['product'];
 const defType=cat=>typesOf(cat)[0];
 const defCta=(cat,type)=>typeCtas(type||defType(cat),cat)[0];
@@ -414,46 +537,37 @@ const pickCta=(cat,type)=>{const list=typeCtas(type||defType(cat),cat);return li
 const UNITS=[{v:'',l:'ไม่ระบุ',en:'None'},{v:'start',l:'เริ่มต้น',en:'Starting'},{v:'/ครั้ง',l:'/ครั้ง',en:'/visit'},{v:'/ชม.',l:'/ชม.',en:'/hr'},{v:'/วัน',l:'/วัน',en:'/day'},{v:'/เดือน',l:'/เดือน',en:'/mo'},{v:'/ไตรมาส',l:'/ไตรมาส',en:'/qtr'},{v:'/ปี',l:'/ปี',en:'/yr'},{v:'/คน',l:'/คน',en:'/person'}];
 /* คำแปลอังกฤษของค่า Thai ที่เก็บใน state (แสดงผลเท่านั้น — ค่าที่เก็บยังเป็นไทย) */
 const U_EN={'/ครั้ง':'/visit','/ชม.':'/hr','/วัน':'/day','/เดือน':'/mo','/ไตรมาส':'/qtr','/ปี':'/yr','/คน':'/person'};
-const SUB_EN={'ทานที่ร้าน':'Dine-in','เดลิเวอรี่':'Delivery','แนะนำ':'Featured','อาหารไทย':'Thai food','วีแกน':'Vegan','กาแฟ':'Coffee','ของหวาน':'Desserts','โปรโมชั่น':'Promotions','ผักผลไม้':'Produce','นมและไข่':'Dairy & eggs','เนื้อและซีฟู้ด':'Meat & seafood','ขนม/เครื่องดื่ม':'Snacks & drinks','อาหารพร้อมทาน':'Ready meals','ของใช้ในบ้าน':'Household','ออร์แกนิก':'Organic','ร้านยา':'Pharmacy','เปิด 24 ชม.':'Open 24h','ทำความสะอาด':'Cleaning','ซ่อมบำรุง':'Repairs','รีโนเวท/ตกแต่ง':'Renovation','ขนย้าย/ส่งของ':'Moving & delivery','ซักรีด':'Laundry','บริการสัตว์เลี้ยง':'Pet care','ล่าสุด':'Latest','ราคาดี':'Good price','1 ห้องนอน':'1 bedroom','2 ห้องนอนขึ้นไป':'2+ bedrooms','แจ้งเตือน':'Notices'};
+/* (คำแปลหมวดย่อยมากับ category-config แล้ว — ไม่ต้องมีตารางแปลแยก) */
 const FURN_EN={'ห้องเปล่า':'Unfurnished','ตกแต่งบางส่วน':'Partly furnished','ตกแต่งครบ':'Fully furnished','บิวท์อิน':'Built-in'};
-const freeOK=()=>S.category==='Events'||S.category==='Education'||S.type==='service';
+const freeOK=()=>S.category==='events'||S.category==='education'||S.type==='service';
 const unitOK=()=>S.type==='service'||S.type==='listing';
 const defUnit=()=>S.type==='listing'?'/เดือน':S.type==='service'?'start':'';
 const isPromo=()=>S.type==='promotion';
-/* subcategories (from category-config.json) */
-const SUBCATS={
-  'Dining':['ทานที่ร้าน','เดลิเวอรี่','แนะนำ','อาหารไทย','วีแกน','กาแฟ','ของหวาน','โปรโมชั่น'],
-  'Groceries':['ผักผลไม้','นมและไข่','เนื้อและซีฟู้ด','ขนม/เครื่องดื่ม','อาหารพร้อมทาน','ของใช้ในบ้าน','ออร์แกนิก','ร้านยา','โปรโมชั่น','เปิด 24 ชม.'],
-  'Services':['ทำความสะอาด','ซ่อมบำรุง','รีโนเวท/ตกแต่ง','ขนย้าย/ส่งของ','ซักรีด','บริการสัตว์เลี้ยง'],
-  'For Rent':['ล่าสุด','ราคาดี','1 ห้องนอน','2 ห้องนอนขึ้นไป'],
-  'For Sale':['ล่าสุด','ราคาดี','1 ห้องนอน','2 ห้องนอนขึ้นไป'],
-  'Health & Beauty':['แนะนำ'],'Leisure & Travel':['แนะนำ'],'Shopping':['แนะนำ'],'Education':['แนะนำ'],'Events':['แนะนำ'],
-  'Building Updates':['ล่าสุด','แจ้งเตือน'],
-};
-const subsOf=cat=>SUBCATS[cat]||['แนะนำ'];
+/* หมวดย่อยอ่านจาก CATS (มาจาก category-config.json) — คืน array ของ {id,th,en} */
+const subsOf=cat=>{const c=CATS.find(x=>x.id===cat);return(c&&c.subs&&c.subs.length)?c.subs:[{id:'recommended',th:'แนะนำ',en:'Recommended'}];};
 /* per-category example content (mock)
    รูปตัวอย่าง = รูป stock จริงตรงหมวด (Unsplash, ครอปแนวตั้ง) — ไม่ใช่รูปสุ่ม คนเห็นแล้วนึกภาพออก */
 const U=id=>`https://images.unsplash.com/photo-${id}?w=480&h=854&fit=crop&q=60&auto=format`;
 const SAMPLES={
-  'Dining':{img:U('1559847844-5315695dadae'),title:'ครัวคุณยาย',sub:'อาหารไทยต้นตำรับ',menu:[['ผัดกะเพราหมูสับ','฿60'],['ต้มยำกุ้งน้ำข้น','฿150'],['ข้าวผัดปู','฿120'],['ส้มตำไทย','฿50']]},
-  'Groceries':{img:U('1542838132-92c53300491e'),title:'มินิมาร์ทชุมชน',sub:'ของสด ของใช้ ครบ ใกล้บ้าน',menu:[['ไข่ไก่ เบอร์ 2','฿42'],['ข้าวหอมมะลิ 5kg','฿165'],['น้ำดื่ม แพ็ก 12','฿55'],['ผงซักฟอก','฿89']]},
-  'Services':{img:U('1562322140-8baeececf3df'),title:'DE ICON SALON',sub:'ตัดและจัดแต่งทรงผม',menu:[['ตัดผม','฿250'],['สระไดร์','฿180'],['ทำสีผม','฿1,200'],['ทรีตเมนต์','฿600']]},
-  'For Rent':{img:U('1522708323590-d24dbb6b0267'),title:'ลุมพินี คอนโด',sub:'ห้อง 1 นอน · ชั้น 12 · พร้อมอยู่',menu:[['Studio 28 ตร.ม.','฿9,500/ด'],['1 Bed 35 ตร.ม.','฿13,000/ด'],['2 Bed 55 ตร.ม.','฿21,000/ด']]},
-  'For Sale':{img:U('1570129477492-45c003edd2be'),title:'บ้านเดี่ยว ร่มเย็น',sub:'3 นอน 2 น้ำ · 56 ตร.ว.',menu:[['ทาวน์โฮม','฿2.9 ล.'],['บ้านเดี่ยว','฿4.5 ล.'],['คอนโดวิวเมือง','฿1.8 ล.']]},
-  'Health & Beauty':{img:U('1540555700478-4be289fbecef'),title:'Glow Clinic',sub:'ดูแลผิวหน้าครบวงจร',menu:[['ทรีตเมนต์หน้าใส','฿990'],['ฉีดวิตามินผิว','฿1,500'],['นวดหน้า','฿590']]},
-  'Leisure & Travel':{img:U('1520250497591-112f2f40a3f4'),title:'ทะเลใส รีสอร์ท',sub:'แพ็กเกจ 2 วัน 1 คืน',menu:[['ห้อง Deluxe','฿2,200/คืน'],['แพ็กเกจดำน้ำ','฿1,800'],['ทัวร์เกาะ','฿900']]},
-  'Shopping':{img:U('1441986300917-64674bd600d8'),title:'Trendy Store',sub:'แฟชั่นมาใหม่ทุกสัปดาห์',menu:[['เสื้อยืดคอตตอน','฿390'],['กางเกงยีนส์','฿790'],['รองเท้าผ้าใบ','฿1,290']]},
-  'Education':{img:U('1509062522246-3755977927d7'),title:'สถาบันติว BrightMind',sub:'คอร์สติวเข้ม ม.ปลาย',menu:[['คณิต ม.6','฿3,500'],['ฟิสิกส์','฿3,200'],['ภาษาอังกฤษ','฿2,900']]},
-  'Events':{img:U('1470229722913-7c0e2dbbafd3'),title:'Summer Music Fest',sub:'21 มิ.ย. นี้ · ลานกิจกรรม',menu:[['บัตร Early Bird','฿590'],['บัตรหน้างาน','฿790'],['บัตร VIP','฿1,500']]},
-  'Building Updates':{img:U('1486406146926-c627a92ad1ab'),title:'ประกาศนิติบุคคล',sub:'แจ้งปิดน้ำชั่วคราว 22 มิ.ย.',menu:[['ซ้อมหนีไฟ','24 มิ.ย.'],['ประชุมใหญ่สามัญ','30 มิ.ย.'],['พ่นยุง','ทุกวันศุกร์']]},
+  food:{img:U('1559847844-5315695dadae'),title:'ครัวคุณยาย',sub:'อาหารไทยต้นตำรับ',menu:[['ผัดกะเพราหมูสับ','฿60'],['ต้มยำกุ้งน้ำข้น','฿150'],['ข้าวผัดปู','฿120'],['ส้มตำไทย','฿50']]},
+  groceries:{img:U('1542838132-92c53300491e'),title:'มินิมาร์ทชุมชน',sub:'ของสด ของใช้ ครบ ใกล้บ้าน',menu:[['ไข่ไก่ เบอร์ 2','฿42'],['ข้าวหอมมะลิ 5kg','฿165'],['น้ำดื่ม แพ็ก 12','฿55'],['ผงซักฟอก','฿89']]},
+  services:{img:U('1562322140-8baeececf3df'),title:'DE ICON SALON',sub:'ตัดและจัดแต่งทรงผม',menu:[['ตัดผม','฿250'],['สระไดร์','฿180'],['ทำสีผม','฿1,200'],['ทรีตเมนต์','฿600']]},
+  rent:{img:U('1522708323590-d24dbb6b0267'),title:'ลุมพินี คอนโด',sub:'ห้อง 1 นอน · ชั้น 12 · พร้อมอยู่',menu:[['Studio 28 ตร.ม.','฿9,500/ด'],['1 Bed 35 ตร.ม.','฿13,000/ด'],['2 Bed 55 ตร.ม.','฿21,000/ด']]},
+  sale:{img:U('1570129477492-45c003edd2be'),title:'บ้านเดี่ยว ร่มเย็น',sub:'3 นอน 2 น้ำ · 56 ตร.ว.',menu:[['ทาวน์โฮม','฿2.9 ล.'],['บ้านเดี่ยว','฿4.5 ล.'],['คอนโดวิวเมือง','฿1.8 ล.']]},
+  healthBeauty:{img:U('1540555700478-4be289fbecef'),title:'Glow Clinic',sub:'ดูแลผิวหน้าครบวงจร',menu:[['ทรีตเมนต์หน้าใส','฿990'],['ฉีดวิตามินผิว','฿1,500'],['นวดหน้า','฿590']]},
+  leisureTravel:{img:U('1520250497591-112f2f40a3f4'),title:'ทะเลใส รีสอร์ท',sub:'แพ็กเกจ 2 วัน 1 คืน',menu:[['ห้อง Deluxe','฿2,200/คืน'],['แพ็กเกจดำน้ำ','฿1,800'],['ทัวร์เกาะ','฿900']]},
+  shopping:{img:U('1441986300917-64674bd600d8'),title:'Trendy Store',sub:'แฟชั่นมาใหม่ทุกสัปดาห์',menu:[['เสื้อยืดคอตตอน','฿390'],['กางเกงยีนส์','฿790'],['รองเท้าผ้าใบ','฿1,290']]},
+  education:{img:U('1509062522246-3755977927d7'),title:'สถาบันติว BrightMind',sub:'คอร์สติวเข้ม ม.ปลาย',menu:[['คณิต ม.6','฿3,500'],['ฟิสิกส์','฿3,200'],['ภาษาอังกฤษ','฿2,900']]},
+  events:{img:U('1470229722913-7c0e2dbbafd3'),title:'Summer Music Fest',sub:'21 มิ.ย. นี้ · ลานกิจกรรม',menu:[['บัตร Early Bird','฿590'],['บัตรหน้างาน','฿790'],['บัตร VIP','฿1,500']]},
+  updates:{img:U('1486406146926-c627a92ad1ab'),title:'ประกาศนิติบุคคล',sub:'แจ้งปิดน้ำชั่วคราว 22 มิ.ย.',menu:[['ซ้อมหนีไฟ','24 มิ.ย.'],['ประชุมใหญ่สามัญ','30 มิ.ย.'],['พ่นยุง','ทุกวันศุกร์']]},
 };
-const sampleOf=()=>SAMPLES[S.category]||SAMPLES['Services'];
+const sampleOf=()=>SAMPLES[S.category]||SAMPLES.services;
 
-const S={step:1,total:4,format:null,pkg:'pro',category:'Services',title:'ชื่อโฆษณาของคุณ',sub:'คำบรรยายสั้นๆ',price:'',unit:'start',free:false,freeWord:'ฟรี',origPrice:'',subcat:'ทำความสะอาด',avail:'',valid:'',images:[],media:'image',videoUrl:'',videoName:'',kiosks:1,weeks:4,type:'service',cta:'book',cta2:null,ctaLabel:'',cta2Label:'',after:{link:'',area:'',floor:'',bed:'',bath:'',park:'',furnish:'',menu:[],menuLink:'',order:[],ful:['dinein','pickup'],deliv:'',min:'',bkOpen:'09:00',bkClose:'18:00',bkSlot:'60',bkAhead:'7',cap:'',evStart:'',evEnd:'',evWhen:'',evPlace:'',evCap:''},view3:'mine',pick3:null,lang:'th',sheet:null,sumImg:0,agree:false,sawCat:false,sawType:false};
+const S={step:1,total:4,format:null,pkg:'pro',category:'services',title:'ชื่อโฆษณาของคุณ',sub:'คำบรรยายสั้นๆ',price:'',unit:'start',free:false,freeWord:'ฟรี',origPrice:'',subcat:'cleaning',avail:'',valid:'',images:[],media:'image',videoUrl:'',videoName:'',kiosks:1,weeks:4,type:'service',cta:'book',cta2:null,ctaLabel:'',cta2Label:'',after:{link:'',area:'',floor:'',bed:'',bath:'',park:'',furnish:'',menu:[],menuLink:'',order:[],ful:['dinein','pickup'],deliv:'',min:'',bkOpen:'09:00',bkClose:'18:00',bkSlot:'60',bkAhead:'7',cap:'',evStart:'',evEnd:'',evWhen:'',evPlace:'',evCap:''},view3:'mine',pick3:null,lang:'th',sheet:null,sumImg:0,agree:false,sawCat:false,sawType:false};
 /* i18n — แพทเทิร์นเดียวกับ mockup-provider-app */
 const L=(th,en)=>S.lang==='en'?(en??th):th;
-const catName=()=>{const c=CATS.find(x=>x.en===S.category)||CATS[2];return L(c.th,c.en);};
-const subTxt=s=>L(s,SUB_EN[s]||s);
+const catName=()=>{const c=CATS.find(x=>x.id===S.category)||CATS[2];return L(c.th,c.en);};
+const subTxt=id=>{for(const c of CATS){const s=(c.subs||[]).find(x=>x.id===id);if(s)return L(s.th,s.en);}return id;};
 const unitTxt=u=>S.lang==='en'?(U_EN[u]||u):u;
 function tglLang(){S.lang=S.lang==='th'?'en':'th';document.body.classList.toggle('en',S.lang==='en');el('langBtn').textContent=S.lang==='th'?'EN':'ไทย';el('exitBtn').textContent=L('✕ ออก','✕ Exit');document.querySelectorAll('[data-th]').forEach(a=>a.textContent=S.lang==='en'?a.dataset.en:a.dataset.th);renderStep();if(S.sheet)openSheet(S.sheet);}
 function tglNav(b){b.classList.toggle('open');const m=el('siteMenu'),o=m.classList.toggle('open');b.setAttribute('aria-expanded',o);}
@@ -470,7 +584,7 @@ const MARQ=`<div class="tt-bottombar"><div class="tt-marq"><span>Touch to explor
 
 /* SAMPLE media — example tailored to the selected category */
 function sampleMedia(){
-  const c=CATS.find(x=>x.en===S.category)||CATS[2],s=sampleOf();
+  const c=CATS.find(x=>x.id===S.category)||CATS[2],s=sampleOf();
   return `<div class="totem"><div class="tt-screen">${TOPBAR}
     <div class="tt-stage">
       <div class="tt-bg" style="background-image:url('${s.img}')"></div><div class="tt-grad"></div>
@@ -481,7 +595,7 @@ function sampleMedia(){
     </div>${MARQ}</div><div class="tt-base"></div></div>`;
 }
 /* Catalog/Menu Ad = the CATEGORY directory grid; your card is highlighted among others (matches /offer pmGrid) */
-const catTh=()=>(CATS.find(x=>x.en===S.category)||CATS[2]).th;
+const catTh=()=>(CATS.find(x=>x.id===S.category)||CATS[2]).th;
 /* การ์ดร้านข้างเคียงในเมนู — ใช้ร้านตัวอย่างจากหมวดอื่น (มีรูปจริง) หรี่จางไว้ ให้การ์ดของเราเด่น */
 function phCards(){return Object.keys(SAMPLES).filter(k=>k!==S.category).slice(0,3).map(k=>{const s=SAMPLES[k];
   const meta=s.menu&&s.menu[0]?L('เริ่ม ','From ')+s.menu[0][1]:'';
@@ -499,7 +613,7 @@ function menuScreen(title,meCard,wm){
   ${wm?'<div class="tt-wm"><i>ตัวอย่าง · Sample</i></div>':''}${MARQ}</div><div class="tt-base"></div></div>`;
 }
 function sampleCatalog(){
-  const c=CATS.find(x=>x.en===S.category)||CATS[2],s=sampleOf();
+  const c=CATS.find(x=>x.id===S.category)||CATS[2],s=sampleOf();
   const meta=s.menu&&s.menu[0]?L('เริ่ม ','From ')+s.menu[0][1]:'';
   return menuScreen(L(c.th,c.en),menuCard(s.title,s.sub,meta,s.img,false),true);
 }
@@ -576,22 +690,24 @@ function renderStep(){
     const mine=S.view3!=='sample';
     const sampleHTML=isFree()?sampleCatalog():sampleMedia();
     const tyCur=TYPES.find(x=>x.id===S.type),catCur=catName();
-    c.innerHTML=`<div class="canvas-body" style="align-items:flex-start;overflow-y:auto;"><div class="fmt-wrap" style="display:flex;flex-direction:column;align-items:center;">
+    c.innerHTML=`<div class="canvas-body" style="align-items:flex-start;overflow-y:auto;"><div class="fmt-wrap s3-wrap">
         ${S.pick3?`<div class="pk-back" onclick="closePick()"></div>`:''}
+        <div class="s3-left">
         <div class="canvas-head" style="margin:0 0 12px;width:100%;"><h1>${L('กรอกรายละเอียดโฆษณาที่จะปรากฏบนหน้าจอดิจิตอล','Fill in the ad details that will appear on the digital screen')}</h1><p>${L('เลือกหมวดธุรกิจ และชนิดของโฆษณาก่อน','Pick your business category and ad type first,')}<br>${L('แล้วแตะจุดต่างๆ บนจอเพื่อกรอกข้อมูล — จออีกใบคือตัวอย่าง','then tap the spots on the screen to fill in — the other screen is a sample')}</p></div>
         <div class="pick2-wrap">
           <div class="pick2">
             <button class="pk-box ${S.pick3==='cat'?'open':''}${S.sawCat?'':' nudge'}" onclick="tglPick('cat')" aria-expanded="${S.pick3==='cat'}"><span class="pk-num">1</span><span class="pk-lbl">${L('หมวดธุรกิจ','Category')}</span><span class="pk-val">${catCur}</span><span class="pk-ch">▾</span></button>
             ${isFree()?'':`<button class="pk-box ${S.pick3==='type'?'open':''}${S.sawType?'':' nudge'}" onclick="tglPick('type')" aria-expanded="${S.pick3==='type'}"><span class="pk-num">2</span><span class="pk-lbl">${L('ชนิดโฆษณา','Ad type')}</span><span class="pk-val">${tyCur?tyCur.e+' '+L(tyCur.th,tyCur.en):'—'}</span><span class="pk-ch">▾</span></button>`}
           </div>
-          ${S.pick3==='cat'?`<div class="pk-panel">${CATS.filter(ct=>ct.en!=='For Rent'&&ct.en!=='For Sale').map(ct=>`<button class="wchip ${S.category===ct.en?'on':''}" data-cat="${ct.en}">${L(ct.th,ct.en)}</button>`).join('')}
+          ${S.pick3==='cat'?`<div class="pk-panel">${CATS.map(ct=>`<button class="wchip ${S.category===ct.id?'on':''}" data-cat="${ct.id}">${L(ct.th,ct.en)}</button>`).join('')}
             <div style="width:100%;font-size:11.5px;font-weight:600;color:var(--ink-40);padding:4px 3px 0;">🏠 ${L('ขาย / ให้เช่าห้อง → ลงที่ฟอร์มประกาศอสังหาโดยเฉพาะ (/offer-listing)','Selling / renting a unit? → use the dedicated listing form (/offer-listing)')}</div></div>`:''}
           ${S.pick3==='type'&&!isFree()?`<div class="pk-panel" style="padding:6px;">${typesOf(S.category).map(t=>{const ty=TYPES.find(x=>x.id===t);return `<button class="dd-opt ${S.type===t?'on':''}" data-type="${t}" style="border-bottom:none;border-radius:10px;"><b>${ty.e} ${L(ty.th,ty.en)}</b><small>${L(TYPE_DESC[t].th,TYPE_DESC[t].en)}</small></button>`;}).join('')}</div>`:''}
-        </div>
+        </div>        </div>
         <div class="deck">
           <div class="deck-card slot-left ${mine?'on':''}" ${!mine?'data-raise="mine"':''}>${editPreview()}<span class="peek-tag">${L('แตะเพื่อกรอกข้อมูล','Tap to fill in')}</span></div>
           <div class="deck-card slot-right ${!mine?'on':''}" ${mine?'data-raise="sample"':''}>${sampleHTML}<span class="peek-tag">${L('แตะเพื่อดูตัวอย่าง','Tap to view sample')}</span></div>
-        </div>      </div></div>`;
+        </div>
+      </div></div>`;
     if(mine) bindHot();
     bindCats();
     document.querySelectorAll('[data-raise]').forEach(b=>b.onclick=()=>{S.view3=b.dataset.raise;renderStep();});
@@ -630,9 +746,12 @@ function fitMini(){
   const cb=document.querySelector('.canvas-body'),minis=[...document.querySelectorAll('.tmini')];
   if(!cb||!minis.length)return;
   const note=document.querySelector('.af-note'),nm=document.querySelector('.fmt-card .nm'),ds=document.querySelector('.fmt-card .ds'),hd=cb.querySelector('.canvas-head');
-  const budget=Math.max(180,cb.clientHeight-(note?note.offsetHeight+10:0)-(nm?nm.offsetHeight:0)-(ds?ds.offsetHeight:0)-(hd?hd.offsetHeight+14:0)-96);
+  /* desktop เลื่อนทั้งหน้า → canvas-body สูงตามเนื้อหา ห้ามใช้ตรงๆ: หักด้วยพื้นที่จอจริงที่เหลือใต้ canvas-body ด้วย */
+  const avail=Math.max(180,innerHeight-cb.getBoundingClientRect().top-((document.querySelector('.actbar')&&!document.querySelector('.actbar').hidden)?document.querySelector('.actbar').offsetHeight:0)-16);
+  const budget=Math.max(180,Math.min(cb.clientHeight,avail)-(note?note.offsetHeight+10:0)-(nm?nm.offsetHeight:0)-(ds?ds.offsetHeight:0)-(hd?hd.offsetHeight+14:0)-96);
   let s=Infinity;
-  minis.forEach(t=>{const tm=t.querySelector('.totem');if(!tm)return;tm.style.transform='none';const nh=tm.offsetHeight||382;s=Math.min(s,t.clientWidth/200,budget/nh);});
+  /* responsive: หักค่า padding ของกรอบ (clientWidth รวม padding) + เพดานขยาย 1.25x กันจอบานเกินการ์ดบน desktop */
+  minis.forEach(t=>{const tm=t.querySelector('.totem');if(!tm)return;tm.style.transform='none';const nh=tm.offsetHeight||382;s=Math.min(s,(t.clientWidth-16)/200,budget/nh,1.25);});
   minis.forEach(t=>{const tm=t.querySelector('.totem');if(!tm)return;const nh=tm.offsetHeight||382;tm.style.transform='scale('+s+')';t.style.height=Math.round(nh*s)+'px';});
 }
 window.addEventListener('resize',()=>{if(S.step===1)fitMini();});
@@ -640,7 +759,7 @@ window.addEventListener('load',()=>{if(S.step===1)fitMini();});
 function bindPicks(){
   document.querySelectorAll('[data-fmt]').forEach(b=>{const p=()=>{S.format=b.dataset.fmt;renderStep();};b.onclick=p;b.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();p();}};});
   document.querySelectorAll('[data-pkg]').forEach(b=>{b.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();b.onclick();}};b.onclick=()=>{S.pkg=b.dataset.pkg;const p=pkg();if(S.images.length>p.maxImg)S.images=S.images.slice(0,p.maxImg);if(!p.vid){S.media='image';S.videoUrl='';S.videoName='';}if(ctaLocked(S.cta)){S.cta=pickCta(S.category,S.type);S.ctaLabel='';}if(S.cta2&&ctaLocked(S.cta2)){S.cta2=null;S.cta2Label='';}renderStep();};});
-  document.querySelectorAll('[data-cat]').forEach(b=>b.onclick=()=>{S.pick3=null;S.category=b.dataset.cat;S.type=defType(S.category);S.cta=pickCta(S.category,S.type);S.cta2=null;S.ctaLabel='';S.cta2Label='';S.unit=defUnit();S.subcat=subsOf(S.category)[0];if(!freeOK())S.free=false;if(!isPromo())S.origPrice='';renderStep();});
+  document.querySelectorAll('[data-cat]').forEach(b=>b.onclick=()=>{S.pick3=null;S.category=b.dataset.cat;S.type=defType(S.category);S.cta=pickCta(S.category,S.type);S.cta2=null;S.ctaLabel='';S.cta2Label='';S.unit=defUnit();S.subcat=subsOf(S.category)[0].id;if(!freeOK())S.free=false;if(!isPromo())S.origPrice='';renderStep();});
   document.querySelectorAll('[data-type]').forEach(b=>b.onclick=()=>{S.pick3=null;S.type=b.dataset.type;S.cta=pickCta(S.category,S.type);S.cta2=null;S.ctaLabel='';S.cta2Label='';S.unit=defUnit();if(!freeOK())S.free=false;if(!isPromo())S.origPrice='';renderStep();});
 }
 function tglPick(k){if(k==='cat')S.sawCat=true;if(k==='type')S.sawType=true;S.pick3=S.pick3===k?null:k;renderStep();}
@@ -668,7 +787,7 @@ function openSheet(kind){
       if(isPromo())html+=`<label class="fld-lbl" for="fOrig">${L('ราคาเดิม ก่อนลด (โชว์ขีดฆ่า)','Original price (shown struck-through)')}</label><input class="fld" id="fOrig" value="${esc(S.origPrice)}" placeholder="${L('เช่น 79','e.g. 79')}" inputmode="numeric">`;
       if(unitOK())html+=`<div class="ulbl">${L('หน่วยราคา','Price unit')}</div><div class="word-chips">${UNITS.map(u=>`<button class="wchip ${S.unit===u.v?'on':''}" onclick="setUnit('${u.v}')">${L(u.l,u.en)}</button>`).join('')}</div>`;
     }
-    html+=`<div class="ulbl">${L('หมวดย่อย','Subcategory')}</div><div class="word-chips">${subsOf(S.category).map(s=>`<button class="wchip ${S.subcat===s?'on':''}" onclick="setSub('${s}')">${subTxt(s)}</button>`).join('')}</div>
+    html+=`<div class="ulbl">${L('หมวดย่อย','Subcategory')}</div><div class="word-chips">${subsOf(S.category).map(s=>`<button class="wchip ${S.subcat===s.id?'on':''}" onclick="setSub('${s.id}')">${L(s.th,s.en)}</button>`).join('')}</div>
       <label class="fld-lbl" for="fAvail">${L('เวลา / สถานะ','Hours / status')}</label><input class="fld" id="fAvail" value="${esc(S.avail)}" placeholder="${L('เช่น เปิด 9:00–18:00','e.g. open 9:00–18:00')}">
       <label class="fld-lbl" for="fValid">${L('ช่วงโปร / วันหมดเขต (ถ้ามี)','Promo period / expiry (optional)')}</label><input class="fld" id="fValid" value="${esc(S.valid)}" placeholder="${L('เช่น ถึง 31 ส.ค.','e.g. until Aug 31')}">`;
     html+=`<button class="sheet-save" onclick="saveTitle()">${L('บันทึก','Save')}</button>`;

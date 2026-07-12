@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Aurora Bistro · AquaMx</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=Anton&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+:root {
+    --navy:#0E3361; --navy-deep:#072147;
+    --orange:#C9864C; --orange-strong:#A36738; --orange-soft:#F6E5D0;
+    --cream:#FAF6ED; --ink:#0B1B33; --muted:#5C6B82; --white:#fff;
+    --line:#EADFC9; --ink-40:#8B98AE; --green:#2E9E5B;
+}
+html, body {
+    background:#cabfae;
+    background:radial-gradient(circle at 50% 0%, #d9d1c2 0%, #c7bdac 55%, #b9ae9c 100%);
+    font-family:'IBM Plex Sans Thai','Nunito',system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased; color:var(--ink);
+}
+body { min-height:100vh; display:flex; align-items:center; justify-content:center; padding:30px 12px; }
+a { color:inherit; text-decoration:none; }
+
+/* ── phone shell ── */
+.phone { position:relative; width:392px; height:812px; flex-shrink:0; background:#0b0d12; border-radius:56px; padding:14px; box-shadow:0 50px 90px -28px rgba(11,27,51,0.55), 0 0 0 2px #23272f, inset 0 0 0 1px rgba(255,255,255,0.05); }
+.phone-screen { position:relative; width:100%; height:100%; border-radius:44px; overflow-x:hidden; overflow-y:auto; background:var(--white); -webkit-overflow-scrolling:touch; }
+.phone-screen::-webkit-scrollbar { width:0; }
+.island { position:absolute; top:13px; left:50%; transform:translateX(-50%); width:110px; height:30px; background:#000; border-radius:18px; z-index:100; box-shadow:0 1px 3px rgba(0,0,0,0.6); }
+.home-bar { position:absolute; bottom:9px; left:50%; transform:translateX(-50%); width:128px; height:5px; border-radius:3px; background:rgba(0,0,0,0.32); z-index:100; pointer-events:none; }
+
+/* the device = the actual mobile page (fills the screen, scrolls) */
+.device {
+    width:100%; min-height:100%;
+    background:var(--white); position:relative;
+}
+
+/* sticky app bar */
+.app-bar {
+    position:sticky; top:0; z-index:40;
+    height:56px; display:flex; align-items:center; justify-content:space-between;
+    padding:0 16px; background:rgba(255,255,255,0.9); backdrop-filter:blur(12px);
+    border-bottom:1px solid var(--line);
+}
+.app-bar .l { display:flex; align-items:center; gap:11px; }
+.app-bar .back { width:36px; height:36px; border-radius:50%; background:var(--cream); display:flex; align-items:center; justify-content:center; font-size:19px; color:var(--ink); }
+.app-bar .ctx { font-size:13px; font-weight:700; color:var(--muted); }
+.app-bar .mark { font-family:'Nunito',sans-serif; font-weight:800; font-size:18px; color:var(--navy); }
+.app-bar .mark .x { color:var(--orange); }
+
+/* hero gallery */
+.hero { position:relative; width:100%; aspect-ratio:1/1; background:#0a0c10; overflow:hidden; }
+.hero-track { display:flex; height:100%; overflow-x:auto; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
+.hero-track::-webkit-scrollbar { display:none; }
+.hero-track .slide { flex:0 0 100%; width:100%; height:100%; object-fit:cover; display:block; scroll-snap-align:center; }
+.hero::after { content:''; position:absolute; inset:0; pointer-events:none; z-index:1; background:linear-gradient(180deg, rgba(5,6,8,0.22) 0%, transparent 28%, transparent 70%, rgba(5,6,8,0.3) 100%); }
+.hero-logo { position:absolute; top:14px; right:14px; z-index:2; pointer-events:none; display:flex; align-items:center; gap:6px; color:#fff; text-shadow:0 1px 6px rgba(0,0,0,0.6); }
+.hero-logo .mk { width:26px; height:26px; border-radius:50%; background:#fff; color:#0e1d3a; display:flex; align-items:center; justify-content:center; font-family:'Anton',sans-serif; font-size:15px; }
+.hero-logo .nm { font-size:12px; font-weight:800; letter-spacing:0.4px; text-transform:uppercase; }
+.hero-chip { position:absolute; left:14px; bottom:16px; z-index:2; pointer-events:none; background:rgba(8,12,22,0.6); backdrop-filter:blur(5px); border:1px solid rgba(255,255,255,0.35); color:#fff; font-size:11px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; padding:6px 13px; border-radius:20px; }
+.hero-dots { position:absolute; bottom:14px; left:50%; transform:translateX(-50%); z-index:2; pointer-events:none; display:flex; gap:6px; }
+.hero-dots i { width:7px; height:7px; border-radius:50%; background:rgba(255,255,255,0.55); transition:width .2s, background .2s; }
+.hero-dots i.on { background:#fff; width:18px; border-radius:4px; }
+
+/* content */
+.content { padding:18px 20px 120px; }   /* bottom space for sticky CTA */
+.prov-row { display:flex; align-items:center; gap:11px; margin-bottom:12px; }
+.prov-row .plogo { width:42px; height:42px; border-radius:13px; background:var(--navy); color:#fff; display:flex; align-items:center; justify-content:center; font-family:'Anton',sans-serif; font-size:21px; flex-shrink:0; }
+.prov-row .pname { font-size:14px; font-weight:700; color:var(--muted); }
+.prov-row .pname small { display:block; font-weight:500; font-size:11.5px; color:var(--ink-40); margin-top:1px; }
+.offer-title { font-family:'Nunito',sans-serif; font-size:27px; font-weight:800; color:var(--ink); line-height:1.12; letter-spacing:-0.01em; }
+
+.badges { display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; }
+.badge { display:inline-flex; align-items:center; gap:6px; padding:7px 13px; border-radius:22px; font-size:13.5px; font-weight:600; }
+.badge.price { color:var(--orange-strong); background:var(--orange-soft); border:1px solid var(--orange); font-weight:700; }
+.badge.avail { color:var(--muted); background:var(--cream); border:1px solid var(--line); }
+.badge.avail .open { color:var(--green); font-weight:700; }
+
+.desc { font-size:14.5px; line-height:1.75; color:var(--muted); margin-top:16px; }
+
+.facts { display:grid; grid-template-columns:repeat(3,1fr); gap:9px; margin-top:18px; }
+.fact { background:var(--cream); border:1px solid var(--line); border-radius:14px; padding:13px 8px; text-align:center; }
+.fact .v { font-family:'Nunito',sans-serif; font-size:20px; font-weight:800; color:var(--ink); line-height:1; }
+.fact .l { font-size:10px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); margin-top:6px; }
+
+.contact { display:grid; grid-template-columns:repeat(4,1fr); gap:9px; margin-top:22px; }
+.cbtn { display:flex; flex-direction:column; align-items:center; gap:6px; padding:14px 4px; background:var(--white); border:1px solid var(--line); border-radius:16px; transition:transform .12s, border-color .12s; cursor:pointer; }
+.cbtn:active { transform:scale(0.96); border-color:var(--orange); }
+.cbtn .ci { width:34px; height:34px; border-radius:50%; background:var(--orange-soft); display:flex; align-items:center; justify-content:center; font-size:17px; }
+.cbtn .cl { font-size:11px; font-weight:700; color:var(--muted); }
+
+.info { margin-top:22px; padding-top:18px; border-top:1px solid var(--line); }
+.info .h { font-size:11.5px; font-weight:800; letter-spacing:0.12em; text-transform:uppercase; color:var(--orange-strong); margin-bottom:7px; }
+.info .t { font-size:14px; color:var(--muted); line-height:1.65; }
+.info .map-thumb { margin-top:10px; height:120px; border-radius:14px; border:1px solid var(--line); background:linear-gradient(135deg,#e8eef3,#dfe7ee); position:relative; overflow:hidden; }
+.info .map-thumb::after { content:'📍'; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:26px; }
+
+.view-prov { display:flex; align-items:center; justify-content:center; gap:8px; width:100%; margin-top:24px; padding:15px; border-radius:18px; border:1.5px solid var(--navy); color:var(--navy); font-family:'Nunito',sans-serif; font-weight:700; font-size:14.5px; }
+.pw { text-align:center; padding:24px 0 6px; font-size:12px; color:var(--ink-40); }
+.pw b { color:var(--muted); font-weight:800; }
+.pw .x { color:var(--orange); }
+
+/* sticky bottom CTA */
+.cta-dock {
+    position:sticky; bottom:0; z-index:30;
+    padding:12px 16px calc(16px + env(safe-area-inset-bottom));
+    background:linear-gradient(180deg, rgba(255,255,255,0) 0%, var(--white) 28%);
+}
+.cta-primary {
+    display:flex; align-items:center; justify-content:center; gap:9px; width:100%;
+    background:var(--navy); color:#fff; font-family:'Nunito',sans-serif; font-weight:800; font-size:16.5px;
+    padding:17px; border-radius:20px;
+    box-shadow:0 14px 30px -10px rgba(14,51,97,0.55);
+    transition:transform .12s, background .15s;
+}
+.cta-primary:active { transform:scale(0.985); background:var(--navy-deep); }
+.cta-primary .ar { font-size:19px; }
+</style>
+</head>
+<body>
+
+<div class="phone">
+  <div class="phone-screen">
+    <div class="device">
+
+    <!-- app bar -->
+    <div class="app-bar">
+        <div class="l"><span class="back">‹</span><span class="ctx">📍 Mahogany Tower</span></div>
+        <span class="mark">aqua<span class="x">mx</span></span>
+    </div>
+
+    <!-- hero gallery (swipe / scroll) -->
+    <div class="hero">
+        <div class="hero-track" id="heroTrack">
+            <img class="slide" src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=860&q=80" alt="Signature plated dish">
+            <img class="slide" src="https://images.unsplash.com/photo-1481931098730-318b6f776db0?auto=format&fit=crop&w=860&q=80" alt="All-day brunch spread">
+            <img class="slide" src="https://images.unsplash.com/photo-1559339352-11d035aa65de?auto=format&fit=crop&w=860&q=80" alt="Specialty coffee">
+            <img class="slide" src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=860&q=80" alt="Restaurant interior">
+        </div>
+        <div class="hero-logo"><span class="mk">A</span><span class="nm">Aurora</span></div>
+        <div class="hero-chip">Featured Dining</div>
+        <div class="hero-dots" id="heroDots"><i class="on"></i><i></i><i></i><i></i></div>
+    </div>
+
+    <!-- content -->
+    <div class="content">
+        <div class="prov-row">
+            <div class="plogo">A</div>
+            <div class="pname">Aurora Bistro<small>Mahogany Tower · Floor 2</small></div>
+        </div>
+
+        <div class="offer-title">All-Day Brunch &amp; Specialty Coffee</div>
+
+        <div class="badges">
+            <span class="badge price">฿ From 250</span>
+            <span class="badge avail">🕐 08:00–22:00 · <span class="open">Open now</span></span>
+        </div>
+
+        <p class="desc">บรันช์ทั้งวันพร้อมกาแฟพิเศษคั่วเอง · เมนูซิกเนเจอร์เปลี่ยนตามฤดูกาล · นั่งสบายวิวสวนชั้น 2 — เหมาะทั้งมื้อเช้าสายและประชุมแบบชิล ๆ พร้อมเบเกอรีอบสดทุกวัน</p>
+
+        <div class="facts">
+            <div class="fact"><div class="v">★ 4.8</div><div class="l">Rating</div></div>
+            <div class="fact"><div class="v">Floor 2</div><div class="l">Location</div></div>
+            <div class="fact"><div class="v">฿฿</div><div class="l">Price</div></div>
+        </div>
+
+        <div class="contact">
+            <div class="cbtn"><span class="ci">📞</span><span class="cl">Call</span></div>
+            <div class="cbtn"><span class="ci">💬</span><span class="cl">LINE</span></div>
+            <div class="cbtn"><span class="ci">📍</span><span class="cl">Map</span></div>
+            <div class="cbtn"><span class="ci">🌐</span><span class="cl">Web</span></div>
+        </div>
+
+        <div class="info">
+            <div class="h">เวลาเปิด-ปิด · Opening Hours</div>
+            <div class="t">จันทร์–อาทิตย์ · 08:00–22:00 น.</div>
+        </div>
+
+        <div class="info">
+            <div class="h">ที่ตั้ง · Location</div>
+            <div class="t">ชั้น 2, Mahogany Tower · President Park, Sukhumvit 24</div>
+            <div class="map-thumb"></div>
+        </div>
+
+        <a class="view-prov">ดูข้อมูล Aurora Bistro →</a>
+
+        <div class="pw">powered by <b>aqua<span class="x">mx</span></b></div>
+    </div>
+
+    <!-- sticky bottom CTA -->
+    <div class="cta-dock">
+        <a class="cta-primary">ดูเมนู · View Menu <span class="ar">→</span></a>
+    </div>
+
+</div>
+  </div><!-- /phone-screen -->
+  <div class="island"></div>
+  <div class="home-bar"></div>
+</div><!-- /phone -->
+
+<script>
+/* Hero gallery — update dots as you swipe/scroll */
+(function(){
+    var track = document.getElementById('heroTrack');
+    var dots = Array.prototype.slice.call(document.getElementById('heroDots').children);
+    if (!track) return;
+    var raf = null;
+    track.addEventListener('scroll', function(){
+        if (raf) return;
+        raf = requestAnimationFrame(function(){
+            var i = Math.round(track.scrollLeft / track.clientWidth);
+            dots.forEach(function(d, n){ d.classList.toggle('on', n === i); });
+            raf = null;
+        });
+    }, { passive: true });
+})();
+</script>
+
+</body>
+</html>
