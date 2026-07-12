@@ -5,6 +5,7 @@ import { NoticeSubcategoryInput }     from '../components/NoticeSubcategoryInput
 import { VideoCompressInput }         from '../components/VideoCompressInput'
 import { PosterImageAIInput }         from '../components/PosterImageAIInput'
 import { createTranslateInput }       from '../components/TranslateInput'
+import { MediaTitleInput }            from '../components/MediaTitleInput'
 import { MediaUsageSummary }          from '../components/MediaUsageSummary'
 import { PlaylistStatusBadge }        from '../components/PlaylistStatusBadge'
 
@@ -54,8 +55,8 @@ export default defineType({
       title:       'Title (ภาษาหลัก / Primary)',
       type:        'string',
       validation:  Rule => Rule.required(),
-      description: 'ชื่อที่ขึ้นจอ — เป็นภาษาตาม "ภาษาหลักบนจอ" ด้านบน · Can be auto-filled by 🤖 Read Image with AI (notices + promos).',
-      components:  { input: createTranslateInput({ sourceField: 'altText', sourceLang: 'English', targetLang: 'Thai', buttonLabel: '✨ Translate from English' }) },
+      description: 'พาดหัวที่ขึ้นจอ — ใช้ "ชื่อโปรโม/บริการ" (กด ⤵ ดึงจาก Offer) ไม่ใช่ชื่อร้าน เพราะชื่อร้านขึ้นจากโลโก้/ป๊อปอัปอยู่แล้ว · เป็นภาษาตาม "ภาษาหลักบนจอ" ด้านบน',
+      components:  { input: MediaTitleInput },
     }),
     defineField({
       name:        'altText',
