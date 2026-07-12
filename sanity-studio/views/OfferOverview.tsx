@@ -37,6 +37,14 @@ const CTA_TH: Record<string, string> = {
   viewStore: 'ดูร้าน', contact: 'ดูข้อเสนอ', signup: 'สมัคร', event: 'อีเวนต์',
 }
 
+// Thai category labels — display copy of category-config.json (menu mock header)
+const CAT_TH: Record<string, string> = {
+  food: 'อาหาร', groceries: 'ของใช้/ของชำ', services: 'บริการ',
+  healthBeauty: 'สุขภาพ & ความงาม', leisureTravel: 'ท่องเที่ยว & พักผ่อน',
+  shopping: 'ช้อปปิ้ง', education: 'การศึกษา', events: 'อีเวนต์',
+  forRent: 'ให้เช่า', forSale: 'ขาย', buildingUpdates: 'ประกาศอาคาร',
+}
+
 function assetUrl(ref: string | undefined, projectId: string, dataset: string, w?: number): string | null {
   if (!ref) return null
   const p = ref.split('-')
@@ -212,6 +220,56 @@ export function OfferOverview(props: Props) {
             </Flex>
           </Card>
         )}
+
+        {/* 2.5 — menu-card mock: how this offer looks as a card in the kiosk
+            category menu (every offer appears there — Menu Ads exclusively so).
+            Mirrors buildCatCard(): image + provider logo/name overlay, then
+            name / provider / price-in-cyan. A dimmed ghost card conveys the
+            2-column grid context. */}
+        <Stack space={2}>
+          <Text size={1} weight="semibold" style={{ textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            🍽 การ์ดในเมนูหมวด (ตัวอย่างโดยประมาณ)
+          </Text>
+          <Flex justify="center">
+            <div style={{ width: 320, padding: 14, borderRadius: 16, background: '#0B1526', fontFamily: "'Prompt','IBM Plex Sans Thai',sans-serif" }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 9, fontSize: 10, fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase', color: 'rgba(255,255,255,0.75)' }}>
+                <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#39D0FF', boxShadow: '0 0 6px #39D0FF' }} />
+                {d.category ? (CAT_TH[d.category] || d.category) : 'หมวด'}
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <div style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 10, overflow: 'hidden', color: '#fff' }}>
+                  <div style={{ position: 'relative', height: 96, background: '#0a0c10' }}>
+                    {hero && <img src={hero} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
+                    {prov?.logo && <img src={`${prov.logo}?w=80&h=80&fit=crop&auto=format`} alt="" style={{ position: 'absolute', top: 6, left: 6, width: 26, height: 26, borderRadius: 6, objectFit: 'cover', border: '1px solid rgba(255,255,255,0.35)', background: 'rgba(8,12,22,0.55)' }} />}
+                    {prov?.title && (
+                      <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: '10px 7px 4px', fontSize: 8, fontWeight: 700, textAlign: 'right', textShadow: '0 1px 4px rgba(0,0,0,0.85)', background: 'linear-gradient(0deg, rgba(5,6,8,0.78) 0%, transparent 100%)' }}>{prov.title}</div>
+                    )}
+                  </div>
+                  <div style={{ padding: '8px 9px 10px' }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, lineHeight: 1.25 }}>{title}</div>
+                    {prov?.title && <div style={{ fontSize: 8.5, color: 'rgba(255,255,255,0.6)', marginTop: 3, letterSpacing: 0.3 }}>{prov.title}</div>}
+                    {d.price && <div style={{ fontSize: 8, color: '#39D0FF', marginTop: 5, fontFamily: "'JetBrains Mono', monospace", letterSpacing: 0.6 }}>{d.price}</div>}
+                  </div>
+                </div>
+                {/* ghost neighbour — grid context only */}
+                <div style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 10, overflow: 'hidden', opacity: 0.3 }}>
+                  <div style={{ height: 96, background: '#12161f' }} />
+                  <div style={{ padding: '8px 9px 10px' }}>
+                    <div style={{ height: 9, width: '75%', borderRadius: 3, background: 'rgba(255,255,255,0.35)' }} />
+                    <div style={{ height: 7, width: '50%', borderRadius: 3, background: 'rgba(255,255,255,0.2)', marginTop: 6 }} />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Flex>
+          <Flex justify="center">
+            <Text size={1} muted>
+              {d.displayMode === 'menu'
+                ? 'Menu Ad — โผล่เฉพาะการ์ดในเมนูแบบนี้ ไม่วนบนจอ · หน้ามือถือดูแท็บ "หน้าเว็บ (ลูกค้า)"'
+                : 'ทุก offer มีการ์ดในเมนูแบบนี้ · แบบวนจอดูตัวอย่างสไลด์ที่ media ที่ผูกไว้ · หน้ามือถือดูแท็บ "หน้าเว็บ (ลูกค้า)"'}
+            </Text>
+          </Flex>
+        </Stack>
 
         {/* 3 — the pipeline: why is/isn't this on screen? */}
         <Card padding={4} radius={3} shadow={1} tone={liveOnScreen ? 'positive' : 'transparent'} border>
