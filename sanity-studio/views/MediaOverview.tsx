@@ -29,6 +29,26 @@ interface UseRow {
   projectId?: string; projectTitle?: string; projectCode?: string
 }
 interface RefRow { _id: string; title?: string | null }
+interface OfferRow {
+  _id: string; title?: string | null
+  category?: string | null; price?: string | null
+  description_th?: string | null; description_en?: string | null
+  displayLang?: string | null
+  ctaType?: string | null; ctaLabel?: string | null
+  ctaType2?: string | null; ctaLabel2?: string | null
+}
+
+// Display-only copies of the player's fallback maps (category eyebrow + CTA labels)
+const CAT_TH: Record<string, string> = {
+  food: 'อาหาร', groceries: 'ของใช้/ของชำ', services: 'บริการ',
+  healthBeauty: 'สุขภาพ & ความงาม', leisureTravel: 'ท่องเที่ยว & พักผ่อน',
+  shopping: 'ช้อปปิ้ง', education: 'การศึกษา', events: 'อีเวนต์',
+  forRent: 'ให้เช่า', forSale: 'ขาย', buildingUpdates: 'ประกาศอาคาร',
+}
+const CTA_TH: Record<string, string> = {
+  viewMenu: 'ดูเมนู', order: 'สั่งซื้อ', book: 'จองคิว', viewListing: 'ดูประกาศ',
+  viewStore: 'ดูร้าน', contact: 'ดูข้อเสนอ', signup: 'สมัคร', event: 'อีเวนต์',
+}
 
 /* Build a CDN URL straight from an asset _ref (no extra fetch needed).
    image-<hash>-<dims>-<ext> → /images/...  ·  file-<hash>-<ext> → /files/... */
@@ -53,7 +73,7 @@ export function MediaOverview(props: Props) {
   const mediaId  = String(d._id || '').replace(/^drafts\./, '')
 
   const [usage, setUsage]       = useState<UseRow[] | null>(null)
-  const [offer, setOffer]       = useState<RefRow | null>(null)
+  const [offer, setOffer]       = useState<OfferRow | null>(null)
   const [provider, setProvider] = useState<RefRow | null>(null)
 
   // Where is this media playing? (same query as MediaUsageSummary, minus form context)
@@ -71,7 +91,10 @@ export function MediaOverview(props: Props) {
   const offerRef = d.offer?._ref, provRef = d.provider?._ref
   useEffect(() => {
     if (!offerRef) { setOffer(null); return }
-    client.fetch<RefRow>(`*[_id == $id][0]{ _id, "title": coalesce(title_th, title_en) }`, { id: offerRef })
+    client.fetch<OfferRow>(
+      `*[_id == $id][0]{ _id, "title": coalesce(title_th, title_en),
+        category, price, description_th, description_en, displayLang,
+        ctaType, ctaLabel, ctaType2, ctaLabel2 }`, { id: offerRef })
       .then(setOffer).catch(() => setOffer(null))
   }, [client, offerRef])
   useEffect(() => {
@@ -94,6 +117,22 @@ export function MediaOverview(props: Props) {
     : (d.defaultImageDuration ? `${d.defaultImageDuration} วิ/รูป` : null)
 
   const expired = d.expiresAt ? new Date(d.expiresAt) < new Date() : false
+
+  // ── kiosk-mock values — mirror the player's fallback logic ────────────────
+  const isNotice    = d.kind === 'notice'
+  const mockEyebrow = isNotice
+    ? 'ข่าวสารอาคาร'
+    : (offer?.category ? (CAT_TH[offer.category] || offer.category) : 'โปรโมชั่น')
+  const mockDesc = offer
+    ? (offer.displayLang === 'en'
+        ? (offer.description_en || offer.description_th)
+        : (offer.description_th || offer.description_en))
+    : null
+  const mockCtas: string[] = []
+  if (!isNotice) {   // notices never get a CTA on screen
+    mockCtas.push(offer?.ctaLabel || (offer?.ctaType ? CTA_TH[offer.ctaType] || offer.ctaType : '') || 'ดูเพิ่มเติม')
+    if (offer?.ctaType2) mockCtas.push(offer.ctaLabel2 || CTA_TH[offer.ctaType2] || offer.ctaType2)
+  }
 
   const groups = useMemo(() => {
     const g: Record<string, { title: string; code?: string; slots: UseRow[] }> = {}
@@ -122,21 +161,78 @@ export function MediaOverview(props: Props) {
           <Text size={1}>👁️ หน้าสรุป (ดูอย่างเดียว) — ต้องการแก้ไข กดแท็บ <b>Edit</b> ด้านบน</Text>
         </Card>
 
-        {/* 1 — the asset itself */}
-        <Card radius={3} shadow={1} overflow="hidden" tone="transparent">
-          {hero ? (
-            <div style={{ position: 'relative' }}>
-              <img src={hero} alt={d.altText || d.title || 'media'} style={{ display: 'block', width: '100%', maxHeight: 440, objectFit: 'cover' }} />
-              {isVideo && (
-                <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.25)', fontSize: 44 }}>▶️</div>
+        {/* 1 — kiosk-slide mock: 9:16 frame laid out like renderSlot() in
+            vertical-signage.html (eyebrow pill → title → price → sub → CTA dock)
+            so editors see roughly what airs, not just the raw image. */}
+        <Stack space={2}>
+          <Flex justify="center">
+            <div style={{
+              width: 300, height: 533, position: 'relative', flexShrink: 0,
+              borderRadius: 16, overflow: 'hidden', background: '#0B1526',
+              boxShadow: '0 10px 36px rgba(0,0,0,0.35)',
+              fontFamily: "'Prompt','IBM Plex Sans Thai',sans-serif",
+            }}>
+              {hero ? (
+                <img src={hero} alt={d.altText || d.title || 'media'}
+                  style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+              ) : (
+                <Flex align="center" justify="center" style={{ position: 'absolute', inset: 0 }}>
+                  <Text size={2} style={{ color: '#8a93a6' }}>{isVideo ? '🎬 วิดีโอ (ยังไม่มีภาพปก)' : '🖼️ ยังไม่มีรูป'}</Text>
+                </Flex>
               )}
+              {isVideo && (
+                <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 40, textShadow: '0 2px 12px rgba(0,0,0,0.6)' }}>▶️</div>
+              )}
+              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(6,10,20,0.4) 0%, transparent 16%, transparent 42%, rgba(6,10,20,0.94) 100%)' }} />
+              <div style={{ position: 'absolute', left: 14, right: 14, bottom: 14, color: '#fff' }}>
+                <div style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 7, padding: '4px 12px',
+                  border: '1px solid rgba(255,255,255,0.4)', borderRadius: 999,
+                  background: 'rgba(8,12,22,0.45)', fontSize: 9, fontWeight: 600,
+                  letterSpacing: 2, textTransform: 'uppercase',
+                }}>
+                  <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#39D0FF', boxShadow: '0 0 6px #39D0FF' }} />
+                  {mockEyebrow}
+                  <span style={{ opacity: 0.6, fontWeight: 700 }}>›</span>
+                </div>
+                <div style={{
+                  marginTop: 8, fontSize: 26, fontWeight: 600, lineHeight: 1.3,
+                  textTransform: 'uppercase', textShadow: '0 2px 10px rgba(0,0,0,0.6)',
+                  display: '-webkit-box', WebkitBoxOrient: 'vertical' as any, WebkitLineClamp: 2, overflow: 'hidden',
+                }}>{d.title || '(ไม่มีชื่อ)'}</div>
+                {offer?.price && (
+                  <div style={{ marginTop: 6, fontSize: 14, fontWeight: 700, color: '#C9864C', textShadow: '0 1px 5px rgba(0,0,0,0.65)' }}>{offer.price}</div>
+                )}
+                {mockDesc && (
+                  <div style={{
+                    marginTop: 6, fontSize: 10.5, lineHeight: 1.45, color: 'rgba(255,255,255,0.8)',
+                    display: '-webkit-box', WebkitBoxOrient: 'vertical' as any, WebkitLineClamp: 3, overflow: 'hidden',
+                    textShadow: '0 1px 4px rgba(0,0,0,0.6)',
+                  }}>{mockDesc}</div>
+                )}
+                {mockCtas.length > 0 && (
+                  <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    {mockCtas.map((c, i) => (
+                      <div key={c + i} style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                        padding: '9px 14px', borderRadius: 10,
+                        background: 'rgba(10,16,28,0.72)', border: '1px solid rgba(255,255,255,0.14)',
+                        fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase',
+                      }}>
+                        <span>{c}</span><span style={{ opacity: 0.7 }}>{i === 0 ? '→' : '↗'}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
-          ) : (
-            <Flex align="center" justify="center" style={{ height: 220, background: '#12161f' }}>
-              <Text size={2} style={{ color: '#8a93a6' }}>{isVideo ? '🎬 วิดีโอ (ยังไม่มีภาพปก)' : '🖼️ ยังไม่มีรูป'}</Text>
-            </Flex>
-          )}
-        </Card>
+          </Flex>
+          <Flex justify="center">
+            <Text size={1} muted>
+              🖥 ตัวอย่างจำลองหน้าจอ (โดยประมาณ){d.kind === 'notice' ? ' — ประกาศบนจอจริงใช้เลย์เอาต์กระดาษขาว' : ''}
+            </Text>
+          </Flex>
+        </Stack>
 
         {/* title + status badges */}
         <Stack space={3}>
