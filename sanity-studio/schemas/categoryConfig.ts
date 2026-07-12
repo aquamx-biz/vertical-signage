@@ -2,8 +2,9 @@ import { defineField, defineType } from 'sanity'
 
 // Global singleton — _id is always "categoryConfig-global".
 // All projects share one category configuration; no project reference needed.
-// Kiosk reads label per category for display; reads subcategories[] for filter tabs.
-// subcategories are plain display strings (e.g. "Dine-in") — order = display order.
+// Kiosk reads label per category for display; subcategories[] render as stacked
+// section headings on the category page (array order = display order) —
+// defaultSubcategoryId names the section that catches offers with no/unknown subcategory.
 // Category IDs must match enum: food, groceries, services, forRent, forSale, buildingUpdates.
 
 const CATEGORY_ID_LIST = [
@@ -55,9 +56,13 @@ export default defineType({
           // → generic) and never reads this field — filling it did nothing.
           defineField({
             name: 'defaultSubcategoryId',
-            title: 'Default Sub-Category ID',
+            title: 'หมวดย่อยสำรอง (Fallback Sub-Category)',
             type: 'string',
-            description: 'Must match one of the subcategory IDs below. Shown as active tab on load.',
+            // The player routes "orphan" offers (no subcategory chosen, or an
+            // unknown id) into this section — it is NOT a default tab; the
+            // category page has no tabs, it renders all subcategories as
+            // stacked section headings.
+            description: 'offer ที่ไม่ได้เลือกหมวดย่อย (หรือเลือกอันที่ไม่มีจริง) จะไปแสดงใต้หัวข้อนี้ — ใส่ ID ของหมวดย่อยด้านล่าง 1 อัน เช่น recommended',
           }),
           defineField({
             name: 'subcategories',
@@ -86,7 +91,7 @@ export default defineType({
               ],
               preview: { select: { title: 'label.en', subtitle: 'id' } },
             }],
-            description: 'Filter tabs. Array order = display order.',
+            description: 'หัวข้อย่อยบนหน้าหมวด (จอแสดงเป็นหัวข้อเรียงลงมา ไม่ใช่แท็บ) — ลำดับใน list = ลำดับบนจอ',
           }),
         ],
         preview: { select: { title: 'label.en', subtitle: 'id' } },
