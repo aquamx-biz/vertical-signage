@@ -34,25 +34,6 @@ export default defineType({
       validation: Rule => Rule.required(),
     }),
 
-    // ── Poster image (notices: upload first, then AI reads it) ────────────────
-    defineField({
-      name:        'posterImage',
-      title:       'Poster Image',
-      type:        'image',
-      options:     { hotspot: true },
-      // Hidden for image promos: the screen shows Image Files there — never this
-      // field — so having both visible made editors unsure which image airs. And
-      // customers now send plain photos (not text posters), so the AI reader has
-      // nothing to read for promos anyway. Still used by: notices (this IS the
-      // on-screen image) and video promos (thumbnail before the video loads).
-      hidden:      ({ document }) => {
-        const doc = document as any
-        return doc?.kind === 'promo' && doc?.type === 'image'
-      },
-      description: 'รูปประกาศ (notice = รูปนี้คือตัวที่ขึ้นจอ) หรือปกวิดีโอระหว่างโหลด · กด 🤖 Read Image with AI ให้อ่านข้อความในรูปมากรอกชื่ออัตโนมัติ · โปรโมแบบรูปภาพไม่ใช้ช่องนี้ (จอใช้ Image Files)',
-      components:  { input: PosterImageAIInput },
-    }),
-
     // ── Identity ─────────────────────────────────────────────────────────────
     // Display language: mirrors offer.displayLang — the owner's intended
     // language. The `title` below holds the PRIMARY-language title (not
@@ -122,6 +103,25 @@ export default defineType({
             return 'Video file is required when Type is Video'
           return true
         }),
+    }),
+
+    // ── Poster image ──────────────────────────────────────────────────────────
+    // Placed AFTER the type/video fields on purpose: editors were seeing this
+    // slot before they had even chosen image-or-video, and image promos never
+    // use it (the screen airs Image Files there). So it only appears once its
+    // role is knowable — notice (this IS the on-screen image) or video promo
+    // (cover shown while the video loads).
+    defineField({
+      name:        'posterImage',
+      title:       'Poster Image',
+      type:        'image',
+      options:     { hotspot: true },
+      hidden:      ({ document }) => {
+        const doc = document as any
+        return doc?.kind === 'promo' && doc?.type !== 'video'
+      },
+      description: 'ช่องของแอดมิน — ฟอร์มเว็บไม่มีช่องนี้ ลูกค้าไม่เคยส่งปกมา · notice = รูปนี้คือตัวที่ขึ้นจอ · วิดีโอ = ปกตอนโหลด (ไม่ใส่ก็ได้ จอใช้รูปร้านแทนอัตโนมัติ) · กด 🤖 Read Image with AI ให้อ่านข้อความในรูปมากรอกชื่อ',
+      components:  { input: PosterImageAIInput },
     }),
     defineField({
       name: 'imageFiles',
