@@ -105,22 +105,19 @@ export default defineType({
         }),
     }),
 
-    // ── Poster image ──────────────────────────────────────────────────────────
-    // Placed AFTER the type/video fields on purpose: editors were seeing this
-    // slot before they had even chosen image-or-video, and image promos never
-    // use it (the screen airs Image Files there). So it only appears once its
-    // role is knowable — notice (this IS the on-screen image) or video promo
-    // (cover shown while the video loads).
+    // ── Notice image ──────────────────────────────────────────────────────────
+    // Notice-only: for a notice this IS the on-screen image. Hidden for ALL
+    // promos — the customer flow never carries a poster (the /offer form has no
+    // such field), video promos are preloaded and fall back to the provider
+    // image, so showing a poster slot on promos only confused editors. Old
+    // video posters already in data keep working; the field just stays hidden.
     defineField({
       name:        'posterImage',
-      title:       'Poster Image',
+      title:       'รูปประกาศ (ตัวที่ขึ้นจอ)',
       type:        'image',
       options:     { hotspot: true },
-      hidden:      ({ document }) => {
-        const doc = document as any
-        return doc?.kind === 'promo' && doc?.type !== 'video'
-      },
-      description: 'ช่องของแอดมิน — ฟอร์มเว็บไม่มีช่องนี้ ลูกค้าไม่เคยส่งปกมา · notice = รูปนี้คือตัวที่ขึ้นจอ · วิดีโอ = ปกตอนโหลด (ไม่ใส่ก็ได้ จอใช้รูปร้านแทนอัตโนมัติ) · กด 🤖 Read Image with AI ให้อ่านข้อความในรูปมากรอกชื่อ',
+      hidden:      ({ document }) => (document as any)?.kind !== 'notice',
+      description: 'รูปนี้คือตัวที่แสดงบนจอสำหรับประกาศ · กด 🤖 Read Image with AI ให้อ่านข้อความในรูปมากรอกชื่ออัตโนมัติ',
       components:  { input: PosterImageAIInput },
     }),
     defineField({
