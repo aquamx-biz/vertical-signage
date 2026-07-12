@@ -96,7 +96,11 @@ const PLAYLIST_PROJ_MIN = `
                              defined(media->imageFile.asset)      => "image",
                              defined(media->posterImage.asset)    => "image"
                            ),
-        "url":             coalesce(media->videoFile.asset->url, media->imageFiles[0].asset->url, media->imageFile.asset->url, media->posterImage.asset->url),
+        "url":             select(
+                             media->type == "image" => coalesce(media->imageFiles[0].asset->url, media->imageFile.asset->url, media->posterImage.asset->url),
+                             media->type == "video" => media->videoFile.asset->url,
+                             coalesce(media->videoFile.asset->url, media->imageFiles[0].asset->url, media->imageFile.asset->url, media->posterImage.asset->url)
+                           ),
         "images":          media->imageFiles[].asset->url,
         "category":        coalesce(touchExploreCategory, media->offer->category),
         "defaultDuration": media->defaultImageDuration,
@@ -118,7 +122,11 @@ const PLAYLIST_PROJ_V7 = `
                                 defined(media->imageFile.asset)   => "image",
                                 defined(media->posterImage.asset) => "image"
                               ),
-        "url":                coalesce(media->videoFile.asset->url, media->imageFile.asset->url, media->imageFiles[0].asset->url, media->posterImage.asset->url),
+        "url":                select(
+                                media->type == "image" => coalesce(media->imageFiles[0].asset->url, media->imageFile.asset->url, media->posterImage.asset->url),
+                                media->type == "video" => media->videoFile.asset->url,
+                                coalesce(media->videoFile.asset->url, media->imageFile.asset->url, media->imageFiles[0].asset->url, media->posterImage.asset->url)
+                              ),
         "images":             media->imageFiles[].asset->url,
         "poster":             media->posterImage.asset->url,
         "category":           coalesce(touchExploreCategory, media->offer->category),
