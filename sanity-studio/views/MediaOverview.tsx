@@ -10,10 +10,10 @@
  * Everything else lives on the Edit tab. (Overview stays the default tab so a
  * first-time visitor lands on a safe read-only page, not an edit form.)
  */
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useClient } from 'sanity'
 import { IntentLink } from 'sanity/router'
-import { Badge, Box, Card, Flex, Heading, Spinner, Stack, Text } from '@sanity/ui'
+import { Badge, Box, Button, Card, Flex, Heading, Spinner, Stack, Text } from '@sanity/ui'
 
 interface Props {
   document: {
@@ -134,6 +134,26 @@ export function MediaOverview(props: Props) {
     if (offer?.ctaType2) mockCtas.push(offer.ctaLabel2 || CTA_TH[offer.ctaType2] || offer.ctaType2)
   }
 
+  // ── save the mock as a shareable PNG (client-side DOM → canvas → download) ──
+  // Sanity CDN sends CORS headers for the studio origin, so images inline fine.
+  const mockRef = useRef<HTMLDivElement>(null)
+  const [savingPng, setSavingPng] = useState(false)
+  async function saveMockPng() {
+    if (!mockRef.current) return
+    setSavingPng(true)
+    try {
+      const { toPng } = await import('html-to-image')
+      const url = await toPng(mockRef.current, { pixelRatio: 3, cacheBust: true })
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `${String(d.title || 'media-preview').replace(/[\\/:*?"<>|]/g, '_').slice(0, 60)}.png`
+      a.click()
+    } catch (e) {
+      alert('บันทึกรูปไม่สำเร็จ: ' + String(e))
+    }
+    setSavingPng(false)
+  }
+
   const groups = useMemo(() => {
     const g: Record<string, { title: string; code?: string; slots: UseRow[] }> = {}
     for (const r of usage || []) {
@@ -166,7 +186,7 @@ export function MediaOverview(props: Props) {
             so editors see roughly what airs, not just the raw image. */}
         <Stack space={2}>
           <Flex justify="center">
-            <div style={{
+            <div ref={mockRef} style={{
               width: 300, height: 533, position: 'relative', flexShrink: 0,
               borderRadius: 16, overflow: 'hidden', background: '#0B1526',
               boxShadow: '0 10px 36px rgba(0,0,0,0.35)',
@@ -227,10 +247,13 @@ export function MediaOverview(props: Props) {
               </div>
             </div>
           </Flex>
-          <Flex justify="center">
+          <Flex justify="center" align="center" gap={3}>
             <Text size={1} muted>
               🖥 ตัวอย่างจำลองหน้าจอ (โดยประมาณ){d.kind === 'notice' ? ' — ประกาศบนจอจริงใช้เลย์เอาต์กระดาษขาว' : ''}
             </Text>
+            <Button text={savingPng ? '⏳ กำลังบันทึก…' : '💾 บันทึกเป็นรูป'} mode="ghost" fontSize={1} padding={2}
+              disabled={savingPng} onClick={saveMockPng}
+              title="ดาวน์โหลดภาพจำลองนี้เป็น PNG — ส่งให้ลูกค้าดูได้เลย" />
           </Flex>
         </Stack>
 
