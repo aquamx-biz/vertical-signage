@@ -36,6 +36,27 @@ export default defineType({
       validation: Rule => Rule.required(),
     }),
 
+    // ── Offer link — FIRST, right after Kind, because it's the SOURCE ─────────
+    // Pick the offer before typing anything: the pull button below it fills
+    // title/displayLang/images automatically. Placing it lower made editors
+    // hand-fill half the form before discovering the shortcut existed.
+    defineField({
+      name: 'offer',
+      title: 'Offer',
+      type: 'reference',
+      to: [{ type: 'offer' }],
+      weak: true,   // media ถูกสร้างคู่กับ offer draft (ก่อน publish) → ref ต้อง weak · resolve ปกติเมื่อ publish
+      description: 'เลือก offer เป็นอย่างแรก แล้วกดปุ่มด้านล่างเพื่อดึงรูป/ชื่อ/ภาษามาเติมช่องที่เหลือให้อัตโนมัติ',
+      components: { input: OfferPullInput },
+      hidden: ({ document }) => (document as any)?.kind !== 'promo',
+      validation: Rule =>
+        Rule.custom((value, context) => {
+          if ((context.document as any)?.kind === 'promo' && !value?._ref)
+            return 'Offer is required for promo media'
+          return true
+        }),
+    }),
+
     // ── Identity ─────────────────────────────────────────────────────────────
     // Display language: mirrors offer.displayLang — the owner's intended
     // language. The `title` below holds the PRIMARY-language title (not
@@ -187,24 +208,6 @@ export default defineType({
       type: 'image',
       options: { accept: 'image/*', hotspot: true },
       hidden: true,
-    }),
-
-    // ── Offer link (promo only; optional for notices) ─────────────────────────
-    defineField({
-      name: 'offer',
-      title: 'Offer',
-      type: 'reference',
-      to: [{ type: 'offer' }],
-      weak: true,   // media ถูกสร้างคู่กับ offer draft (ก่อน publish) → ref ต้อง weak · resolve ปกติเมื่อ publish
-      description: 'เลือก offer แล้วกดปุ่มด้านล่างเพื่อดึงรูป/ชื่อ/ภาษามาเติมช่องที่ยังว่างอัตโนมัติ — สำหรับคนที่เริ่มงานจากฝั่ง media',
-      components: { input: OfferPullInput },
-      hidden: ({ document }) => (document as any)?.kind !== 'promo',
-      validation: Rule =>
-        Rule.custom((value, context) => {
-          if ((context.document as any)?.kind === 'promo' && !value?._ref)
-            return 'Offer is required for promo media'
-          return true
-        }),
     }),
 
     // ── Provider (convenience shortcut) ──────────────────────────────────────
