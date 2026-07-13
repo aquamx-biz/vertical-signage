@@ -6,6 +6,7 @@ import { VideoCompressInput }         from '../components/VideoCompressInput'
 import { PosterImageAIInput }         from '../components/PosterImageAIInput'
 import { createTranslateInput }       from '../components/TranslateInput'
 import { MediaTitleInput }            from '../components/MediaTitleInput'
+import { OfferPullInput }             from '../components/OfferPullInput'
 import { MediaUsageSummary }          from '../components/MediaUsageSummary'
 import { PlaylistStatusBadge }        from '../components/PlaylistStatusBadge'
 
@@ -195,6 +196,8 @@ export default defineType({
       type: 'reference',
       to: [{ type: 'offer' }],
       weak: true,   // media ถูกสร้างคู่กับ offer draft (ก่อน publish) → ref ต้อง weak · resolve ปกติเมื่อ publish
+      description: 'เลือก offer แล้วกดปุ่มด้านล่างเพื่อดึงรูป/ชื่อ/ภาษามาเติมช่องที่ยังว่างอัตโนมัติ — สำหรับคนที่เริ่มงานจากฝั่ง media',
+      components: { input: OfferPullInput },
       hidden: ({ document }) => (document as any)?.kind !== 'promo',
       validation: Rule =>
         Rule.custom((value, context) => {
@@ -202,7 +205,6 @@ export default defineType({
             return 'Offer is required for promo media'
           return true
         }),
-      description: 'Required for promo. Links this asset to its offer → provider chain.',
     }),
 
     // ── Provider (convenience shortcut) ──────────────────────────────────────
