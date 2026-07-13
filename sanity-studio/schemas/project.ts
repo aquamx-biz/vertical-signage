@@ -120,9 +120,9 @@ export default defineType({
     // ── URLs ──────────────────────────────────────────────────────────────────
     defineField({
       name: 'kioskBaseUrl',
-      title: 'Kiosk Base URL',
+      title: 'Kiosk Base URL (Netlify site)',
       type: 'url',
-      description: 'Root URL of the kiosk app (e.g. https://lumpini-kiosk.netlify.app).',
+      description: 'URL จอจริงบน Netlify — เช่น https://mahogany-tower.netlify.app (นี่คือ Netlify site ของโปรเจ็คนี้)',
     }),
     defineField({
       name: 'kioskUrl',
@@ -135,6 +135,43 @@ export default defineType({
       title: 'Handoff Base URL',
       type: 'url',
       description: 'Base URL for handoff / QR links on mobile landing pages.',
+    }),
+
+    // ── Deploy / Ops — where this screen lives and who to call ───────────────
+    // Click-through links + on-site knowledge, so debugging "จอไม่อัปเดต/จอดับ"
+    // starts from this doc instead of hunting through dashboards. NO SECRETS
+    // here — the dataset is publicly readable.
+    defineField({
+      name: 'githubRepoUrl',
+      title: 'GitHub Repo (build ปลายทาง)',
+      type: 'url',
+      description: 'repo ที่ระบบ push จอตึกนี้ไป — เช็ค commit ล่าสุดเมื่อจอไม่อัปเดต · ปกติ = https://github.com/aquamx-biz/{code}',
+    }),
+    defineField({
+      name: 'netlifyAdminUrl',
+      title: 'Netlify Dashboard',
+      type: 'url',
+      description: 'หน้า deploys/logs ของ site นี้บน app.netlify.com — เช็ค build fail ได้ตรงนี้',
+    }),
+    defineField({
+      name: 'yodeckScreenIds',
+      title: 'Yodeck Screen IDs',
+      type: 'array',
+      of: [{ type: 'string' }],
+      description: 'ชื่อจอใน Yodeck (ตึกเดียวมีหลายจอได้ เช่น noble-be19a, noble-be19b) — ใช้ผูกอีเมลแจ้งจอดับกับโปรเจ็คนี้',
+    }),
+    defineField({
+      name: 'onsiteContact',
+      title: 'ผู้ติดต่อหน้างาน',
+      type: 'string',
+      description: 'นิติ/ช่างประจำตึก — ชื่อ · เบอร์ (จอดับต้องโทรหาใคร)',
+    }),
+    defineField({
+      name: 'opsNotes',
+      title: 'Ops Notes',
+      type: 'text',
+      rows: 3,
+      description: 'โน้ตหน้างาน: ตำแหน่งตู้, เครือข่ายที่ใช้, ข้อตกลงพิเศษ ฯลฯ — ห้ามใส่ password/token',
     }),
   ],
 
