@@ -125,8 +125,11 @@ export function MediaOverview(props: Props) {
   const mockEyebrow = isNotice
     ? 'ข่าวสารอาคาร'
     : (offer?.category ? (CAT_TH[offer.category] || offer.category) : 'โปรโมชั่น')
+  // caption language follows THIS media's displayLang (what the screen's default
+  // mode shows) — not the offer's flag, which once made the mock show English
+  // under a Thai-primary media
   const mockDesc = offer
-    ? (offer.displayLang === 'en'
+    ? (d.displayLang === 'en'
         ? (offer.description_en || offer.description_th)
         : (offer.description_th || offer.description_en))
     : null
