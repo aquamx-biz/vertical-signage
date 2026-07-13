@@ -224,7 +224,13 @@ export function MediaOverview(props: Props) {
                   marginTop: 8, fontSize: 26, fontWeight: 600, lineHeight: 1.3,
                   textTransform: 'uppercase', textShadow: '0 2px 10px rgba(0,0,0,0.6)',
                   display: '-webkit-box', WebkitBoxOrient: 'vertical' as any, WebkitLineClamp: 2, overflow: 'hidden',
-                }}>{d.title || '(ไม่มีชื่อ)'}</div>
+                }}>
+                  {/* '|' = author's line-break hint (same convention as the player's
+                      thaiBreakHTML): each piece stays unbroken, breaks allowed between */}
+                  {String(d.title || '(ไม่มีชื่อ)').split('|').map((u, i) => (
+                    <React.Fragment key={i}>{i > 0 && '​'}<span style={{ whiteSpace: 'nowrap' }}>{u}</span></React.Fragment>
+                  ))}
+                </div>
                 {offer?.price && (
                   <div style={{ marginTop: 6, fontSize: 14, fontWeight: 700, color: '#C9864C', textShadow: '0 1px 5px rgba(0,0,0,0.65)' }}>{offer.price}</div>
                 )}
@@ -266,7 +272,7 @@ export function MediaOverview(props: Props) {
 
         {/* title + status badges */}
         <Stack space={3}>
-          {d.title && <Heading size={2}>{d.title}</Heading>}
+          {d.title && <Heading size={2}>{String(d.title).replace(/\|/g, ' ')}</Heading>}
           <Flex gap={2} wrap="wrap">
             <Badge tone={d.isActive ? 'positive' : 'critical'} fontSize={1} padding={2}>
               {d.isActive ? '● กำลังใช้งาน' : '○ ปิดใช้งาน'}
