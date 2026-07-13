@@ -60,7 +60,7 @@ export default defineType({
         },
       }],
       description: 'The signed contracts linked to this project (one per building).',
-      validation:  Rule => Rule.custom((items: any[]) => {
+      validation:  Rule => Rule.custom((items?: any[]) => {
         if (!items?.length) return true
         const refs = items.map(i => i._ref).filter(Boolean)
         return refs.length === new Set(refs).size
