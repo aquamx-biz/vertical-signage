@@ -63,7 +63,7 @@ export default defineType({
     // necessarily Thai: an English ad carries its English title here).
     defineField({
       name: 'displayLang',
-      title: 'ภาษาหลักบนจอ (Display language)',
+      title: '📺 ภาษาหลักบนจอ (Display language)',
       type: 'string',
       options: { list: [
         { title: 'ไทย (Thai)', value: 'th' },
@@ -74,7 +74,7 @@ export default defineType({
     }),
     defineField({
       name:        'title',
-      title:       'Title (ภาษาหลัก / Primary)',
+      title:       '📺 Title (ภาษาหลัก / Primary)',
       type:        'string',
       validation:  Rule => [
         Rule.required(),
@@ -88,7 +88,7 @@ export default defineType({
           return true
         }).warning(),
       ],
-      description: 'พาดหัวที่ขึ้นจอ — ใช้ "ชื่อโปรโม/บริการ" (กด ⤵ ดึงจาก Offer) ไม่ใช่ชื่อร้าน เพราะชื่อร้านขึ้นจากโลโก้/ป๊อปอัปอยู่แล้ว · เป็นภาษาตาม "ภาษาหลักบนจอ" ด้านบน',
+      description: 'พาดหัวที่ขึ้นจอ — ใช้ "ชื่อโปรโม/บริการ" (กด ⤵ ดึงจาก Offer) ไม่ใช่ชื่อร้าน เพราะชื่อร้านขึ้นจากโลโก้/ป๊อปอัปอยู่แล้ว · เป็นภาษาตาม "ภาษาหลักบนจอ" ด้านบน · พิมพ์ | ตรงจุดที่ยอมให้ขึ้นบรรทัดใหม่บนจอ เช่น "Sell • Rent •|Free Listing" (เครื่องหมายไม่แสดงจริง)',
       components:  { input: MediaTitleInput },
     }),
     defineField({
@@ -122,7 +122,7 @@ export default defineType({
     }),
     defineField({
       name: 'videoFile',
-      title: 'Video File (MP4)',
+      title: '📺 Video File (MP4)',
       type: 'file',
       options: { accept: 'video/*' },
       components: { input: VideoCompressInput },
@@ -147,7 +147,7 @@ export default defineType({
     // video posters already in data keep working; the field just stays hidden.
     defineField({
       name:        'posterImage',
-      title:       'รูปประกาศ (ตัวที่ขึ้นจอ)',
+      title:       '📺 รูปประกาศ (ตัวที่ขึ้นจอ)',
       type:        'image',
       options:     { hotspot: true },
       hidden:      ({ document }) => (document as any)?.kind !== 'notice',
@@ -156,7 +156,7 @@ export default defineType({
     }),
     defineField({
       name: 'imageFiles',
-      title: 'Image Files (JPG / PNG) — up to 6',
+      title: '📺 Image Files (JPG / PNG) — up to 6',
       type: 'array',
       of: [{ type: 'image', options: { accept: 'image/*', hotspot: true } }],
       hidden: ({ document }) => {
@@ -182,7 +182,7 @@ export default defineType({
     // Resolution: playlistItem.displayDuration ?? media.defaultImageDuration ?? 10
     defineField({
       name: 'defaultImageDuration',
-      title: 'Display Duration (seconds)',
+      title: '📺 Display Duration (seconds)',
       type: 'number',
       initialValue: 10,
       hidden: ({ document }) => {

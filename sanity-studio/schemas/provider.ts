@@ -76,7 +76,7 @@ export default defineType({
     // ── Identity ─────────────────────────────────────────────────────────────
     defineField({
       name:        'name_th',
-      title:       'Name (Thai)',
+      title:       '📺 Name (Thai)',
       type:        'string',
       description: 'Name shown in media. Can differ from the legal entity name (e.g. shop name).',
       validation:  Rule => Rule.required(),
@@ -84,7 +84,7 @@ export default defineType({
     }),
     defineField({
       name:        'name_en',
-      title:       'Name (English)',
+      title:       '📺 Name (English)',
       type:        'string',
       description: 'Enter the name to be displayed in media. This can differ from the provider\'s legal entity name (e.g. shop name).',
       components:  { input: NameEnInput },
@@ -146,11 +146,11 @@ export default defineType({
 
     // ── Branding ─────────────────────────────────────────────────────────────
     defineField({
-      name: 'logo', title: 'Logo', type: 'image', options: { hotspot: true },
+      name: 'logo', title: '📺 Logo', type: 'image', options: { hotspot: true },
       description: 'ตราร้านแบบจัตุรัส (แนะนำ PNG พื้นโปร่งใส) — ใช้เป็นโลโก้มุมขวาบนของโปสเตอร์บนจอ และไอคอนข้างชื่อร้านในแอป (หน้าร้าน + หน้าโปรโมชั่น). Square brand mark — shown top-right on the on-screen poster and as the store icon in the app.',
     }),
     defineField({
-      name: 'coverImage', title: 'Cover Image', type: 'image', options: { hotspot: true },
+      name: 'coverImage', title: '📺 Cover Image', type: 'image', options: { hotspot: true },
       description: 'รูปปกแนวนอน (รูปร้าน / บรรยากาศ) — ใช้เป็นภาพใหญ่ส่วนหัวหน้าร้านในแอป, ภาพในป๊อปอัปรายละเอียดบนจอ และภาพพรีวิวตอนแชร์ลิงก์. Wide cover photo — the hero at the top of the store page, the detail image on-screen, and the link-share preview.',
     }),
 
@@ -165,12 +165,12 @@ export default defineType({
     }),
 
     // ── Contact & Location ────────────────────────────────────────────────────
-    defineField({ name: 'locationText', title: 'Location',     type: 'string', description: 'e.g. G Floor, Zone A' }),
+    defineField({ name: 'locationText', title: '📺 Location',     type: 'string', description: 'e.g. G Floor, Zone A' }),
     defineField({ name: 'mapUrl',       title: 'Map URL',       type: 'url' }),
     defineField({ name: 'phone',   title: 'Phone',    type: 'string', components: { input: createRetrieveFromPartyInput('phone')   } }),
     defineField({ name: 'lineId',  title: 'LINE ID',  type: 'string', components: { input: createRetrieveFromPartyInput('lineId')  } }),
     defineField({ name: 'website', title: 'Website',  type: 'url',    components: { input: createRetrieveFromPartyInput('website') } }),
-    defineField({ name: 'openingHours', title: 'Opening Hours', type: 'string', description: 'e.g. 10:00–22:00' }),
+    defineField({ name: 'openingHours', title: '📺 Opening Hours', type: 'string', description: 'e.g. 10:00–22:00' }),
     defineField({ name: 'amenities', title: 'Amenities / จุดเด่นร้าน', type: 'array', of: [{ type: 'string' }], description: 'Store highlights shown on provider page (parking, wifi, accepts cards, etc.).' }),
     defineField({ name: 'submittedBy', title: 'Submitted By', type: 'string', readOnly: true, description: 'Most recent auth identity that submitted via /submit (e.g. "line:Uxxx" / "email:foo@bar.com").' }),
     defineField({

@@ -101,7 +101,7 @@ export default defineType({
     defineField({
       name:       'title_th',
       group:      'content',
-      title:      'Title (Thai)',
+      title:      '📺 Title (Thai)',
       type:       'string',
       description: 'ชื่อสินค้า / บริการ / โปรโมชั่น สั้นๆ กระชับ — เช่น "All-Day Brunch", "นวดแผนไทย 60 นาที", "ลด 50% วันนี้". Short product / service / promo name (the ad headline).',
       // required — UNLESS the owner chose English and the English title exists
@@ -118,7 +118,7 @@ export default defineType({
     defineField({
       name:       'title_en',
       group:      'content',
-      title:      'Title (English)',
+      title:      '📺 Title (English)',
       type:       'string',
       description: 'ระบบไม่แปลอัตโนมัติ — อยากมีเวอร์ชันอังกฤษ กด ✨ แปลจากช่องไทย แล้วตรวจก่อนบันทึก (จอโชว์ภาษาตาม "ภาษาหลักบนจอ")',
       components: { input: createTranslateInput({ sourceField: 'title_th', sourceLang: 'Thai',    targetLang: 'English', buttonLabel: '✨ Translate from Thai'    }) },
@@ -147,7 +147,7 @@ export default defineType({
     defineField({
       name: 'category',
       group: 'content',
-      title: 'Category',
+      title: '📺 Category',
       type: 'string',
       options: { list: CATEGORY_LIST },
       validation: Rule => Rule.required(),
@@ -156,7 +156,7 @@ export default defineType({
     defineField({
       name: 'subCategories',
       group: 'content',
-      title: 'Sub-Categories',
+      title: '📺 Sub-Categories',
       type: 'array',
       of: [{ type: 'string' }],
       components: { input: SubCategoriesInput },
@@ -206,17 +206,17 @@ export default defineType({
     // under the ad on the kiosk (clamped to ~2 lines) AND as the full detail on the
     // offer page in the app. The web form stores ONLY the language the customer
     // typed (see displayLang) — the other side stays empty until a human translates.
-    defineField({ name: 'description_th', group: 'content', title: 'Description (Thai)',    type: 'text', rows: 3,
-      description: 'ป้ายใต้โฆษณาบนจอ (ตัด ~2 บรรทัด) + รายละเอียดเต็มในหน้า offer บนแอป. Ad subtitle on-screen + full detail on the app offer page.',
+    defineField({ name: 'description_th', group: 'content', title: '📺 Description (Thai)',    type: 'text', rows: 3,
+      description: 'ป้ายใต้โฆษณาบนจอ (ตัด ~2 บรรทัด) + รายละเอียดเต็มในหน้า offer บนแอป. Ad subtitle on-screen + full detail on the app offer page. · พิมพ์ | ตรงจุดที่ยอมให้ขึ้นบรรทัดใหม่บนจอ (เครื่องหมายไม่แสดงจริง)',
       components: { input: createTranslateInput({ sourceField: 'description_en', sourceLang: 'English', targetLang: 'Thai',    buttonLabel: '✨ Translate from English' }) },
     }),
-    defineField({ name: 'description_en', group: 'content', title: 'Description (English)', type: 'text', rows: 3,
+    defineField({ name: 'description_en', group: 'content', title: '📺 Description (English)', type: 'text', rows: 3,
       components: { input: createTranslateInput({ sourceField: 'description_th', sourceLang: 'Thai',    targetLang: 'English', buttonLabel: '✨ Translate from Thai'    }) },
     }),
     defineField({
       name: 'price',
       group: 'content',
-      title: 'Price',
+      title: '📺 Price',
       type: 'string',
       description: 'e.g. "150", "150–300", "Free", "From ฿99"',
     }),
@@ -227,7 +227,7 @@ export default defineType({
     defineField({
       name: 'images',
       group: 'content',
-      title: 'Images',
+      title: '📺 Images',
       type: 'array',
       of: [{ type: 'image', options: { hotspot: true } }],
       options: { layout: 'grid' },
@@ -238,7 +238,7 @@ export default defineType({
     defineField({
       name: 'listing',
       group: 'property',
-      title: 'Property Listing Specs',
+      title: '📺 Property Listing Specs',
       type: 'object',
       hidden: propertyGate,
       description: 'Structured specs for property offers — shown only for For Sale / For Rent (or the View Listing CTA).',
@@ -265,7 +265,7 @@ export default defineType({
     defineField({
       name: 'listingImages',
       group: 'property',
-      title: 'Listing Photos',
+      title: '📺 Listing Photos',
       type: 'array',
       hidden: propertyGate,
       of: [{ type: 'image', options: { hotspot: true } }],
@@ -280,7 +280,7 @@ export default defineType({
     defineField({
       name: 'ctaType',
       group: 'cta',
-      title: 'CTA Type',
+      title: '📺 CTA Type',
       type: 'string',
       options: {
         list: [
@@ -295,7 +295,7 @@ export default defineType({
         ],
       },
     }),
-    defineField({ name: 'ctaLabel', group: 'cta', title: 'CTA Button Label (custom)', type: 'string', description: 'Custom button text set by vendor (e.g. "Schedule Viewing").' }),
+    defineField({ name: 'ctaLabel', group: 'cta', title: '📺 CTA Button Label (custom)', type: 'string', description: 'Custom button text set by vendor (e.g. "Schedule Viewing").' }),
     defineField({
       name: 'adType',
       group: 'advanced',
@@ -340,7 +340,7 @@ export default defineType({
       name: 'ctaType2',
       group: 'cta',
       components: { field: MediaGatedField },
-      title: 'CTA Type (2nd)',
+      title: '📺 CTA Type (2nd)',
       type: 'string',
       options: { list: [
         { title: 'View Menu',    value: 'viewMenu' },
@@ -354,7 +354,7 @@ export default defineType({
       ] },
       description: 'Optional second CTA — Media ads only (Menu ads use a single CTA).',
     }),
-    defineField({ name: 'ctaLabel2', group: 'cta', components: { field: MediaGatedField }, title: 'CTA Button Label (2nd, custom)', type: 'string' }),
+    defineField({ name: 'ctaLabel2', group: 'cta', components: { field: MediaGatedField }, title: '📺 CTA Button Label (2nd, custom)', type: 'string' }),
     defineField({ name: 'ctaURL2',   group: 'cta', components: { field: MediaGatedField }, title: 'ลิงก์ภายนอก (ปุ่มที่ 2) / Vendor link (2nd)', type: 'url', description: 'เหมือนลิงก์ภายนอกด้านบน แต่สำหรับปุ่มที่ 2' }),
 
     // ── Per-CTA extra data (appears below the CTA pickers that reveal it) ────
@@ -362,7 +362,7 @@ export default defineType({
     defineField({
       name: 'menuItems',
       group: 'cta',
-      title: 'Menu Items',
+      title: '📺 Menu Items',
       type: 'array',
       hidden: ctaGate('viewMenu'),
       of: [{
@@ -370,7 +370,7 @@ export default defineType({
         fields: [
           defineField({ name: 'name_th', title: 'Name (TH)', type: 'string' }),
           defineField({ name: 'name_en', title: 'Name (EN)', type: 'string' }),
-          defineField({ name: 'price', title: 'Price', type: 'string' }),
+          defineField({ name: 'price', title: '📺 Price', type: 'string' }),
           defineField({ name: 'image', title: 'Image', type: 'image', options: { hotspot: true } }),
         ],
       }],
@@ -380,7 +380,7 @@ export default defineType({
     defineField({
       name: 'orderItems',
       group: 'cta',
-      title: 'Order Items',
+      title: '📺 Order Items',
       type: 'array',
       hidden: ctaGate('order'),
       of: [{
@@ -388,7 +388,7 @@ export default defineType({
         fields: [
           defineField({ name: 'name_th', title: 'Name (TH)', type: 'string' }),
           defineField({ name: 'name_en', title: 'Name (EN)', type: 'string' }),
-          defineField({ name: 'price', title: 'Price', type: 'string' }),
+          defineField({ name: 'price', title: '📺 Price', type: 'string' }),
           defineField({ name: 'image', title: 'Image', type: 'image', options: { hotspot: true } }),
         ],
       }],
@@ -441,7 +441,7 @@ export default defineType({
       ],
     }),
 
-    defineField({ name: 'availability', group: 'advanced', title: 'Availability', type: 'string', description: 'e.g. "Mon–Fri 11:00–14:00"' }),
+    defineField({ name: 'availability', group: 'advanced', title: '📺 Availability', type: 'string', description: 'e.g. "Mon–Fri 11:00–14:00"' }),
     defineField({ name: 'validFrom',    group: 'advanced', title: 'Valid From', type: 'datetime' }),
     defineField({ name: 'validTo',      group: 'advanced', title: 'Valid To',   type: 'datetime' }),
   ],

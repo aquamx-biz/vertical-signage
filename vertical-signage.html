@@ -2251,6 +2251,12 @@ function cleanTitle(s) {
         .replace(/^[ัิ-ฺ็-๎\s]+/, '')
         .trim();
 }
+/* '|' is the author's line-break hint for the SLIDE headline/sub (thaiBreakHTML).
+   Every other surface (tap popup, menu cards) renders plain text — strip the
+   hint there so residents never see a raw pipe. */
+function stripBreakHints(s) {
+    return String(s == null ? '' : s).replace(/\s*\|\s*/g, ' ').trim();
+}
 function adaptPlaylistToSlots(pl) {
     const now = Date.now();
     const POSES = ['bl', 'br', 'tl'];
@@ -2399,7 +2405,7 @@ function adaptToCategories() {
         const items = [];
         providers.forEach(p => {
             (p.offers || []).forEach(o => {
-                const name = cleanTitle(isTH ? (o.title_th || o.title_en || p.name_th) : (o.title_en || o.title_th || p.name_en));
+                const name = stripBreakHints(cleanTitle(isTH ? (o.title_th || o.title_en || p.name_th) : (o.title_en || o.title_th || p.name_en)));
                 const provName = isTH ? (p.name_th || p.name_en) : (p.name_en || p.name_th);
                 const desc = isTH ? (o.description_th || o.description_en) : (o.description_en || o.description_th);
                 const img = o.primaryImage || p.coverImage || p.thumbnail || '';
@@ -3553,8 +3559,8 @@ function openDetail(ctx) {
     setDetailGallery(imgs);
     const setTxt = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
     setTxt('detailCat', ctx.eyebrow || (uiLang === 'th' ? 'รายการ' : 'Offering'));
-    setTxt('detailTitle', cleanTitle(ctx.title));
-    setTxt('detailSub', ctx.sub || '');
+    setTxt('detailTitle', stripBreakHints(cleanTitle(ctx.title)));
+    setTxt('detailSub', stripBreakHints(ctx.sub || ''));
 
     // Listing (For Sale / For Rent): chip on the image + specs overlaid on the
     // image bottom (bed · bath · area · floor · price) — mirrors the /offer form's
