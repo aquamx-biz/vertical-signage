@@ -299,6 +299,21 @@ export default defineType({
         'Takes effect on the kiosk after the next deploy.',
     }),
 
+    // ── Deploy-on-publish — the user's per-publish choice ─────────────────────
+    // Replaces the deleted unfiltered Sanity webhook that rebuilt on EVERY
+    // publish of any doc type. Default off = publish just saves (batch-deploy
+    // later via Pending Publish); on = fire exactly one manual rebuild after
+    // this publish, then the switch resets itself.
+    defineField({
+      name: 'deployOnPublish',
+      title: '🚀 ส่งขึ้นจอทันทีหลัง Publish (ครั้งเดียว)',
+      type: 'boolean',
+      initialValue: false,
+      description:
+        'ปกติกด Publish = แค่บันทึก รอไปกดส่งขึ้นจอรวมทีเดียวที่ Pending Publish (ประหยัดรอบ build) · ' +
+        'เปิดสวิตช์นี้เฉพาะของด่วนชิ้นเดียว: publish แล้วระบบสั่งส่งขึ้นจอให้ทันที 1 รอบ เสร็จแล้วสวิตช์ปิดตัวเอง',
+    }),
+
     // ── Playlist auto-slot — REMOVE on publish ────────────────────────────────
     // Applies to both promo and notice.
     // initialValue=false: opt-in; user must tick deliberately each time.

@@ -45,6 +45,7 @@ export function MediaPublishAction(props: DocumentActionProps) {
   const excludedProjs = (doc?.excludedProjects ?? []) as Array<{ _ref: string }>
   const addOnPub      = !!(doc?.addToPlaylistOnPublish)
   const removeOnPub   = !!(doc?.removeFromPlaylistOnPublish)
+  const deployOnPub   = !!(doc?.deployOnPublish)
 
   // ── Resolve target project refs ────────────────────────────────────────────
   // Notices: scope is hidden in the form and defaults to 'global', which would
@@ -125,10 +126,25 @@ export function MediaPublishAction(props: DocumentActionProps) {
     try {
       await client
         .patch(props.id)
-        .set({ addToPlaylistOnPublish: false, removeFromPlaylistOnPublish: false })
+        .set({ addToPlaylistOnPublish: false, removeFromPlaylistOnPublish: false, deployOnPublish: false })
         .commit()
     } catch {
       /* non-critical */
+    }
+  }
+
+  // ── Fire exactly ONE manual rebuild (the ?manual=1 gate is required) ───────
+  // This is the per-publish "ส่งขึ้นจอทันที" choice that replaced the deleted
+  // unfiltered Sanity webhook.
+  async function fireDeploy(): Promise<boolean> {
+    const url = 'https://app.aquamx.biz/api/sanity-webhook?manual=1'
+    try {
+      const res = await fetch(url, { method: 'POST' })
+      const out = await res.json().catch(() => null)
+      return !!out?.success
+    } catch {
+      try { await fetch(url, { method: 'POST', mode: 'no-cors' }); return true }
+      catch { return false }
     }
   }
 
@@ -150,8 +166,8 @@ export function MediaPublishAction(props: DocumentActionProps) {
     setBusy(true)
     publish.execute()
 
-    // Neither flag set → standard publish, nothing else to do.
-    if (!addOnPub && !removeOnPub) {
+    // No flags set → standard publish, nothing else to do.
+    if (!addOnPub && !removeOnPub && !deployOnPub) {
       setBusy(false)
       props.onComplete()
       return
@@ -160,24 +176,33 @@ export function MediaPublishAction(props: DocumentActionProps) {
     // Give publish time to settle before we run patches / transactions.
     await new Promise(r => setTimeout(r, 800))
 
-    const targets = await resolveTargets()
-    if (targets.length === 0) {
-      // Nothing to act on — still reset the flag so it doesn't fire again next time.
-      await resetFlags()
-      setBusy(false)
-      props.onComplete()
-      return
+    let slotResults: SlotResult[] = []
+    if (addOnPub || removeOnPub) {
+      const targets = await resolveTargets()
+      if (targets.length > 0) {
+        if (addOnPub) {
+          setDialogMode('add')
+          for (const id of targets) {
+            slotResults.push(await createSlot(id))
+          }
+        } else if (removeOnPub) {
+          setDialogMode('remove')
+          slotResults = await deleteSlots(targets)
+        }
+      }
     }
 
-    let slotResults: SlotResult[] = []
-    if (addOnPub) {
-      setDialogMode('add')
-      for (const id of targets) {
-        slotResults.push(await createSlot(id))
-      }
-    } else if (removeOnPub) {
-      setDialogMode('remove')
-      slotResults = await deleteSlots(targets)
+    // The per-publish deploy choice — runs AFTER slot work so the rebuild
+    // bakes the slots this publish just created.
+    if (deployOnPub) {
+      const ok = await fireDeploy()
+      slotResults.push({
+        projectId: '',
+        ok,
+        text: ok
+          ? '🚀 สั่งส่งขึ้นจอแล้ว — จอทุกตึกได้ของใหม่ใน ~5 นาที'
+          : 'สั่งส่งขึ้นจอไม่สำเร็จ (เน็ต/Netlify มีปัญหา) — publish สำเร็จแล้ว ไปกด Deploy Now ที่ Pending Publish อีกครั้ง',
+      })
     }
 
     await resetFlags()

@@ -178,11 +178,15 @@ export function PendingChangesTool() {
         tx.delete(r._id)
         await tx.commit()
         pushLog(`✓ ${title}: publish แล้ว`)
-        if (draft._type === 'media' && (draft.addToPlaylistOnPublish || draft.removeFromPlaylistOnPublish)) {
-          const targets = await resolveTargets(draft as Record<string, any>)
-          if (draft.addToPlaylistOnPublish)    await addSlots(pubId, targets, title)
-          if (draft.removeFromPlaylistOnPublish) await removeSlots(pubId, targets, title)
-          await client.patch(pubId).set({ addToPlaylistOnPublish: false, removeFromPlaylistOnPublish: false }).commit()
+        if (draft._type === 'media' && (draft.addToPlaylistOnPublish || draft.removeFromPlaylistOnPublish || draft.deployOnPublish)) {
+          if (draft.addToPlaylistOnPublish || draft.removeFromPlaylistOnPublish) {
+            const targets = await resolveTargets(draft as Record<string, any>)
+            if (draft.addToPlaylistOnPublish)    await addSlots(pubId, targets, title)
+            if (draft.removeFromPlaylistOnPublish) await removeSlots(pubId, targets, title)
+          }
+          // deployOnPublish also resets here — the batch fires its own single
+          // rebuild at the end, so the one-shot must not linger for next time
+          await client.patch(pubId).set({ addToPlaylistOnPublish: false, removeFromPlaylistOnPublish: false, deployOnPublish: false }).commit()
         }
         ok++
       } catch (err: any) {
