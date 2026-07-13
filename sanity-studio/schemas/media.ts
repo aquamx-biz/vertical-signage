@@ -306,7 +306,7 @@ export default defineType({
     // this publish, then the switch resets itself.
     defineField({
       name: 'deployOnPublish',
-      title: '🚀 ส่งขึ้นจอทันทีหลัง Publish (ครั้งเดียว)',
+      title: '🚀 Deploy to Screens on Publish (one-shot)',
       type: 'boolean',
       initialValue: false,
       description:
