@@ -233,11 +233,13 @@ export function MediaOverview(props: Props) {
                   }}>{mockDesc}</div>
                 )}
                 {mockCtas.length > 0 && (
-                  <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  // mirrors the player's .cta-dock: grid column sized to the WIDEST
+                  // label (max-content) — buttons hug their text, never full-width
+                  <div style={{ marginTop: 10, display: 'grid', gridTemplateColumns: 'max-content', justifyContent: 'start', gap: 6 }}>
                     {mockCtas.map((c, i) => (
                       <div key={c + i} style={{
-                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                        padding: '9px 14px', borderRadius: 10,
+                        width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                        gap: 22, padding: '9px 14px', borderRadius: 10, whiteSpace: 'nowrap',
                         background: 'rgba(10,16,28,0.72)', border: '1px solid rgba(255,255,255,0.14)',
                         fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase',
                       }}>
