@@ -13,8 +13,8 @@
  */
 import React, { useEffect, useMemo, useState } from 'react'
 import { useClient } from 'sanity'
-import { IntentLink } from 'sanity/router'
-import { Badge, Box, Card, Flex, Heading, Spinner, Stack, Text } from '@sanity/ui'
+import { IntentLink, useRouter } from 'sanity/router'
+import { Badge, Box, Button, Card, Flex, Heading, Spinner, Stack, Text, useToast } from '@sanity/ui'
 
 interface Props {
   document: {
@@ -137,6 +137,45 @@ export function OfferOverview(props: Props) {
   const liveOnScreen = steps.approved && steps.hasMedia && steps.inPlaylist && steps.published &&
                        d.status !== false && !expired && !notYet
   const loadingUsage = slots === null || medias === null
+
+  // ── one-click media creation — a REAL button at the step that needs it ─────
+  // (deliberately NOT in the Publish dropdown: publishing is the LAST thing a
+  // user does; utility work must live where the workflow shows the gap.)
+  const router = useRouter()
+  const toast  = useToast()
+  const [creatingMedia, setCreatingMedia] = useState(false)
+  async function createMediaFromOffer() {
+    setCreatingMedia(true)
+    try {
+      const displayLang = d.displayLang || (/[฀-๿]/.test(d.title_th || '') || !d.title_en ? 'th' : 'en')
+      const mTitle = displayLang === 'en' ? (d.title_en || d.title_th) : (d.title_th || d.title_en)
+      const srcImages = (Array.isArray(d.images) && d.images.length)
+        ? d.images
+        : (d.primaryImage ? [d.primaryImage] : [])
+      const imageFiles = srcImages
+        .filter((img: any) => img?.asset?._ref)
+        .map((img: any, i: number) => ({
+          _type: 'image', _key: img._key || `offer-img-${i}`,
+          asset: { _type: 'reference', _ref: img.asset._ref },   // reuse asset — no re-upload
+        }))
+      const newId = `drafts.${crypto.randomUUID()}`
+      await client.create({
+        _id: newId, _type: 'media', kind: 'promo', type: 'image',
+        displayLang, title: mTitle || '(ไม่มีชื่อ)',
+        ...(imageFiles.length ? { imageFiles } : {}),
+        defaultImageDuration: 10,
+        offer: { _type: 'reference', _ref: offerId, _weak: true },   // weak: offer may be draft-only
+        scope: d.scope || 'global',
+        ...(Array.isArray(d.projects) && d.projects.length ? { projects: d.projects } : {}),
+        isActive: true, addToPlaylistOnPublish: false,
+      })
+      toast.push({ status: 'success', title: 'สร้าง Media draft แล้ว',
+        description: imageFiles.length ? `ดึงรูป ${imageFiles.length} รูป + ชื่อจาก offer ให้แล้ว` : 'offer นี้ไม่มีรูป — เพิ่มรูปใน media ก่อน publish' })
+      router.navigateIntent('edit', { id: newId.replace(/^drafts\./, ''), type: 'media' })
+    } catch (err: any) {
+      toast.push({ status: 'error', title: 'สร้างไม่สำเร็จ', description: err?.message ?? String(err) })
+    } finally { setCreatingMedia(false) }
+  }
 
   const groups = useMemo(() => {
     const g: Record<string, { title: string; code?: string; slots: SlotRow[] }> = {}
@@ -282,6 +321,17 @@ export function OfferOverview(props: Props) {
                 <StepRow ok={steps.approved}  label="1 · เนื้อหาผ่านรีวิว" hint="กดอนุมัติจากอีเมลรีวิว หรือแก้ reviewStatus เป็น Approved" />
                 <StepRow ok={steps.hasMedia}  label={`2 · มีสื่อในคลัง (Media)${medias?.length ? ` — ${medias.length} ชิ้น${activeMedia.length < (medias?.length || 0) ? ` (เปิดใช้ ${activeMedia.length})` : ''}` : ''}`}
                          hint="สร้าง media doc ผูกกับ offer นี้ (โปสเตอร์/วิดีโอที่จะฉายบนจอ)" />
+                <Flex style={{ marginLeft: 34 }}>
+                  <Button
+                    text={creatingMedia ? '⏳ กำลังสร้าง…' : '🎬 สร้าง Media จาก offer นี้ (ดึงรูป+ชื่อให้อัตโนมัติ)'}
+                    tone={steps.hasMedia ? 'default' : 'positive'}
+                    mode={steps.hasMedia ? 'ghost' : 'default'}
+                    fontSize={1} padding={3}
+                    disabled={creatingMedia}
+                    onClick={createMediaFromOffer}
+                    title="สร้าง media draft โดยดึงรูป (ใช้ไฟล์เดิม ไม่อัปโหลดซ้ำ) ชื่อ ภาษา และผูก offer ให้ครบ — แล้วพาไปหน้า media นั้นเลย"
+                  />
+                </Flex>
                 <StepRow ok={steps.inPlaylist} label={`3 · อยู่ใน playlist ของโครงการ${slots?.length ? ` — ${slots.length} ช่อง` : ''}`}
                          hint="เพิ่ม media เข้า playlist ของโครงการที่ต้องการ (หรือใช้ Add-to-playlist-on-publish บน media)" />
                 <StepRow ok={steps.published} label="4 · Publish เอกสารแล้ว" hint="เอกสารยังเป็น draft — กด Publish ที่แท็บ Edit" />

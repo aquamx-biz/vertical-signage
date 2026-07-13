@@ -6,7 +6,6 @@ import { initPlaylistAction }    from './actions/initPlaylistAction'
 import { ProjectPublishAction } from './actions/projectPublishAction'
 import { AddToPlaylistAction }  from './actions/addToPlaylistAction'
 import { MediaPublishAction }   from './actions/mediaPublishAction'
-import { CreateMediaFromOfferAction } from './actions/CreateMediaFromOfferAction'
 import { DocumentOverview }     from './views/DocumentOverview'
 import { MediaOverview }        from './views/MediaOverview'
 import { OfferOverview }        from './views/OfferOverview'
@@ -446,11 +445,6 @@ export default defineConfig({
       if (ctx.schemaType === 'categoryConfig' || ctx.schemaType === 'ratecard') {
         // Singleton — block delete and duplicate so it can't be destroyed or duplicated.
         return prev.filter(a => !['delete', 'duplicate'].includes((a as any).action))
-      }
-      if (ctx.schemaType === 'offer') {
-        // One-click media creation — reuses the offer's images/title/language
-        // so admins stop rebuilding the same content by hand.
-        return [...prev, CreateMediaFromOfferAction]
       }
       if (ctx.schemaType === 'contract') {
         return [...prev, CreatePartyFromContractAction]
