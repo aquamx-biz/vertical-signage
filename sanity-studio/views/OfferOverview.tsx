@@ -15,6 +15,7 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { useClient } from 'sanity'
 import { IntentLink, useRouter } from 'sanity/router'
 import { Badge, Box, Button, Card, Flex, Heading, Spinner, Stack, Text, useToast } from '@sanity/ui'
+import { useEditWhenNew } from './useEditWhenNew'
 
 interface Props {
   document: {
@@ -67,6 +68,7 @@ function StepRow({ ok, label, hint }: { ok: boolean; label: string; hint?: strin
 }
 
 export function OfferOverview(props: Props) {
+  useEditWhenNew(props.document)   // brand-new doc → jump to Edit
   const d       = props.document.displayed || {}
   const client  = useClient({ apiVersion: '2024-01-01' })
   const cfg     = client.config() as { projectId?: string; dataset?: string }

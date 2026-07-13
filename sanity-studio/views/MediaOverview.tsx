@@ -14,6 +14,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useClient } from 'sanity'
 import { IntentLink } from 'sanity/router'
 import { Badge, Box, Button, Card, Flex, Heading, Spinner, Stack, Text } from '@sanity/ui'
+import { useEditWhenNew } from './useEditWhenNew'
 
 interface Props {
   document: {
@@ -65,6 +66,7 @@ function assetUrl(ref: string | undefined, projectId: string, dataset: string, w
 }
 
 export function MediaOverview(props: Props) {
+  useEditWhenNew(props.document)   // brand-new doc → jump to Edit
   const d        = props.document.displayed || {}
   const client   = useClient({ apiVersion: '2024-01-01' })
   const cfg      = client.config() as { projectId?: string; dataset?: string }

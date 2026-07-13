@@ -11,6 +11,7 @@ import { useClient } from 'sanity'
 import { IntentLink } from 'sanity/router'
 import { Badge, Box, Card, Flex, Spinner, Stack, Text } from '@sanity/ui'
 import { PhonePreview, providerPreviewUrl, NoSlugCard } from './WebPreview'
+import { useEditWhenNew } from './useEditWhenNew'
 
 interface Props {
   document: {
@@ -44,6 +45,7 @@ function dedupe(rows: OfferRow[]): OfferRow[] {
 }
 
 export function ProviderOverview(props: Props) {
+  useEditWhenNew(props.document)   // brand-new doc → jump to Edit
   const d      = props.document.displayed || {}
   const client = useClient({ apiVersion: '2024-01-01' })
   const provId = String(d._id || '').replace(/^drafts\./, '')
