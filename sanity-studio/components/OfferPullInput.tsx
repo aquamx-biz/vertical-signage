@@ -23,6 +23,7 @@ export function OfferPullInput(props: RefInputProps) {
   const title   = useFormValue(['title']) as string | undefined
   const dLang   = useFormValue(['displayLang']) as string | undefined
   const imgs    = useFormValue(['imageFiles']) as any[] | undefined
+  const prov    = useFormValue(['provider']) as { _ref?: string } | undefined
   const { patch } = useDocumentOperation(docId, 'media')
 
   const [busy, setBusy] = useState(false)
@@ -35,7 +36,8 @@ export function OfferPullInput(props: RefInputProps) {
       // prefer the draft — freshest edit wins
       const o = await client.fetch<Record<string, any> | null>(
         `coalesce(*[_id == "drafts." + $id][0], *[_id == $id][0]){
-          title_th, title_en, displayLang, images, primaryImage, scope, projects
+          title_th, title_en, displayLang, images, primaryImage, scope, projects,
+          "providerRef": provider._ref
         }`, { id: offerRef },
       )
       if (!o) throw new Error('หา offer ไม่เจอ')
@@ -58,6 +60,7 @@ export function OfferPullInput(props: RefInputProps) {
       if (!title?.trim() || title === '(ไม่มีชื่อ)') { if (oTitle) { set.title = oTitle; pulled.push('ชื่อ') } } else kept.push('ชื่อ')
       if (!dLang) { set.displayLang = lang; pulled.push('ภาษา') } else kept.push('ภาษา')
       if (!imgs?.length) { if (imageFiles.length) { set.imageFiles = imageFiles; set.type = 'image'; pulled.push(`รูป ×${imageFiles.length}`) } } else kept.push('รูป')
+      if (!prov?._ref) { if (o.providerRef) { set.provider = { _type: 'reference', _ref: o.providerRef, _weak: true }; pulled.push('ร้าน') } } else kept.push('ร้าน')
 
       if (!Object.keys(set).length) {
         toast.push({ status: 'info', title: 'ไม่ได้ทับอะไร', description: 'ทุกช่องมีข้อมูลอยู่แล้ว — ลบช่องที่อยากดึงใหม่ก่อน แล้วกดอีกครั้ง' })
@@ -76,10 +79,10 @@ export function OfferPullInput(props: RefInputProps) {
       {props.renderDefault(props)}
       <Flex align="center" gap={2}>
         <Button
-          text={busy ? '⏳ กำลังดึง…' : '⤵ ดึงรูป+ชื่อ+ภาษาจาก Offer นี้'}
+          text={busy ? '⏳ กำลังดึง…' : '⤵ ดึงรูป+ชื่อ+ภาษา+ร้านจาก Offer นี้'}
           mode="ghost" tone="primary" fontSize={1}
           disabled={!offerRef || busy}
-          title={offerRef ? 'เติมเฉพาะช่องที่ยังว่าง (ชื่อ / ภาษา / รูป — ใช้ไฟล์เดิม ไม่อัปโหลดซ้ำ) ไม่ทับของที่กรอกแล้ว' : 'เลือก Offer ก่อน'}
+          title={offerRef ? 'เติมเฉพาะช่องที่ยังว่าง (ชื่อ / ภาษา / รูป / ร้าน — รูปใช้ไฟล์เดิม ไม่อัปโหลดซ้ำ) ไม่ทับของที่กรอกแล้ว' : 'เลือก Offer ก่อน'}
           onClick={pullFromOffer}
         />
         {!offerRef && <Text size={0} muted>เลือก Offer ก่อน แล้วปุ่มนี้จะดึงข้อมูลซ้ำ ๆ มาให้เอง</Text>}

@@ -165,6 +165,7 @@ export function OfferOverview(props: Props) {
         ...(imageFiles.length ? { imageFiles } : {}),
         defaultImageDuration: 10,
         offer: { _type: 'reference', _ref: offerId, _weak: true },   // weak: offer may be draft-only
+        ...(d.provider?._ref ? { provider: { _type: 'reference', _ref: d.provider._ref, _weak: true } } : {}),
         scope: d.scope || 'global',
         ...(Array.isArray(d.projects) && d.projects.length ? { projects: d.projects } : {}),
         isActive: true, addToPlaylistOnPublish: false,
