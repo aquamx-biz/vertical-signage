@@ -37,7 +37,8 @@ export function OfferPullInput(props: RefInputProps) {
       const o = await client.fetch<Record<string, any> | null>(
         `coalesce(*[_id == "drafts." + $id][0], *[_id == $id][0]){
           title_th, title_en, displayLang, images, primaryImage, scope, projects,
-          "providerRef": provider._ref
+          "providerRef": provider._ref,
+          "providerPublished": defined(*[_id == ^.provider._ref][0]._id)
         }`, { id: offerRef },
       )
       if (!o) throw new Error('หา offer ไม่เจอ')
@@ -60,7 +61,10 @@ export function OfferPullInput(props: RefInputProps) {
       if (!title?.trim() || title === '(ไม่มีชื่อ)') { if (oTitle) { set.title = oTitle; pulled.push('ชื่อ') } } else kept.push('ชื่อ')
       if (!dLang) { set.displayLang = lang; pulled.push('ภาษา') } else kept.push('ภาษา')
       if (!imgs?.length) { if (imageFiles.length) { set.imageFiles = imageFiles; set.type = 'image'; pulled.push(`รูป ×${imageFiles.length}`) } } else kept.push('รูป')
-      if (!prov?._ref) { if (o.providerRef) { set.provider = { _type: 'reference', _ref: o.providerRef, _weak: true }; pulled.push('ร้าน') } } else kept.push('ร้าน')
+      // strong when the provider is published (schema expects strong — no mismatch
+      // warning, delete-protection intact); weak only while it's still a draft
+      // (a strong ref to an unpublished doc is rejected on save)
+      if (!prov?._ref) { if (o.providerRef) { set.provider = { _type: 'reference', _ref: o.providerRef, ...(o.providerPublished ? {} : { _weak: true }) }; pulled.push('ร้าน') } } else kept.push('ร้าน')
 
       if (!Object.keys(set).length) {
         toast.push({ status: 'info', title: 'ไม่ได้ทับอะไร', description: 'ทุกช่องมีข้อมูลอยู่แล้ว — ลบช่องที่อยากดึงใหม่ก่อน แล้วกดอีกครั้ง' })
