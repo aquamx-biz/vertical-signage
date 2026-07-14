@@ -1364,6 +1364,7 @@ body {
 .detail-slots { display: flex; gap: 0.7vh; flex-wrap: wrap; }
 .detail-slot { font-size: 1.3vh; color: #fff; background: rgba(255,255,255,0.1); border: 0.1vh solid rgba(255,255,255,0.22); border-radius: 0.8vh; padding: 0.5vh 1.2vh; }
 .detail-slot.on { background: var(--bronze-strong); border-color: var(--bronze-strong); font-weight: 800; }
+.detail-slot.off { opacity: 0.32; pointer-events: none; }   /* violates the min-notice cutoff for the selected day */
 .detail-dd { font-size: 1.35vh; color: rgba(255,255,255,0.82); margin: 0.4vh 0; }
 .detail-substore { font-size: 1.3vh; color: rgba(255,255,255,0.72); margin: 0 0 0.6vh; }
 .detail-price { font-family: 'Prompt','IBM Plex Sans Thai',sans-serif; font-weight: 800; font-size: 2vh; color: var(--bronze); line-height: 1; margin: 0.4vh 0; }
@@ -3516,6 +3517,19 @@ function mobileVerbLabel(ctaType) {
 function _hm(s){ if(!s) return null; const m=String(s).match(/(\d{1,2}):(\d{2})/); return m ? (+m[1]*60 + +m[2]) : null; }
 function _fmtHM(m){ return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0'); }
 /* Generate a date strip + available time slots from a booking config object. */
+/* Min-notice cutoff — the earliest instant a booking may start.
+   hours = now + N h (กันจองกระทันหัน) · days = 00:00 of today + N days
+   (เริ่มเปิดจองอีก N วันข้างหน้า) · none = now (still hides today's past slots). */
+function bookCutoffTs(b){
+    const n = b && +b.minNotice;
+    if(!n || n <= 0) return Date.now();
+    if((b.minNoticeUnit || 'hours') === 'days'){
+        const t = new Date(); t.setHours(0,0,0,0);
+        return t.getTime() + n * 86400000;
+    }
+    return Date.now() + n * 3600000;
+}
+let _bookCutoff = 0;   // set per popup; read by updateSlotAvail()
 function genBookSlots(b){
     if(!b) return { dates:[], slots:[] };
     const open=_hm(b.openTime), close=_hm(b.closeTime), slot=b.slotMinutes, bs=_hm(b.breakStart), be=_hm(b.breakEnd);
@@ -3527,15 +3541,40 @@ function genBookSlots(b){
         }
     }
     const ahead = b.daysAhead || 7;
+    const cutoff = bookCutoffTs(b);
+    // Date window starts on the first day that can still take a booking; if the
+    // cutoff falls after the day's LAST slot, that day is spent — start tomorrow.
+    const first = new Date(cutoff); first.setHours(0,0,0,0);
+    if(slots.length){
+        const cd = new Date(cutoff);
+        if(cd.getHours()*60 + cd.getMinutes() > _hm(slots[slots.length-1])) first.setDate(first.getDate()+1);
+    }
     const wk = uiLang==='th' ? ['อา','จ','อ','พ','พฤ','ศ','ส'] : ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-    const today=new Date(), dates=[];
+    const dates=[];
     for(let i=0;i<ahead;i++){
-        const d=new Date(today.getFullYear(), today.getMonth(), today.getDate()+i);
+        const d=new Date(first.getFullYear(), first.getMonth(), first.getDate()+i);
         // iso rides the chip → the handoff link (?d=) so the phone gets the pick
         const iso = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
         dates.push({ d:d.getDate(), w:wk[d.getDay()], iso });
     }
-    return { dates, slots };
+    return { dates, slots, cutoff };
+}
+/* Grey out slot chips that violate the cutoff for the SELECTED date (only the
+   first bookable day ever has partial availability). Keeps a valid slot selected. */
+function updateSlotAvail(){
+    const dsel = detailOverlay.querySelector('.detail-date.on');
+    const iso = dsel && dsel.dataset.iso;
+    if(!iso || !_bookCutoff) return;
+    const base = new Date(iso + 'T00:00:00').getTime();
+    detailOverlay.querySelectorAll('.detail-slot').forEach(ch => {
+        const ok = base + _hm(ch.dataset.t)*60000 >= _bookCutoff;
+        ch.classList.toggle('off', !ok);
+        if(!ok) ch.classList.remove('on');
+    });
+    if(!detailOverlay.querySelector('.detail-slot.on')){
+        const firstOk = detailOverlay.querySelector('.detail-slot:not(.off)');
+        if(firstOk) firstOk.classList.add('on');
+    }
 }
 /* Build the per-CTA popup body HTML (menu / order / book / event / store / contact
    + promo window). Listing specs are rendered separately as the image overlay. */
@@ -3567,6 +3606,7 @@ function buildDetailDyn(ctx){
     }
     if (t==='book'){
         const g = genBookSlots(ctx.booking);
+        _bookCutoff = g.cutoff || 0;   // read by updateSlotAvail() after render
         const slot = ctx.booking && ctx.booking.slotMinutes;
         const sub = [store, (slot?slot+' '+(isTH?'นาที/คิว':'min/slot'):'')].filter(Boolean).join(' · ');
         let h = sub?`<div class="detail-substore">${sub}</div>`:'';
@@ -3671,6 +3711,7 @@ function openDetail(ctx) {
     // Per-CTA body (menu / order / book / event / store tags / contact + promo).
     const dyn = document.getElementById('detailDyn');
     if (dyn) dyn.innerHTML = ctx.isUpdate ? '' : buildDetailDyn(ctx);
+    if (ctx.ctaType === 'book') updateSlotAvail();   // grey out slots the cutoff forbids
 
     const hs = document.getElementById('handoffStep');
     if (hs) hs.style.display = 'none';
@@ -3836,10 +3877,11 @@ function buildIntentQuery(ctaType) {
    (single-select per group). The selection is read at QR time. */
 detailOverlay.addEventListener('click', function (e) {
     const chip = e.target.closest('.detail-date, .detail-slot');
-    if (!chip) return;
+    if (!chip || chip.classList.contains('off')) return;   // cutoff-forbidden slot
     const group = chip.classList.contains('detail-date') ? '.detail-date' : '.detail-slot';
     detailOverlay.querySelectorAll(group).forEach(c => c.classList.remove('on'));
     chip.classList.add('on');
+    if (group === '.detail-date') updateSlotAvail();       // re-check slots for the new day
     resetIdle();
 });
 
