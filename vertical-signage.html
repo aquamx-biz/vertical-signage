@@ -3401,11 +3401,28 @@ const GALLERY_INTERVAL_MS = 4000;
 function stopDetailGallery() {
     if (_galleryTimer) { clearInterval(_galleryTimer); _galleryTimer = null; }
 }
+/* Decode-gate for the popup image: never hand the compositor a half-decoded
+   bitmap. Load via Image() first (prewarmed cache = instant), set the
+   background only once the FULL bitmap exists, then nudge the layer so box
+   GPUs re-rasterise from the complete texture — the same guard the slides
+   got; background-image divs have no load event, so this wrapper adds one. */
+function setDetailImage(di, url) {
+    if (!di || !url) return;
+    const src = sizedImg(url, 1080, 1920);
+    const im = new Image();
+    im.decoding = 'async';
+    im.onload = function () {
+        di.style.backgroundImage = `url('${src}')`;
+        di.style.willChange = 'transform';
+        requestAnimationFrame(() => requestAnimationFrame(() => { di.style.willChange = ''; }));
+    };
+    im.onerror = function () { di.style.backgroundImage = `url('${src}')`; };
+    im.src = src;
+}
 function showGalleryImage(i) {
     if (!_galleryImgs.length) return;
     _galleryIdx = ((i % _galleryImgs.length) + _galleryImgs.length) % _galleryImgs.length;
-    const di = document.getElementById('detailImg');
-    if (di) di.style.backgroundImage = `url('${sizedImg(_galleryImgs[_galleryIdx], 1080, 1920)}')`;
+    setDetailImage(document.getElementById('detailImg'), _galleryImgs[_galleryIdx]);
     const dots = document.getElementById('detailGalleryDots');
     if (dots) [...dots.children].forEach((d, idx) => d.classList.toggle('active', idx === _galleryIdx));
 }
@@ -3421,7 +3438,7 @@ function setDetailGallery(imgs) {
         if (dots) dots.style.display = 'none';
         return;
     }
-    if (di) di.style.backgroundImage = `url('${sizedImg(_galleryImgs[0], 1080, 1920)}')`;
+    setDetailImage(di, _galleryImgs[0]);
     if (_galleryImgs.length > 1 && dots) {
         dots.style.display = 'flex';
         _galleryImgs.forEach((_, i) => {
