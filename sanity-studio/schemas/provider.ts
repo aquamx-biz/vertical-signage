@@ -175,9 +175,9 @@ export default defineType({
     // fields decide whether/how it continues to the SHOP's group.
     defineField({
       name: 'lineGroupId',
-      title: 'LINE Group ID ของร้าน (รับคำขอจอง/สั่งซื้อ)',
+      title: 'LINE ของร้านที่รับคำขอจอง/สั่งซื้อ (Group ID หรือ User ID)',
       type: 'string',
-      description: 'วิธีได้ ID: เชิญ LINE OA ของ aquamx เข้ากลุ่มไลน์ร้าน → พิมพ์ข้อความอะไรก็ได้ 1 ครั้ง → bot ตอบ Group ID กลับมา → คัดลอกมาวางที่นี่ · เว้นว่าง = คำขอแจ้งเราอย่างเดียว',
+      description: 'ใส่ได้ 2 แบบ — แบบกลุ่ม: เชิญ OA aquamx เข้ากลุ่มไลน์ร้าน พิมพ์อะไรก็ได้ 1 ครั้ง bot ตอบ Group ID (ขึ้นต้น C) · แบบคนเดียว: เจ้าของร้านเพิ่มเพื่อน OA aquamx แล้วทักแชท 1 ข้อความ bot ตอบ User ID (ขึ้นต้น U) · คัดลอก ID มาวางที่นี่ · เว้นว่าง = คำขอแจ้งเราอย่างเดียว',
     }),
     defineField({
       name: 'leadRelay',
@@ -189,7 +189,7 @@ export default defineType({
         { title: 'ไม่ส่งต่อ — แจ้งเราอย่างเดียว',                            value: 'off' },
       ], layout: 'radio' },
       initialValue: 'manual',
-      description: 'มีผลเมื่อกรอก LINE Group ID แล้วเท่านั้น',
+      description: 'มีผลเมื่อกรอก LINE ID ช่องบนแล้วเท่านั้น',
     }),
     defineField({ name: 'website', title: 'Website',  type: 'url',    components: { input: createRetrieveFromPartyInput('website') } }),
     defineField({ name: 'openingHours', title: '📺 Opening Hours', type: 'string', description: 'e.g. 10:00–22:00' }),
