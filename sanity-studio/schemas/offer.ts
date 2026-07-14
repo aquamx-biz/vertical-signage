@@ -421,7 +421,7 @@ export default defineType({
         defineField({ name: 'slotMinutes', title: 'Slot Minutes', type: 'number' }),
         defineField({ name: 'breakStart', title: 'Break Start', type: 'string', description: 'e.g. "14:00"' }),
         defineField({ name: 'breakEnd', title: 'Break End', type: 'string', description: 'e.g. "17:00"' }),
-        defineField({ name: 'daysAhead', title: 'Days Ahead', type: 'number' }),
+        defineField({ name: 'daysAhead', title: 'เปิดให้เลือกวันล่วงหน้ากี่วัน (นับรวมวันนี้)', type: 'number', description: 'เช่น 3 = เลือกได้ วันนี้ / พรุ่งนี้ / มะรืน — ไม่ใช่ระยะเวลาขั้นต่ำก่อนถึงคิว' }),
         defineField({ name: 'capacityPerSlot', title: 'Capacity Per Slot', type: 'number' }),
       ],
     }),
