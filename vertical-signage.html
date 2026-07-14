@@ -1317,7 +1317,13 @@ body {
     backdrop-filter: blur(8px);
 }
 .detail-gallery { position: relative; width: 100%; height: 67%; flex-shrink: 0; }
-.detail-img { width: 100%; height: 100%; background-size: cover; background-position: center; background-color: #11151c; transition: background-image 0.4s ease; cursor: pointer; }
+.detail-img { width: 100%; height: 100%; background-size: cover; background-position: center; background-color: #11151c; transition: background-image 0.4s ease; cursor: pointer; position: relative; overflow: hidden; }
+/* Right after a reload the media cache is cold — a tapped popup can wait seconds
+   for its image. Say "loading" instead of sitting there as a silent empty panel.
+   The class exists only while the popup is open AND the bitmap is pending, so
+   the animation never composites in the background (kiosk GPU rule). */
+.detail-img.img-loading::before { content: ''; position: absolute; top: 50%; left: 50%; width: 42px; height: 42px; margin: -21px 0 0 -21px; border: 3px solid rgba(255,255,255,0.18); border-top-color: rgba(255,255,255,0.75); border-radius: 50%; animation: detailImgSpin 0.9s linear infinite; }
+@keyframes detailImgSpin { to { transform: rotate(360deg); } }
 /* Listing chip (For Sale/Rent) — overlaid top-left of the image */
 .detail-chip {
     position: absolute; top: 1.4vh; left: 1.4vh; z-index: 3;
@@ -3409,14 +3415,22 @@ function stopDetailGallery() {
 function setDetailImage(di, url) {
     if (!di || !url) return;
     const src = sizedImg(url, 1080, 1920);
+    // Cold cache (right after a reload) = the bitmap can take seconds on condo
+    // wifi. Spin instead of showing a silent empty panel. Token guards a rapid
+    // gallery switch: only the LATEST request may clear the spinner / set the bg.
+    const token = (di._imgToken = (di._imgToken || 0) + 1);
+    di.classList.add('img-loading');
     const im = new Image();
     im.decoding = 'async';
-    im.onload = function () {
+    const settle = () => {
+        if (di._imgToken !== token) return;   // superseded by a newer image
+        di.classList.remove('img-loading');
         di.style.backgroundImage = `url('${src}')`;
         di.style.willChange = 'transform';
         requestAnimationFrame(() => requestAnimationFrame(() => { di.style.willChange = ''; }));
     };
-    im.onerror = function () { di.style.backgroundImage = `url('${src}')`; };
+    im.onload = settle;
+    im.onerror = settle;
     im.src = src;
 }
 function showGalleryImage(i) {
@@ -3569,6 +3583,9 @@ function buildDetailDyn(ctx){
 
 function openDetail(ctx) {
     lastDetailCtx = ctx;   // remember for lang-toggle re-render
+    // Someone is LOOKING at this popup — yield the whole pipe to its images.
+    // The SW prewarm queue resumes when the popup closes.
+    try { navigator.serviceWorker?.controller?.postMessage({ action: 'prewarm-pause' }); } catch (e) {}
     // F — build the gallery image list (offer.primaryImage + images[] + provider
     // fallbacks). If ctx.images wasn't supplied (e.g. CTA-slide path), fall back
     // to the single ctx.img so the popup still shows one image with no dots.
@@ -3691,6 +3708,8 @@ function closeDetail() {
         if (!detailOverlay.classList.contains('open')) detailOverlay.style.visibility = 'hidden';
     }, 300);
     stopDetailGallery();           // F — stop auto-rotate when popup closes
+    // Nobody is looking any more — let the SW prewarm queue continue.
+    try { navigator.serviceWorker?.controller?.postMessage({ action: 'prewarm-resume' }); } catch (e) {}
     syncInteractingClass();
     resumeRotation();   // re-arm current slot (video/multi-image + dwell) — never stall
 }

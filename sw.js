@@ -133,8 +133,16 @@ async function serveVideo(req) {
 // Images → opaque (no-cors). Videos → CORS full download, so they're ready to
 // play offline before ever cycling into view. Also purges cached videos that are
 // no longer in the current playlist (keeps the big cache bounded).
+// While a popup is open the player pauses the queue — every byte of condo wifi
+// goes to the image the visitor is actually looking at. In-memory flag is fine:
+// if the SW is killed the queue died with it anyway.
+let prewarmPaused = false;
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
 self.addEventListener('message', (event) => {
   const data = event.data || {};
+  if (data.action === 'prewarm-pause')  { prewarmPaused = true;  return; }
+  if (data.action === 'prewarm-resume') { prewarmPaused = false; return; }
   if (data.action !== 'prewarm' || !Array.isArray(data.urls)) return;
 
   event.waitUntil((async () => {
@@ -169,6 +177,7 @@ self.addEventListener('message', (event) => {
       let i = 0;
       await Promise.all(Array.from({ length: Math.min(concurrency, urls.length) }, async () => {
         while (i < urls.length) {
+          while (prewarmPaused) await sleep(300);   // popup open → yield the pipe
           const url = urls[i++];
           try { await worker(url) } catch (_) { /* offline / transient — fetch handler retries on demand */ }
         }
