@@ -169,6 +169,28 @@ export default defineType({
     defineField({ name: 'mapUrl',       title: 'Map URL',       type: 'url' }),
     defineField({ name: 'phone',   title: 'Phone',    type: 'string', components: { input: createRetrieveFromPartyInput('phone')   } }),
     defineField({ name: 'lineId',  title: 'LINE ID',  type: 'string', components: { input: createRetrieveFromPartyInput('lineId')  } }),
+
+    // ── Lead relay — where booking/order requests get forwarded ─────────────
+    // The kiosk/mobile booking flow notifies OUR admin LINE group; these two
+    // fields decide whether/how it continues to the SHOP's group.
+    defineField({
+      name: 'lineGroupId',
+      title: 'LINE Group ID ของร้าน (รับคำขอจอง/สั่งซื้อ)',
+      type: 'string',
+      description: 'วิธีได้ ID: เชิญ LINE OA ของ aquamx เข้ากลุ่มไลน์ร้าน → พิมพ์ข้อความอะไรก็ได้ 1 ครั้ง → bot ตอบ Group ID กลับมา → คัดลอกมาวางที่นี่ · เว้นว่าง = คำขอแจ้งเราอย่างเดียว',
+    }),
+    defineField({
+      name: 'leadRelay',
+      title: 'โหมดส่งต่อคำขอถึงร้าน',
+      type: 'string',
+      options: { list: [
+        { title: 'ผ่านแอดมินก่อน — กด ✅ ในกลุ่ม LINE เราแล้วค่อยส่งถึงร้าน', value: 'manual' },
+        { title: 'ส่งตรงถึงร้านอัตโนมัติ — เราได้รับสำเนา',                 value: 'auto' },
+        { title: 'ไม่ส่งต่อ — แจ้งเราอย่างเดียว',                            value: 'off' },
+      ], layout: 'radio' },
+      initialValue: 'manual',
+      description: 'มีผลเมื่อกรอก LINE Group ID แล้วเท่านั้น',
+    }),
     defineField({ name: 'website', title: 'Website',  type: 'url',    components: { input: createRetrieveFromPartyInput('website') } }),
     defineField({ name: 'openingHours', title: '📺 Opening Hours', type: 'string', description: 'e.g. 10:00–22:00' }),
     defineField({ name: 'amenities', title: 'Amenities / จุดเด่นร้าน', type: 'array', of: [{ type: 'string' }], description: 'Store highlights shown on provider page (parking, wifi, accepts cards, etc.).' }),
