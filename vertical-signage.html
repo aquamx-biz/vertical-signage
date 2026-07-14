@@ -1519,6 +1519,15 @@ body {
 /* Mitr display tier — same TH+EN title font as the offer-page preview, so the preview matches the real screen */
 .topbar-project, .slot-logo, .cat-screen-title, .cat-card-name { font-weight: 700; }
 /* .slot-title weight is controlled in its own rule (Prompt 600 — slimmer) */
+
+/* ── Kiosk GPU rule #4: NO backdrop-filter, EVER ─────────────────────────────
+   The rk35xx WebView on the boxes intermittently composites ANY visible
+   backdrop-filter layer as a SOLID BLACK BOX — seen live 2026-07-14: the popup
+   caption plate and the ✕ chip rendered as black rectangles while everything
+   else drew fine. Blur is a nicety; a black box is a broken screen. Killed
+   globally (must be the LAST rule) — rgba fills, gradients and text-shadows
+   carry the look instead. Do not re-introduce blur on this surface. */
+*, *::before, *::after { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
 </style>
 </head>
 <body>
