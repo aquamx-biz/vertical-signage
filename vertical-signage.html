@@ -3607,6 +3607,7 @@ function openDetail(ctx) {
         // A4: vendor's real CTA destination (deep link / URL) takes priority over
         // the generic /o/{slug} page. A3: provider's preferred handoff channel.
         ctaURL: ctx.deepLink || ctx.ctaURL || '',
+        ctaType: ctx.ctaType || null,   // step-2 heading verb ("📱 จอง บนมือถือ")
         handoffType: (ctx.provider && ctx.provider.defaultHandoffType) || 'qr'
     };
 
@@ -3617,14 +3618,19 @@ function openDetail(ctx) {
     const hs = document.getElementById('handoffStep');
     if (hs) hs.style.display = 'none';
     const vm = document.getElementById('detailVm');
-    // "{verb} on mobile" — matches the form's MOBILE_VERB idiom (Book/Order/Sign up
-    // on mobile), falling back to the offer's custom CTA label, then generic.
+    // Step-1 button = the VERB only ("จอง →", "สมัคร →") — no "บนมือถือ" yet.
+    // Mentioning mobile here made people think tapping would jump to their phone
+    // instantly; the mobile wording now lives on step 2 (the QR/handoff panel),
+    // which is where the phone actually enters the flow.
     if (vm) {
-        // Order replaces the "{verb} on mobile" button with a cart button (v2).
+        // Order replaces the verb button with a cart button (v2).
         if (ctx.ctaType === 'order') {
             vm.textContent = uiLang === 'th' ? '🛒 ดูตะกร้า · สั่ง' : '🛒 View cart · Order';
         } else {
-            vm.textContent = `📱 ${ctx.ctaType ? mobileVerbLabel(ctx.ctaType) : (ctx.ctaLabel || (uiLang === 'th' ? 'ดูบนมือถือ' : 'View on mobile'))}`;
+            const v = MOBILE_VERB[ctx.ctaType];
+            const verb = v ? (uiLang === 'th' ? v.th : v.en)
+                           : (ctx.ctaLabel || (uiLang === 'th' ? 'ดูเพิ่มเติม' : 'View more'));
+            vm.textContent = `${verb} →`;
         }
     }
 
@@ -3689,7 +3695,12 @@ function showHandoff() {
     else                              deepLink = `${CONFIG.HANDOFF_BASE}`;
 
     const setTxt = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
-    setTxt('handoffHeading',    isTH ? `สแกนเพื่อดู ${offerLabel}` : `Scan to View ${offerLabel}`);
+    // Step 2 owns the mobile wording: "📱 จอง บนมือถือ" (verb-aware) — step 1's
+    // button is verb-only so nobody expects an instant jump to their phone.
+    const verbMobile = handoffCtx.ctaType
+        ? mobileVerbLabel(handoffCtx.ctaType)
+        : (isTH ? 'ดูบนมือถือ' : 'View on mobile');
+    setTxt('handoffHeading',    `📱 ${verbMobile}${offerLabel ? ` — ${offerLabel}` : ''}`);
     setTxt('handoffSubheading', isTH ? 'สแกนคิวอาร์โค้ดด้วยโทรศัพท์ของท่านเพื่อดำเนินการต่อ' : 'Scan the QR code with your phone to continue');
     setTxt('handoffPhoneLabel', isTH ? 'กรอกเบอร์โทรเพื่อให้ติดต่อกลับ' : 'Enter your phone number to be contacted');
     setTxt('sendLinkBtn',       isTH ? 'ส่งเบอร์โทร' : 'Submit Number');
@@ -4159,6 +4170,10 @@ async function init() {
             if (vid) mediaUrls.push(vid);
             // Slide provider badge (top-right logo)
             if (item.provider && item.provider.logo) mediaUrls.push(sizedImg(item.provider.logo, 240, 240));
+            // Tap-popup gallery for property listings — their dedicated photo set
+            // wins over images[] in the popup, so it needs the SAME 1080x1920 urls
+            (Array.isArray(item.listingImages) ? item.listingImages : [])
+                .forEach(u => { if (u && !isVid(u)) mediaUrls.push(sizedImg(u, 1080, 1920)); });
         });
         // MENU/category content too (offers, provider logos, Building-Updates
         // posters) — tapping MENU used to fetch everything on demand, so cards sat
@@ -4168,6 +4183,13 @@ async function init() {
             if (it.img && !isVid(it.img)) mediaUrls.push(sizedImg(it.img, 640, 480));
             const lg = it._provider && it._provider.logo;
             if (lg) mediaUrls.push(sizedImg(lg, 240, 240));
+            // Card-tap popup gallery (galleryList): listing photos → primary +
+            // images → provider cover. All rendered at 1080x1920 in the popup,
+            // so prewarm those EXACT urls — the cache only hits on a match.
+            const o = it._offer, p = it._provider;
+            const gal = (o && Array.isArray(o.listingImages) && o.listingImages.length) ? o.listingImages
+                      : [ o && o.primaryImage, ...((o && Array.isArray(o.images)) ? o.images : []) ];
+            gal.concat([p && p.coverImage]).forEach(u => { if (u && !isVid(u)) mediaUrls.push(sizedImg(u, 1080, 1920)); });
         }));
         const uniqueUrls = [...new Set(mediaUrls.filter(Boolean))];
         if (uniqueUrls.length) {
