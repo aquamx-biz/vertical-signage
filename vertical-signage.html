@@ -2760,7 +2760,14 @@ function manageSlotVideo(idx) {
         if (!v) { scheduleNext(); return; }
         if (v.getAttribute('src') !== s.video) { v.src = s.video; }
         v.loop = false;                            // so `ended` fires (FIX 1)
-        v.style.display = 'block';
+        // Keep the video layer HIDDEN until it has a decoded first frame — a
+        // buffering <video> paints solid black OVER the poster still, and on slow
+        // condo wifi a multi-MB file buffers for minutes (the recurring "black
+        // video slide"). The poster/provider still underneath carries the slot;
+        // the video swaps in only once it can actually show pixels.
+        v.style.display = 'none';
+        const revealVideo = () => { if (myToken === advanceToken) v.style.display = 'block'; };
+        if (v.readyState >= 2) revealVideo(); else v.onloadeddata = revealVideo;
         try { v.currentTime = 0; } catch(e) {}
 
         // ended → advance
