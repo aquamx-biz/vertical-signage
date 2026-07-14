@@ -4310,6 +4310,59 @@ async function init() {
         setTimeout(function() { location.reload(); }, msToNextHour);
     })();
 
+    // ── Health beacon — every screen reports its vitals to the fleet API ─────
+    // POSTs every 5 min: project, build rev, uptime, JS errors, failed media,
+    // current slide, JS heap. A screen that goes silent >12 min = frozen page /
+    // dead box / dead wifi. Read side: https://app.aquamx.biz/api/kiosk-beacon
+    (function healthBeacon() {
+        var BURL = 'https://app.aquamx.biz/api/kiosk-beacon';
+        var boot = Date.now();
+        var errs = [], imgf = [];
+        var bid = '';
+        try {
+            bid = localStorage.getItem('aq-beacon-id') || '';
+            if (!bid) { bid = Math.random().toString(36).slice(2, 8); localStorage.setItem('aq-beacon-id', bid); }
+        } catch (e) { bid = 'mem' + Math.random().toString(36).slice(2, 6); }
+        window.addEventListener('error', function (e) {
+            try {
+                if (e && e.target && (e.target.tagName === 'IMG' || e.target.tagName === 'VIDEO')) {
+                    imgf.push(String(e.target.currentSrc || e.target.src || '?').slice(-80));
+                    if (imgf.length > 5) imgf.shift();
+                } else if (e && e.message) {
+                    errs.push(String(e.message).slice(0, 120));
+                    if (errs.length > 5) errs.shift();
+                }
+            } catch (_) {}
+        }, true);
+        window.addEventListener('unhandledrejection', function (e) {
+            try { errs.push(('promise: ' + ((e.reason && e.reason.message) || e.reason)).slice(0, 120)); if (errs.length > 5) errs.shift(); } catch (_) {}
+        });
+        function send() {
+            try {
+                var slide = '';
+                try { if (typeof cur !== 'undefined' && SLOTS && SLOTS[cur]) slide = (SLOTS[cur].titleLines || []).join(' ').slice(0, 40); } catch (_) {}
+                var mem = 0; try { mem = performance.memory ? Math.round(performance.memory.usedJSHeapSize / 1048576) : 0; } catch (_) {}
+                fetch(BURL, {
+                    method: 'POST', keepalive: true,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        p:     (window.__BAKED__ && __BAKED__.projectCode) || 'unknown',
+                        rev:   (window.__BAKED__ && __BAKED__.rev) || '',
+                        bid:   bid,
+                        up:    Math.round((Date.now() - boot) / 60000),
+                        err:   errs.join(' | '),
+                        imgf:  imgf.join(' | '),
+                        slide: slide,
+                        memMB: mem,
+                        ua:    navigator.userAgent.slice(-60)
+                    })
+                }).catch(function () {});
+            } catch (_) {}
+        }
+        setTimeout(send, 45000);        // first report after warm-up
+        setInterval(send, 300000);      // then every 5 minutes
+    })();
+
     // Build / data-source stamp (D) — always visible, like vertical-signage.
     // Shows project code + the audited data sources (playlist / providers).
     const stamp = document.getElementById('buildStamp');
