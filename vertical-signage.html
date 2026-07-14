@@ -4285,9 +4285,12 @@ async function init() {
     setInterval(fetchWeather, CONFIG.CACHE_DURATION);
     setInterval(fetchNews,    CONFIG.CACHE_DURATION);
 
-    // Hourly hard-reload (Yodeck Android cache buster).
+    // Hourly hard-reload (Yodeck Android cache buster). Random 0–5 min jitter so
+    // boxes never all reload at :00 sharp — a reload landing exactly on another
+    // navigation (remote admin, deploy check) has wedged a box WebView before,
+    // and staggering also spreads the fleet's Netlify hits.
     (function scheduleHourlyReload() {
-        var msToNextHour = 3600000 - (Date.now() % 3600000);
+        var msToNextHour = 3600000 - (Date.now() % 3600000) + Math.floor(Math.random() * 300000);
         setTimeout(function() { location.reload(); }, msToNextHour);
     })();
 
