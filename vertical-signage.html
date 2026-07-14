@@ -1319,11 +1319,13 @@ body {
 .detail-gallery { position: relative; width: 100%; height: 67%; flex-shrink: 0; }
 .detail-img { width: 100%; height: 100%; background-size: cover; background-position: center; background-color: #11151c; transition: background-image 0.4s ease; cursor: pointer; position: relative; overflow: hidden; }
 /* Right after a reload the media cache is cold — a tapped popup can wait seconds
-   for its image. Say "loading" instead of sitting there as a silent empty panel.
+   for its image. Show a skeleton shimmer instead of a silent empty panel.
    The class exists only while the popup is open AND the bitmap is pending, so
-   the animation never composites in the background (kiosk GPU rule). */
-.detail-img.img-loading::before { content: ''; position: absolute; top: 50%; left: 50%; width: 42px; height: 42px; margin: -21px 0 0 -21px; border: 3px solid rgba(255,255,255,0.18); border-top-color: rgba(255,255,255,0.75); border-radius: 50%; animation: detailImgSpin 0.9s linear infinite; }
-@keyframes detailImgSpin { to { transform: rotate(360deg); } }
+   the animation never composites in the background (kiosk GPU rule). The sweep
+   animates transform only (GPU-cheap on the boxes). */
+.detail-img.img-loading { background-color: #1a2230; }
+.detail-img.img-loading::before { content: ''; position: absolute; inset: 0; transform: translateX(-100%); background: linear-gradient(100deg, transparent 35%, rgba(255,255,255,0.07) 50%, transparent 65%); animation: detailImgSweep 1.4s ease-in-out infinite; }
+@keyframes detailImgSweep { to { transform: translateX(100%); } }
 /* Listing chip (For Sale/Rent) — overlaid top-left of the image */
 .detail-chip {
     position: absolute; top: 1.4vh; left: 1.4vh; z-index: 3;
