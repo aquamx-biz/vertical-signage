@@ -3480,7 +3480,12 @@ function genBookSlots(b){
     const ahead = b.daysAhead || 7;
     const wk = uiLang==='th' ? ['อา','จ','อ','พ','พฤ','ศ','ส'] : ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
     const today=new Date(), dates=[];
-    for(let i=0;i<ahead;i++){ const d=new Date(today.getFullYear(), today.getMonth(), today.getDate()+i); dates.push({ d:d.getDate(), w:wk[d.getDay()] }); }
+    for(let i=0;i<ahead;i++){
+        const d=new Date(today.getFullYear(), today.getMonth(), today.getDate()+i);
+        // iso rides the chip → the handoff link (?d=) so the phone gets the pick
+        const iso = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+        dates.push({ d:d.getDate(), w:wk[d.getDay()], iso });
+    }
     return { dates, slots };
 }
 /* Build the per-CTA popup body HTML (menu / order / book / event / store / contact
@@ -3517,8 +3522,8 @@ function buildDetailDyn(ctx){
         const sub = [store, (slot?slot+' '+(isTH?'นาที/คิว':'min/slot'):'')].filter(Boolean).join(' · ');
         let h = sub?`<div class="detail-substore">${sub}</div>`:'';
         if(g.slots.length){
-            h += `<div class="detail-lab">${isTH?'เลือกวัน':'Pick a day'}</div><div class="detail-dates">${g.dates.map((d,i)=>`<span class="detail-date${i===0?' on':''}"><b>${d.d}</b>${d.w}</span>`).join('')}</div>`
-               + `<div class="detail-lab">${isTH?'เวลาว่าง':'Available times'}</div><div class="detail-slots">${g.slots.map((s,i)=>`<span class="detail-slot${i===0?' on':''}">${s}</span>`).join('')}</div>`;
+            h += `<div class="detail-lab">${isTH?'เลือกวัน':'Pick a day'}</div><div class="detail-dates">${g.dates.map((d,i)=>`<span class="detail-date${i===0?' on':''}" data-iso="${d.iso}"><b>${d.d}</b>${d.w}</span>`).join('')}</div>`
+               + `<div class="detail-lab">${isTH?'เวลาว่าง':'Available times'}</div><div class="detail-slots">${g.slots.map((s,i)=>`<span class="detail-slot${i===0?' on':''}" data-t="${s}">${s}</span>`).join('')}</div>`;
         } else {
             h += `<div class="detail-lab">${isTH?'เลือกวัน':'Pick a day'}</div><div class="detail-hint">${isTH?'ตั้งค่าเวลาเปิด–ปิด + ความยาวคิว เพื่อสร้างตาราง':'Set open–close time + slot length to build the schedule'}</div>`;
         }
@@ -3690,7 +3695,8 @@ function showHandoff() {
     // The vendor's external link (ctaURL) is the continue-button ON that page —
     // never the QR target directly. (Changed from "vendor's real link wins".)
     let deepLink;
-    if (handoffCtx.offerSlug)         deepLink = `${CONFIG.HANDOFF_BASE}/o/${handoffCtx.offerSlug}`;
+    const intentQ = buildIntentQuery(handoffCtx.ctaType);   // the kiosk pick rides along
+    if (handoffCtx.offerSlug)         deepLink = `${CONFIG.HANDOFF_BASE}/o/${handoffCtx.offerSlug}${intentQ}`;
     else if (handoffCtx.providerSlug) deepLink = `${CONFIG.HANDOFF_BASE}/p/${handoffCtx.providerSlug}`;
     else                              deepLink = `${CONFIG.HANDOFF_BASE}`;
 
@@ -3744,6 +3750,37 @@ function showHandoff() {
     const hs = document.getElementById('handoffStep'); if (hs) hs.style.display = 'block';
     resetIdle();
 }
+
+/* ── Intent: what the customer picked on the kiosk rides the handoff link ────
+   ONE structure for every CTA type. Chips (and future qty controls) carry data
+   attributes; buildIntentQuery reads the CURRENT popup DOM and serialises the
+   selection as query params the mobile page understands:
+     book        → ?cta=book&d=2026-07-15&t=16:30
+     order       → ?cta=order&items=0:2,3:1      (plugs in here later)
+     viewListing → ?cta=viewListing&d=…          (plugs in here later)
+   Adding a CTA = adding a serializer case + chips, never new plumbing. */
+function buildIntentQuery(ctaType) {
+    if (!ctaType) return '';
+    const p = new URLSearchParams({ cta: ctaType });
+    if (ctaType === 'book') {
+        const d = document.querySelector('.detail-date.on');
+        const t = document.querySelector('.detail-slot.on');
+        if (d && d.dataset.iso) p.set('d', d.dataset.iso);
+        if (t && t.dataset.t)   p.set('t', t.dataset.t);
+    }
+    return '?' + p.toString();
+}
+
+/* Booking chips are real choices, not decoration: tap a date/time to select it
+   (single-select per group). The selection is read at QR time. */
+detailOverlay.addEventListener('click', function (e) {
+    const chip = e.target.closest('.detail-date, .detail-slot');
+    if (!chip) return;
+    const group = chip.classList.contains('detail-date') ? '.detail-date' : '.detail-slot';
+    detailOverlay.querySelectorAll(group).forEach(c => c.classList.remove('on'));
+    chip.classList.add('on');
+    resetIdle();
+});
 
 /* Handoff back → return to the offer detail (step 1) */
 const detailBack = document.getElementById('detailBack');
