@@ -407,13 +407,16 @@ export default defineType({
       ] },
     }),
 
-    // Book CTA — booking config used to generate slots in the kiosk popup
+    // Book CTA — per-offer OVERRIDE of the provider's booking schedule.
+    // Field-level merge: a field filled here wins; empty = the shop's value.
+    // (Merge implemented in build.mjs bake + handoff mergeBooking — keep in sync.)
     defineField({
       name: 'booking',
       group: 'cta',
-      title: 'Booking Config',
+      title: 'Booking — ปรับเฉพาะ offer นี้ (เว้นว่าง = ใช้ตารางของร้าน)',
       type: 'object',
       hidden: ctaGate('book'),
+      description: 'ค่าหลักตั้งที่ ร้านค้า → "ตารางรับคิวของร้าน" ครั้งเดียวใช้ทุก offer · กรอกที่นี่เฉพาะช่องที่อยากให้ต่างจากร้าน (เช่น บริการนี้คิวยาวกว่า) — ช่องที่กรอกชนะเป็นรายช่อง',
       options: { collapsible: true, collapsed: false, columns: 2 },
       fields: [
         defineField({ name: 'openTime', title: 'Open Time', type: 'string', description: 'e.g. "10:00"' }),

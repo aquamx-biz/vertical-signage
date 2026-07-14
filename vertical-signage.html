@@ -1922,6 +1922,7 @@ async function loadProviders() {
             unitRef:            p.unitRef ?? '',
             defaultHandoffType: p.defaultHandoffType ?? 'qr',
             category:           p.category,
+            booking:            p.booking ?? null,   // shop schedule — merged with offer overrides at popup time
             offers:             p.offers ?? [],
         };
     }
@@ -1943,7 +1944,7 @@ async function loadProviders() {
         const q = `*[_type == "provider" && status == true]{
             "slug":          slug.current,
             name_th, name_en, displayName,
-            locationText, mapUrl, phone, lineId, website, openingHours, amenities,
+            locationText, mapUrl, phone, lineId, website, openingHours, amenities, booking,
             "logo":          logo.asset->url,
             "coverImage":    coverImage.asset->url,
             description_th, description_en,
@@ -2132,6 +2133,7 @@ async function loadPlaylist() {
                                     "slug": slug.current, name_th, name_en, displayName, category,
                                     locationText, mapUrl, phone, lineId, website, openingHours, amenities,
                                     description_th, description_en, defaultHandoffType, unitRef,
+                                    booking,
                                     "logo": logo.asset->url, "coverImage": coverImage.asset->url,
                                     "offers": *[_type=="offer" && provider._ref == ^._id && status == true][0...8]{
                                         "slug": slug.current, title_th, title_en, price,
@@ -2401,7 +2403,8 @@ function adaptPlaylistToSlots(pl) {
             _menuItems: Array.isArray(item.menuItems) ? item.menuItems : [],
             _orderItems: Array.isArray(item.orderItems) ? item.orderItems : [],
             _fulfillment: Array.isArray(item.fulfillment) ? item.fulfillment : [],
-            _booking: item.booking || null,
+            // Shop schedule + per-offer overrides, merged field-by-field
+            _booking: mergeBooking(item.provider && item.provider.booking, item.booking),
             _eventInfo: item.eventInfo || null,
             _displayMode: item.displayMode || null,
             _validFrom: item.validFrom || null,
@@ -3517,6 +3520,18 @@ function mobileVerbLabel(ctaType) {
 function _hm(s){ if(!s) return null; const m=String(s).match(/(\d{1,2}):(\d{2})/); return m ? (+m[1]*60 + +m[2]) : null; }
 function _fmtHM(m){ return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0'); }
 /* Generate a date strip + available time slots from a booking config object. */
+/* Field-level merge of the shop's schedule + the offer's overrides — a field the
+   offer fills wins; empty/blank falls back to the provider's booking config.
+   (kiosk-parity: mirrors mergeBooking in aquamx-handoff lib/booking.ts) */
+function mergeBooking(prov, off){
+    if(!prov && !off) return off || null;
+    const m = Object.assign({}, prov || {});
+    Object.keys(off || {}).forEach(k => {
+        const v = off[k];
+        if(v !== null && v !== undefined && v !== '') m[k] = v;
+    });
+    return m;
+}
 /* Min-notice cutoff — the earliest instant a booking may start.
    hours = now + N h (กันจองกระทันหัน) · days = 00:00 of today + N days
    (เริ่มเปิดจองอีก N วันข้างหน้า) · none = now (still hides today's past slots). */
@@ -4085,7 +4100,8 @@ function openCardDetail(idx) {
         menuItems: o && Array.isArray(o.menuItems) ? o.menuItems : [],
         orderItems: o && Array.isArray(o.orderItems) ? o.orderItems : [],
         fulfillment: o && Array.isArray(o.fulfillment) ? o.fulfillment : [],
-        booking: o ? (o.booking || null) : null,
+        // Shop schedule + per-offer overrides, merged field-by-field
+        booking: mergeBooking(p && p.booking, o ? o.booking : null),
         eventInfo: o ? (o.eventInfo || null) : null,
         // Detail CTA label mirrors the form: custom offer.ctaLabel → per-category
         // default. Uses the offer's own category value, not the panel key.

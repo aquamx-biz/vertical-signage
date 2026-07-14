@@ -191,6 +191,28 @@ export default defineType({
       initialValue: 'manual',
       description: 'มีผลเมื่อกรอก LINE ID ช่องบนแล้วเท่านั้น',
     }),
+
+    // ── ตารางรับคิวของร้าน — ค่าหลักที่ทุก offer ปุ่มจองใช้ร่วมกัน ─────────────
+    // Field-level merge: offer.booking's filled fields win over these.
+    // (Merge implemented in build.mjs bake + handoff mergeBooking — keep in sync.)
+    defineField({
+      name: 'booking',
+      title: '📺 ตารางรับคิวของร้าน (ค่าหลักของทุก offer)',
+      type: 'object',
+      description: 'ตั้งครั้งเดียว ทุก offer ที่มีปุ่มจองใช้ตารางนี้อัตโนมัติ · offer ไหนอยากต่าง (เช่น คิวยาวกว่า) ไปกรอกทับเฉพาะช่องนั้นในตัว offer เอง',
+      options: { collapsible: true, collapsed: true, columns: 2 },
+      fields: [
+        defineField({ name: 'openTime', title: 'Open Time', type: 'string', description: 'e.g. "10:00"' }),
+        defineField({ name: 'closeTime', title: 'Close Time', type: 'string', description: 'e.g. "22:00"' }),
+        defineField({ name: 'slotMinutes', title: 'Slot Minutes', type: 'number' }),
+        defineField({ name: 'breakStart', title: 'Break Start', type: 'string', description: 'e.g. "14:00"' }),
+        defineField({ name: 'breakEnd', title: 'Break End', type: 'string', description: 'e.g. "17:00"' }),
+        defineField({ name: 'daysAhead', title: 'เปิดให้เลือกกี่วัน', type: 'number', description: 'จำนวนวันในปฏิทินที่ลูกค้าเลือกได้ นับจากวันแรกที่จองได้' }),
+        defineField({ name: 'minNotice', title: 'ต้องจองล่วงหน้าอย่างน้อย', type: 'number', description: 'กันจองกระทันหัน — ใช้คู่กับหน่วยด้านล่าง เช่น 3 ชั่วโมง · 7 วัน · เว้นว่าง = รับถึงนาทีสุดท้าย' }),
+        defineField({ name: 'minNoticeUnit', title: 'หน่วยของ "ต้องจองล่วงหน้า"', type: 'string', options: { list: [ { title: 'ชั่วโมง', value: 'hours' }, { title: 'วัน', value: 'days' } ], layout: 'radio' }, initialValue: 'hours' }),
+        defineField({ name: 'capacityPerSlot', title: 'Capacity Per Slot', type: 'number' }),
+      ],
+    }),
     defineField({ name: 'website', title: 'Website',  type: 'url',    components: { input: createRetrieveFromPartyInput('website') } }),
     defineField({ name: 'openingHours', title: '📺 Opening Hours', type: 'string', description: 'e.g. 10:00–22:00' }),
     defineField({ name: 'amenities', title: 'Amenities / จุดเด่นร้าน', type: 'array', of: [{ type: 'string' }], description: 'Store highlights shown on provider page (parking, wifi, accepts cards, etc.).' }),
