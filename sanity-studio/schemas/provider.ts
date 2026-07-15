@@ -1,4 +1,5 @@
 import { defineField, defineType } from 'sanity'
+import { OpenDaysInput }                from '../components/OpenDaysInput'
 import { createRetrieveFromPartyInput } from '../components/RetrieveFromPartyInput'
 import { createProviderNameInput }      from '../components/ProviderNameInput'
 import { createTranslateInput }         from '../components/TranslateInput'
@@ -205,12 +206,13 @@ export default defineType({
       title: '📺 Open Days · วันเปิดร้าน',
       type: 'array',
       of: [{ type: 'string' }],
+      components: { input: OpenDaysInput },   // 7 chips on one row (default grid wraps at 4)
       options: { list: [
         { title: 'M', value: 'mon' }, { title: 'T', value: 'tue' },
         { title: 'W', value: 'wed' }, { title: 'T', value: 'thu' },
         { title: 'F', value: 'fri' }, { title: 'S', value: 'sat' },
         { title: 'S', value: 'sun' },
-      ], layout: 'grid' },
+      ] },
       initialValue: ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'],
       description: 'วันที่ปิด จะหายจากปฏิทินจองอัตโนมัติ · Closed days disappear from the booking calendar',
     }),
