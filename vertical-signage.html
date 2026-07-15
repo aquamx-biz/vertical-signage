@@ -2404,8 +2404,8 @@ function adaptPlaylistToSlots(pl) {
             _orderItems: Array.isArray(item.orderItems) ? item.orderItems : [],
             _fulfillment: Array.isArray(item.fulfillment) ? item.fulfillment : [],
             // Shop schedule (open/close derived from Opening Hours text when blank)
-            // + per-offer overrides, merged field-by-field
-            _booking: mergeBooking(shopBooking(item.provider), item.booking),
+            // + per-offer overrides (queue fields only), merged field-by-field
+            _booking: mergeBooking(shopBooking(item.provider), offerBookingOv(item.booking)),
             _eventInfo: item.eventInfo || null,
             _displayMode: item.displayMode || null,
             _validFrom: item.validFrom || null,
@@ -3548,6 +3548,15 @@ function shopBooking(p){
     }
     return Object.keys(b).length ? b : null;
 }
+/* Offer-side override may NOT carry open/close — hours come from the shop's
+   Opening Hours only (user rule 2026-07-15). Strips legacy stored values too,
+   so old offers with baked-in 9:00-18:00 can't silently beat the shop's hours. */
+function offerBookingOv(b){
+    if(!b) return b;
+    const c = Object.assign({}, b);
+    delete c.openTime; delete c.closeTime;
+    return c;
+}
 /* Min-notice cutoff — the earliest instant a booking may start.
    hours = now + N h (กันจองกระทันหัน) · days = 00:00 of today + N days
    (เริ่มเปิดจองอีก N วันข้างหน้า) · none = now (still hides today's past slots). */
@@ -4117,8 +4126,8 @@ function openCardDetail(idx) {
         orderItems: o && Array.isArray(o.orderItems) ? o.orderItems : [],
         fulfillment: o && Array.isArray(o.fulfillment) ? o.fulfillment : [],
         // Shop schedule (open/close derived from Opening Hours text when blank)
-        // + per-offer overrides, merged field-by-field
-        booking: mergeBooking(shopBooking(p), o ? o.booking : null),
+        // + per-offer overrides (queue fields only), merged field-by-field
+        booking: mergeBooking(shopBooking(p), offerBookingOv(o ? o.booking : null)),
         eventInfo: o ? (o.eventInfo || null) : null,
         // Detail CTA label mirrors the form: custom offer.ctaLabel → per-category
         // default. Uses the offer's own category value, not the panel key.
