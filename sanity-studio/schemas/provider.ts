@@ -175,18 +175,18 @@ export default defineType({
     // fields decide whether/how it continues to the SHOP's group.
     defineField({
       name: 'lineGroupId',
-      title: 'LINE ของร้านที่รับคำขอจอง/สั่งซื้อ (Group ID หรือ User ID)',
+      title: 'Lead LINE (Group/User ID) · LINE รับคำขอจองของร้าน',
       type: 'string',
       description: '① เชิญ @aquamx เข้ากลุ่มรับคิวของร้าน (ในกลุ่มต้องไม่มี OA อื่น) ② พิมพ์ "id" ในกลุ่ม → bot ตอบรหัส C… ③ วางรหัสที่นี่ · แบบรายคน: เจ้าของร้านแอดเพื่อน @aquamx แล้วทัก "id" → ได้รหัส U… · เว้นว่าง = แจ้งเราอย่างเดียว',
     }),
     defineField({
       name: 'leadRelay',
-      title: 'โหมดส่งต่อคำขอถึงร้าน',
+      title: 'Lead Relay Mode · โหมดส่งต่อคำขอถึงร้าน',
       type: 'string',
       options: { list: [
-        { title: 'ผ่านแอดมินก่อน — กด ✅ ในกลุ่ม LINE เราแล้วค่อยส่งถึงร้าน', value: 'manual' },
-        { title: 'ส่งตรงถึงร้านอัตโนมัติ — เราได้รับสำเนา',                 value: 'auto' },
-        { title: 'ไม่ส่งต่อ — แจ้งเราอย่างเดียว',                            value: 'off' },
+        { title: 'Manual · ผ่านแอดมินก่อน — กด ✅ ในกลุ่ม LINE เราแล้วค่อยส่งถึงร้าน', value: 'manual' },
+        { title: 'Auto · ส่งตรงถึงร้านอัตโนมัติ — เราได้รับสำเนา',                    value: 'auto' },
+        { title: 'Off · ไม่ส่งต่อ — แจ้งเราอย่างเดียว',                                value: 'off' },
       ], layout: 'radio' },
       initialValue: 'manual',
       description: 'มีผลเมื่อกรอก LINE ID ช่องบนแล้วเท่านั้น',
@@ -197,9 +197,9 @@ export default defineType({
     // (Merge implemented in build.mjs bake + handoff mergeBooking — keep in sync.)
     defineField({
       name: 'booking',
-      title: '📺 ตารางรับคิวของร้าน (ค่าหลักของทุก offer)',
+      title: '📺 Booking Schedule · ตารางรับคิวของร้าน',
       type: 'object',
-      description: 'ตั้งครั้งเดียว ทุก offer ที่มีปุ่มจองใช้ตารางนี้อัตโนมัติ · offer ไหนอยากต่าง (เช่น คิวยาวกว่า) ไปกรอกทับเฉพาะช่องนั้นในตัว offer เอง',
+      description: 'Default for every offer with a Book button — set once here · ตั้งครั้งเดียว ทุก offer ใช้ตารางนี้อัตโนมัติ ยกเว้นช่องที่ offer กรอกทับเอง',
       options: { collapsible: true, collapsed: true, columns: 2 },
       fields: [
         defineField({ name: 'openTime', title: 'Open Time', type: 'string', description: 'e.g. "10:00"' }),
@@ -207,9 +207,9 @@ export default defineType({
         defineField({ name: 'slotMinutes', title: 'Slot Minutes', type: 'number' }),
         defineField({ name: 'breakStart', title: 'Break Start', type: 'string', description: 'e.g. "14:00"' }),
         defineField({ name: 'breakEnd', title: 'Break End', type: 'string', description: 'e.g. "17:00"' }),
-        defineField({ name: 'daysAhead', title: 'เปิดให้เลือกกี่วัน', type: 'number', description: 'จำนวนวันในปฏิทินที่ลูกค้าเลือกได้ นับจากวันแรกที่จองได้' }),
-        defineField({ name: 'minNotice', title: 'ต้องจองล่วงหน้าอย่างน้อย', type: 'number', description: 'กันจองกระทันหัน — ใช้คู่กับหน่วยด้านล่าง เช่น 3 ชั่วโมง · 7 วัน · เว้นว่าง = รับถึงนาทีสุดท้าย' }),
-        defineField({ name: 'minNoticeUnit', title: 'หน่วยของ "ต้องจองล่วงหน้า"', type: 'string', options: { list: [ { title: 'ชั่วโมง', value: 'hours' }, { title: 'วัน', value: 'days' } ], layout: 'radio' }, initialValue: 'hours' }),
+        defineField({ name: 'daysAhead', title: 'Days Selectable · เปิดให้เลือกกี่วัน', type: 'number', description: 'Calendar days offered, counted from the first bookable day · นับจากวันแรกที่จองได้' }),
+        defineField({ name: 'minNotice', title: 'Min Notice · ต้องจองล่วงหน้า', type: 'number', description: 'Blocks last-minute bookings, unit below · เช่น 3 ชั่วโมง / 7 วัน · เว้นว่าง = รับถึงนาทีสุดท้าย' }),
+        defineField({ name: 'minNoticeUnit', title: 'Min Notice Unit · หน่วย', type: 'string', options: { list: [ { title: 'Hours · ชั่วโมง', value: 'hours' }, { title: 'Days · วัน', value: 'days' } ], layout: 'radio' }, initialValue: 'hours' }),
         defineField({ name: 'capacityPerSlot', title: 'Capacity Per Slot', type: 'number' }),
       ],
     }),
