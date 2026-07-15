@@ -3,6 +3,21 @@
 <head>
 <!-- Category icons: Twemoji (c) Twitter — CC-BY 4.0 · https://github.com/twitter/twemoji · see icons/CREDITS.txt -->
 <meta charset="UTF-8">
+<script>
+/* LITE MODE gate — set BEFORE styles paint so decorative loops never start on a
+   4K panel. Native 4K (2160×3840) on a weak RK chip can't composite the animated
+   player without janking to ANR; lite mode drops the continuous animations.
+   Auto-on when the longest device-pixel edge ≥ 3000 (4K-class); force with
+   ?lite=1 / ?lite=0. Kept tiny + dependency-free so it runs at first parse. */
+(function () {
+  try {
+    var q = new URLSearchParams(location.search).get('lite');
+    var px = Math.max(screen.width, screen.height) * (window.devicePixelRatio || 1);
+    var on = q === '1' || (q !== '0' && px >= 3000);
+    if (on) document.documentElement.classList.add('lite');
+  } catch (e) {}
+})();
+</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
@@ -1520,6 +1535,32 @@ body {
 /* Mitr display tier — same TH+EN title font as the offer-page preview, so the preview matches the real screen */
 .topbar-project, .slot-logo, .cat-screen-title, .cat-card-name { font-weight: 700; }
 /* .slot-title weight is controlled in its own rule (Prompt 600 — slimmer) */
+
+/* ── LITE MODE — 4K panels on weak RK chips (rule below the base styles so it wins)
+   A native-4K WebView (2160×3840) composites 4× the pixels of a 1080p box. The
+   decorative INFINITE animations (ticker, CTA glow/shimmer/breathe, menu float,
+   pulse dots, hamburger wave) then force a full 4K recomposite every frame →
+   sustained GPU load → ANR. Kill only the continuous loops; brief slide
+   TRANSITIONS (cube-fade-out / book-page-fade, which are `forwards`) survive, so
+   slides still change smoothly. Toggle with ?lite=1 / ?lite=0; auto-on ≥3000px. */
+html.lite .bottombar-track,
+html.lite .slot.active .slot-eyebrow::before,
+html.lite .slot.active .cta .arrow,
+html.lite .slot.active .cta-primary::after,
+html.lite .slot.active .cta-label,
+html.lite .slot.active .cta,
+html.lite .menu-btn,
+html.lite .menu-btn::after,
+html.lite .menu-btn .hamburger span,
+html.lite .cat-card .live-dot,
+html.lite .live .dot,
+html.lite .swipe-hint svg {
+    animation: none !important;
+}
+/* The CSS marquee ticker is the single costliest continuous layer at 4K (a wide
+   strip repainting every frame). Freeze it — headlines then show statically
+   (the least-important element; acceptable trade to stop the ANR). */
+html.lite .bottombar-track { transform: none !important; }
 
 /* ── Kiosk GPU rule #4: NO backdrop-filter, EVER ─────────────────────────────
    The rk35xx WebView on the boxes intermittently composites ANY visible
