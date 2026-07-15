@@ -195,7 +195,21 @@ export default defineType({
     defineField({ name: 'website', title: 'Website',  type: 'url',    components: { input: createRetrieveFromPartyInput('website') } }),
     // Opening Hours FIRST — the booking schedule below reads open/close from here
     // (single entry point; no duplicate time fields — user rule 2026-07-15).
-    defineField({ name: 'openingHours', title: '📺 Opening Hours', type: 'string', description: 'e.g. 10:00–22:00 · เวลานี้ใช้ทั้งโชว์บนจอ และเป็นเวลาเปิด-ปิดของตารางรับคิวด้านล่าง' }),
+    defineField({
+      name: 'openingHours',
+      title: '📺 Opening Hours',
+      type: 'string',
+      description: 'e.g. 10:00–22:00 · เวลานี้ใช้ทั้งโชว์บนจอ และเป็นเวลาเปิด-ปิดของตารางรับคิวด้านล่าง — ต้องมีช่วงเวลารูปแบบ HH:MM-HH:MM อยู่ในข้อความ ระบบคิวถึงจะอ่านออก',
+      validation: (Rule) =>
+        Rule.custom((v?: string) => {
+          if (!v) return true
+          const m = v.match(/(\d{1,2})[:.](\d{2})\s*[-–—]\s*(\d{1,2})[:.](\d{2})/)
+          if (!m) return 'ระบบคิวอ่านเวลาไม่ออก — ใส่ช่วงเวลารูปแบบ 10:00-19:00 ไว้ในข้อความด้วย (จอโชว์ข้อความนี้ได้ปกติ แต่ปุ่มจองจะไม่มีตารางเวลา) · Queue system can\'t read a time span like 10:00-19:00 from this text'
+          const open = +m[1] * 60 + +m[2], close = +m[3] * 60 + +m[4]
+          if (open >= close) return 'เวลาเปิดต้องมาก่อนเวลาปิด — ตอนนี้ระบบคิวจะไม่มีตารางเวลา · Open time must be before close time'
+          return true
+        }).warning(),
+    }),
 
     // ── ตารางรับคิวของร้าน — ค่าหลักที่ทุก offer ปุ่มจองใช้ร่วมกัน ─────────────
     // Open/close มาจาก Opening Hours ด้านบน (shopBooking() parses it) — ก้อนนี้
