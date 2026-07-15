@@ -1910,7 +1910,7 @@ async function loadProviders() {
             coverImage:         p.coverImage ?? '',
             location:           p.locationText ?? p.location ?? '',
             mapUrl:             p.mapUrl ?? '',
-            hours:              p.openingHours ?? p.hours ?? '',
+            hours:              hoursLabel(p),   // structured openDays/openTime/closeTime → text; legacy string as-is
             phone:              p.phone ?? '',
             line:               p.lineId ?? p.line ?? '',
             website:            p.website ?? '',
@@ -1923,6 +1923,10 @@ async function loadProviders() {
             defaultHandoffType: p.defaultHandoffType ?? 'qr',
             category:           p.category,
             booking:            p.booking ?? null,   // shop schedule — merged with offer overrides at popup time
+            openDays:           p.openDays ?? null,  // structured opening — read by shopBooking()
+            openTime:           p.openTime ?? '',
+            closeTime:          p.closeTime ?? '',
+            openingHours:       p.openingHours ?? '',   // legacy text kept for the hours fallback parse
             offers:             p.offers ?? [],
         };
     }
@@ -1944,7 +1948,7 @@ async function loadProviders() {
         const q = `*[_type == "provider" && status == true]{
             "slug":          slug.current,
             name_th, name_en, displayName,
-            locationText, mapUrl, phone, lineId, website, openingHours, amenities, booking,
+            locationText, mapUrl, phone, lineId, website, openingHours, amenities, booking, openDays, openTime, closeTime,
             "logo":          logo.asset->url,
             "coverImage":    coverImage.asset->url,
             description_th, description_en,
@@ -2133,7 +2137,7 @@ async function loadPlaylist() {
                                     "slug": slug.current, name_th, name_en, displayName, category,
                                     locationText, mapUrl, phone, lineId, website, openingHours, amenities,
                                     description_th, description_en, defaultHandoffType, unitRef,
-                                    booking,
+                                    booking, openDays, openTime, closeTime,
                                     "logo": logo.asset->url, "coverImage": coverImage.asset->url,
                                     "offers": *[_type=="offer" && provider._ref == ^._id && status == true][0...8]{
                                         "slug": slug.current, title_th, title_en, price,
@@ -2392,7 +2396,7 @@ function adaptPlaylistToSlots(pl) {
                 website: item.provider.website || '',
                 mapUrl: item.provider.mapUrl || '',
                 location: item.provider.locationText || '',
-                hours: item.provider.openingHours || '',
+                hours: hoursLabel(item.provider),
                 amenities: Array.isArray(item.provider.amenities) ? item.provider.amenities : [],
                 description: item.provider.description_th || item.provider.description_en || '',
                 defaultHandoffType: item.provider.defaultHandoffType || 'qr',
@@ -3533,12 +3537,15 @@ function mergeBooking(prov, off){
     });
     return m;
 }
-/* Shop booking with open/close derived from the display "Opening Hours" text
-   when the structured fields are blank — one source of truth, no double entry.
-   Only a simple "HH:MM-HH:MM" span is parseable; complex text needs the fields. */
+/* Shop booking assembled from the provider's STRUCTURED opening fields
+   (openDays / openTime / closeTime — same shape as the /provider web form).
+   Legacy fallback: parse "HH:MM-HH:MM" out of the old free-text openingHours.
+   openDays rides along so the booking calendar can skip closed days. */
 function shopBooking(p){
     if(!p) return null;
     const b = Object.assign({}, p.booking || {});
+    if(p.openTime)  b.openTime  = p.openTime;
+    if(p.closeTime) b.closeTime = p.closeTime;
     if(!b.openTime || !b.closeTime){
         const m = String(p.openingHours || p.hours || '').match(/(\d{1,2}[:.]\d{2})\s*[-–—]\s*(\d{1,2}[:.]\d{2})/);
         if(m){
@@ -3546,7 +3553,22 @@ function shopBooking(p){
             if(!b.closeTime) b.closeTime = m[2].replace('.', ':');
         }
     }
+    if(Array.isArray(p.openDays) && p.openDays.length && p.openDays.length < 7) b.openDays = p.openDays;
     return Object.keys(b).length ? b : null;
+}
+/* Compose the on-screen hours label from structured fields; legacy text as-is. */
+const DAY_CODES = ['sun','mon','tue','wed','thu','fri','sat'];   // Date.getDay() order
+function hoursLabel(p){
+    if(!p) return '';
+    if(p.openTime && p.closeTime){
+        const names = uiLang==='th' ? {mon:'จ',tue:'อ',wed:'พ',thu:'พฤ',fri:'ศ',sat:'ส',sun:'อา'}
+                                    : {mon:'Mon',tue:'Tue',wed:'Wed',thu:'Thu',fri:'Fri',sat:'Sat',sun:'Sun'};
+        const d = Array.isArray(p.openDays) ? p.openDays : [];
+        const dayTxt = (!d.length || d.length===7) ? (uiLang==='th'?'ทุกวัน':'Daily')
+                     : d.map(k=>names[k]||k).join(' ');
+        return dayTxt + ' ' + p.openTime + '–' + p.closeTime;
+    }
+    return p.openingHours || p.hours || '';
 }
 /* Offer-side override may NOT carry open/close — hours come from the shop's
    Opening Hours only (user rule 2026-07-15). Strips legacy stored values too,
@@ -3590,9 +3612,13 @@ function genBookSlots(b){
         if(cd.getHours()*60 + cd.getMinutes() > _hm(slots[slots.length-1])) first.setDate(first.getDate()+1);
     }
     const wk = uiLang==='th' ? ['อา','จ','อ','พ','พฤ','ศ','ส'] : ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    // Closed days (shop's openDays) are skipped entirely — the picker still
+    // offers `ahead` REAL choices. Scan is capped so a bad config can't spin.
+    const openSet = (Array.isArray(b.openDays) && b.openDays.length) ? b.openDays : null;
     const dates=[];
-    for(let i=0;i<ahead;i++){
+    for(let i=0; dates.length<ahead && i<ahead*4+14; i++){
         const d=new Date(first.getFullYear(), first.getMonth(), first.getDate()+i);
+        if(openSet && openSet.indexOf(DAY_CODES[d.getDay()]) === -1) continue;   // shop closed
         // iso rides the chip → the handoff link (?d=) so the phone gets the pick
         const iso = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
         dates.push({ d:d.getDate(), w:wk[d.getDay()], iso });

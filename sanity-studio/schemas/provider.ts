@@ -195,21 +195,49 @@ export default defineType({
     defineField({ name: 'website', title: 'Website',  type: 'url',    components: { input: createRetrieveFromPartyInput('website') } }),
     // Opening Hours FIRST — the booking schedule below reads open/close from here
     // (single entry point; no duplicate time fields — user rule 2026-07-15).
+    // ── Opening days + hours — STRUCTURED, same shape as the /provider web form
+    // (day chips + time dropdowns). Single source for on-screen display AND the
+    // booking calendar: closed days disappear from the date picker.
     defineField({
-      name: 'openingHours',
-      title: '📺 Opening Hours',
+      name: 'openDays',
+      title: '📺 Open Days · วันเปิดร้าน',
+      type: 'array',
+      of: [{ type: 'string' }],
+      options: { list: [
+        { title: 'Mon · จ', value: 'mon' }, { title: 'Tue · อ', value: 'tue' },
+        { title: 'Wed · พ', value: 'wed' }, { title: 'Thu · พฤ', value: 'thu' },
+        { title: 'Fri · ศ', value: 'fri' }, { title: 'Sat · ส', value: 'sat' },
+        { title: 'Sun · อา', value: 'sun' },
+      ], layout: 'grid' },
+      initialValue: ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'],
+      description: 'วันที่ปิด จะหายจากปฏิทินจองอัตโนมัติ · Closed days disappear from the booking calendar',
+    }),
+    defineField({
+      name: 'openTime',
+      title: '📺 Open Time · เวลาเปิด',
       type: 'string',
-      description: 'e.g. 10:00–22:00 · เวลานี้ใช้ทั้งโชว์บนจอ และเป็นเวลาเปิด-ปิดของตารางรับคิวด้านล่าง — ต้องมีช่วงเวลารูปแบบ HH:MM-HH:MM อยู่ในข้อความ ระบบคิวถึงจะอ่านออก',
+      description: 'e.g. "10:00"',
+      validation: (Rule) => Rule.regex(/^\d{1,2}:\d{2}$/).warning('รูปแบบต้องเป็น HH:MM เช่น 10:00 · Must be HH:MM'),
+    }),
+    defineField({
+      name: 'closeTime',
+      title: '📺 Close Time · เวลาปิด',
+      type: 'string',
+      description: 'e.g. "22:00"',
       validation: (Rule) =>
-        Rule.custom((v?: string) => {
+        Rule.custom((v: string | undefined, ctx) => {
           if (!v) return true
-          const m = v.match(/(\d{1,2})[:.](\d{2})\s*[-–—]\s*(\d{1,2})[:.](\d{2})/)
-          if (!m) return 'ระบบคิวอ่านเวลาไม่ออก — ใส่ช่วงเวลารูปแบบ 10:00-19:00 ไว้ในข้อความด้วย (จอโชว์ข้อความนี้ได้ปกติ แต่ปุ่มจองจะไม่มีตารางเวลา) · Queue system can\'t read a time span like 10:00-19:00 from this text'
-          const open = +m[1] * 60 + +m[2], close = +m[3] * 60 + +m[4]
-          if (open >= close) return 'เวลาเปิดต้องมาก่อนเวลาปิด — ตอนนี้ระบบคิวจะไม่มีตารางเวลา · Open time must be before close time'
+          if (!/^\d{1,2}:\d{2}$/.test(v)) return 'รูปแบบต้องเป็น HH:MM เช่น 22:00 · Must be HH:MM'
+          const o = String((ctx.document as { openTime?: string } | undefined)?.openTime ?? '')
+          const hm = (s: string) => { const m = s.match(/^(\d{1,2}):(\d{2})$/); return m ? +m[1] * 60 + +m[2] : null }
+          const ot = hm(o), ct = hm(v)
+          if (ot != null && ct != null && ot >= ct) return 'เวลาปิดต้องหลังเวลาเปิด · Close must be after open'
           return true
         }).warning(),
     }),
+    // Legacy free-text hours — superseded by the structured fields above; kept
+    // hidden so old documents load cleanly and old builds can still read it.
+    defineField({ name: 'openingHours', title: 'Opening Hours (legacy)', type: 'string', hidden: true }),
 
     // ── ตารางรับคิวของร้าน — ค่าหลักที่ทุก offer ปุ่มจองใช้ร่วมกัน ─────────────
     // Open/close มาจาก Opening Hours ด้านบน (shopBooking() parses it) — ก้อนนี้
@@ -219,7 +247,7 @@ export default defineType({
       name: 'booking',
       title: '📺 Booking Schedule · ตารางรับคิวของร้าน',
       type: 'object',
-      description: 'Uses the Opening Hours above as open–close · ใช้เวลาเปิด-ปิดจากช่อง Opening Hours ด้านบนอัตโนมัติ — ตั้งครั้งเดียว ทุก offer ปุ่มจองใช้ร่วมกัน',
+      description: 'Uses Open Days/Time above · ใช้วัน-เวลาเปิดร้านด้านบนอัตโนมัติ — ตั้งครั้งเดียว ทุก offer ปุ่มจองใช้ร่วมกัน',
       options: { collapsible: true, collapsed: true, columns: 2 },
       fields: [
         defineField({ name: 'slotMinutes', title: 'Slot Minutes', type: 'number' }),

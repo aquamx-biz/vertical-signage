@@ -160,7 +160,7 @@ const PLAYLIST_PROJ_V7 = `
                                 "slug": slug.current, name_th, name_en, displayName, category,
                                 locationText, mapUrl, phone, lineId, website, openingHours, amenities,
                                 description_th, description_en, defaultHandoffType, unitRef,
-                                booking,
+                                booking, openDays, openTime, closeTime,
                                 "logo": logo.asset->url, "coverImage": coverImage.asset->url,
                                 "offers": *[_type=="offer" && provider._ref == ^._id && status == true][0...8]{
                                     "slug": slug.current, title_th, title_en, price,
@@ -229,7 +229,7 @@ for (const project of projects) {
         lineId,
         website,
         openingHours,
-        booking,
+        booking, openDays, openTime, closeTime,
         "logo":          logo.asset->url,
         "coverImage":    coverImage.asset->url,
         description_th,
