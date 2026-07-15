@@ -30,6 +30,8 @@ export default defineType({
   name: 'provider',
   title: 'Provider',
   type: 'document',
+  // Layout-only: puts Open Time + Close Time on one row (field paths unchanged)
+  fieldsets: [{ name: 'openHours', title: '📺 Open – Close · เวลาเปิด-ปิด', options: { columns: 2 } }],
   fields: [
     // ── Party link (CRM) ──────────────────────────────────────────────────────
     defineField({
@@ -204,24 +206,26 @@ export default defineType({
       type: 'array',
       of: [{ type: 'string' }],
       options: { list: [
-        { title: 'Mon · จ', value: 'mon' }, { title: 'Tue · อ', value: 'tue' },
-        { title: 'Wed · พ', value: 'wed' }, { title: 'Thu · พฤ', value: 'thu' },
-        { title: 'Fri · ศ', value: 'fri' }, { title: 'Sat · ส', value: 'sat' },
-        { title: 'Sun · อา', value: 'sun' },
+        { title: 'M', value: 'mon' }, { title: 'T', value: 'tue' },
+        { title: 'W', value: 'wed' }, { title: 'T', value: 'thu' },
+        { title: 'F', value: 'fri' }, { title: 'S', value: 'sat' },
+        { title: 'S', value: 'sun' },
       ], layout: 'grid' },
       initialValue: ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'],
       description: 'วันที่ปิด จะหายจากปฏิทินจองอัตโนมัติ · Closed days disappear from the booking calendar',
     }),
     defineField({
       name: 'openTime',
-      title: '📺 Open Time · เวลาเปิด',
+      title: 'Open',
+      fieldset: 'openHours',
       type: 'string',
       description: 'e.g. "10:00"',
       validation: (Rule) => Rule.regex(/^\d{1,2}:\d{2}$/).warning('รูปแบบต้องเป็น HH:MM เช่น 10:00 · Must be HH:MM'),
     }),
     defineField({
       name: 'closeTime',
-      title: '📺 Close Time · เวลาปิด',
+      title: 'Close',
+      fieldset: 'openHours',
       type: 'string',
       description: 'e.g. "22:00"',
       validation: (Rule) =>
