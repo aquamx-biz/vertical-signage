@@ -421,8 +421,8 @@ export default defineType({
       fields: [
         defineField({ name: 'slotMinutes', title: 'Slot Minutes', type: 'number' }),
         defineField({ name: 'capacityPerSlot', title: 'Capacity Per Slot', type: 'number' }),
-        defineField({ name: 'breakStart', title: 'Break Start', type: 'string', description: 'e.g. "14:00"' }),
-        defineField({ name: 'breakEnd', title: 'Break End', type: 'string', description: 'e.g. "17:00"' }),
+        defineField({ name: 'breakStart', title: 'Break Start', type: 'string', description: 'e.g. "14:00"', validation: (Rule) => Rule.regex(/^\d{1,2}:\d{2}$/).error('รูปแบบต้องเป็น HH:MM · Must be HH:MM') }),
+        defineField({ name: 'breakEnd', title: 'Break End', type: 'string', description: 'e.g. "17:00"', validation: (Rule) => Rule.regex(/^\d{1,2}:\d{2}$/).error('รูปแบบต้องเป็น HH:MM · Must be HH:MM') }),
         defineField({ name: 'daysAhead', title: 'Days Selectable · เปิดให้เลือกกี่วัน', type: 'number', description: 'Calendar days offered, counted from the first bookable day · นับจากวันแรกที่จองได้ (ไม่ใช่ระยะขั้นต่ำก่อนถึงคิว)' }),
         defineField({ name: 'minNotice', title: 'Min Notice · ต้องจองล่วงหน้า', type: 'number', description: 'Blocks last-minute bookings, unit below · เช่น 3 ชั่วโมง = ซ่อนคิวที่จะถึงใน 3 ชม. · 7 วัน = เริ่มจองอีก 7 วันข้างหน้า · เว้นว่าง = รับถึงนาทีสุดท้าย' }),
         defineField({ name: 'minNoticeUnit', title: 'Min Notice Unit · หน่วย', type: 'string', options: { list: [ { title: 'Hours · ชั่วโมง', value: 'hours' }, { title: 'Days · วัน', value: 'days' } ], layout: 'radio' }, initialValue: 'hours' }),

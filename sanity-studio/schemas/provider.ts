@@ -222,7 +222,7 @@ export default defineType({
       fieldset: 'openHours',
       type: 'string',
       description: 'e.g. "10:00"',
-      validation: (Rule) => Rule.regex(/^\d{1,2}:\d{2}$/).warning('รูปแบบต้องเป็น HH:MM เช่น 10:00 · Must be HH:MM'),
+      validation: (Rule) => Rule.regex(/^\d{1,2}:\d{2}$/).error('รูปแบบต้องเป็น HH:MM เช่น 10:00 · Must be HH:MM — publish ไม่ได้จนกว่าจะถูกรูปแบบ'),
     }),
     defineField({
       name: 'closeTime',
@@ -239,7 +239,7 @@ export default defineType({
           const ot = hm(o), ct = hm(v)
           if (ot != null && ct != null && ot >= ct) return 'เวลาปิดต้องหลังเวลาเปิด · Close must be after open'
           return true
-        }).warning(),
+        }).error(),
     }),
     // Legacy free-text hours — superseded by the structured fields above; kept
     // hidden so old documents load cleanly and old builds can still read it.
@@ -258,8 +258,8 @@ export default defineType({
       fields: [
         defineField({ name: 'slotMinutes', title: 'Slot Minutes', type: 'number' }),
         defineField({ name: 'capacityPerSlot', title: 'Capacity Per Slot', type: 'number' }),
-        defineField({ name: 'breakStart', title: 'Break Start', type: 'string', description: 'e.g. "14:00"' }),
-        defineField({ name: 'breakEnd', title: 'Break End', type: 'string', description: 'e.g. "17:00"' }),
+        defineField({ name: 'breakStart', title: 'Break Start', type: 'string', description: 'e.g. "14:00"', validation: (Rule) => Rule.regex(/^\d{1,2}:\d{2}$/).error('รูปแบบต้องเป็น HH:MM · Must be HH:MM') }),
+        defineField({ name: 'breakEnd', title: 'Break End', type: 'string', description: 'e.g. "17:00"', validation: (Rule) => Rule.regex(/^\d{1,2}:\d{2}$/).error('รูปแบบต้องเป็น HH:MM · Must be HH:MM') }),
         defineField({ name: 'daysAhead', title: 'Days Selectable · เปิดให้เลือกกี่วัน', type: 'number', description: 'Calendar days offered, counted from the first bookable day · นับจากวันแรกที่จองได้' }),
         defineField({ name: 'minNotice', title: 'Min Notice · ต้องจองล่วงหน้า', type: 'number', description: 'Blocks last-minute bookings, unit below · เช่น 3 ชั่วโมง / 7 วัน · เว้นว่าง = รับถึงนาทีสุดท้าย' }),
         defineField({ name: 'minNoticeUnit', title: 'Min Notice Unit · หน่วย', type: 'string', options: { list: [ { title: 'Hours · ชั่วโมง', value: 'hours' }, { title: 'Days · วัน', value: 'days' } ], layout: 'radio' }, initialValue: 'hours' }),
