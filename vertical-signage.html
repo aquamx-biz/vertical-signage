@@ -2403,8 +2403,9 @@ function adaptPlaylistToSlots(pl) {
             _menuItems: Array.isArray(item.menuItems) ? item.menuItems : [],
             _orderItems: Array.isArray(item.orderItems) ? item.orderItems : [],
             _fulfillment: Array.isArray(item.fulfillment) ? item.fulfillment : [],
-            // Shop schedule + per-offer overrides, merged field-by-field
-            _booking: mergeBooking(item.provider && item.provider.booking, item.booking),
+            // Shop schedule (open/close derived from Opening Hours text when blank)
+            // + per-offer overrides, merged field-by-field
+            _booking: mergeBooking(shopBooking(item.provider), item.booking),
             _eventInfo: item.eventInfo || null,
             _displayMode: item.displayMode || null,
             _validFrom: item.validFrom || null,
@@ -3522,7 +3523,7 @@ function _fmtHM(m){ return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m
 /* Generate a date strip + available time slots from a booking config object. */
 /* Field-level merge of the shop's schedule + the offer's overrides — a field the
    offer fills wins; empty/blank falls back to the provider's booking config.
-   (kiosk-parity: mirrors mergeBooking in aquamx-handoff lib/booking.ts) */
+   (kiosk-parity: mirrors mergeBooking in aquamx-handoff lib/sanity.ts) */
 function mergeBooking(prov, off){
     if(!prov && !off) return off || null;
     const m = Object.assign({}, prov || {});
@@ -3531,6 +3532,21 @@ function mergeBooking(prov, off){
         if(v !== null && v !== undefined && v !== '') m[k] = v;
     });
     return m;
+}
+/* Shop booking with open/close derived from the display "Opening Hours" text
+   when the structured fields are blank — one source of truth, no double entry.
+   Only a simple "HH:MM-HH:MM" span is parseable; complex text needs the fields. */
+function shopBooking(p){
+    if(!p) return null;
+    const b = Object.assign({}, p.booking || {});
+    if(!b.openTime || !b.closeTime){
+        const m = String(p.openingHours || p.hours || '').match(/(\d{1,2}[:.]\d{2})\s*[-–—]\s*(\d{1,2}[:.]\d{2})/);
+        if(m){
+            if(!b.openTime)  b.openTime  = m[1].replace('.', ':');
+            if(!b.closeTime) b.closeTime = m[2].replace('.', ':');
+        }
+    }
+    return Object.keys(b).length ? b : null;
 }
 /* Min-notice cutoff — the earliest instant a booking may start.
    hours = now + N h (กันจองกระทันหัน) · days = 00:00 of today + N days
@@ -4100,8 +4116,9 @@ function openCardDetail(idx) {
         menuItems: o && Array.isArray(o.menuItems) ? o.menuItems : [],
         orderItems: o && Array.isArray(o.orderItems) ? o.orderItems : [],
         fulfillment: o && Array.isArray(o.fulfillment) ? o.fulfillment : [],
-        // Shop schedule + per-offer overrides, merged field-by-field
-        booking: mergeBooking(p && p.booking, o ? o.booking : null),
+        // Shop schedule (open/close derived from Opening Hours text when blank)
+        // + per-offer overrides, merged field-by-field
+        booking: mergeBooking(shopBooking(p), o ? o.booking : null),
         eventInfo: o ? (o.eventInfo || null) : null,
         // Detail CTA label mirrors the form: custom offer.ctaLabel → per-category
         // default. Uses the offer's own category value, not the panel key.

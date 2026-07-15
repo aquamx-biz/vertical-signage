@@ -202,8 +202,8 @@ export default defineType({
       description: 'Default for every offer with a Book button — set once here · ตั้งครั้งเดียว ทุก offer ใช้ตารางนี้อัตโนมัติ ยกเว้นช่องที่ offer กรอกทับเอง',
       options: { collapsible: true, collapsed: true, columns: 2 },
       fields: [
-        defineField({ name: 'openTime', title: 'Open Time', type: 'string', description: 'e.g. "10:00"' }),
-        defineField({ name: 'closeTime', title: 'Close Time', type: 'string', description: 'e.g. "22:00"' }),
+        defineField({ name: 'openTime', title: 'Open Time', type: 'string', description: 'Blank = from Opening Hours · เว้นว่าง = ใช้จากช่อง Opening Hours อัตโนมัติ — กรอกเมื่อเวลารับคิวต่างจากเวลาเปิดร้าน' }),
+        defineField({ name: 'closeTime', title: 'Close Time', type: 'string', description: 'Blank = from Opening Hours · เว้นว่าง = ใช้จากช่อง Opening Hours อัตโนมัติ' }),
         defineField({ name: 'slotMinutes', title: 'Slot Minutes', type: 'number' }),
         defineField({ name: 'breakStart', title: 'Break Start', type: 'string', description: 'e.g. "14:00"' }),
         defineField({ name: 'breakEnd', title: 'Break End', type: 'string', description: 'e.g. "17:00"' }),
