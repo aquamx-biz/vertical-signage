@@ -4493,6 +4493,17 @@ async function init() {
                 var slide = '';
                 try { if (typeof cur !== 'undefined' && SLOTS && SLOTS[cur]) slide = (SLOTS[cur].titleLines || []).join(' ').slice(0, 40); } catch (_) {}
                 var mem = 0; try { mem = performance.memory ? Math.round(performance.memory.usedJSHeapSize / 1048576) : 0; } catch (_) {}
+                // Hardware fingerprint — lets the fleet self-report specs (screen +
+                // board model + chip class) so we can compare sites without touching
+                // each box. Board model sits at the START of the UA (e.g. "Android
+                // 11; YF_020E Build/…") — the sliced ua tail misses it, so parse here.
+                var scr = '', board = '', andr = '';
+                try {
+                    var w = screen.width, h = screen.height, dpr = window.devicePixelRatio || 1;
+                    scr = Math.round(Math.max(w, h) * dpr) + 'x' + Math.round(Math.min(w, h) * dpr) + '@' + dpr;
+                    var m = navigator.userAgent.match(/Android\s+([\d.]+);\s*([^;)]+?)\s*(?:Build|;|\))/i);
+                    if (m) { andr = m[1]; board = (m[2] || '').trim(); }
+                } catch (_) {}
                 fetch(BURL, {
                     method: 'POST', keepalive: true,
                     headers: { 'Content-Type': 'application/json' },
@@ -4505,6 +4516,9 @@ async function init() {
                         imgf:  imgf.join(' | '),
                         slide: slide,
                         memMB: mem,
+                        scr:   scr,      // e.g. "3840x2160@1" — reveals 4K vs 1080p per box
+                        board: board,    // e.g. "YF_020E" (Gygar 4K) vs "ZC_H358S" (Ushida 1080p)
+                        andr:  andr,     // Android version
                         ua:    navigator.userAgent.slice(-60)
                     })
                 }).catch(function () {});
