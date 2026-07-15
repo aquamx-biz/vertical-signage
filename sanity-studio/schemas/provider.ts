@@ -192,29 +192,31 @@ export default defineType({
       description: 'มีผลเมื่อกรอก LINE ID ช่องบนแล้วเท่านั้น',
     }),
 
+    defineField({ name: 'website', title: 'Website',  type: 'url',    components: { input: createRetrieveFromPartyInput('website') } }),
+    // Opening Hours FIRST — the booking schedule below reads open/close from here
+    // (single entry point; no duplicate time fields — user rule 2026-07-15).
+    defineField({ name: 'openingHours', title: '📺 Opening Hours', type: 'string', description: 'e.g. 10:00–22:00 · เวลานี้ใช้ทั้งโชว์บนจอ และเป็นเวลาเปิด-ปิดของตารางรับคิวด้านล่าง' }),
+
     // ── ตารางรับคิวของร้าน — ค่าหลักที่ทุก offer ปุ่มจองใช้ร่วมกัน ─────────────
-    // Field-level merge: offer.booking's filled fields win over these.
-    // (Merge implemented in build.mjs bake + handoff mergeBooking — keep in sync.)
+    // Open/close มาจาก Opening Hours ด้านบน (shopBooking() parses it) — ก้อนนี้
+    // จึงมีเฉพาะเรื่องคิวล้วน ๆ · Field-level merge: offer.booking wins per field.
+    // (Merge implemented in kiosk shopBooking/mergeBooking + handoff fetchOffer — keep in sync.)
     defineField({
       name: 'booking',
       title: '📺 Booking Schedule · ตารางรับคิวของร้าน',
       type: 'object',
-      description: 'Default for every offer with a Book button — set once here · ตั้งครั้งเดียว ทุก offer ใช้ตารางนี้อัตโนมัติ ยกเว้นช่องที่ offer กรอกทับเอง',
+      description: 'Uses the Opening Hours above as open–close · ใช้เวลาเปิด-ปิดจากช่อง Opening Hours ด้านบนอัตโนมัติ — ตั้งครั้งเดียว ทุก offer ปุ่มจองใช้ร่วมกัน',
       options: { collapsible: true, collapsed: true, columns: 2 },
       fields: [
-        defineField({ name: 'openTime', title: 'Open Time', type: 'string', description: 'Blank = from Opening Hours · เว้นว่าง = ใช้จากช่อง Opening Hours อัตโนมัติ — กรอกเมื่อเวลารับคิวต่างจากเวลาเปิดร้าน' }),
-        defineField({ name: 'closeTime', title: 'Close Time', type: 'string', description: 'Blank = from Opening Hours · เว้นว่าง = ใช้จากช่อง Opening Hours อัตโนมัติ' }),
         defineField({ name: 'slotMinutes', title: 'Slot Minutes', type: 'number' }),
+        defineField({ name: 'capacityPerSlot', title: 'Capacity Per Slot', type: 'number' }),
         defineField({ name: 'breakStart', title: 'Break Start', type: 'string', description: 'e.g. "14:00"' }),
         defineField({ name: 'breakEnd', title: 'Break End', type: 'string', description: 'e.g. "17:00"' }),
         defineField({ name: 'daysAhead', title: 'Days Selectable · เปิดให้เลือกกี่วัน', type: 'number', description: 'Calendar days offered, counted from the first bookable day · นับจากวันแรกที่จองได้' }),
         defineField({ name: 'minNotice', title: 'Min Notice · ต้องจองล่วงหน้า', type: 'number', description: 'Blocks last-minute bookings, unit below · เช่น 3 ชั่วโมง / 7 วัน · เว้นว่าง = รับถึงนาทีสุดท้าย' }),
         defineField({ name: 'minNoticeUnit', title: 'Min Notice Unit · หน่วย', type: 'string', options: { list: [ { title: 'Hours · ชั่วโมง', value: 'hours' }, { title: 'Days · วัน', value: 'days' } ], layout: 'radio' }, initialValue: 'hours' }),
-        defineField({ name: 'capacityPerSlot', title: 'Capacity Per Slot', type: 'number' }),
       ],
     }),
-    defineField({ name: 'website', title: 'Website',  type: 'url',    components: { input: createRetrieveFromPartyInput('website') } }),
-    defineField({ name: 'openingHours', title: '📺 Opening Hours', type: 'string', description: 'e.g. 10:00–22:00' }),
     defineField({ name: 'amenities', title: 'Amenities / จุดเด่นร้าน', type: 'array', of: [{ type: 'string' }], description: 'Store highlights shown on provider page (parking, wifi, accepts cards, etc.).' }),
     defineField({ name: 'submittedBy', title: 'Submitted By', type: 'string', readOnly: true, description: 'Most recent auth identity that submitted via /submit (e.g. "line:Uxxx" / "email:foo@bar.com").' }),
     defineField({
