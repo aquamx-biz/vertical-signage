@@ -40,6 +40,8 @@ import { DashboardTool }        from './tools/DashboardTool'
 import { PartyMigrationTool }   from './tools/PartyMigrationTool'
 import { ScreenHealthTool }     from './tools/ScreenHealthTool'
 import { PendingChangesTool }   from './tools/PendingChangesTool'
+import { KioskHealthTool }      from './tools/KioskHealthTool'
+import { ContentFootprintTool } from './tools/ContentFootprintTool'
 import { accessControlPlugin, accessStore } from './plugins/accessControl'
 import { paneWidthOverride }               from './plugins/paneWidthOverride'
 
@@ -71,6 +73,16 @@ const dashboardPlugin = definePlugin({
       name:      'screen-health',
       title:     'Screen Health',
       component: ScreenHealthTool,
+    },
+    {
+      name:      'kiosk-health',
+      title:     'Fleet Health',
+      component: KioskHealthTool,
+    },
+    {
+      name:      'content-footprint',
+      title:     'Content Footprint',
+      component: ContentFootprintTool,
     },
     {
       name:      'pending-changes',
