@@ -1,4 +1,0 @@
-quotationNumber,customerName,companyName,quotationDate,rentalAddress,rentalRate,electricity,specificSpot,startingDate,endingDate,terms,note,_projectName
-QT-2024-001,Somchai Jaidee,ABC Media Co. Ltd.,2024-01-15,"Lobby B1, Ground Floor",25000 baht/month,Government rate,Zone A - Screen 1,2024-02-01,2024-07-31,Monthly payment by 5th of each month,First month free,The Residence Sukhumvit 21
-QT-2024-002,Malee Srisuk,XYZ Advertising Ltd.,2024-01-20,"Main Entrance, 1F",32000 baht/month,Government rate,Zone B - Screen 2,2024-03-01,2025-02-28,Quarterly payment,3-month minimum,Lumpini 24
-QT-2024-003,Wichai Rodpetch,DEF Corp.,2024-02-01,"Carpark Level B1",18000 baht/month,Government rate,Zone C - Screen 1,2024-02-15,2024-08-14,Monthly payment,Renewal option available,Mahogany Tower

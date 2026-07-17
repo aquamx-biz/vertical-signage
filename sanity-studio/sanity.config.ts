@@ -27,7 +27,6 @@ import { AssetRegisterListPane } from './components/AssetRegisterListPane'
 import { PartyOverview }        from './views/PartyOverview'
 import { LeadOverview }              from './views/LeadOverview'
 import { SaleOpportunityOverview }  from './views/SaleOpportunityOverview'
-import { dataImportPlugin }     from './plugins/data-import'
 import { PlaylistView }            from './views/PlaylistView'
 import { DirectoryView }           from './views/DirectoryView'
 import { FinancialStatementView }  from './components/FinancialStatementView'
@@ -405,7 +404,6 @@ export default defineConfig({
     }),
 
     dashboardPlugin(),
-    dataImportPlugin(),
     howToPlugin(),
     visionTool(),
   ],
