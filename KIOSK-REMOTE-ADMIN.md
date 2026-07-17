@@ -8,10 +8,118 @@
 
 ## ทะเบียนกล่อง (device registry)
 
-| ชื่อ | ไซต์ | Tailnet IP | LAN IP | บอร์ด/Android | wifi | MAC |
+| ชื่อ | ไซต์ | Tailnet IP (hostname) | LAN IP | บอร์ด/Android | wifi | MAC |
 |---|---|---|---|---|---|---|
-| Gygar43 | mahogany (บ้าน) | — | 192.168.1.137 | rk3588s / 13 | Theake_2.4G | B8:41:D9:F1:8F:A8 |
-| noble-be19a | noble-be19 | 100.100.123.43 | 192.168.1.4 | YF_020E / 11 | Aquamx004-5G | (ดู Device Info) |
+| Gygar43 | mahogany (บ้าน) | 100.71.132.15 (zc-h358s) | 192.168.1.137 | ZC-H358S rk3588s / 13 | Theake_2.4G | B8:41:D9:F1:8F:A8 |
+| noble-be19a | noble-be19 | 100.100.123.43 (yf-020e) | 192.168.1.4 | YF_020E rk3566 / 11 · จอ override 1080p · ไม่มี Yodeck | Aquamx004-5G | (ดู Device Info) |
+| noble-be19b | noble-be19 | 100.87.197.15 (yf-020e-1) | 192.168.1.46 | YF_020E rk3566 / 11 · 4K 2160×3840 | Noble B19_LobbyB_5G | 68:8F:C9:12:B6:BC |
+
+**adb:** ทุกกล่องเปิด `persist.adb.tcp.port=5555` แล้ว → `adb connect <tailnet-ip>:5555` ได้เลย
+⚠️ **wifi Noble B19_LobbyB มี client isolation** — คอมกับกล่องอยู่ SSID เดียวกันก็คุยกันตรง ๆ ไม่ได้
+(LAN adb/2323 ใช้ไม่ได้แม้อยู่หน้างาน) → ใช้ tailnet IP เสมอ · mDNS discovery ทะลุได้แต่ unicast โดนบล็อก
+
+### ตั้ง Fully เป็น Home app ผ่าน adb (บทเรียน be19b 2026-07-16)
+
+**Yodeck ต้อง disable ก่อน** ไม่งั้นตั้ง home ไม่ติด — Yodeck ไม่ได้แค่กิน RAM (4K + 2 แอป
+signage บน RAM 4GB = OOM thrash → Fully ANR) แต่ตอนบูตมันเป็นตัวเลือก HOME แย่งกับ Fully
+ทำให้ default ไม่ล็อก และ component Fully โดน disable กลับทุกรีบูต ลำดับที่รอดข้ามรีบูตจริง:
+
+```bash
+adb -s <ip>:5555 shell pm disable-user --user 0 com.yodeck.android   # ปิด Yodeck (ย้อนได้)
+adb -s <ip>:5555 shell am force-stop com.yodeck.android
+adb -s <ip>:5555 shell pm enable de.ozerov.fully/de.ozerov.fully.LauncherReplacement
+adb -s <ip>:5555 shell cmd package set-home-activity de.ozerov.fully/.LauncherReplacement
+# ยืนยัน: resolve-activity ... HOME --brief  → ต้องได้ de.ozerov.fully/.LauncherReplacement
+# แล้ว reboot จริงเช็คว่า LauncherReplacement ไม่กลับไปอยู่ disabledComponents
+```
+
+⚠️ อย่าเคลมว่าเสร็จก่อนรีบูตทดสอบ — `pm set-home-activity` อย่างเดียวชนะแค่รอบเดียว
+ถ้ายังมี home candidate อื่น (Yodeck) จะหลุดหลังบูต
+
+### สถานะปัจจุบัน be19b (2026-07-16): Fully → หน้า holding ในเครื่อง (offline)
+
+**เดิม** กล่องนี้ตั้ง Fully เป็น **Single App Mode ครอบ Yodeck** (`singleAppIntent` →
+`com.yodeck.android`) และ Yodeck เล่นคอนเทนต์เป็นหน้าเว็บ `noble-be19.netlify.app`
+(สาย Fully → Yodeck → netlify) เว็บโหลดพลาดบ่อย (`ERR_CONNECTION_ABORTED`) + RAM ตึง
+
+**ตอนนี้เปลี่ยนเป็น** Fully โหลดไฟล์ static ในเครื่องตรง ๆ ตัด Yodeck+netlify ออก (offline 100%):
+- `singleAppMode=false`, `startURL=file:///sdcard/aquamx-holding.html`
+- ไฟล์ต้นฉบับ = `holding.html` ใน repo (navy+bronze, สองภาษา, self-contained)
+- ยืนยันขึ้นเองหลังรีบูตจริงแล้ว
+
+อัปเดตไฟล์ holding: แก้ `holding.html` → `adb push holding.html /sdcard/aquamx-holding.html`
+→ REST `?cmd=loadStartUrl&password=<pw>` (ไม่ต้องรีสตาร์ท)
+
+ตั้งค่า Fully จากคอมผ่าน REST (Remote Admin ต้องเปิด):
+```bash
+PW=<remoteAdminPassword>; IP=<tailnet-ip>:2323
+curl "http://$IP/?cmd=setStringSetting&key=startURL&value=<urlencoded>&password=$PW"
+curl "http://$IP/?cmd=setBooleanSetting&key=singleAppMode&value=false&password=$PW"
+curl "http://$IP/?cmd=loadStartUrl&password=$PW"
+# เปลี่ยน setting เสร็จ ต้อง force-stop+start Fully ถึงจะหลุด single-app session เดิม
+```
+
+**ย้อนกลับไป Yodeck:** `setBooleanSetting singleAppMode=true` + ให้ `singleAppIntent` ชี้
+`com.yodeck.android/com.example.yodeck_library.MainActivity` แล้ว restart Fully
+(Yodeck ถูก enable กลับแล้ว — ก่อนหน้าเคย disable-user ตอนไล่ ANR)
+
+**be19a ก็ตั้งเหมือนกันแล้ว (2026-07-16):** Fully → `file:///sdcard/aquamx-holding.html`, home,
+`persist.adb.tcp.port=5555`, ยืนยันรอดรีบูต · be19a ไม่มี Yodeck ตั้งแต่แรก · จอ override 1080p
+เคล็ด: ถ้า REST setStringSetting startURL ไม่ติด → แก้ prefs ตรง ๆ ด้วย root ชัวร์กว่า:
+`am force-stop de.ozerov.fully; sed -i 's|>OLD_URL<|>file:///sdcard/aquamx-holding.html<|' <prefs>; am start ...`
+⚠️ **อย่าเปิดหน้า Android Settings → Default apps → Home app picker** — แค่เปิด picker จะล้าง
+default home ทันที (ต้อง set-home-activity ใหม่) เจอกับ be19b มาแล้ว
+
+### ⚠️ be19a: กับดัก 2 อย่างที่ทำจอค้าง "Loading..." (บทเรียน 2026-07-17)
+
+**1. `graphicsAccelerationMode` ต้อง = 1** — be19a ตั้งไว้ = 2 (software) → WebView 4K
+เรนเดอร์ไม่ไหว ค้าง "Loading..." ตลอด · แก้: `sed` prefs เป็น `>1</string>` (เทียบกับ be19b = 1)
+
+**2. Fully-as-home ทำ dialog "Switch Home Button Lock off?" วนทุกบูต** — ถ้า Fully ถูกตั้งเป็น
+home ด้วย `set-home-activity` (adb) อย่างเดียว แต่ไม่ได้ถือ HOME role จริง Fully จะเด้ง dialog นี้
+ทุกบูต **บล็อก WebView ไม่ให้โหลด** (กด BACK/NO ไม่หาย มันวน) →
+**ทางแก้ที่ใช้ได้: กด YES (ปลด home-lock)** ให้ Fully เป็นแอปธรรมดา แล้วพึ่ง `launchOnBoot=true`
+เปิดเองตอนบูต · be19a รันแบบนี้ (home = Quickstep, Fully autostart) · ยืนยันรอดรีบูตแล้ว
+· be19b ไม่เจอปัญหานี้เพราะถือ HOME role ถูกต้อง (ตอนตั้งค่ามีคนอยู่หน้าเครื่องกด Always)
+
+## มอนิเตอร์สุขภาพจอ (2026-07-17)
+
+**ชั้น 1 — beacon ในหน้า holding:** `holding.html` มี `<script>` ยิง POST ทุก 5 นาที ไป
+`app.aquamx.biz/api/kiosk-beacon` (field `slide=holding@<dev>`) · ไฟล์ต่อกล่อง sed `__AQDEV__`→
+`be19a`/`be19b` ก่อน push · จอเงียบ >12 นาที = ค้าง/ดับ/เน็ตหลุด · อ่าน: curl endpoint นั้น
+⚠️ be19a เคย ANR ตอน force-reload beacon ใต้โหลดสูง — บูตสะอาดแล้วรันได้ ถ้า ANR ซ้ำให้ถอด beacon
+
+**ชั้น 2 — VPN health check:** `tools/kiosk-health.ps1` (Task Scheduler "AquaMX Kiosk Health"
+ทุก 4 ชม.) เช็คผ่าน tailnet: ping/adb/foreground-app/screen/RAM/storage/ANR-count/top-CPU →
+**POST ขึ้น `app.aquamx.biz/api/kiosk-health`** (+ เขียนไฟล์ local `tools/health/kiosk-health.html`
+เป็น backup) · ทำงานเฉพาะตอนคอมเปิด
+
+**หน้าเว็บรวม: `app.aquamx.biz/kiosk`** — รวม beacon (สด, always-on) + health (adb, ทุก 4 ชม.)
+เป็น dashboard เดียว battery-bar เปิดจากมือถือได้ · source อยู่ที่ repo `aquamx-handoff`
+(`app/kiosk/page.tsx` + `app/api/kiosk-health/route.ts`) deploy ผ่าน Netlify master · ตอนนี้
+**เปิด public** (ยังไม่มีรหัส) · merge key: beacon slide `holding@be19a` ↔ health device `noble-be19a`
+
+⛔ **ห้าม screencap ในการเช็คสุขภาพ** — `adb screencap` บนจอ 4K RK3566 นี้ทำ Fully ค้าง ANR
+**ทั้ง be19a และ be19b** (ยืนยันแล้ว ตรงกฎ "no repeated screenshots on 4K") · สคริปต์เลยตั้ง
+`Screencap = $false` ทั้งคู่ ใช้ beacon เป็นตัวยืนยัน render (field `scr` ไม่ใช่ 0x0 = เรนเดอร์แล้ว)
+· probe เบา ๆ (dumpsys/free/uptime) ปลอดภัย ไม่ทำ ANR · ต้องแคปจริง = ทำครั้งเดียว มือ ตอนจำเป็น
+
+### 🎯 ต้นตอ ANR ที่แท้จริง = `volumelock.vlocker` (2026-07-17)
+
+กล่อง ANR ~12 ครั้ง/วัน · ไล่ด้วย `top -o %CPU` เจอ **`volumelock.vlocker` เผา CPU 80-120%
+ต่อเนื่องทั้งสองกล่อง** (แอปล็อกเสียงที่วน set volume ไม่หยุด → กระแทก CPU + audioserver →
+Fully main thread อดตาย → ANR) · **ปิดแล้ว** (`pm disable-user volumelock.vlocker`) เพราะ
+**Fully ล็อกเสียงเองอยู่แล้ว** (`disableVolumeButtons=true`, `volumeLevels`, มี volume license)
+vlocker จึงซ้ำซ้อน · หลังปิด: RAM ว่าง be19a 130→308MB
+
+แอปขยะอื่นที่ปิดไปด้วย (ไม่เกี่ยว signage): Ookla Speedtest, Chrome (Fully ใช้ WebView เอง), TTS
+· freeze Play/GMS background: `am set-standby-bucket com.android.vending restricted` +
+`cmd appops set com.android.vending RUN_ANY_IN_BACKGROUND deny`
+
+⚠️ **`load average` บน RK3566 เชื่อไม่ได้** — `/proc/loadavg` โชว์เลข 6-10 ทั้งที่มี runnable
+แค่ 2-4 thread (kernel นับเพี้ยน) · ตัวชี้วัดจริง = **%CPU ใน top** + **จำนวน ANR/วัน**
+(health check เก็บ `anrToday`, `topCpu`, `memFreeMB`, `storagePct` ลง CSV + dashboard แล้ว)
+พิสูจน์ผลปิด vlocker = ดู anrToday ของ "พรุ่งนี้" (วันนี้เลขค้างเพราะ ANR เกิดก่อนแก้)
 
 Remote Admin password (ทุกกล่อง): ดูจาก Fully Cloud หรือ Settings ที่กล่อง
 

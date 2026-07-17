@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>aquamx — available soon</title>
+<style>
+  :root{
+    --navy:#0E3361; --navy-deep:#072147; --bronze:#C9864C;
+    --bronze-soft:#F6E5D0; --white:#FFFFFF;
+    /* offline-safe stacks: Android WebView falls back to Noto Sans Thai for Thai glyphs */
+    --sans:"Prompt","IBM Plex Sans Thai","Noto Sans Thai",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    --display:"Anton","Prompt","IBM Plex Sans Thai","Noto Sans Thai",Impact,sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%;overflow:hidden;background:var(--navy-deep)}
+  body{
+    font-family:var(--sans);
+    color:var(--white);
+    background:
+      radial-gradient(120% 80% at 50% 12%, #14417A 0%, var(--navy) 42%, var(--navy-deep) 100%);
+    display:flex;align-items:center;justify-content:center;
+    -webkit-font-smoothing:antialiased;
+  }
+  /* brass-marquee hairline frame */
+  .frame{
+    position:fixed;inset:2.6vmin;
+    border:0.32vmin solid rgba(201,134,76,0.55);
+    border-radius:1.4vmin;pointer-events:none;
+  }
+  .stage{
+    width:100%;max-width:92vw;
+    display:flex;flex-direction:column;align-items:center;
+    text-align:center;gap:4.5vh;padding:6vh 4vw;
+  }
+  .wordmark{
+    font-family:var(--display);
+    font-weight:900;
+    font-size:20vw;line-height:.9;
+    letter-spacing:-0.01em;
+    text-transform:lowercase;
+  }
+  .wordmark b{font-weight:900}
+  .wordmark .x{color:var(--bronze)}
+  .rule{width:16vw;height:0.55vh;background:var(--bronze);border-radius:2px}
+  .headline{
+    font-family:var(--display);
+    font-weight:800;
+    font-size:9.4vw;line-height:1.02;
+    letter-spacing:.005em;
+  }
+  .headline .th{
+    display:block;font-family:var(--sans);font-weight:600;
+    font-size:5.6vw;line-height:1.1;margin-top:1.6vh;
+    color:var(--bronze-soft);
+  }
+  .clock{width:13vw;height:13vw;stroke:var(--bronze);fill:none;
+    stroke-width:5;stroke-linecap:round}
+  .note{
+    font-size:3.5vw;line-height:1.5;
+    color:rgba(255,255,255,0.86);max-width:78vw;
+  }
+  .note .th{display:block;margin-top:0.8vh;color:rgba(246,229,208,0.78)}
+</style>
+</head>
+<body>
+  <div class="frame"></div>
+  <main class="stage">
+    <div class="wordmark"><b>aquam</b><span class="x">x</span></div>
+    <div class="rule"></div>
+
+    <svg class="clock" viewBox="0 0 100 100" aria-hidden="true">
+      <circle cx="50" cy="50" r="42"/>
+      <path d="M50 27 V50 L66 60"/>
+    </svg>
+
+    <h1 class="headline">
+      Available&nbsp;soon
+      <span class="th">จะเปิดให้บริการเร็ว&nbsp;ๆ&nbsp;นี้</span>
+    </h1>
+
+    <p class="note">
+      Thank you for your patience — we're preparing something better.
+      <span class="th">ขอบคุณที่รอ เรากำลังเตรียมสิ่งที่ดีกว่าให้คุณ</span>
+    </p>
+  </main>
+
+<script>
+// ── Health beacon — same contract as vertical-signage.html ──────────────
+// POSTs every 5 min so the fleet API sees holding screens too. A box that
+// goes silent >12 min = frozen page / dead box / dead wifi.
+// __AQDEV__ is replaced per-box at push time (be19a / be19b) — the repo
+// copy keeps the placeholder. Read side: https://app.aquamx.biz/api/kiosk-beacon
+(function healthBeacon() {
+    var BURL = 'https://app.aquamx.biz/api/kiosk-beacon';
+    var DEV = '__AQDEV__';
+    var boot = Date.now();
+    var errs = [];
+    var bid = '';
+    try {
+        bid = localStorage.getItem('aq-beacon-id') || '';
+        if (!bid) { bid = Math.random().toString(36).slice(2, 8); localStorage.setItem('aq-beacon-id', bid); }
+    } catch (e) { bid = 'mem' + Math.random().toString(36).slice(2, 6); }
+    window.addEventListener('error', function (e) {
+        try { if (e && e.message) { errs.push(String(e.message).slice(0, 120)); if (errs.length > 5) errs.shift(); } } catch (_) {}
+    }, true);
+    function send() {
+        try {
+            var mem = 0; try { mem = performance.memory ? Math.round(performance.memory.usedJSHeapSize / 1048576) : 0; } catch (_) {}
+            var scr = '', board = '', andr = '';
+            try {
+                var w = screen.width, h = screen.height, dpr = window.devicePixelRatio || 1;
+                scr = Math.round(Math.max(w, h) * dpr) + 'x' + Math.round(Math.min(w, h) * dpr) + '@' + dpr;
+                var m = navigator.userAgent.match(/Android\s+([\d.]+);\s*([^;)]+?)\s*(?:Build|;|\))/i);
+                if (m) { andr = m[1]; board = (m[2] || '').trim(); }
+            } catch (_) {}
+            fetch(BURL, {
+                method: 'POST', keepalive: true,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    p:     'noble-be19',
+                    rev:   'holding-v1',
+                    bid:   bid,
+                    dev:   DEV,
+                    up:    Math.round((Date.now() - boot) / 60000),
+                    err:   errs.join(' | '),
+                    imgf:  '',
+                    slide: 'holding@' + DEV,
+                    memMB: mem,
+                    scr:   scr,
+                    board: board,
+                    andr:  andr,
+                    ua:    navigator.userAgent.slice(-60)
+                })
+            }).catch(function () {});
+        } catch (_) {}
+    }
+    setTimeout(send, 30000);
+    setInterval(send, 300000);
+})();
+</script>
+</body>
+</html>
