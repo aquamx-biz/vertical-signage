@@ -11,11 +11,24 @@ const API = 'https://app.aquamx.biz'
 const GREEN = '#2E9E5B', AMBER = '#C9864C', RED = '#B23B2E'
 
 interface Beacon { project: string; bid: string; slide: string; upMin: number; minAgo: number; online: boolean; scr: string; err: string; imgFails: string }
-interface Health { device: string; anrToday: number; topCpu: string; cores: number; ramUsedPct: number; ramFreeMB: number; storagePct: number; cacheMB: number; apps: string; focus: string; screenAwake: string; checkedMinAgo: number; anrCause: string; anrFixed: string; anrPending: string }
+interface Health { device: string; anrToday: number; topCpu: string; cores: number; ramUsedPct: number; ramFreeMB: number; storagePct: number; cacheMB: number; apps: string; focus: string; screenAwake: string; checkedMinAgo: number; anrCause: string; anrFixed: string; anrPending: string; anrAssessed: string }
 interface Row { device: string; beacon?: Beacon; health?: Health; ghosts?: number }
 
 const fmtUp = (m: number) => (m >= 1440 ? `${Math.floor(m / 1440)}d ${Math.floor((m % 1440) / 60)}h` : m >= 60 ? `${Math.floor(m / 60)}h ${m % 60}m` : `${m}m`)
 const fmtAgo = (m: number) => (m < 1 ? 'now' : m < 60 ? `${m}m ago` : `${Math.floor(m / 60)}h ${m % 60}m ago`)
+
+// how many whole days ago the human ANR diagnosis was made (from a YYYY-MM-DD)
+function assessedDaysAgo(d: string): number | null {
+  const t = Date.parse(`${d}T00:00:00`)
+  return isNaN(t) ? null : Math.floor((Date.now() - t) / 86400000)
+}
+function assessedLabel(d: string): string {
+  const days = assessedDaysAgo(d)
+  if (days === null) return ''
+  const th = new Date(`${d}T00:00:00`).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' })
+  const ago = days <= 0 ? 'วันนี้' : days === 1 ? 'เมื่อวาน' : `${days} วันก่อน`
+  return `${th} · ${ago}`
+}
 
 function anrColor(n: number) { return n <= 0 ? GREEN : n <= 3 ? AMBER : RED }
 function ramColor(p: number) { return p < 85 ? GREEN : p < 93 ? AMBER : RED }
@@ -220,7 +233,16 @@ export function KioskHealthTool() {
               )}
               {(h.anrCause || h.anrFixed || h.anrPending) && (
                 <Card padding={4} radius={3} shadow={1}>
-                  <Text size={1} weight="semibold" style={{ color: '#0E3361', marginBottom: 8, display: 'block' }}>{r.device} · สาเหตุ ANR</Text>
+                  <Text size={1} weight="semibold" style={{ color: '#0E3361', display: 'block' }}>{r.device} · สาเหตุ ANR</Text>
+                  {h.anrAssessed && (() => {
+                    const days = assessedDaysAgo(h.anrAssessed) ?? 0
+                    const stale = days >= 2 && h.anrToday > 0   // old diagnosis but ANR still biting → re-assess
+                    return (
+                      <Text size={0} style={{ display: 'block', marginTop: 2, marginBottom: 8, color: stale ? RED : '#8b98ae' }}>
+                        ประเมินเมื่อ {assessedLabel(h.anrAssessed)}{stale ? ' · ⚠ เก่าแล้ว แต่ ANR ยังเกิด — ควรประเมินใหม่' : ''}
+                      </Text>
+                    )
+                  })()}
                   <div style={{ fontSize: 12, lineHeight: 1.6 }}>
                     {h.anrCause && <p style={{ color: '#334155', margin: 0 }}>{h.anrCause}</p>}
                     {h.anrFixed && <div style={{ marginTop: 6, color: '#1b5e3a' }}><b>✓ แก้แล้ว</b><ul style={{ margin: '2px 0 0', paddingLeft: 20 }}>{h.anrFixed.split('|').map((x, i) => <li key={i}>{x}</li>)}</ul></div>}
