@@ -37,11 +37,13 @@ import { LedgerOverview }         from './components/LedgerOverview'
 import { AccountCodeTreeView }    from './tools/AccountCodeTreeView'
 import { HowToTool }            from './tools/HowToTool'
 import { DashboardTool }        from './tools/DashboardTool'
-import { PartyMigrationTool }   from './tools/PartyMigrationTool'
 import { ScreenHealthTool }     from './tools/ScreenHealthTool'
 import { PendingChangesTool }   from './tools/PendingChangesTool'
 import { KioskHealthTool }      from './tools/KioskHealthTool'
 import { ContentFootprintTool } from './tools/ContentFootprintTool'
+import {
+  DashboardIcon, RocketIcon, DesktopIcon, ActivityIcon, PackageIcon, HelpCircleIcon,
+} from '@sanity/icons'
 import { accessControlPlugin, accessStore } from './plugins/accessControl'
 import { paneWidthOverride }               from './plugins/paneWidthOverride'
 
@@ -51,6 +53,7 @@ const howToPlugin = definePlugin({
     {
       name:      'how-to',
       title:     'How-To Guide',
+      icon:      HelpCircleIcon,
       component: HowToTool,
     },
   ],
@@ -58,36 +61,39 @@ const howToPlugin = definePlugin({
 
 const dashboardPlugin = definePlugin({
   name: 'ops-dashboard',
+  // Menu order: ops overview → content workflow → the three monitoring tools
+  // grouped together (Screen / Fleet / Content). Party Migration was a one-time
+  // contract→party backfill — retired from the menu (file kept in git history).
   tools: [
     {
       name:      'dashboard',
       title:     'Dashboard',
+      icon:      DashboardIcon,
       component: DashboardTool,
     },
     {
-      name:      'party-migration',
-      title:     'Party Migration',
-      component: PartyMigrationTool,
+      name:      'pending-changes',
+      title:     'Pending Publish',
+      icon:      RocketIcon,
+      component: PendingChangesTool,
     },
     {
       name:      'screen-health',
       title:     'Screen Health',
+      icon:      DesktopIcon,
       component: ScreenHealthTool,
     },
     {
       name:      'kiosk-health',
       title:     'Fleet Health',
+      icon:      ActivityIcon,
       component: KioskHealthTool,
     },
     {
       name:      'content-footprint',
       title:     'Content Footprint',
+      icon:      PackageIcon,
       component: ContentFootprintTool,
-    },
-    {
-      name:      'pending-changes',
-      title:     'Pending Publish',
-      component: PendingChangesTool,
     },
   ],
 })
