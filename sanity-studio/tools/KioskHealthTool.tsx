@@ -159,19 +159,25 @@ export function KioskHealthTool() {
       {err && <Card padding={3} tone="critical" radius={3} style={{ marginBottom: 12 }}><Text size={1}>{err}</Text></Card>}
 
       <Card radius={3} shadow={1} style={{ overflowX: 'auto', marginBottom: 16 }}>
-        <table style={{ borderCollapse: 'collapse', width: '100%' }}>
+        {/* fixed layout → every project column is exactly equal width; long values
+            (e.g. a long Top-CPU process name) wrap to 2 lines instead of stretching */}
+        <table style={{ borderCollapse: 'collapse', tableLayout: 'fixed', width: 132 + rows.length * 152 }}>
+          <colgroup>
+            <col style={{ width: 132 }} />
+            {rows.map(r => <col key={r.device} style={{ width: 152 }} />)}
+          </colgroup>
           <thead>
             <tr style={{ borderBottom: '1px solid #e6e9f1' }}>
-              <th style={{ ...lbl, minWidth: 116 }}></th>
+              <th style={lbl}></th>
               {rows.map(r => {
                 const on = !!r.beacon?.online
                 return (
-                  <th key={r.device} style={{ padding: '10px 12px', textAlign: 'left', verticalAlign: 'bottom', minWidth: 132 }}>
+                  <th key={r.device} style={{ padding: '10px 12px', textAlign: 'left', verticalAlign: 'bottom' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                       <span style={{ width: 8, height: 8, borderRadius: 8, flex: 'none', background: on ? GREEN : RED }} />
-                      <span style={{ fontSize: 13, fontWeight: 500, color: '#0b1b33', whiteSpace: 'nowrap' }}>{r.device}</span>
+                      <span style={{ fontSize: 13, fontWeight: 500, color: '#0b1b33', wordBreak: 'break-word' }}>{r.device}</span>
                     </div>
-                    <div style={{ fontSize: 11, color: '#8b98ae', marginTop: 2, whiteSpace: 'nowrap' }}>
+                    <div style={{ fontSize: 11, color: '#8b98ae', marginTop: 2 }}>
                       {r.beacon ? `${on ? 'online' : 'offline'} · up ${fmtUp(r.beacon.upMin)} · ${fmtAgo(r.beacon.minAgo)}` : 'ไม่มี beacon'}
                     </div>
                   </th>
@@ -186,7 +192,7 @@ export function KioskHealthTool() {
                 const h = r.health
                 if (!h?.focus) return <td key={r.device} style={{ ...cell, color: '#cbd2dd', fontSize: 12 }}>—</td>
                 const drift = h.focus !== 'de.ozerov.fully'
-                return <td key={r.device} style={{ ...cell, fontSize: 12, fontWeight: 500, whiteSpace: 'nowrap', color: drift ? RED : '#1b5e3a' }}>{appName(h.focus)}{drift ? ' ⚠' : ''}</td>
+                return <td key={r.device} style={{ ...cell, fontSize: 12, fontWeight: 500, wordBreak: 'break-word', color: drift ? RED : '#1b5e3a' }}>{appName(h.focus)}{drift ? ' ⚠' : ''}</td>
               })}
             </tr>
             {METRICS.map(m => (
@@ -199,9 +205,9 @@ export function KioskHealthTool() {
                   const cap = m.cap ? m.cap(h) : ''
                   return (
                     <td key={r.device} style={cell}>
-                      <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, whiteSpace: 'nowrap' }}>
-                        <span style={{ fontSize: 12, fontWeight: 500, color: col }}>{m.val(h)}</span>
-                        {cap && <span style={{ marginLeft: 'auto', fontSize: 11, color: '#8b98ae' }}>{cap}</span>}
+                      <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+                        <span style={{ fontSize: 12, fontWeight: 500, color: col, wordBreak: 'break-word', minWidth: 0 }}>{m.val(h)}</span>
+                        {cap && <span style={{ marginLeft: 'auto', fontSize: 11, color: '#8b98ae', flex: 'none', whiteSpace: 'nowrap' }}>{cap}</span>}
                       </div>
                       {pct !== null && <Bar pct={pct} color={col} />}
                     </td>
