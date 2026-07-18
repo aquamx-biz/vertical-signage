@@ -11,7 +11,7 @@ const API = 'https://app.aquamx.biz'
 const GREEN = '#2E9E5B', AMBER = '#C9864C', RED = '#B23B2E'
 
 interface Beacon { project: string; bid: string; slide: string; upMin: number; minAgo: number; online: boolean; scr: string; err: string; imgFails: string }
-interface Health { device: string; anrToday: number; topCpu: string; cores: number; ramUsedPct: number; ramFreeMB: number; storagePct: number; cacheMB: number; apps: string; focus: string; screenAwake: string; checkedMinAgo: number; anrCause: string; anrFixed: string; anrPending: string; anrAssessed: string }
+interface Health { device: string; anrToday: number; topCpu: string; cores: number; ramUsedPct: number; ramFreeMB: number; ramTotalMB: number; storagePct: number; storageTotalMB: number; storageFreeMB: number; cacheMB: number; apps: string; focus: string; screenAwake: string; checkedMinAgo: number; anrCause: string; anrFixed: string; anrPending: string; anrAssessed: string }
 interface Row { device: string; beacon?: Beacon; health?: Health; ghosts?: number }
 
 const fmtUp = (m: number) => (m >= 1440 ? `${Math.floor(m / 1440)}d ${Math.floor((m % 1440) / 60)}h` : m >= 60 ? `${Math.floor(m / 60)}h ${m % 60}m` : `${m}m`)
@@ -71,10 +71,14 @@ const appName = (pkg: string) => {
 }
 const isKeyApp = (pkg: string) => /fully|yodeck|tailscale|vlocker|speedtest|launcher3/.test(pkg)
 
-const METRICS: { label: string; val: (h: Health) => string; pct?: (h: Health) => number; col: (h: Health) => string }[] = [
+// GB label from MB (1 decimal under 100GB, whole above)
+const gb = (mb: number) => `${(mb / 1024).toFixed(mb < 102400 ? 1 : 0)} GB`
+
+// `cap` = capacity read shown right-aligned on the bar line ("ว่าง/รวม")
+const METRICS: { label: string; val: (h: Health) => string; cap?: (h: Health) => string; pct?: (h: Health) => number; col: (h: Health) => string }[] = [
   { label: 'ANR วันนี้', val: h => String(h.anrToday), pct: h => Math.min(h.anrToday / 20 * 100, 100), col: h => anrColor(h.anrToday) },
-  { label: 'RAM ใช้', val: h => `${h.ramUsedPct}% (เหลือ ${h.ramFreeMB}MB)`, pct: h => h.ramUsedPct, col: h => ramColor(h.ramUsedPct) },
-  { label: 'Storage ใช้', val: h => `${h.storagePct}%`, pct: h => h.storagePct, col: h => stColor(h.storagePct) },
+  { label: 'RAM ใช้', val: h => `${h.ramUsedPct}%`, cap: h => h.ramTotalMB > 0 ? `${gb(h.ramFreeMB)} / ${gb(h.ramTotalMB)}` : '', pct: h => h.ramUsedPct, col: h => ramColor(h.ramUsedPct) },
+  { label: 'Storage ใช้', val: h => `${h.storagePct}%`, cap: h => h.storageTotalMB > 0 ? `${gb(h.storageFreeMB)} / ${gb(h.storageTotalMB)}` : '', pct: h => h.storagePct, col: h => stColor(h.storagePct) },
   { label: 'Cache (Fully)', val: h => h.cacheMB >= 0 ? `${h.cacheMB} MB` : '—', pct: h => Math.min(h.cacheMB / 500 * 100, 100), col: h => h.cacheMB < 300 ? GREEN : h.cacheMB < 500 ? AMBER : RED },
   { label: 'Top CPU', val: h => `${h.topCpu || '—'}${h.cores ? ` · ${h.cores} คอร์` : ''}`, pct: h => cpuNum(h.topCpu) / Math.max(1, h.cores), col: h => cpuColor(cpuNum(h.topCpu) / Math.max(1, h.cores)) },
 ]
@@ -192,9 +196,13 @@ export function KioskHealthTool() {
                   const h = r.health
                   if (!h) return <td key={r.device} style={{ ...cell, color: '#cbd2dd', fontSize: 12 }}>—</td>
                   const col = m.col(h), pct = m.pct ? m.pct(h) : null
+                  const cap = m.cap ? m.cap(h) : ''
                   return (
                     <td key={r.device} style={cell}>
-                      <div style={{ fontSize: 12, fontWeight: 500, whiteSpace: 'nowrap', color: col }}>{m.val(h)}</div>
+                      <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, whiteSpace: 'nowrap' }}>
+                        <span style={{ fontSize: 12, fontWeight: 500, color: col }}>{m.val(h)}</span>
+                        {cap && <span style={{ marginLeft: 'auto', fontSize: 11, color: '#8b98ae' }}>{cap}</span>}
+                      </div>
                       {pct !== null && <Bar pct={pct} color={col} />}
                     </td>
                   )
@@ -261,7 +269,7 @@ export function KioskHealthTool() {
           <li><b>ANR</b> = <b>A</b>pplication <b>N</b>ot <b>R</b>esponding — แอปค้างไม่ตอบสนอง (นานเกิน ~5 วินาที) จนระบบเด้งถาม &quot;ปิดแอป / รอ&quot; · เกิดบ่อย = จอมีปัญหา</li>
           <li><b>สด (beacon)</b> — จอ push เองทุก 5 นาที 24 ชม. · บอก online / เปิดมานาน / หน้าเรนเดอร์ไหม</li>
           <li><b>ระบบ (adb)</b> — คอมดึงผ่าน VPN ทุก 4 ชม. · <b>ANR/วัน</b> คือตัวชี้สุขภาพหลัก (0 ดีเยี่ยม เกิน 3 มีปัญหา)</li>
-          <li><b>RAM used</b> — %แรมที่ใช้จริง · Android ใช้สูงเป็นปกติ · เขียว &lt;85%</li>
+          <li><b>RAM ใช้ / Storage ใช้</b> — เลขซ้าย = %ที่ใช้ · เลขขวา (ชิด status bar) = <b>ว่าง / ความจุรวม</b> เช่น <code>1.9 GB / 3.9 GB</code> · RAM Android ใช้สูงเป็นปกติ เขียว &lt;85%</li>
           <li><b>Top CPU</b> — โปรเซสที่กิน CPU สูงสุด (สเกลตามจำนวนคอร์) · ไว้จับแอปวิ่งเพี้ยน</li>
           <li><b>แอปที่รันอยู่</b> — ควรเป็น Fully Kiosk (เขียว) · ถ้าแดง = จอหลุดไปแอปอื่น</li>
         </ul>
