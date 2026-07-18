@@ -95,8 +95,11 @@ const METRICS: { label: string; sub?: string; val: (h: Health) => string; cap?: 
   // 7-day total vs the previous 7 days → trend (fewer = green). Bar scales to the
   // worse of the two windows so a shorter/greener bar = improving week.
   { label: 'ANR 7 วัน (ก่อนหน้า)', val: h => `${h.anr7d} (${h.anr7dPrev})`, cap: h => trendArrow(h.anr7d, h.anr7dPrev), pct: h => (h.anr7d + h.anr7dPrev) > 0 ? h.anr7d / Math.max(h.anr7d, h.anr7dPrev) * 100 : 3, col: h => trendColor(h.anr7d, h.anr7dPrev) },
-  { label: 'RAM ใช้', val: h => `${h.ramUsedPct}%`, cap: h => h.ramTotalMB > 0 ? `${gb(h.ramFreeMB)} / ${gb(h.ramTotalMB)}` : '', pct: h => h.ramUsedPct, col: h => ramColor(h.ramUsedPct) },
-  { label: 'Storage ใช้', val: h => `${h.storagePct}%`, cap: h => h.storageTotalMB > 0 ? `${gb(h.storageFreeMB)} / ${gb(h.storageTotalMB)}` : '', pct: h => h.storagePct, col: h => stColor(h.storagePct) },
+  // cap = "used / total" (NOT free/total) so it matches the % on the left and the
+  // filled bar — no mental subtraction. Derive used from % × total (not total−free)
+  // so it reconciles with the shown % exactly, ignoring reserved-block drift.
+  { label: 'RAM ใช้', val: h => `${h.ramUsedPct}%`, cap: h => h.ramTotalMB > 0 ? `${gb(h.ramTotalMB * h.ramUsedPct / 100)} / ${gb(h.ramTotalMB)}` : '', pct: h => h.ramUsedPct, col: h => ramColor(h.ramUsedPct) },
+  { label: 'Storage ใช้', val: h => `${h.storagePct}%`, cap: h => h.storageTotalMB > 0 ? `${gb(h.storageTotalMB * h.storagePct / 100)} / ${gb(h.storageTotalMB)}` : '', pct: h => h.storagePct, col: h => stColor(h.storagePct) },
   { label: 'Cache (Fully)', val: h => h.cacheMB >= 0 ? `${h.cacheMB} MB` : '—', pct: h => Math.min(h.cacheMB / 500 * 100, 100), col: h => h.cacheMB < 300 ? GREEN : h.cacheMB < 500 ? AMBER : RED },
   // top reports 100% = ONE core, so full capacity = cores×100% (4 cores → 400%).
   // Show "used% / total%" like Storage so a 90% spike on a 4-core box reads as
@@ -296,7 +299,7 @@ export function KioskHealthTool() {
           <li><b>ANR</b> = <b>A</b>pplication <b>N</b>ot <b>R</b>esponding — แอปค้างไม่ตอบสนอง (นานเกิน ~5 วินาที) จนระบบเด้งถาม &quot;ปิดแอป / รอ&quot; · เกิดบ่อย = จอมีปัญหา</li>
           <li><b>สด (beacon)</b> — จอ push เองทุก 5 นาที 24 ชม. · บอก online / เปิดมานาน / หน้าเรนเดอร์ไหม</li>
           <li><b>ระบบ (adb)</b> — คอมดึงผ่าน VPN ทุก 4 ชม. · <b>ANR วันนี้ (เมื่อวาน)</b> = จำนวนวันนี้ · ในวงเล็บ = เมื่อวาน (กันเข้าใจผิดว่าเงียบทั้งที่เมื่อวานเยอะ) · <b>ANR 7 วัน (ก่อนหน้า)</b> = รวม 7 วันล่าสุด เทียบ 7 วันก่อนในวงเล็บ — เขียว/↓ = ลดลง (ดีขึ้น), แดง/↑ = เพิ่มขึ้น, เทา/<b>รอฐาน</b> = ยังเก็บประวัติไม่ถึง 2 สัปดาห์ เทียบเทรนด์ไม่ได้ (prev7d=0 เพราะไม่มีข้อมูล ไม่ใช่ปลอดภัย) · หมายเหตุ: เครื่องเก็บไฟล์ ANR จำกัด สัปดาห์ไหน ANR เยอะมากตัวเลขย้อนหลังอาจนับไม่ครบ</li>
-          <li><b>RAM ใช้ / Storage ใช้</b> — เลขซ้าย = %ที่ใช้ · เลขขวา (ชิด status bar) = <b>ว่าง / ความจุรวม</b> เช่น <code>1.9 GB / 3.9 GB</code> · RAM Android ใช้สูงเป็นปกติ เขียว &lt;85%</li>
+          <li><b>RAM ใช้ / Storage ใช้</b> — เลขซ้าย = %ที่ใช้ · เลขขวา (ชิด status bar) = <b>ที่ใช้ / ความจุรวม</b> ตรงกับ % เลย เช่น 30% → <code>2.3 / 7.7 GB</code> (ที่ว่างดูจากช่องว่างของแถบ) · RAM Android ใช้สูงเป็นปกติ เขียว &lt;85%</li>
           <li><b>Top CPU</b> — โปรเซสที่กิน CPU สูงสุด · เลขขวา = <b>ใช้ / เต็ม</b> โดยเต็ม = จำนวนคอร์×100% (เช่น <code>90% / 400%</code> = ใช้ 90 จาก 4 คอร์) · ไว้จับแอปวิ่งเพี้ยน</li>
           <li><b>Cache (Fully)</b> — MB จริง (ไม่มี "เต็ม" ตายตัว — cache ยืดหดเองตามพื้นที่ว่าง) · เป็นค่าที่ควร<b>เล็ก</b> เขียว &lt;300MB · โตผิดปกติ (&gt;500MB) ค่อยสงสัย</li>
           <li><b>แอปที่รันอยู่</b> — ควรเป็น Fully Kiosk (เขียว) · ถ้าแดง = จอหลุดไปแอปอื่น</li>
