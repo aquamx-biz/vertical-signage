@@ -74,6 +74,16 @@ const isKeyApp = (pkg: string) => /fully|yodeck|tailscale|vlocker|speedtest|laun
 // GB label from MB (1 decimal under 100GB, whole above)
 const gb = (mb: number) => `${(mb / 1024).toFixed(mb < 102400 ? 1 : 0)} GB`
 
+// color cutoffs — kept in lockstep with the *Color() functions above; rendered as
+// a reference table in the legend so a glance tells you when a bar turns amber/red
+const THRESHOLDS: { m: string; g: string; a: string; r: string }[] = [
+  { m: 'ANR / วัน',                g: '0',        a: '1–3',       r: '> 3' },
+  { m: 'RAM ใช้',                  g: '< 85%',    a: '85–92%',    r: '≥ 93%' },
+  { m: 'Storage ใช้',              g: '< 70%',    a: '70–89%',    r: '≥ 90%' },
+  { m: 'Top CPU (ของเต็มเครื่อง)', g: '< 50%',    a: '50–80%',    r: '> 80%' },
+  { m: 'Cache (Fully)',            g: '< 300MB',  a: '300–499MB', r: '≥ 500MB' },
+]
+
 // `cap` = capacity read shown right-aligned on the bar line ("ว่าง/รวม")
 const METRICS: { label: string; val: (h: Health) => string; cap?: (h: Health) => string; pct?: (h: Health) => number; col: (h: Health) => string }[] = [
   { label: 'ANR วันนี้', val: h => String(h.anrToday), pct: h => Math.min(h.anrToday / 20 * 100, 100), col: h => anrColor(h.anrToday) },
@@ -283,8 +293,31 @@ export function KioskHealthTool() {
           <li><b>Cache (Fully)</b> — MB จริง (ไม่มี "เต็ม" ตายตัว — cache ยืดหดเองตามพื้นที่ว่าง) · เป็นค่าที่ควร<b>เล็ก</b> เขียว &lt;300MB · โตผิดปกติ (&gt;500MB) ค่อยสงสัย</li>
           <li><b>แอปที่รันอยู่</b> — ควรเป็น Fully Kiosk (เขียว) · ถ้าแดง = จอหลุดไปแอปอื่น</li>
         </ul>
-        <Text size={1} muted style={{ marginTop: 10, display: 'block' }}>
-          <span style={{ color: GREEN }}>เขียว=ปกติ</span> · <span style={{ color: AMBER }}>เหลือง=เฝ้าดู</span> · <span style={{ color: RED }}>แดง=มีปัญหา</span>
+        <Text size={1} style={{ marginTop: 12, marginBottom: 6, display: 'block', fontWeight: 500, color: '#0E3361' }}>เกณฑ์สีของแถบ (status bar)</Text>
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ borderCollapse: 'collapse', fontSize: 12 }}>
+            <thead>
+              <tr style={{ color: '#8b98ae' }}>
+                <th style={{ textAlign: 'left', padding: '4px 14px 4px 0', fontWeight: 500 }}></th>
+                <th style={{ textAlign: 'left', padding: '4px 14px 4px 0', fontWeight: 500, whiteSpace: 'nowrap' }}><span style={{ color: GREEN }}>● ปกติ</span></th>
+                <th style={{ textAlign: 'left', padding: '4px 14px 4px 0', fontWeight: 500, whiteSpace: 'nowrap' }}><span style={{ color: AMBER }}>● เฝ้าดู</span></th>
+                <th style={{ textAlign: 'left', padding: '4px 0', fontWeight: 500, whiteSpace: 'nowrap' }}><span style={{ color: RED }}>● มีปัญหา</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              {THRESHOLDS.map(t => (
+                <tr key={t.m} style={{ borderTop: '1px solid #f1f3f6' }}>
+                  <td style={{ padding: '4px 14px 4px 0', color: '#334155', fontWeight: 500, whiteSpace: 'nowrap' }}>{t.m}</td>
+                  <td style={{ padding: '4px 14px 4px 0', color: GREEN, whiteSpace: 'nowrap' }}>{t.g}</td>
+                  <td style={{ padding: '4px 14px 4px 0', color: AMBER, whiteSpace: 'nowrap' }}>{t.a}</td>
+                  <td style={{ padding: '4px 0', color: RED, whiteSpace: 'nowrap' }}>{t.r}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <Text size={0} muted style={{ marginTop: 8, display: 'block' }}>
+          RAM/Storage/CPU สเกลต่างกันตามความเสี่ยงจริง — RAM ตั้งเกณฑ์สูงเพราะ Android ใช้แรมสูงเป็นปกติ, Storage ระวังตั้งแต่ 70%, CPU เทียบกับเต็มเครื่อง (คอร์×100%)
         </Text>
       </Card>
     </Box>
