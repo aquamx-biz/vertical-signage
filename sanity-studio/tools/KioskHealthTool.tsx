@@ -80,7 +80,10 @@ const METRICS: { label: string; val: (h: Health) => string; cap?: (h: Health) =>
   { label: 'RAM ใช้', val: h => `${h.ramUsedPct}%`, cap: h => h.ramTotalMB > 0 ? `${gb(h.ramFreeMB)} / ${gb(h.ramTotalMB)}` : '', pct: h => h.ramUsedPct, col: h => ramColor(h.ramUsedPct) },
   { label: 'Storage ใช้', val: h => `${h.storagePct}%`, cap: h => h.storageTotalMB > 0 ? `${gb(h.storageFreeMB)} / ${gb(h.storageTotalMB)}` : '', pct: h => h.storagePct, col: h => stColor(h.storagePct) },
   { label: 'Cache (Fully)', val: h => h.cacheMB >= 0 ? `${h.cacheMB} MB` : '—', pct: h => Math.min(h.cacheMB / 500 * 100, 100), col: h => h.cacheMB < 300 ? GREEN : h.cacheMB < 500 ? AMBER : RED },
-  { label: 'Top CPU', val: h => `${h.topCpu || '—'}${h.cores ? ` · ${h.cores} คอร์` : ''}`, pct: h => cpuNum(h.topCpu) / Math.max(1, h.cores), col: h => cpuColor(cpuNum(h.topCpu) / Math.max(1, h.cores)) },
+  // top reports 100% = ONE core, so full capacity = cores×100% (4 cores → 400%).
+  // Show "used% / total%" like Storage so a 90% spike on a 4-core box reads as
+  // 90-of-400, not near-death. val = process name (wraps); cap = the ratio.
+  { label: 'Top CPU', val: h => h.topCpu ? h.topCpu.replace(/\s+[\d.]+%\s*$/, '') : '—', cap: h => (h.cores > 0 && h.topCpu) ? `${cpuNum(h.topCpu)}% / ${h.cores * 100}%` : '', pct: h => cpuNum(h.topCpu) / Math.max(1, h.cores), col: h => cpuColor(cpuNum(h.topCpu) / Math.max(1, h.cores)) },
 ]
 
 const lbl: React.CSSProperties = { padding: '8px 12px', fontSize: 12, color: '#5c6b82', whiteSpace: 'nowrap', position: 'sticky', left: 0, background: '#fff', zIndex: 1 }
@@ -276,7 +279,8 @@ export function KioskHealthTool() {
           <li><b>สด (beacon)</b> — จอ push เองทุก 5 นาที 24 ชม. · บอก online / เปิดมานาน / หน้าเรนเดอร์ไหม</li>
           <li><b>ระบบ (adb)</b> — คอมดึงผ่าน VPN ทุก 4 ชม. · <b>ANR/วัน</b> คือตัวชี้สุขภาพหลัก (0 ดีเยี่ยม เกิน 3 มีปัญหา)</li>
           <li><b>RAM ใช้ / Storage ใช้</b> — เลขซ้าย = %ที่ใช้ · เลขขวา (ชิด status bar) = <b>ว่าง / ความจุรวม</b> เช่น <code>1.9 GB / 3.9 GB</code> · RAM Android ใช้สูงเป็นปกติ เขียว &lt;85%</li>
-          <li><b>Top CPU</b> — โปรเซสที่กิน CPU สูงสุด (สเกลตามจำนวนคอร์) · ไว้จับแอปวิ่งเพี้ยน</li>
+          <li><b>Top CPU</b> — โปรเซสที่กิน CPU สูงสุด · เลขขวา = <b>ใช้ / เต็ม</b> โดยเต็ม = จำนวนคอร์×100% (เช่น <code>90% / 400%</code> = ใช้ 90 จาก 4 คอร์) · ไว้จับแอปวิ่งเพี้ยน</li>
+          <li><b>Cache (Fully)</b> — MB จริง (ไม่มี "เต็ม" ตายตัว — cache ยืดหดเองตามพื้นที่ว่าง) · เป็นค่าที่ควร<b>เล็ก</b> เขียว &lt;300MB · โตผิดปกติ (&gt;500MB) ค่อยสงสัย</li>
           <li><b>แอปที่รันอยู่</b> — ควรเป็น Fully Kiosk (เขียว) · ถ้าแดง = จอหลุดไปแอปอื่น</li>
         </ul>
         <Text size={1} muted style={{ marginTop: 10, display: 'block' }}>
