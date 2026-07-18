@@ -90,7 +90,7 @@ const THRESHOLDS: { m: string; g: string; a: string; r: string }[] = [
 ]
 
 // `cap` = capacity read shown right-aligned on the bar line ("ว่าง/รวม")
-const METRICS: { label: string; val: (h: Health) => string; cap?: (h: Health) => string; pct?: (h: Health) => number; col: (h: Health) => string }[] = [
+const METRICS: { label: string; sub?: string; val: (h: Health) => string; cap?: (h: Health) => string; pct?: (h: Health) => number; col: (h: Health) => string }[] = [
   { label: 'ANR วันนี้ (เมื่อวาน)', val: h => `${h.anrToday} (${h.anrYesterday})`, pct: h => Math.min(h.anrToday / 20 * 100, 100), col: h => anrColor(h.anrToday) },
   // 7-day total vs the previous 7 days → trend (fewer = green). Bar scales to the
   // worse of the two windows so a shorter/greener bar = improving week.
@@ -101,10 +101,10 @@ const METRICS: { label: string; val: (h: Health) => string; cap?: (h: Health) =>
   // top reports 100% = ONE core, so full capacity = cores×100% (4 cores → 400%).
   // Show "used% / total%" like Storage so a 90% spike on a 4-core box reads as
   // 90-of-400, not near-death. val = process name (wraps); cap = the ratio.
-  { label: 'Top CPU', val: h => h.topCpu ? h.topCpu.replace(/\s+[\d.]+%\s*$/, '') : '—', cap: h => (h.cores > 0 && h.topCpu) ? `${cpuNum(h.topCpu)}% / ${h.cores * 100}%` : '', pct: h => cpuNum(h.topCpu) / Math.max(1, h.cores), col: h => cpuColor(cpuNum(h.topCpu) / Math.max(1, h.cores)) },
+  { label: 'Top CPU', sub: 'เรียงตาม CPU', val: h => h.topCpu ? h.topCpu.replace(/\s+[\d.]+%\s*$/, '') : '—', cap: h => (h.cores > 0 && h.topCpu) ? `${cpuNum(h.topCpu)}% / ${h.cores * 100}%` : '', pct: h => cpuNum(h.topCpu) / Math.max(1, h.cores), col: h => cpuColor(cpuNum(h.topCpu) / Math.max(1, h.cores)) },
 ]
 
-const lbl: React.CSSProperties = { padding: '8px 12px', fontSize: 12, color: '#5c6b82', whiteSpace: 'nowrap', position: 'sticky', left: 0, background: '#fff', zIndex: 1 }
+const lbl: React.CSSProperties = { padding: '8px 12px', fontSize: 12, color: '#5c6b82', lineHeight: 1.3, position: 'sticky', left: 0, background: '#fff', zIndex: 1 }
 const cell: React.CSSProperties = { padding: '8px 12px', verticalAlign: 'top' }
 
 function Bar({ pct, color }: { pct: number; color: string }) {
@@ -218,7 +218,7 @@ export function KioskHealthTool() {
             </tr>
             {METRICS.map(m => (
               <tr key={m.label} style={{ borderBottom: '1px solid #f1f3f6' }}>
-                <td style={lbl}>{m.label}</td>
+                <td style={lbl}>{m.label}{m.sub && <span style={{ display: 'block', fontSize: 10, fontWeight: 400, color: '#9aa7b8' }}>{m.sub}</span>}</td>
                 {rows.map(r => {
                   const h = r.health
                   if (!h) return <td key={r.device} style={{ ...cell, color: '#cbd2dd', fontSize: 12 }}>—</td>
@@ -251,7 +251,7 @@ export function KioskHealthTool() {
             <Stack key={r.device} space={3}>
               {apps.length > 0 && (
                 <Card padding={4} radius={3} shadow={1}>
-                  <Text size={1} weight="semibold" style={{ marginBottom: 8, display: 'block' }}>{r.device} · แอปที่รันอยู่ ({apps.length}) · รวม ~{total} MB</Text>
+                  <Text size={1} weight="semibold" style={{ marginBottom: 8, display: 'block' }}>{r.device} · แอปที่รันอยู่ ({apps.length}) · <span style={{ fontWeight: 400, color: '#8b98ae' }}>เรียงตาม RAM</span> · รวม ~{total} MB</Text>
                   <Stack space={1}>
                     {apps.map((x, i) => {
                       const onScreen = x.pkg === h.focus
