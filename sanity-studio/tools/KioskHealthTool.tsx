@@ -11,7 +11,7 @@ const API = 'https://app.aquamx.biz'
 const GREEN = '#2E9E5B', AMBER = '#C9864C', RED = '#B23B2E'
 
 interface Beacon { project: string; bid: string; slide: string; upMin: number; minAgo: number; online: boolean; scr: string; err: string; imgFails: string }
-interface Health { device: string; anrToday: number; topCpu: string; cores: number; ramUsedPct: number; ramFreeMB: number; ramTotalMB: number; storagePct: number; storageTotalMB: number; storageFreeMB: number; cacheMB: number; apps: string; focus: string; screenAwake: string; checkedMinAgo: number; anrCause: string; anrFixed: string; anrPending: string; anrAssessed: string }
+interface Health { device: string; anrToday: number; anrYesterday: number; anr7d: number; anr7dPrev: number; topCpu: string; cores: number; ramUsedPct: number; ramFreeMB: number; ramTotalMB: number; storagePct: number; storageTotalMB: number; storageFreeMB: number; cacheMB: number; apps: string; focus: string; screenAwake: string; checkedMinAgo: number; anrCause: string; anrFixed: string; anrPending: string; anrAssessed: string }
 interface Row { device: string; beacon?: Beacon; health?: Health; ghosts?: number }
 
 const fmtUp = (m: number) => (m >= 1440 ? `${Math.floor(m / 1440)}d ${Math.floor((m % 1440) / 60)}h` : m >= 60 ? `${Math.floor(m / 60)}h ${m % 60}m` : `${m}m`)
@@ -31,6 +31,9 @@ function assessedLabel(d: string): string {
 }
 
 function anrColor(n: number) { return n <= 0 ? GREEN : n <= 3 ? AMBER : RED }
+// trend of one window vs the previous — fewer ANR = better (green)
+function trendColor(cur: number, prev: number) { return cur === 0 && prev === 0 ? GREEN : cur < prev ? GREEN : cur > prev ? RED : AMBER }
+function trendArrow(cur: number, prev: number) { return cur < prev ? '↓ ดีขึ้น' : cur > prev ? '↑ แย่ลง' : cur === 0 ? '' : '→ เท่าเดิม' }
 function ramColor(p: number) { return p < 85 ? GREEN : p < 93 ? AMBER : RED }
 function stColor(p: number) { return p < 70 ? GREEN : p < 90 ? AMBER : RED }
 function cpuNum(s: string) { const m = s.match(/([\d.]+)%/); return m ? parseFloat(m[1]) : 0 }
@@ -77,7 +80,7 @@ const gb = (mb: number) => `${(mb / 1024).toFixed(mb < 102400 ? 1 : 0)} GB`
 // color cutoffs — kept in lockstep with the *Color() functions above; rendered as
 // a reference table in the legend so a glance tells you when a bar turns amber/red
 const THRESHOLDS: { m: string; g: string; a: string; r: string }[] = [
-  { m: 'ANR / วัน',                g: '0',        a: '1–3',       r: '> 3' },
+  { m: 'ANR วันนี้',               g: '0',        a: '1–3',       r: '> 3' },
   { m: 'RAM ใช้',                  g: '< 85%',    a: '85–92%',    r: '≥ 93%' },
   { m: 'Storage ใช้',              g: '< 70%',    a: '70–89%',    r: '≥ 90%' },
   { m: 'Top CPU (ของเต็มเครื่อง)', g: '< 50%',    a: '50–80%',    r: '> 80%' },
@@ -86,7 +89,10 @@ const THRESHOLDS: { m: string; g: string; a: string; r: string }[] = [
 
 // `cap` = capacity read shown right-aligned on the bar line ("ว่าง/รวม")
 const METRICS: { label: string; val: (h: Health) => string; cap?: (h: Health) => string; pct?: (h: Health) => number; col: (h: Health) => string }[] = [
-  { label: 'ANR วันนี้', val: h => String(h.anrToday), pct: h => Math.min(h.anrToday / 20 * 100, 100), col: h => anrColor(h.anrToday) },
+  { label: 'ANR วันนี้ (เมื่อวาน)', val: h => `${h.anrToday} (${h.anrYesterday})`, pct: h => Math.min(h.anrToday / 20 * 100, 100), col: h => anrColor(h.anrToday) },
+  // 7-day total vs the previous 7 days → trend (fewer = green). Bar scales to the
+  // worse of the two windows so a shorter/greener bar = improving week.
+  { label: 'ANR 7 วัน (ก่อนหน้า)', val: h => `${h.anr7d} (${h.anr7dPrev})`, cap: h => trendArrow(h.anr7d, h.anr7dPrev), pct: h => (h.anr7d + h.anr7dPrev) > 0 ? h.anr7d / Math.max(h.anr7d, h.anr7dPrev) * 100 : 3, col: h => trendColor(h.anr7d, h.anr7dPrev) },
   { label: 'RAM ใช้', val: h => `${h.ramUsedPct}%`, cap: h => h.ramTotalMB > 0 ? `${gb(h.ramFreeMB)} / ${gb(h.ramTotalMB)}` : '', pct: h => h.ramUsedPct, col: h => ramColor(h.ramUsedPct) },
   { label: 'Storage ใช้', val: h => `${h.storagePct}%`, cap: h => h.storageTotalMB > 0 ? `${gb(h.storageFreeMB)} / ${gb(h.storageTotalMB)}` : '', pct: h => h.storagePct, col: h => stColor(h.storagePct) },
   { label: 'Cache (Fully)', val: h => h.cacheMB >= 0 ? `${h.cacheMB} MB` : '—', pct: h => Math.min(h.cacheMB / 500 * 100, 100), col: h => h.cacheMB < 300 ? GREEN : h.cacheMB < 500 ? AMBER : RED },
@@ -287,7 +293,7 @@ export function KioskHealthTool() {
         <ul style={{ margin: 0, paddingLeft: 20, fontSize: 13, lineHeight: 1.6, color: '#1e293b' }}>
           <li><b>ANR</b> = <b>A</b>pplication <b>N</b>ot <b>R</b>esponding — แอปค้างไม่ตอบสนอง (นานเกิน ~5 วินาที) จนระบบเด้งถาม &quot;ปิดแอป / รอ&quot; · เกิดบ่อย = จอมีปัญหา</li>
           <li><b>สด (beacon)</b> — จอ push เองทุก 5 นาที 24 ชม. · บอก online / เปิดมานาน / หน้าเรนเดอร์ไหม</li>
-          <li><b>ระบบ (adb)</b> — คอมดึงผ่าน VPN ทุก 4 ชม. · <b>ANR/วัน</b> คือตัวชี้สุขภาพหลัก (0 ดีเยี่ยม เกิน 3 มีปัญหา)</li>
+          <li><b>ระบบ (adb)</b> — คอมดึงผ่าน VPN ทุก 4 ชม. · <b>ANR วันนี้ (เมื่อวาน)</b> = จำนวนวันนี้ · ในวงเล็บ = เมื่อวาน (กันเข้าใจผิดว่าเงียบทั้งที่เมื่อวานเยอะ) · <b>ANR 7 วัน (ก่อนหน้า)</b> = รวม 7 วันล่าสุด เทียบ 7 วันก่อนในวงเล็บ — เขียว/↓ = ลดลง (ดีขึ้น), แดง/↑ = เพิ่มขึ้น · หมายเหตุ: เครื่องเก็บไฟล์ ANR จำกัด สัปดาห์ไหน ANR เยอะมากตัวเลขย้อนหลังอาจนับไม่ครบ</li>
           <li><b>RAM ใช้ / Storage ใช้</b> — เลขซ้าย = %ที่ใช้ · เลขขวา (ชิด status bar) = <b>ว่าง / ความจุรวม</b> เช่น <code>1.9 GB / 3.9 GB</code> · RAM Android ใช้สูงเป็นปกติ เขียว &lt;85%</li>
           <li><b>Top CPU</b> — โปรเซสที่กิน CPU สูงสุด · เลขขวา = <b>ใช้ / เต็ม</b> โดยเต็ม = จำนวนคอร์×100% (เช่น <code>90% / 400%</code> = ใช้ 90 จาก 4 คอร์) · ไว้จับแอปวิ่งเพี้ยน</li>
           <li><b>Cache (Fully)</b> — MB จริง (ไม่มี "เต็ม" ตายตัว — cache ยืดหดเองตามพื้นที่ว่าง) · เป็นค่าที่ควร<b>เล็ก</b> เขียว &lt;300MB · โตผิดปกติ (&gt;500MB) ค่อยสงสัย</li>
@@ -317,7 +323,7 @@ export function KioskHealthTool() {
           </table>
         </div>
         <Text size={0} muted style={{ marginTop: 8, display: 'block' }}>
-          RAM/Storage/CPU สเกลต่างกันตามความเสี่ยงจริง — RAM ตั้งเกณฑ์สูงเพราะ Android ใช้แรมสูงเป็นปกติ, Storage ระวังตั้งแต่ 70%, CPU เทียบกับเต็มเครื่อง (คอร์×100%)
+          RAM/Storage/CPU สเกลต่างกันตามความเสี่ยงจริง — RAM ตั้งเกณฑ์สูงเพราะ Android ใช้แรมสูงเป็นปกติ, Storage ระวังตั้งแต่ 70%, CPU เทียบกับเต็มเครื่อง (คอร์×100%) · แถว <b>ANR 7 วัน</b> ใช้สีจาก<b>เทรนด์</b> (เทียบสัปดาห์ก่อน) ไม่ใช่เกณฑ์ตายตัว
         </Text>
       </Card>
     </Box>
