@@ -31,9 +31,11 @@ function assessedLabel(d: string): string {
 }
 
 function anrColor(n: number) { return n <= 0 ? GREEN : n <= 3 ? AMBER : RED }
-// trend of one window vs the previous — fewer ANR = better (green)
-function trendColor(cur: number, prev: number) { return cur === 0 && prev === 0 ? GREEN : cur < prev ? GREEN : cur > prev ? RED : AMBER }
-function trendArrow(cur: number, prev: number) { return cur < prev ? '↓ ดีขึ้น' : cur > prev ? '↑ แย่ลง' : cur === 0 ? '' : '→ เท่าเดิม' }
+// trend of one window vs the previous — fewer ANR = better (green). prev===0 is
+// treated as "no baseline yet" (monitoring hasn't covered the older window), NOT
+// as a perfect week — so cur>0 doesn't falsely read as a regression.
+function trendColor(cur: number, prev: number) { return prev === 0 ? (cur === 0 ? GREEN : '#64748b') : cur < prev ? GREEN : cur > prev ? RED : AMBER }
+function trendArrow(cur: number, prev: number) { return prev === 0 ? (cur === 0 ? '' : 'รอฐาน') : cur < prev ? '↓ ดีขึ้น' : cur > prev ? '↑ แย่ลง' : '→ เท่าเดิม' }
 function ramColor(p: number) { return p < 85 ? GREEN : p < 93 ? AMBER : RED }
 function stColor(p: number) { return p < 70 ? GREEN : p < 90 ? AMBER : RED }
 function cpuNum(s: string) { const m = s.match(/([\d.]+)%/); return m ? parseFloat(m[1]) : 0 }
@@ -293,7 +295,7 @@ export function KioskHealthTool() {
         <ul style={{ margin: 0, paddingLeft: 20, fontSize: 13, lineHeight: 1.6, color: '#1e293b' }}>
           <li><b>ANR</b> = <b>A</b>pplication <b>N</b>ot <b>R</b>esponding — แอปค้างไม่ตอบสนอง (นานเกิน ~5 วินาที) จนระบบเด้งถาม &quot;ปิดแอป / รอ&quot; · เกิดบ่อย = จอมีปัญหา</li>
           <li><b>สด (beacon)</b> — จอ push เองทุก 5 นาที 24 ชม. · บอก online / เปิดมานาน / หน้าเรนเดอร์ไหม</li>
-          <li><b>ระบบ (adb)</b> — คอมดึงผ่าน VPN ทุก 4 ชม. · <b>ANR วันนี้ (เมื่อวาน)</b> = จำนวนวันนี้ · ในวงเล็บ = เมื่อวาน (กันเข้าใจผิดว่าเงียบทั้งที่เมื่อวานเยอะ) · <b>ANR 7 วัน (ก่อนหน้า)</b> = รวม 7 วันล่าสุด เทียบ 7 วันก่อนในวงเล็บ — เขียว/↓ = ลดลง (ดีขึ้น), แดง/↑ = เพิ่มขึ้น · หมายเหตุ: เครื่องเก็บไฟล์ ANR จำกัด สัปดาห์ไหน ANR เยอะมากตัวเลขย้อนหลังอาจนับไม่ครบ</li>
+          <li><b>ระบบ (adb)</b> — คอมดึงผ่าน VPN ทุก 4 ชม. · <b>ANR วันนี้ (เมื่อวาน)</b> = จำนวนวันนี้ · ในวงเล็บ = เมื่อวาน (กันเข้าใจผิดว่าเงียบทั้งที่เมื่อวานเยอะ) · <b>ANR 7 วัน (ก่อนหน้า)</b> = รวม 7 วันล่าสุด เทียบ 7 วันก่อนในวงเล็บ — เขียว/↓ = ลดลง (ดีขึ้น), แดง/↑ = เพิ่มขึ้น, เทา/<b>รอฐาน</b> = ยังเก็บประวัติไม่ถึง 2 สัปดาห์ เทียบเทรนด์ไม่ได้ (prev7d=0 เพราะไม่มีข้อมูล ไม่ใช่ปลอดภัย) · หมายเหตุ: เครื่องเก็บไฟล์ ANR จำกัด สัปดาห์ไหน ANR เยอะมากตัวเลขย้อนหลังอาจนับไม่ครบ</li>
           <li><b>RAM ใช้ / Storage ใช้</b> — เลขซ้าย = %ที่ใช้ · เลขขวา (ชิด status bar) = <b>ว่าง / ความจุรวม</b> เช่น <code>1.9 GB / 3.9 GB</code> · RAM Android ใช้สูงเป็นปกติ เขียว &lt;85%</li>
           <li><b>Top CPU</b> — โปรเซสที่กิน CPU สูงสุด · เลขขวา = <b>ใช้ / เต็ม</b> โดยเต็ม = จำนวนคอร์×100% (เช่น <code>90% / 400%</code> = ใช้ 90 จาก 4 คอร์) · ไว้จับแอปวิ่งเพี้ยน</li>
           <li><b>Cache (Fully)</b> — MB จริง (ไม่มี "เต็ม" ตายตัว — cache ยืดหดเองตามพื้นที่ว่าง) · เป็นค่าที่ควร<b>เล็ก</b> เขียว &lt;300MB · โตผิดปกติ (&gt;500MB) ค่อยสงสัย</li>
