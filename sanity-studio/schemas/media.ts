@@ -147,11 +147,19 @@ export default defineType({
     // video posters already in data keep working; the field just stays hidden.
     defineField({
       name:        'posterImage',
-      title:       '📺 รูปประกาศ (ตัวที่ขึ้นจอ)',
+      title:       '📺 รูปประกาศ / ภาพปกวิดีโอ (ตัวที่ขึ้นจอ)',
       type:        'image',
       options:     { hotspot: true },
-      hidden:      ({ document }) => (document as any)?.kind !== 'notice',
-      description: 'รูปนี้คือตัวที่แสดงบนจอสำหรับประกาศ · กด 🤖 Read Image with AI ให้อ่านข้อความในรูปมากรอกชื่ออัตโนมัติ',
+      // notices: THE poster that airs. video promos: the still the kiosk
+      // shows while the video loads (auto-captured from the first frame by
+      // VideoCompressInput; replace here any time).
+      hidden:      ({ document }) => {
+        const doc = document as any
+        if (doc?.kind === 'notice') return false
+        if (doc?.kind === 'promo' && doc?.type === 'video') return false
+        return true
+      },
+      description: 'ประกาศ: รูปนี้คือตัวที่แสดงบนจอ · กด 🤖 Read Image with AI ให้อ่านข้อความในรูปมากรอกชื่ออัตโนมัติ · วิดีโอ: ภาพปกที่จอโชว์ระหว่างรอวิดีโอโหลด (ระบบแคปเฟรมแรกให้อัตโนมัติ เปลี่ยนเองได้)',
       components:  { input: PosterImageAIInput },
     }),
     defineField({

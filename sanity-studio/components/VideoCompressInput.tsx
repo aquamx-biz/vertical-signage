@@ -10,13 +10,16 @@
  *   - After compression the component uploads the result with client.assets.upload().
  */
 
-import { useRef, useState }                     from 'react'
+import { useRef, useState, useEffect, useCallback } from 'react'
 import { Stack, Button, Spinner, Flex, Text, Card, Badge } from '@sanity/ui'
 import { set }                                  from 'sanity'
-import { useClient }                            from 'sanity'
+import { useClient, useFormValue, useDocumentOperation } from 'sanity'
+import { captureVideoFrame, fileRefToUrl }      from './videoPoster'
 
 const TARGET_MB    = 15
 const TARGET_BYTES = TARGET_MB * 1024 * 1024
+const PROJECT_ID   = 'awjj9g8u'
+const DATASET      = 'production'
 
 function fmt(bytes: number) {
   return bytes >= 1_048_576
@@ -40,6 +43,51 @@ export function VideoCompressInput(props: Props) {
   const [progress, setProgress] = useState(0)
   const [msg,      setMsg]      = useState('')
   const [errMsg,   setErrMsg]   = useState('')
+
+  // ── Auto poster: capture the video's first frame into media.posterImage ──
+  // The kiosk uses posterImage as the still while the video loads
+  // (preload="none") — no poster = dark screen at the start of every loop.
+  // Runs once automatically whenever a video exists and the poster is empty
+  // (covers both fresh uploads and older docs opened for editing); the
+  // 📸 button re-captures on demand (overwrites).
+  const rawId     = useFormValue(['_id']) as string | undefined
+  const docId     = (rawId ?? '').replace(/^drafts\./, '')
+  const { patch } = useDocumentOperation(docId || 'placeholder', 'media')
+  const posterRef = useFormValue(['posterImage', 'asset', '_ref']) as string | undefined
+  const videoRef  = (props.value as any)?.asset?._ref as string | undefined
+
+  const [posterPhase, setPosterPhase] = useState<'idle' | 'capturing' | 'done' | 'error'>('idle')
+  const [posterMsg,   setPosterMsg]   = useState('')
+  const autoTried = useRef<string | null>(null)
+
+  const capturePoster = useCallback(async (overwrite: boolean) => {
+    if (!videoRef) return
+    if (posterRef && !overwrite) return
+    const url = fileRefToUrl(videoRef, PROJECT_ID, DATASET)
+    if (!url) return
+    setPosterPhase('capturing')
+    setPosterMsg('กำลังแคปเฟรมแรกจากวิดีโอเป็นภาพปก…')
+    try {
+      const blob  = await captureVideoFrame(url)
+      const asset = await client.assets.upload('image', blob, {
+        filename:    'video-poster-auto.jpg',
+        contentType: 'image/jpeg',
+      })
+      patch.execute([{ set: { posterImage: { _type: 'image', asset: { _type: 'reference', _ref: asset._id } } } }])
+      setPosterPhase('done')
+      setPosterMsg('ตั้งภาพปกจากเฟรมแรกให้แล้ว — เปลี่ยนเป็นรูปอื่นได้ที่ช่องภาพปก')
+    } catch (e: any) {
+      setPosterPhase('error')
+      setPosterMsg(e?.message ?? 'แคปเฟรมไม่สำเร็จ')
+    }
+  }, [videoRef, posterRef, client, patch])
+
+  useEffect(() => {
+    if (!videoRef || posterRef) return
+    if (autoTried.current === videoRef) return   // one silent attempt per video asset
+    autoTried.current = videoRef
+    capturePoster(false)
+  }, [videoRef, posterRef, capturePoster])
 
   // ── Upload compressed file to Sanity ────────────────────────────────────────
   async function doUpload(f: File) {
@@ -146,6 +194,31 @@ export function VideoCompressInput(props: Props) {
 
       {/* ── Native Sanity file input (always shown — handles normal uploads) ── */}
       {props.renderDefault(props)}
+
+      {/* ── Video poster (first-frame capture) ───────────────────────────────── */}
+      {videoRef && (
+        <Card padding={3} radius={2} border
+          tone={posterPhase === 'error' ? 'critical' : posterPhase === 'done' ? 'positive' : 'default'}>
+          <Stack space={2}>
+            <Flex align="center" gap={2} wrap="wrap">
+              {posterPhase === 'capturing' && <Spinner />}
+              <Text size={1} style={{ flex: 1 }}>
+                {posterPhase === 'capturing' ? posterMsg
+                  : posterPhase === 'done'   ? `✅ ${posterMsg}`
+                  : posterPhase === 'error'  ? `❌ แคปภาพปกอัตโนมัติไม่สำเร็จ: ${posterMsg} — อัปโหลดปกเองที่ช่องภาพปก`
+                  : posterRef ? '🖼️ มีภาพปกแล้ว (จอใช้เป็นภาพคั่นระหว่างรอวิดีโอโหลด)'
+                  : '⚠️ ยังไม่มีภาพปก — จอจะมืดช่วงเริ่มสไลด์จนกว่าวิดีโอจะโหลด'}
+              </Text>
+              <Button
+                text="📸 แคปภาพปกจากเฟรมแรก"
+                mode="ghost" tone="primary" fontSize={1} padding={2}
+                disabled={posterPhase === 'capturing'}
+                onClick={() => capturePoster(true)}
+              />
+            </Flex>
+          </Stack>
+        </Card>
+      )}
 
       {/* ── Compress section ─────────────────────────────────────────────────── */}
       <Card padding={3} radius={2} border tone="default">

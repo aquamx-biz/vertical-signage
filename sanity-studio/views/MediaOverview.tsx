@@ -200,6 +200,12 @@ export function MediaOverview(props: Props) {
               {hero ? (
                 <img src={hero} alt={d.altText || d.title || 'media'}
                   style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+              ) : isVideo && videoUrl ? (
+                // no poster yet → show the video's first frame live (display-
+                // only; the real fix is the auto-captured posterImage, see
+                // VideoCompressInput). #t=0.1 skips a black frame 0.
+                <video src={`${videoUrl}#t=0.1`} muted playsInline preload="metadata"
+                  style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
               ) : (
                 <Flex align="center" justify="center" style={{ position: 'absolute', inset: 0 }}>
                   <Text size={2} style={{ color: '#8a93a6' }}>{isVideo ? '🎬 วิดีโอ (ยังไม่มีภาพปก)' : '🖼️ ยังไม่มีรูป'}</Text>
