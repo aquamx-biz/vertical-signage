@@ -13,7 +13,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useClient } from 'sanity'
 import { IntentLink } from 'sanity/router'
-import { Badge, Box, Button, Card, Flex, Heading, Spinner, Stack, Text } from '@sanity/ui'
+import { Badge, Box, Card, Flex, Heading, Spinner, Stack, Text } from '@sanity/ui'
 import { useEditWhenNew } from './useEditWhenNew'
 
 interface Props {
@@ -29,9 +29,9 @@ interface UseRow {
   _id: string; order?: number; enabled?: boolean
   projectId?: string; projectTitle?: string; projectCode?: string
 }
-interface RefRow { _id: string; title?: string | null }
+interface RefRow { _id: string; title?: string | null; logo?: string | null }
 interface OfferRow {
-  _id: string; title?: string | null
+  _id: string; title?: string | null; title_en?: string | null
   category?: string | null; price?: string | null
   description_th?: string | null; description_en?: string | null
   displayLang?: string | null
@@ -39,17 +39,11 @@ interface OfferRow {
   ctaType2?: string | null; ctaLabel2?: string | null
 }
 
-// Display-only copies of the player's fallback maps (category eyebrow + CTA labels)
-const CAT_TH: Record<string, string> = {
-  food: 'อาหาร', groceries: 'ของใช้/ของชำ', services: 'บริการ',
-  healthBeauty: 'สุขภาพ & ความงาม', leisureTravel: 'ท่องเที่ยว & พักผ่อน',
-  shopping: 'ช้อปปิ้ง', education: 'การศึกษา', events: 'อีเวนต์',
-  forRent: 'ให้เช่า', forSale: 'ขาย', buildingUpdates: 'ประกาศอาคาร',
-}
-const CTA_TH: Record<string, string> = {
-  viewMenu: 'ดูเมนู', order: 'สั่งซื้อ', book: 'จองคิว', viewListing: 'ดูประกาศ',
-  viewStore: 'ดูร้าน', contact: 'ดูข้อเสนอ', signup: 'สมัคร', event: 'อีเวนต์',
-}
+// The kiosk preview is the REAL player embedded in preview mode — any deployed
+// site works (preview mode never touches that project's data; it renders only
+// the item we postMessage in). Updating the player automatically updates this
+// preview: there is no hand-mirrored mock code to drift.
+const PREVIEW_PLAYER_URL = 'https://mahogany-tower.netlify.app/?preview=1'
 
 /* Build a CDN URL straight from an asset _ref (no extra fetch needed).
    image-<hash>-<dims>-<ext> → /images/...  ·  file-<hash>-<ext> → /files/... */
@@ -94,14 +88,14 @@ export function MediaOverview(props: Props) {
   useEffect(() => {
     if (!offerRef) { setOffer(null); return }
     client.fetch<OfferRow>(
-      `*[_id == $id][0]{ _id, "title": coalesce(title_th, title_en),
+      `*[_id == $id][0]{ _id, "title": coalesce(title_th, title_en), title_en,
         category, price, description_th, description_en, displayLang,
         ctaType, ctaLabel, ctaType2, ctaLabel2 }`, { id: offerRef })
       .then(setOffer).catch(() => setOffer(null))
   }, [client, offerRef])
   useEffect(() => {
     if (!provRef) { setProvider(null); return }
-    client.fetch<RefRow>(`*[_id == $id][0]{ _id, "title": coalesce(name_th, name_en) }`, { id: provRef })
+    client.fetch<RefRow>(`*[_id == $id][0]{ _id, "title": coalesce(name_th, name_en), "logo": logo.asset->url }`, { id: provRef })
       .then(setProvider).catch(() => setProvider(null))
   }, [client, provRef])
 
@@ -120,44 +114,46 @@ export function MediaOverview(props: Props) {
 
   const expired = d.expiresAt ? new Date(d.expiresAt) < new Date() : false
 
-  // ── kiosk-mock values — mirror the player's fallback logic ────────────────
-  const isNotice    = d.kind === 'notice'
-  const mockEyebrow = isNotice
-    ? 'ข่าวสารอาคาร'
-    : (offer?.category ? (CAT_TH[offer.category] || offer.category) : 'โปรโมชั่น')
-  // caption language follows THIS media's displayLang (what the screen's default
-  // mode shows) — not the offer's flag, which once made the mock show English
-  // under a Thai-primary media
-  const mockDesc = offer
-    ? (d.displayLang === 'en'
-        ? (offer.description_en || offer.description_th)
-        : (offer.description_th || offer.description_en))
-    : null
-  const mockCtas: string[] = []
-  if (!isNotice) {   // notices never get a CTA on screen
-    mockCtas.push(offer?.ctaLabel || (offer?.ctaType ? CTA_TH[offer.ctaType] || offer.ctaType : '') || 'ดูเพิ่มเติม')
-    if (offer?.ctaType2) mockCtas.push(offer.ctaLabel2 || CTA_TH[offer.ctaType2] || offer.ctaType2)
-  }
-
-  // ── save the mock as a shareable PNG (client-side DOM → canvas → download) ──
-  // Sanity CDN sends CORS headers for the studio origin, so images inline fine.
-  const mockRef = useRef<HTMLDivElement>(null)
-  const [savingPng, setSavingPng] = useState(false)
-  async function saveMockPng() {
-    if (!mockRef.current) return
-    setSavingPng(true)
-    try {
-      const { toPng } = await import('html-to-image')
-      const url = await toPng(mockRef.current, { pixelRatio: 3, cacheBust: true })
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `${String(d.title || 'media-preview').replace(/[\\/:*?"<>|]/g, '_').slice(0, 60)}.png`
-      a.click()
-    } catch (e) {
-      alert('บันทึกรูปไม่สำเร็จ: ' + String(e))
+  // ── kiosk preview via the REAL player (iframe + postMessage) ──────────────
+  // Handshake: the player in ?preview=1 posts 'aq-preview-ready', then we send
+  // it ONE playlist-shaped item (same field names the baked/live projection
+  // produces) and it renders with the production code path.
+  const frameRef = useRef<HTMLIFrameElement>(null)
+  const [frameReady, setFrameReady] = useState(false)
+  useEffect(() => {
+    const onMsg = (ev: MessageEvent) => {
+      if (ev.data && ev.data.type === 'aq-preview-ready') setFrameReady(true)
     }
-    setSavingPng(false)
-  }
+    window.addEventListener('message', onMsg)
+    return () => window.removeEventListener('message', onMsg)
+  }, [])
+
+  const previewItem = useMemo(() => ({
+    kind:      d.kind || 'promo',
+    title:     d.title || '',
+    title_en:  d.altText || offer?.title_en || null,
+    eyebrow:   offer?.category || null,
+    sub_th:    offer?.description_th || null,
+    sub_en:    offer?.description_en || null,
+    mediaType: isVideo ? 'video' : 'image',
+    url:       isVideo ? videoUrl : hero,
+    images:    Array.isArray(d.imageFiles)
+                 ? d.imageFiles.map((f: any) => assetUrl(f?.asset?._ref, pid, ds, 1200)).filter(Boolean)
+                 : null,
+    poster:    assetUrl(d.posterImage?.asset?._ref, pid, ds, 1200),
+    category:  offer?.category || null,
+    ctaType:   offer?.ctaType  || null, ctaLabel:  offer?.ctaLabel  || null, ctaURL:  null,
+    ctaType2:  offer?.ctaType2 || null, ctaLabel2: offer?.ctaLabel2 || null, ctaURL2: null,
+    price:     offer?.price || null,
+    provider:  provider ? { logo: provider.logo || '', name_th: provider.title, name_en: provider.title } : null,
+    defaultImageDuration: d.defaultImageDuration || null,
+  }), [d, offer, provider, isVideo, videoUrl, hero, pid, ds])
+
+  useEffect(() => {
+    if (!frameReady || !frameRef.current?.contentWindow) return
+    frameRef.current.contentWindow.postMessage(
+      { type: 'aq-preview', item: previewItem, lang: d.displayLang === 'en' ? 'en' : 'th' }, '*')
+  }, [frameReady, previewItem, d.displayLang])
 
   const groups = useMemo(() => {
     const g: Record<string, { title: string; code?: string; slots: UseRow[] }> = {}
@@ -186,93 +182,33 @@ export function MediaOverview(props: Props) {
           <Text size={1}>👁️ หน้าสรุป (ดูอย่างเดียว) — ต้องการแก้ไข กดแท็บ <b>Edit</b> ด้านบน</Text>
         </Card>
 
-        {/* 1 — kiosk-slide mock: 9:16 frame laid out like renderSlot() in
-            vertical-signage.html (eyebrow pill → title → price → sub → CTA dock)
-            so editors see roughly what airs, not just the raw image. */}
+        {/* 1 — kiosk-slide preview: the REAL player (vertical-signage.html)
+            embedded in ?preview=1 mode and scaled down — the exact production
+            render path (title clamp, Thai breaks, CTA row, category pill).
+            No hand-mirrored mock code to drift when the player changes. */}
         <Stack space={2}>
           <Flex justify="center">
-            <div ref={mockRef} style={{
+            <div style={{
               width: 300, height: 533, position: 'relative', flexShrink: 0,
               borderRadius: 16, overflow: 'hidden', background: '#0B1526',
               boxShadow: '0 10px 36px rgba(0,0,0,0.35)',
-              fontFamily: "'Prompt','IBM Plex Sans Thai',sans-serif",
             }}>
-              {hero ? (
-                <img src={hero} alt={d.altText || d.title || 'media'}
-                  style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-              ) : isVideo && videoUrl ? (
-                // no poster yet → show the video's first frame live (display-
-                // only; the real fix is the auto-captured posterImage, see
-                // VideoCompressInput). #t=0.1 skips a black frame 0.
-                <video src={`${videoUrl}#t=0.1`} muted playsInline preload="metadata"
-                  style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-              ) : (
-                <Flex align="center" justify="center" style={{ position: 'absolute', inset: 0 }}>
-                  <Text size={2} style={{ color: '#8a93a6' }}>{isVideo ? '🎬 วิดีโอ (ยังไม่มีภาพปก)' : '🖼️ ยังไม่มีรูป'}</Text>
-                </Flex>
-              )}
-              {isVideo && (
-                <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 40, textShadow: '0 2px 12px rgba(0,0,0,0.6)' }}>▶️</div>
-              )}
-              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(6,10,20,0.4) 0%, transparent 16%, transparent 42%, rgba(6,10,20,0.94) 100%)' }} />
-              <div style={{ position: 'absolute', left: 14, right: 14, bottom: 14, color: '#fff' }}>
-                <div style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 7, padding: '4px 12px',
-                  border: '1px solid rgba(255,255,255,0.4)', borderRadius: 999,
-                  background: 'rgba(8,12,22,0.45)', fontSize: 9, fontWeight: 600,
-                  letterSpacing: 2, textTransform: 'uppercase',
-                }}>
-                  <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#39D0FF', boxShadow: '0 0 6px #39D0FF' }} />
-                  {mockEyebrow}
-                  <span style={{ opacity: 0.6, fontWeight: 700 }}>›</span>
-                </div>
-                <div style={{
-                  marginTop: 8, fontSize: 26, fontWeight: 600, lineHeight: 1.3,
-                  textTransform: 'uppercase', textShadow: '0 2px 10px rgba(0,0,0,0.6)',
-                  display: '-webkit-box', WebkitBoxOrient: 'vertical' as any, WebkitLineClamp: 2, overflow: 'hidden',
-                }}>
-                  {/* '|' = author's line-break hint (same convention as the player's
-                      thaiBreakHTML): each piece stays unbroken, breaks allowed between */}
-                  {String(d.title || '(ไม่มีชื่อ)').split('|').map((u, i) => (
-                    <React.Fragment key={i}>{i > 0 && '​'}<span style={{ whiteSpace: 'nowrap' }}>{u}</span></React.Fragment>
-                  ))}
-                </div>
-                {offer?.price && (
-                  <div style={{ marginTop: 6, fontSize: 14, fontWeight: 700, color: '#C9864C', textShadow: '0 1px 5px rgba(0,0,0,0.65)' }}>{offer.price}</div>
-                )}
-                {mockDesc && (
-                  <div style={{
-                    marginTop: 6, fontSize: 10.5, lineHeight: 1.45, color: 'rgba(255,255,255,0.8)',
-                    display: '-webkit-box', WebkitBoxOrient: 'vertical' as any, WebkitLineClamp: 3, overflow: 'hidden',
-                    textShadow: '0 1px 4px rgba(0,0,0,0.6)',
-                  }}>{mockDesc}</div>
-                )}
-                {mockCtas.length > 0 && (
-                  // mirrors the player's .cta-dock: grid column sized to the WIDEST
-                  // label (max-content) — buttons hug their text, never full-width
-                  <div style={{ marginTop: 10, display: 'grid', gridTemplateColumns: 'max-content', justifyContent: 'start', gap: 6 }}>
-                    {mockCtas.map((c, i) => (
-                      <div key={c + i} style={{
-                        width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                        gap: 22, padding: '9px 14px', borderRadius: 10, whiteSpace: 'nowrap',
-                        background: 'rgba(10,16,28,0.72)', border: '1px solid rgba(255,255,255,0.14)',
-                        fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase',
-                      }}>
-                        <span>{c}</span><span style={{ opacity: 0.7 }}>{i === 0 ? '→' : '↗'}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+              <iframe
+                ref={frameRef}
+                src={PREVIEW_PLAYER_URL}
+                title="kiosk preview"
+                style={{
+                  width: 1080, height: 1920, border: 0,
+                  transform: 'scale(0.27778)', transformOrigin: 'top left',
+                  pointerEvents: 'none',   // preview only — no menu taps
+                }}
+              />
             </div>
           </Flex>
           <Flex justify="center" align="center" gap={3}>
             <Text size={1} muted>
-              🖥 ตัวอย่างจำลองหน้าจอ (โดยประมาณ){d.kind === 'notice' ? ' — ประกาศบนจอจริงใช้เลย์เอาต์กระดาษขาว' : ''}
+              🖥 ตัวอย่างจากโค้ดจอจริง (player ตัวเดียวกับที่ฉายบนตึก)
             </Text>
-            <Button text={savingPng ? '⏳ กำลังบันทึก…' : '💾 บันทึกเป็นรูป'} mode="ghost" fontSize={1} padding={2}
-              disabled={savingPng} onClick={saveMockPng}
-              title="ดาวน์โหลดภาพจำลองนี้เป็น PNG — ส่งให้ลูกค้าดูได้เลย" />
           </Flex>
         </Stack>
 
