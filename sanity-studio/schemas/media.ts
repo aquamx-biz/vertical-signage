@@ -88,14 +88,14 @@ export default defineType({
           return true
         }).warning(),
       ],
-      description: 'พาดหัวที่ขึ้นจอ — ใช้ "ชื่อโปรโม/บริการ" (กด ⤵ ดึงจาก Offer) ไม่ใช่ชื่อร้าน เพราะชื่อร้านขึ้นจากโลโก้/ป๊อปอัปอยู่แล้ว · เป็นภาษาตาม "ภาษาหลักบนจอ" ด้านบน · ⚠️ แสดงเต็มบนจอไม่เกิน ~38 ตัวอักษรไทย / ~28 ตัวถ้า English ล้วน — ยาวกว่านี้จอตัดเป็น "…" · พิมพ์ | ตรงจุดที่ยอมให้ขึ้นบรรทัดใหม่บนจอ เช่น "Sell • Rent •|Free Listing" (เครื่องหมายไม่แสดงจริง)',
+      description: 'พาดหัวที่ขึ้นจอ — ใช้ "ชื่อโปรโม/บริการ" (กด ⤵ ดึงจาก Offer) ไม่ใช่ชื่อร้าน เพราะชื่อร้านขึ้นจากโลโก้/ป๊อปอัปอยู่แล้ว · เป็นภาษาตาม "ภาษาหลักบนจอ" ด้านบน · ⚠️ แสดงเต็มบนจอไม่เกิน ~38 ตัวอักษรไทย / ~34 ตัวถ้า English ล้วน (จอแสดง English เป็นตัวพิมพ์เล็กทั้งหมดตามสไตล์แบรนด์) — ยาวกว่านี้จอตัดเป็น "…" · พิมพ์ | ตรงจุดที่ยอมให้ขึ้นบรรทัดใหม่บนจอ เช่น "Sell • Rent •|Free Listing" (เครื่องหมายไม่แสดงจริง)',
       components:  { input: MediaTitleInput },
     }),
     defineField({
       name:        'altText',
       title:       'Title (English)',
       type:        'string',
-      description: 'English version of the title — กด ✨ แปลจากช่องบนแล้วตรวจก่อนบันทึก · Can be auto-filled by 🤖 Read Image with AI above (notices + promos). · ⚠️ Fits fully on screen up to ~28 characters — longer gets cut with "…".',
+      description: 'English version of the title — กด ✨ แปลจากช่องบนแล้วตรวจก่อนบันทึก · Can be auto-filled by 🤖 Read Image with AI above (notices + promos). · ⚠️ Fits fully on screen up to ~34 characters (screen renders English lowercase, brand style) — longer gets cut with "…".',
       components:  { input: createTranslateInput({ sourceField: 'title', sourceLang: 'Thai', targetLang: 'English', buttonLabel: '✨ Translate from Thai' }) },
     }),
 

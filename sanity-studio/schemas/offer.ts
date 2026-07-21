@@ -120,7 +120,7 @@ export default defineType({
       group:      'content',
       title:      '📺 Title (English)',
       type:       'string',
-      description: 'ระบบไม่แปลอัตโนมัติ — อยากมีเวอร์ชันอังกฤษ กด ✨ แปลจากช่องไทย แล้วตรวจก่อนบันทึก (จอโชว์ภาษาตาม "ภาษาหลักบนจอ") · ⚠️ Fits fully on screen up to ~28 characters — longer gets cut with "…".',
+      description: 'ระบบไม่แปลอัตโนมัติ — อยากมีเวอร์ชันอังกฤษ กด ✨ แปลจากช่องไทย แล้วตรวจก่อนบันทึก (จอโชว์ภาษาตาม "ภาษาหลักบนจอ") · ⚠️ Fits fully on screen up to ~34 characters (screen renders English lowercase, brand style) — longer gets cut with "…".',
       components: { input: createTranslateInput({ sourceField: 'title_th', sourceLang: 'Thai',    targetLang: 'English', buttonLabel: '✨ Translate from Thai'    }) },
     }),
     defineField({
