@@ -233,8 +233,20 @@ body {
 
 /* Eyebrow pill — outlined, with cyan dot */
 .slot-eyebrow {
+    /* Top-center strip — between MENU (left) and the provider logo (right).
+       Category is metadata, not sales copy: pinning it up here keeps its
+       position identical on every slide and frees the bottom block for the
+       photo/title. Every transform below must carry translateX(-50%). */
+    /* Anchored to the MENU button's vertical CENTER line (top 2.2vh + ~half
+       its 5.26vh height), not its top edge — a 2-line pill grows evenly up
+       AND down, staying level with the button instead of hanging below it. */
+    position: absolute; top: 4.8vh; left: 50%; z-index: 6;
     display: inline-flex; align-items: center; gap: 1.4vh;
-    width: fit-content;
+    /* 20vh clears the EXPANDED MENU box on the left (same clearance mirrored
+       right), so the pill never collides in any menu state. Long category
+       names wrap to 2 lines inside (.eb-t) instead of squeezing the cyan
+       dot flat — the dot is the eye-leader and must always survive. */
+    max-width: 20vh;
     padding: 0.9vh 2vh;
     border: 0.15vh solid rgba(255,255,255,0.4);
     border-radius: 5vh;
@@ -244,12 +256,14 @@ body {
     letter-spacing: 0.45vh; text-transform: uppercase;
     color: var(--ink-100);
     cursor: pointer;   /* tappable → opens this category's combined screen */
-    opacity: 0; transform: translateY(1.5vh);
+    opacity: 0; transform: translate(-50%, calc(-50% - 1.2vh));   /* reveals downward, like the logo */
     transition: opacity 0.6s var(--ease-out) 0.3s, transform 0.6s var(--ease-out) 0.3s;
 }
-.slot-eyebrow:active { transform: scale(0.95); }
+.slot-eyebrow:active { transform: translate(-50%, -50%) scale(0.95); }
+.slot.active .slot-eyebrow { opacity: 0.75; transform: translate(-50%, -50%); }
 .slot-eyebrow::before {
     content: ''; width: 0.7vh; height: 0.7vh;
+    flex-shrink: 0;             /* NEVER squeezed out by a long category name */
     border-radius: 50%;
     background: var(--dot-cyan);
     box-shadow: 0 0 1.2vh var(--dot-cyan);
@@ -257,9 +271,21 @@ body {
 .slot-eyebrow::after {
     content: '›';               /* signals the pill is tappable → category screen */
     margin-left: auto;
+    flex-shrink: 0;
     font-size: 2vh; line-height: 1; font-weight: 700;
     color: rgba(255,255,255,0.6);
     transform: translateY(-0.15vh);
+}
+/* Category text — wraps to max 2 centred lines (long Thai names like
+   "สุขภาพและความงาม"), clamped with ellipsis beyond that. */
+.slot-eyebrow .eb-t {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+    text-align: center;
+    line-height: 1.5;           /* room for Thai stacked marks at this small size */
+    word-break: break-word;
 }
 
 /* Title — sized to the /offer .tt-title proportion (≈8.7% of width) so the
@@ -326,11 +352,12 @@ body {
 }
 
 /* Settled opacities let the background photo read through. The title is the
-   biggest mass of ink, so it goes more transparent (0.65) than the rest (0.75). */
-.slot.active .slot-eyebrow,
+   biggest mass of ink, so it goes more transparent (0.57) than the rest (0.75).
+   0.57 is the deliberate floor: the scrim + text-shadow keep it distance-legible
+   on bright photos — don't go lower (thin-gray-text territory). */
 .slot.active .slot-sub { opacity: 0.75; transform: translateY(0); }
 .slot.active .slot-price { opacity: 0.85; transform: translateY(0); }  /* key selling info — a touch more visible */
-.slot.active .slot-title { opacity: 0.65; transform: translateY(0); }
+.slot.active .slot-title { opacity: 0.57; transform: translateY(0); }
 
 /* ============================================================
    v6 — Dynamic text-overlay upgrades
@@ -353,7 +380,11 @@ body {
    the outgoing text immediately — otherwise a leaving slot reverts to the base
    reveal transition (0.5s delay) and its text lingers, overlapping the incoming
    slide's text during the change. */
-.slot.exiting .slot-eyebrow, .slot.leaving .slot-eyebrow,
+.slot.exiting .slot-eyebrow, .slot.leaving .slot-eyebrow {
+    /* separate rule: the top-center pill must keep its -50%,-50% anchor */
+    opacity: 0; transform: translate(-50%, calc(-50% - 1.2vh));
+    transition-duration: 0.4s; transition-delay: 0s;
+}
 .slot.exiting .slot-title,   .slot.leaving .slot-title,
 .slot.exiting .slot-price,   .slot.leaving .slot-price,
 .slot.exiting .slot-sub,     .slot.leaving .slot-sub {
@@ -962,22 +993,27 @@ body {
     top: 2.2vh; left: 2.5vh;
     z-index: 220;
     display: flex; align-items: center;
-    gap: 1.4vh;
+    gap: 0;   /* hamburger↔label spacing lives on .menu-btn-label's margin-left so it can animate closed */
     padding: 1.7vh 2.2vh;
-    background: rgba(8,12,22,0.82);  /* solid — no backdrop blur on an animated node (Pi perf) */
-    border: 0.15vh solid var(--cta-border);
-    border-radius: 1.4vh;
+    /* Matched to .slot-eyebrow (same capsule format + transparency) so the
+       top strip reads as ONE family: burger · category pill · logo.
+       backdrop blur is allowed here ONLY because the node itself no longer
+       animates (menu-float removed) — blur on a continuously-moving element
+       re-samples every frame and kills kiosk-box GPUs. Liveliness still
+       comes from the halo ping, blinking dot and hamburger bar waves. */
+    background: rgba(8,12,22,0.35);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 0.15vh solid rgba(255,255,255,0.4);
+    border-radius: 5vh;
     cursor: pointer;
     touch-action: manipulation; user-select: none;
     font-family: 'Prompt', 'IBM Plex Sans Thai', sans-serif;
     color: var(--ink-100);
-    transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
-    /* Subtle floating motion — never fully still */
-    animation: menu-float 5s ease-in-out infinite;
-    box-shadow: 0 1.2vh 3vh rgba(0,0,0,0.45),
-                inset 0 0 0 0.05vh rgba(255,255,255,0.04);
+    transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease,
+                padding 1s var(--ease-out);   /* squares off in step with the label glide */
     overflow: visible;
-    opacity: 0.75;   /* match the bottom CTA buttons' transparency */
+    opacity: 0.75;   /* match the category pill + bottom CTA transparency */
 }
 .menu-btn:active {
     background: rgba(8,12,22,0.75);
@@ -1018,11 +1054,8 @@ body {
     0%, 100% { transform: scale(1);    opacity: 1;   }
     50%       { transform: scale(0.55); opacity: 0.45; }
 }
-/* Subtle float — vertical breathing */
-@keyframes menu-float {
-    0%, 100% { transform: translateY(0); }
-    50%       { transform: translateY(-0.4vh); }
-}
+/* (menu-float removed — the button must stay static so its backdrop blur
+   doesn't re-sample every frame on kiosk-box GPUs) */
 
 .hamburger {
     display: flex; flex-direction: column;
@@ -1062,13 +1095,36 @@ body {
     transform: translateY(-0.78vh) rotate(-45deg);
 }
 
-/* Label typography mirrors CTA primary exactly */
+/* Label typography mirrors CTA primary exactly.
+   Expand/collapse is a two-beat animation: the box slides open to the right
+   (max-width + margin), THEN the text fades in — reverse order on collapse
+   (text out first, box closes after). One-shot transitions on touch/pulse
+   only, not continuous — kiosk-GPU safe. Spacing lives on the label's
+   margin-left (not the flex gap) so it can collapse to a true square. */
 .menu-btn-label {
     font-size: 1.85vh; font-weight: 700;
     letter-spacing: 0.32vh; text-transform: uppercase;
     color: var(--ink-100);
     line-height: 1;
+    white-space: nowrap; overflow: hidden;
+    max-width: 9vh; margin-left: 1.4vh;
+    opacity: 1;
+    /* Open pace = the cyan dot's blink rhythm (dot-pulse 1.6s) so the slide-out
+       feels like part of the button's heartbeat, not a UI snap. */
+    transition: max-width 1.6s var(--ease-out),
+                margin-left 1.6s var(--ease-out),
+                opacity 0.6s ease 0.9s;        /* text fades in as the box nears open */
 }
+/* Idle (slim) state — bare hamburger, screen chrome at minimum. The label
+   comes back on ANY touch and during a periodic discoverability pulse (see
+   the MENU slim controller in JS) so passers-by still learn it's tappable. */
+.menu-btn.slim .menu-btn-label {
+    max-width: 0; margin-left: 0; opacity: 0;
+    transition: max-width 0.8s var(--ease-out) 0.2s,
+                margin-left 0.8s var(--ease-out) 0.2s,
+                opacity 0.25s ease;            /* text goes first, box glides closed after */
+}
+.menu-btn.slim { padding: 1.7vh 1.9vh; }
 
 /* Category dropdown panel */
 /* REACH ZONE — interactive menu sits in the UPPER area (near MENU),
@@ -2436,6 +2492,7 @@ function adaptPlaylistToSlots(pl) {
             titleLines: titleStr ? [titleStr] : [''],
             sub: sub || '',
             ctas,
+            _notice: item.kind === 'notice',   // renderCommercial: poster airs clean (no title/sub overlay)
             _category: item.kind === 'notice' ? 'building-updates' : (item.category || ''),
             _providerSlug: item.providerSlug || '',
             _offerSlug: item.offerSlug || '',
@@ -2676,18 +2733,26 @@ function renderCommercial(s) {
     // failed to paint on the user's Edge; <img> renders reliably.
     // onload=fitMedia → decide cover vs contain from the IMAGE's own ratio (see fitMedia).
     const mediaImg = bgUrl ? `<img class="slot-media-img" src="${sizedImg(bgUrl, 1080, 1920)}" alt="" decoding="async" onload="fitMedia(this)">` : '';
+    // Juristic notices are self-contained posters — overlaying the big title
+    // would cover their own text. Suppress title/price/sub on the slide (the
+    // data stays for the menu list + popup); the top "ประกาศ" pill still says
+    // what it is. With no text and no CTA to hold up, drop the bottom scrim
+    // too so the poster isn't darkened for nothing.
+    const isNotice = !!s._notice;
+    const showText = !isNotice;
+    const showBotGrad = !(isNotice && !(s.ctas || []).length);
     return `
         <div class="slot-media">${mediaImg}</div>
         ${videoHTML}
         <div class="slot-grad-top"></div>
-        <div class="slot-grad-bot"></div>
+        ${showBotGrad ? '<div class="slot-grad-bot"></div>' : ''}
         ${s.logo ? `<div class="slot-logo">${s.logo}</div>` : ''}
         ${s.providerLogo ? `<img class="slot-plogo" src="${sizedImg(s.providerLogo, 240, 240)}" alt="">` : ''}
+        ${s.eyebrow ? `<div class="slot-eyebrow"><span class="eb-t">${s.eyebrow}</span></div>` : ''}
         <div class="slot-content">
-            ${s.eyebrow ? `<div class="slot-eyebrow">${s.eyebrow}</div>` : ''}
-            <div class="slot-title${titleIsLatin ? ' latin' : ''}">${titleHTML}</div>
-            ${(s._price && (typeof s._price === 'string' || typeof s._price === 'number')) ? `<div class="slot-price">${s._price}</div>` : ''}
-            ${s.sub ? `<div class="slot-sub">${thaiBreakHTML(s.sub)}</div>` : ''}
+            ${showText ? `<div class="slot-title${titleIsLatin ? ' latin' : ''}">${titleHTML}</div>` : ''}
+            ${(showText && s._price && (typeof s._price === 'string' || typeof s._price === 'number')) ? `<div class="slot-price">${s._price}</div>` : ''}
+            ${(showText && s.sub) ? `<div class="slot-sub">${thaiBreakHTML(s.sub)}</div>` : ''}
             ${ctaHTML ? `<div class="cta-dock" data-count="${(s.ctas || []).length}">${ctaHTML}</div>` : ''}
         </div>
         ${(s.stats && s.stats.length) ? `<div class="stat-row">${s.stats.map(st => `<div class="stat-card"><div class="stat-num">${st.num}</div><div class="stat-label">${st.label}</div></div>`).join('')}</div>` : ''}
@@ -3499,6 +3564,36 @@ menuBtn.addEventListener('click', () => {
     else openMenu();
 });
 menuBackdrop.addEventListener('click', closeMenu);
+
+/* ── MENU slim controller ─────────────────────────────────────────────
+   Idle = bare hamburger (screen belongs to the content). Any touch anywhere
+   brings the full "☰ MENU" back for a while; with no touches it still pulses
+   open briefly on a cadence so new visitors learn the screen is tappable
+   (the flywheel depends on that first touch). Class toggles only — no
+   continuous animation, kiosk-GPU safe. */
+(function () {
+    if (!menuBtn) return;
+    const EXPAND_MS = 12000;       // stay full this long after a touch
+    const PULSE_EVERY_MS = 18000;  // discoverability pulse cadence when idle
+    const PULSE_MS = 4500;         // open glide (1.6s) + readable hold before easing shut
+    let collapseTimer = null;
+    const slim = () => {
+        // never collapse the open (X) state — retry after the menu closes
+        if (menuBtn.classList.contains('open')) { collapseTimer = setTimeout(slim, 3000); return; }
+        menuBtn.classList.add('slim');
+    };
+    const expand = ms => {
+        menuBtn.classList.remove('slim');
+        clearTimeout(collapseTimer);
+        collapseTimer = setTimeout(slim, ms);
+    };
+    menuBtn.classList.add('slim');   // idle default
+    document.addEventListener('touchstart', () => expand(EXPAND_MS), { passive: true });
+    document.addEventListener('mousedown',  () => expand(EXPAND_MS));
+    setInterval(() => {
+        if (menuBtn.classList.contains('slim')) expand(PULSE_MS);
+    }, PULSE_EVERY_MS);
+})();
 categoryPanel.querySelectorAll('.cat-item').forEach(el => {
     addTap(el, () => openCategory(el.dataset.cat));
 });
