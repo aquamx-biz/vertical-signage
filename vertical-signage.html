@@ -301,15 +301,18 @@ body {
                            practical minimum; do NOT tighten for Thai titles */
     letter-spacing: -0.04vh;
     color: var(--ink-100);
-    text-transform: uppercase;
+    /* lowercase — brand voice (aquamx is never capitalised) AND measured
+       +29% more characters per line vs uppercase (18 vs 14 at this size):
+       minimal, less formal, more title fits before the 2-line clamp cuts. */
+    text-transform: lowercase;
     opacity: 0; transform: translateY(2.2vh);
     transition: opacity 0.7s var(--ease-out) 0.5s, transform 0.7s var(--ease-out) 0.5s;
     text-shadow: 0 0.3vh 2vh rgba(0,0,0,0.6);
 }
 /* Latin-only titles (no Thai glyphs — set by renderCommercial) can sit much
-   tighter: uppercase Latin has no stacked marks (ink tops out at 0.72em) and
-   no descenders, so the 1.3 Thai floor reads as a big empty band between
-   lines. Any Thai character in the title keeps the 1.3 rule above. */
+   tighter: measured lowercase ink needs only 0.985em between baselines
+   (descenders g/j/p/q/y 0.25em + ascenders 0.74em), so 1.1 keeps a margin.
+   Any Thai character in the title keeps the 1.3 rule above. */
 .slot-title.latin { line-height: 1.1; }
 /* Each title line clamps to max 2 visual lines + ellipsis, so a long
    vendor-set title can never balloon and bury the media (we keep the v6
@@ -322,6 +325,12 @@ body {
     -webkit-line-clamp: 2;
     overflow: hidden;
     word-break: break-word;
+    /* ink-bleed room: descenders on the LAST clamped line (lowercase g/j/p/q/y,
+       Thai สระอุ/ฎ) extend below the tight line box and would be shaved by
+       overflow:hidden — pad for the ink, pull layout back so spacing to
+       price/sub is unchanged. */
+    padding-bottom: 0.3em;
+    margin-bottom: -0.3em;
 }
 
 /* Sub description — clamp to 2 lines (kiosk = glanceable; full text lives in
