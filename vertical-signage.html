@@ -4512,9 +4512,39 @@ function maybeShowNoLiveDataBanner() {
 }
 
 /* ============================================================
+   STUDIO PREVIEW MODE (?preview=1)
+   Sanity's Media Overview embeds THIS file in an iframe, so the Studio
+   preview IS the player — same title clamp, Thai line-breaking, CTA row
+   logic, category pill, everything, with zero hand-mirrored code to drift.
+   The parent posts one playlist-shaped item; we adapt it with the SAME
+   adapter the live playlist uses and render it as a single static slide.
+   No fetches, no rotation, no ticker/weather, no SW, no analytics.
+============================================================ */
+const PREVIEW_MODE = new URLSearchParams(location.search).has('preview');
+function initPreviewMode() {
+    updateTime();                      // header clock renders once (static)
+    applyLangLabels();
+    window.addEventListener('message', ev => {
+        const d = ev.data;
+        if (!d || d.type !== 'aq-preview' || !d.item) return;
+        if (d.lang) uiLang = d.lang === 'en' ? 'en' : 'th';
+        playlist = [d.item];
+        SLOTS = adaptPlaylistToSlots(playlist);
+        if (!SLOTS.length) return;
+        cur = 0;
+        buildSlots();
+        showSlot(0, true);
+        // no scheduleNext() — a single slide just sits (videos still play/loop
+        // via manageSlotVideo's own ended→advance cycling back to slot 0)
+    });
+    // handshake: tell the Studio parent we're ready to receive the item
+    try { window.parent.postMessage({ type: 'aq-preview-ready' }, '*'); } catch (e) {}
+}
+
+/* ============================================================
    SERVICE WORKER + PREWARM + HOURLY RELOAD (ported)
 ============================================================ */
-if ('serviceWorker' in navigator && location.hostname !== 'localhost') {
+if ('serviceWorker' in navigator && location.hostname !== 'localhost' && !PREVIEW_MODE) {
     navigator.serviceWorker.register('./sw.js')
         .then(reg => console.log('[SW] Registered, scope:', reg.scope))
         .catch(err => console.warn('[SW] Registration failed:', err));
@@ -4524,6 +4554,8 @@ if ('serviceWorker' in navigator && location.hostname !== 'localhost') {
    INIT
 ============================================================ */
 async function init() {
+    if (PREVIEW_MODE) { initPreviewMode(); return; }   // Studio iframe → static single-slide mode
+
     ['weather_data','weather_data_time','news_data','news_ts'].forEach(k => localStorage.removeItem(k));
 
     applyLangLabels();
