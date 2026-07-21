@@ -103,7 +103,7 @@ export default defineType({
       group:      'content',
       title:      '📺 Title (Thai)',
       type:       'string',
-      description: 'ชื่อสินค้า / บริการ / โปรโมชั่น สั้นๆ กระชับ — เช่น "All-Day Brunch", "นวดแผนไทย 60 นาที", "ลด 50% วันนี้". Short product / service / promo name (the ad headline).',
+      description: 'ชื่อสินค้า / บริการ / โปรโมชั่น สั้นๆ กระชับ — เช่น "All-Day Brunch", "นวดแผนไทย 60 นาที", "ลด 50% วันนี้". Short product / service / promo name (the ad headline). · ⚠️ แสดงเต็มบนจอไม่เกิน ~38 ตัวอักษร — ยาวกว่านี้จอตัดเป็น "…"',
       // required — UNLESS the owner chose English and the English title exists
       // (an English-only ad is legitimate; forcing Thai here would push admins
       // to paste machine translations the owner never approved).
@@ -120,7 +120,7 @@ export default defineType({
       group:      'content',
       title:      '📺 Title (English)',
       type:       'string',
-      description: 'ระบบไม่แปลอัตโนมัติ — อยากมีเวอร์ชันอังกฤษ กด ✨ แปลจากช่องไทย แล้วตรวจก่อนบันทึก (จอโชว์ภาษาตาม "ภาษาหลักบนจอ")',
+      description: 'ระบบไม่แปลอัตโนมัติ — อยากมีเวอร์ชันอังกฤษ กด ✨ แปลจากช่องไทย แล้วตรวจก่อนบันทึก (จอโชว์ภาษาตาม "ภาษาหลักบนจอ") · ⚠️ Fits fully on screen up to ~28 characters — longer gets cut with "…".',
       components: { input: createTranslateInput({ sourceField: 'title_th', sourceLang: 'Thai',    targetLang: 'English', buttonLabel: '✨ Translate from Thai'    }) },
     }),
     defineField({
