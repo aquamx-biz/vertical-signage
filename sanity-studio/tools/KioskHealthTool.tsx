@@ -10,12 +10,13 @@ import { Box, Card, Flex, Stack, Text, Heading, Button, Spinner, Badge } from '@
 const API = 'https://app.aquamx.biz'
 const GREEN = '#2E9E5B', AMBER = '#C9864C', RED = '#B23B2E'
 
-// device rename map — a box relabelled on the adb side but still beaconing its
-// old project name folds into ONE column here (health + beacon = same physical
-// box). e.g. the home unit: adb=SD2603-001 but its player still beacons
-// mahogany-tower until it's deployed to a real project.
-const ALIAS: Record<string, string> = { 'mahogany-tower': 'SD2603-001' }
-const aka = (n: string) => ALIAS[n] || n
+// Beacons identify by the PROJECT baked into the web page, not by the box —
+// so the home unit (Fully, adb=SD2603-001, screen scheduled off) and the real
+// mahogany-tower site box (Yodeck) both beacon "mahogany-tower". A name-level
+// alias stole the site box's beacon, so remap by the home box's browser-profile
+// bid instead (regenerates only if Fully's local storage is wiped — update here
+// if the home column ever goes silent while the box is still on).
+const BID_ALIAS: Record<string, string> = { v1zst6: 'SD2603-001' }
 
 interface Beacon { project: string; bid: string; slide: string; upMin: number; minAgo: number; online: boolean; scr: string; board: string; andr: string; err: string; imgFails: string }
 
@@ -194,8 +195,9 @@ export function KioskHealthTool() {
       const healths: Health[] = (await hRes.json()).boxes || []
 
       const identOf = (b: Beacon) => {
+        if (BID_ALIAS[b.bid]) return BID_ALIAS[b.bid]
         const m = String(b.slide || '').match(/@([A-Za-z0-9_-]+)/)
-        return aka(m ? m[1] : String(b.project))
+        return m ? m[1] : String(b.project)
       }
       const freshest = new Map<string, Beacon>()
       const ghostCount = new Map<string, number>()
@@ -213,12 +215,10 @@ export function KioskHealthTool() {
       }
 
       const byDevice = new Map<string, Row>()
-      // A health doc's device name is authoritative (the collector sets it), so it
-      // is NEVER aliased — otherwise the real mahogany-tower SITE box collapses into
-      // the home box's SD2603-001 column and vanishes. The alias applies ONLY to the
-      // home box's stray BEACON (project=mahogany-tower, its placeholder content),
-      // which folds into SD2603-001 below. If two health docs still collide keep the
-      // freshest by checkedMinAgo.
+      // A health doc's device name is authoritative (the collector sets it) and is
+      // never remapped — only the home box's BEACON (bid in BID_ALIAS, since it
+      // beacons under mahogany-tower's project name) folds into SD2603-001. If two
+      // health docs still collide keep the freshest by checkedMinAgo.
       for (const h of healths) {
         const dev = h.device
         const cur = byDevice.get(dev)
