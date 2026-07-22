@@ -452,6 +452,22 @@ body {
     gap: 1vh; z-index: 6;
     opacity: 0.75;      /* CTAs at 75% to match the text (background reads through) */
 }
+/* ── VIDEO slides air CLEAN ─────────────────────────────────────────
+   The creative is self-contained (same rule as notices): no title/price/
+   sub floats over a moving picture — white text on a white frame was
+   unreadable and duplicated what the video already says. Only the CTA
+   dock may stay (media.videoShowCta; data-vcta="0" hides it too).
+   manageSlotVideo REMOVES .video-phase when the end card starts → the
+   text block reveals through its normal .active transitions. */
+.slot.video-phase .slot-title,
+.slot.video-phase .slot-price,
+.slot.video-phase .slot-sub { opacity: 0 !important; }
+.slot.video-phase[data-vcta="0"] .cta-dock { opacity: 0 !important; pointer-events: none; }
+/* video-safe CTA skin: a ghost button dies on bright frames — go solid.
+   (Static images keep the airy 0.55/0.75 ghost look untouched.) */
+.slot[data-video="true"] .cta { background: rgba(8,12,22,0.85); }
+.slot[data-video="true"] .cta-dock { opacity: 1; }
+
 /* Row mode — set by layoutCtaDocks() when two CTAs fit side-by-side: same
    font/letter-spacing/height (text NEVER shrinks), one line, photo gets the
    saved height back. --cta-col is the measured equal width (the wider of the
@@ -2229,6 +2245,9 @@ async function loadPlaylist() {
                                   ),
             "images":             media->imageFiles[].asset->url,
             "poster":             media->posterImage.asset->url,
+            "videoShowCta":       media->videoShowCta,
+            "videoEndCard":       media->videoEndCard,
+            "offerImg":           coalesce(media->offer->primaryImage.asset->url, media->offer->images[0].asset->url, media->offer->listingImages[0].asset->url),
             "category":           coalesce(touchExploreCategory, media->offer->category),
             "defaultDuration":    media->defaultImageDuration,
             "defaultImageDuration": media->defaultImageDuration,
@@ -2477,9 +2496,11 @@ function adaptPlaylistToSlots(pl) {
         const ctas = [];
         if (item.ctaType) {
             ctas.push({ kind: 'primary', label: item.ctaLabel || ctaLabelFor(item.ctaType, slotCat), icon: '→', ctaType: item.ctaType, url: item.ctaURL || '' });
-        } else if (item.kind !== 'notice') {
+        } else if (item.kind !== 'notice' && !isVid) {
             // Building notices (No Smoking, water bill, mourning…) are informational —
             // NO offer-style CTA. Only add the generic "View" fallback for real promos.
+            // Videos also get NO fallback: a video ad is self-contained (airs clean),
+            // so no configured CTA = no button at all, not a generic "View".
             ctas.push({ kind: 'primary', label: uiLang === 'th' ? 'ดูเพิ่มเติม' : 'View', icon: '→' });
         }
         if (item.ctaType2) {
@@ -2502,6 +2523,15 @@ function adaptPlaylistToSlots(pl) {
             sub: sub || '',
             ctas,
             _notice: item.kind === 'notice',   // renderCommercial: poster airs clean (no title/sub overlay)
+            // ── video overlay behaviour ──
+            // Videos air CLEAN (no title/price/sub — the creative is self-contained).
+            // _vShowCta: CTA dock visible during playback (media.videoShowCta, default on).
+            // _endCard: after `ended`, crossfade to the OFFER's main image and reveal
+            // the full text+CTA block (standard slide layout) for _endCardMs.
+            _vShowCta: item.videoShowCta !== false,
+            _endCard: isVid && item.videoEndCard === true && !!item.offerImg,
+            _endCardImg: item.offerImg || '',
+            _endCardMs: ((item.defaultImageDuration ?? 6) * 1000),
             _category: item.kind === 'notice' ? 'building-updates' : (item.category || ''),
             _providerSlug: item.providerSlug || '',
             _offerSlug: item.offerSlug || '',
@@ -2836,6 +2866,15 @@ function buildSlots() {
         el.dataset.kind = s.kind;
         if (s.pos) el.dataset.pos = s.pos;
         if (s.stats && s.stats.length) el.dataset.hasStats = 'true';
+        if (s.mediaType === 'video') {
+            // videos air CLEAN: .video-phase hides title/price/sub (and the CTA
+            // dock too when data-vcta="0"); manageSlotVideo lifts the class for
+            // the end card. data-video also switches the CTA to its solid
+            // video-safe skin (white-on-white frames killed the ghost buttons).
+            el.dataset.video = 'true';
+            el.dataset.vcta = s._vShowCta === false ? '0' : '1';
+            el.classList.add('video-phase');
+        }
         el.innerHTML = s.kind === 'notice' ? renderNotice(s) : renderCommercial(s);
         stage.appendChild(el);
     });
@@ -2964,6 +3003,15 @@ function manageSlotVideo(idx) {
     if (s.mediaType === 'video' && s.video) {
         const v = el && el.querySelector('.slot-video');
         if (!v) { scheduleNext(); return; }
+        // (Re)enter the CLEAN phase — a previous loop's end card removed the
+        // class and swapped the still to the offer image; restore both so this
+        // loop starts as poster → clean video again.
+        el.classList.add('video-phase');
+        if (s._endCard && s.image) {
+            const still = el.querySelector('.slot-media-img');
+            const stillSrc = sizedImg(s.image, 1080, 1920);
+            if (still && still.getAttribute('src') !== stillSrc) still.src = stillSrc;
+        }
         if (v.getAttribute('src') !== s.video) { v.src = s.video; }
         v.loop = false;                            // so `ended` fires (FIX 1)
         // Keep the video layer HIDDEN until it has a decoded first frame — a
@@ -2976,9 +3024,22 @@ function manageSlotVideo(idx) {
         if (v.readyState >= 2) revealVideo(); else v.onloadeddata = revealVideo;
         try { v.currentTime = 0; } catch(e) {}
 
-        // ended → advance
-        v.onended = advanceFromMedia;
-        // error/stall → skip to next via safety
+        // ended → END CARD (when enabled + the offer has an image) or advance.
+        // End card: pause on the last state, crossfade the media layer to the
+        // OFFER's main image, lift .video-phase so the standard text+CTA block
+        // reveals through its normal .active transitions, dwell, then advance.
+        const startEndCard = () => {
+            if (myToken !== advanceToken) return;
+            clearAllSlotTimers();
+            try { v.pause(); } catch(e) {}
+            v.style.display = 'none';              // fall back to the still layer under the card
+            el.classList.remove('video-phase');
+            const media = el.querySelector('.slot-media');
+            if (media) crossfadeMedia(media, s._endCardImg);
+            advanceTimer = setTimeout(advanceFromMedia, s._endCardMs);
+        };
+        v.onended = s._endCard ? startEndCard : advanceFromMedia;
+        // error/stall → skip to next via safety (no end card off a broken video)
         v.onerror = advanceFromMedia;
 
         // Safety timeout: if the video never reaches a playable state, skip it.
