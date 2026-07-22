@@ -3013,6 +3013,14 @@ function manageSlotVideo(idx) {
             if (still && still.getAttribute('src') !== stillSrc) still.src = stillSrc;
         }
         if (v.getAttribute('src') !== s.video) { v.src = s.video; }
+        else if (v.error) {
+            // sticky MediaError from an earlier loop (e.g. the SW was still
+            // downloading the file and the pipeline gave up) — same src never
+            // reloads by itself, so the slide stayed a still image until the
+            // hourly page reload. load() clears the error; by now the file is
+            // usually cached, so this replay starts instantly.
+            try { v.load(); } catch(e) {}
+        }
         v.loop = false;                            // so `ended` fires (FIX 1)
         // Keep the video layer HIDDEN until it has a decoded first frame — a
         // buffering <video> paints solid black OVER the poster still, and on slow

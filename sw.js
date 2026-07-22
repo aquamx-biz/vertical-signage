@@ -77,19 +77,29 @@ async function serveImage(req) {
 async function serveVideo(req) {
   const cache = await caches.open(VIDEO_CACHE);
 
-  // Ensure the full file is cached (fetch WITHOUT a Range header → 200 full body).
+  // NOT CACHED YET → STREAM the network response to the player immediately
+  // and copy it into the cache in the background. The old behaviour awaited
+  // the FULL multi-MB download before answering the first byte — on slow
+  // condo wifi Chrome's media pipeline gave up (PIPELINE_ERROR_READ) and the
+  // slide stayed a still image. Streaming means the FIRST loop already plays.
+  // cache.put is atomic: an interrupted download stores nothing, so the next
+  // request simply re-fetches — no risk of serving a truncated file.
   if (!(await cache.match(req.url))) {
-    try {
-      const full = await fetch(req.url, { mode: 'cors' }); // file CDN allows CORS → readable 200
-      if (full && full.status === 200) {
-        await cache.put(req.url, full.clone());
-      } else {
-        return full;                                       // unexpected (e.g. 206) → just pass network response
-      }
-    } catch (err) {
-      // Offline and never cached → nothing we can do; let <video> get the error.
-      throw err;
+    const range = req.headers.get('range');
+    const m     = range ? /bytes=(\d*)-/.exec(range) : null;
+    const start = m && m[1] ? parseInt(m[1], 10) : 0;
+    if (start > 0) {
+      // mid-file seek before the file is cached (rare on kiosk) — pass the
+      // ranged request straight through; the CDN answers 206 natively.
+      return fetch(req);
     }
+    const full = await fetch(req.url, { mode: 'cors' }); // file CDN allows CORS → readable 200
+    if (!full || full.status !== 200) return full;       // unexpected → pass through
+    cache.put(req.url, full.clone()).catch(() => {});    // background copy (atomic)
+    return full;                                         // player streams from byte 0 NOW
+    // (a 200 answering a bytes=0- request is valid — the player treats it as
+    //  the whole resource and reads sequentially; later loops get real 206s
+    //  sliced from the cache below.)
   }
 
   const cached = await cache.match(req.url);
