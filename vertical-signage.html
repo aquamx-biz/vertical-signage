@@ -328,9 +328,13 @@ body {
     /* ink-bleed room: descenders on the LAST clamped line (lowercase g/j/p/q/y,
        Thai สระอุ/ฎ) extend below the tight line box and would be shaved by
        overflow:hidden — pad for the ink, pull layout back so spacing to
-       price/sub is unchanged. */
-    padding-bottom: 0.3em;
-    margin-bottom: -0.3em;
+       price/sub is unchanged.
+       0.12em EXACTLY: measured descender ink needs ~0.10em, while the TOPS of
+       a clipped 3rd line start painting ~0.21em below the edge — 0.3em opened
+       a window wide enough to show ghost slivers of the cut line (white dashes
+       under long titles, seen on the 39 screen). Keep it under 0.2em. */
+    padding-bottom: 0.12em;
+    margin-bottom: -0.12em;
 }
 
 /* Sub description — clamp to 2 lines (kiosk = glanceable; full text lives in
