@@ -162,7 +162,18 @@ export default defineType({
         const doc = document as any
         return doc?.kind !== 'promo' || doc?.type !== 'video'
       },
-      description: 'จบคลิปแล้วค้างภาพสรุป: ใช้รูปหลักของ offer (ไม่ต้องอัปโหลดเพิ่ม) + ชื่อ/คำอธิบาย/ราคา/CTA เหมือนสไลด์รูปปกติ · ระยะเวลาใช้ช่อง "วินาทีต่อรูป" (ไม่ตั้ง = 6 วิ) · ต้องมีรูปใน offer ถึงจะแสดง',
+      description: 'จบคลิปแล้วค้างภาพสรุป: ชื่อ/คำอธิบาย/ราคา/CTA เหมือนสไลด์รูปปกติ บนรูป End Card ด้านล่าง · ระยะเวลาใช้ช่อง "วินาทีต่อรูป" (ไม่ตั้ง = 6 วิ)',
+    }),
+    defineField({
+      name:        'endCardImage',
+      title:       '📺 End Card Image (รูปปิดท้ายวิดีโอ)',
+      type:        'image',
+      options:     { hotspot: true },
+      hidden: ({ document }) => {
+        const doc = document as any
+        return doc?.kind !== 'promo' || doc?.type !== 'video' || doc?.videoEndCard !== true
+      },
+      description: 'กด ⤵ Pull from Offer ใต้ช่อง Offer เพื่อดึงรูปหลักของ offer มาไว้ที่นี่ (ใช้ไฟล์เดิม ไม่อัปโหลดซ้ำ) · ไม่ถูกใจ ลบแล้วอัปโหลดรูปเองได้ · ปล่อยว่าง = จอใช้รูปหลักของ offer อัตโนมัติ',
     }),
 
     // ── Notice image ──────────────────────────────────────────────────────────

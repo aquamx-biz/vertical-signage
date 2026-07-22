@@ -151,6 +151,7 @@ export function MediaOverview(props: Props) {
     defaultImageDuration: d.defaultImageDuration || null,
     videoShowCta: d.videoShowCta !== false,
     videoEndCard: d.videoEndCard === true,
+    endCardImg: assetUrl(d.endCardImage?.asset?._ref, pid, ds, 1200),
     offerImg:  offer?.img || null,
   }), [d, offer, provider, isVideo, videoUrl, hero, pid, ds])
 

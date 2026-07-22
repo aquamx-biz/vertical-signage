@@ -24,6 +24,8 @@ export function OfferPullInput(props: RefInputProps) {
   const dLang   = useFormValue(['displayLang']) as string | undefined
   const imgs    = useFormValue(['imageFiles']) as any[] | undefined
   const prov    = useFormValue(['provider']) as { _ref?: string } | undefined
+  const mType   = useFormValue(['type']) as string | undefined
+  const endCard = useFormValue(['endCardImage']) as { asset?: { _ref?: string } } | undefined
   const { patch } = useDocumentOperation(docId, 'media')
 
   const [busy, setBusy] = useState(false)
@@ -60,7 +62,15 @@ export function OfferPullInput(props: RefInputProps) {
       const pulled: string[] = [], kept: string[] = []
       if (!title?.trim() || title === '(ไม่มีชื่อ)') { if (oTitle) { set.title = oTitle; pulled.push('ชื่อ') } } else kept.push('ชื่อ')
       if (!dLang) { set.displayLang = lang; pulled.push('ภาษา') } else kept.push('ภาษา')
-      if (!imgs?.length) { if (imageFiles.length) { set.imageFiles = imageFiles; set.type = 'image'; pulled.push(`รูป ×${imageFiles.length}`) } } else kept.push('รูป')
+      if (mType === 'video') {
+        // video media: don't touch imageFiles (video has none) — instead pull
+        // the offer's main image into endCardImage so the admin SEES the end
+        // card, can clear it and upload their own. Same only-if-empty rule.
+        const mainRef = (o.primaryImage?.asset?._ref) || (srcImages[0]?.asset?._ref)
+        if (!endCard?.asset?._ref) {
+          if (mainRef) { set.endCardImage = { _type: 'image', asset: { _type: 'reference', _ref: mainRef } }; pulled.push('รูปปิดท้าย') }
+        } else kept.push('รูปปิดท้าย')
+      } else if (!imgs?.length) { if (imageFiles.length) { set.imageFiles = imageFiles; set.type = 'image'; pulled.push(`รูป ×${imageFiles.length}`) } } else kept.push('รูป')
       // strong when the provider is published (schema expects strong — no mismatch
       // warning, delete-protection intact); weak only while it's still a draft
       // (a strong ref to an unpublished doc is rejected on save)
@@ -83,13 +93,13 @@ export function OfferPullInput(props: RefInputProps) {
       {props.renderDefault(props)}
       <Flex align="center" gap={2}>
         <Button
-          text={busy ? '⏳ กำลังดึง…' : '⤵ ดึงรูป+ชื่อ+ภาษา+ร้านจาก Offer นี้'}
+          text={busy ? '⏳ Pulling…' : '⤵ Pull from Offer (ดึงรูป/ชื่อ/ภาษา/ร้าน — วิดีโอ: รูปปิดท้าย)'}
           mode="ghost" tone="primary" fontSize={1}
           disabled={!offerRef || busy}
-          title={offerRef ? 'เติมเฉพาะช่องที่ยังว่าง (ชื่อ / ภาษา / รูป / ร้าน — รูปใช้ไฟล์เดิม ไม่อัปโหลดซ้ำ) ไม่ทับของที่กรอกแล้ว' : 'เลือก Offer ก่อน'}
+          title={offerRef ? 'Fills only empty fields — never overwrites what you typed · เติมเฉพาะช่องที่ยังว่าง (รูปใช้ไฟล์เดิม ไม่อัปโหลดซ้ำ) · video media pulls the offer image into End Card' : 'Pick an Offer first · เลือก Offer ก่อน'}
           onClick={pullFromOffer}
         />
-        {!offerRef && <Text size={0} muted>เลือก Offer ก่อน แล้วปุ่มนี้จะดึงข้อมูลซ้ำ ๆ มาให้เอง</Text>}
+        {!offerRef && <Text size={0} muted>Pick an Offer first — this button then pulls its data in · เลือก Offer ก่อน</Text>}
       </Flex>
     </Stack>
   )
