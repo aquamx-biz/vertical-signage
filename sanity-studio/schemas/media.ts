@@ -162,7 +162,7 @@ export default defineType({
         const doc = document as any
         return doc?.kind !== 'promo' || doc?.type !== 'video'
       },
-      description: 'จบคลิปแล้วค้างภาพสรุป: ชื่อ/คำอธิบาย/ราคา/CTA เหมือนสไลด์รูปปกติ บนรูป End Card ด้านล่าง · ระยะเวลาใช้ช่อง "วินาทีต่อรูป" (ไม่ตั้ง = 6 วิ)',
+      description: 'จบคลิปแล้วค้างภาพสรุป: ชื่อ/คำอธิบาย/ราคา/CTA เหมือนสไลด์รูปปกติ บนรูป End Card ด้านล่าง · การ์ดแสดง 6 วินาที (ค่ามาตรฐานของระบบ — ถูกรวมในเวลารวมของ playlist อัตโนมัติ)',
     }),
     defineField({
       name:        'endCardImage',

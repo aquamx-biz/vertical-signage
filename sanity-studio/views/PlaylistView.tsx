@@ -45,6 +45,7 @@ interface PlaylistItem {
   thumbnail?:       string
   videoUrl?:        string
   videoDuration?:   number
+  videoEndCard?:    boolean
   imageCount?:      number
   defaultImageDuration?: number
 }
@@ -64,9 +65,14 @@ function fmtDuration(seconds: number) {
   return m > 0 ? `${m}m ${s > 0 ? s + 's' : ''}`.trim() : `${s}s`
 }
 
+// End card (media.videoEndCard) always shows for the FIXED standard 6s —
+// same constant as the player (vertical-signage.html END_CARD_MS).
+const END_CARD_SEC = 6
+
 function itemDuration(item: PlaylistItem): number | null {
   if (item.mediaType === 'video') {
-    return item.videoDuration ?? null
+    if (item.videoDuration == null) return null
+    return item.videoDuration + (item.videoEndCard ? END_CARD_SEC : 0)
   }
   if (item.mediaType === 'image' || item.mediaKind === 'notice') {
     const dur   = item.displayDuration ?? item.defaultImageDuration ?? 10
@@ -306,6 +312,7 @@ export function PlaylistView({ document: doc }: { document?: { displayed?: any }
         "mediaKind":            media->kind,
         "mediaActive":          media->isActive,
         "videoDuration":        media->videoDuration,
+        "videoEndCard":         media->videoEndCard,
         "imageCount":           count(media->imageFiles),
         "defaultImageDuration": media->defaultImageDuration,
         "thumbnail":            coalesce(
