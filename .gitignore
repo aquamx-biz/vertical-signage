@@ -40,3 +40,7 @@ yarn-error.log*
 # Environment / Netlify local
 .env.local
 sanity-studio/.netlify/
+
+# Kiosk health collector output + per-box human diagnosis — runtime data, local only
+tools/health/
+tools/diagnosis.json
