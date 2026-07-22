@@ -131,6 +131,7 @@ const PLAYLIST_PROJ_V7 = `
         "poster":             media->posterImage.asset->url,
         "videoShowCta":       media->videoShowCta,
         "videoEndCard":       media->videoEndCard,
+        "endCardImg":         media->endCardImage.asset->url,
         "offerImg":           coalesce(media->offer->primaryImage.asset->url, media->offer->images[0].asset->url, media->offer->listingImages[0].asset->url),
         "category":           coalesce(touchExploreCategory, media->offer->category),
         "defaultDuration":    media->defaultImageDuration,
