@@ -37,6 +37,7 @@ interface OfferRow {
   displayLang?: string | null
   ctaType?: string | null; ctaLabel?: string | null
   ctaType2?: string | null; ctaLabel2?: string | null
+  img?: string | null
 }
 
 // The kiosk preview is the REAL player embedded in preview mode — any deployed
@@ -90,7 +91,8 @@ export function MediaOverview(props: Props) {
     client.fetch<OfferRow>(
       `*[_id == $id][0]{ _id, "title": coalesce(title_th, title_en), title_en,
         category, price, description_th, description_en, displayLang,
-        ctaType, ctaLabel, ctaType2, ctaLabel2 }`, { id: offerRef })
+        ctaType, ctaLabel, ctaType2, ctaLabel2,
+        "img": coalesce(primaryImage.asset->url, images[0].asset->url, listingImages[0].asset->url) }`, { id: offerRef })
       .then(setOffer).catch(() => setOffer(null))
   }, [client, offerRef])
   useEffect(() => {
@@ -147,6 +149,9 @@ export function MediaOverview(props: Props) {
     price:     offer?.price || null,
     provider:  provider ? { logo: provider.logo || '', name_th: provider.title, name_en: provider.title } : null,
     defaultImageDuration: d.defaultImageDuration || null,
+    videoShowCta: d.videoShowCta !== false,
+    videoEndCard: d.videoEndCard === true,
+    offerImg:  offer?.img || null,
   }), [d, offer, provider, isVideo, videoUrl, hero, pid, ds])
 
   useEffect(() => {

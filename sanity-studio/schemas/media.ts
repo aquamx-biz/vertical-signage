@@ -139,6 +139,32 @@ export default defineType({
         }),
     }),
 
+    // ── Video overlay behaviour ──────────────────────────────────────────────
+    // Videos air CLEAN (the creative is self-contained — no title/price/desc
+    // overlay, matching the notice rule). These two toggles cover the rest:
+    defineField({
+      name:        'videoShowCta',
+      title:       '📺 Show CTA on Video (แสดงปุ่ม CTA บนวิดีโอ)',
+      type:        'boolean',
+      initialValue: true,
+      hidden: ({ document }) => {
+        const doc = document as any
+        return doc?.kind !== 'promo' || doc?.type !== 'video'
+      },
+      description: 'เปิด = วิดีโอ + ปุ่ม CTA ทึบ 1 ชุด (ไม่มีข้อความอื่นทับ) · ปิด = วิดีโอเปลือย 100% สำหรับโฆษณาแบบโชว์อย่างเดียว',
+    }),
+    defineField({
+      name:        'videoEndCard',
+      title:       '📺 End Card after Video (จบวิดีโอแล้วโชว์สรุป offer)',
+      type:        'boolean',
+      initialValue: false,
+      hidden: ({ document }) => {
+        const doc = document as any
+        return doc?.kind !== 'promo' || doc?.type !== 'video'
+      },
+      description: 'จบคลิปแล้วค้างภาพสรุป: ใช้รูปหลักของ offer (ไม่ต้องอัปโหลดเพิ่ม) + ชื่อ/คำอธิบาย/ราคา/CTA เหมือนสไลด์รูปปกติ · ระยะเวลาใช้ช่อง "วินาทีต่อรูป" (ไม่ตั้ง = 6 วิ) · ต้องมีรูปใน offer ถึงจะแสดง',
+    }),
+
     // ── Notice image ──────────────────────────────────────────────────────────
     // Notice-only: for a notice this IS the on-screen image. Hidden for ALL
     // promos — the customer flow never carries a poster (the /offer form has no
@@ -147,7 +173,7 @@ export default defineType({
     // video posters already in data keep working; the field just stays hidden.
     defineField({
       name:        'posterImage',
-      title:       '📺 รูปประกาศ / ภาพปกวิดีโอ (ตัวที่ขึ้นจอ)',
+      title:       '📺 Poster / Video Cover (รูปประกาศ / ภาพปกวิดีโอ)',
       type:        'image',
       options:     { hotspot: true },
       // notices: THE poster that airs. video promos: the still the kiosk
