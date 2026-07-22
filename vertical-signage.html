@@ -2535,7 +2535,10 @@ function adaptPlaylistToSlots(pl) {
             // main image so older docs with just the toggle still work.
             _endCard: isVid && item.videoEndCard === true && !!(item.endCardImg || item.offerImg),
             _endCardImg: item.endCardImg || item.offerImg || '',
-            _endCardMs: ((item.defaultImageDuration ?? 6) * 1000),
+            // FIXED standard 6s (decided over a per-doc field — one number,
+            // stated in the Studio toggle description, and PlaylistView's
+            // loop-time math adds the same END_CARD_SEC constant).
+            _endCardMs: 6000,
             _category: item.kind === 'notice' ? 'building-updates' : (item.category || ''),
             _providerSlug: item.providerSlug || '',
             _offerSlug: item.offerSlug || '',
