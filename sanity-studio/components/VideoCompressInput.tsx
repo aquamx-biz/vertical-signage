@@ -14,12 +14,16 @@ import { useRef, useState, useEffect, useCallback } from 'react'
 import { Stack, Button, Spinner, Flex, Text, Card, Badge } from '@sanity/ui'
 import { set }                                  from 'sanity'
 import { useClient, useFormValue, useDocumentOperation } from 'sanity'
-import { captureVideoFrame, fileRefToUrl }      from './videoPoster'
+import { captureVideoFrame, fileRefToUrl, probeVideoDims } from './videoPoster'
 
 const TARGET_MB    = 15
 const TARGET_BYTES = TARGET_MB * 1024 * 1024
 const PROJECT_ID   = 'awjj9g8u'
 const DATASET      = 'production'
+// Kiosk decode envelope: cheap fleet SoCs (ZC-H358S) hard-cap H.264 decode at
+// a 1080×1920 box — anything bigger plays on desktop but dies on those boxes.
+const MAX_W = 1080
+const MAX_H = 1920
 
 function fmt(bytes: number) {
   return bytes >= 1_048_576
@@ -89,6 +93,83 @@ export function VideoCompressInput(props: Props) {
     capturePoster(false)
   }, [videoRef, posterRef, capturePoster])
 
+  // ── Auto-normalize: EVERY video must fit the kiosk decode envelope ──────
+  // Like images (auto-resized by the Sanity CDN before they reach a screen),
+  // videos must never reach a box bigger than 1080×1920: a 1210×1712 upload
+  // played on desktop/RK3566 but failed fleet-wide on ZC-H358S boxes. On
+  // upload — or first open of an older doc — probe the real pixels and
+  // transcode down in-browser when they exceed the box. In-envelope files
+  // are never touched. Vendors can upload ANY size/ratio.
+  const [normPhase, setNormPhase] = useState<'idle' | 'checking' | 'working' | 'done' | 'error'>('idle')
+  const [normMsg,   setNormMsg]   = useState('')
+  const [normPct,   setNormPct]   = useState(0)
+  const normTried    = useRef<string | null>(null)
+  const recaptureFor = useRef<string | null>(null)
+
+  async function loadFFmpeg(onProgress: (pct: number) => void) {
+    const { FFmpeg }    = await import('@ffmpeg/ffmpeg')
+    const { fetchFile } = await import('@ffmpeg/util')
+    const ffmpeg = new FFmpeg()
+    ffmpeg.on('progress', ({ progress: p }) => onProgress(Math.round(p * 100)))
+    const coreURL = new URL('../node_modules/@ffmpeg/core-st/dist/esm/ffmpeg-core.js', import.meta.url).href
+    const wasmURL = new URL('../node_modules/@ffmpeg/core-st/dist/esm/ffmpeg-core.wasm', import.meta.url).href
+    await ffmpeg.load({ coreURL, wasmURL })
+    return { ffmpeg, fetchFile }
+  }
+
+  useEffect(() => {
+    if (!videoRef) return
+    if (normTried.current === videoRef) return
+    normTried.current = videoRef
+    const url = fileRefToUrl(videoRef, PROJECT_ID, DATASET)
+    if (!url) return
+    ;(async () => {
+      setNormPhase('checking'); setNormMsg('Checking video size…')
+      try {
+        const { w, h } = await probeVideoDims(url)
+        if (w <= MAX_W && h <= MAX_H) { setNormPhase('idle'); setNormMsg(''); return }
+        const sc = Math.min(MAX_W / w, MAX_H / h)
+        const tw = Math.floor(w * sc / 2) * 2
+        const th = Math.floor(h * sc / 2) * 2
+        setNormPhase('working'); setNormPct(0)
+        setNormMsg(`วิดีโอ ${w}×${h} เกินเพดานจอ — กำลังย่อเป็น ${tw}×${th}…`)
+        const { ffmpeg, fetchFile } = await loadFFmpeg(setNormPct)
+        await ffmpeg.writeFile('in.mp4', await fetchFile(url))
+        await ffmpeg.exec([
+          '-i', 'in.mp4',
+          '-c:v', 'libx264', '-crf', '22', '-preset', 'fast',
+          '-vf', `scale=${tw}:${th}`,
+          '-c:a', 'aac', '-b:a', '96k',
+          '-movflags', '+faststart',
+          'out.mp4',
+        ])
+        const data = await ffmpeg.readFile('out.mp4')
+        const blob = new Blob([data as Uint8Array], { type: 'video/mp4' })
+        setNormMsg('Uploading normalized video…')
+        const asset = await client.assets.upload('file', new File([blob], 'video-1080fit.mp4', { type: 'video/mp4' }), {
+          filename: 'video-1080fit.mp4', contentType: 'video/mp4',
+        })
+        normTried.current    = asset._id   // our own output is in-envelope — don't re-probe
+        recaptureFor.current = asset._id   // poster must match the new frames
+        props.onChange(set({ _type: 'file', asset: { _type: 'reference', _ref: asset._id } }))
+        setNormPhase('done')
+        setNormMsg(`ย่อเป็น ${tw}×${th} แล้ว (${(blob.size / 1048576).toFixed(1)} MB) — เล่นได้ทุกกล่องในระบบ`)
+      } catch (e: any) {
+        setNormPhase('error')
+        setNormMsg(e?.message ?? String(e))
+      }
+    })()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [videoRef])
+
+  // After a normalize replaced the file, re-capture the poster from it.
+  useEffect(() => {
+    if (!videoRef || recaptureFor.current !== videoRef) return
+    recaptureFor.current = null
+    capturePoster(true)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [videoRef])
+
   // ── Upload compressed file to Sanity ────────────────────────────────────────
   async function doUpload(f: File) {
     setPhase('uploading')
@@ -116,44 +197,37 @@ export function VideoCompressInput(props: Props) {
 
     try {
       setMsg('Loading FFmpeg…')
-
-      const { FFmpeg }    = await import('@ffmpeg/ffmpeg')
-      const { fetchFile } = await import('@ffmpeg/util')
-
-      const ffmpeg = new FFmpeg()
-      ffmpeg.on('progress', ({ progress: p }) => {
-        const pct = Math.round(p * 100)
+      const { ffmpeg, fetchFile } = await loadFFmpeg(pct => {
         setProgress(pct)
         setMsg(`Compressing… ${pct}%`)
       })
 
-      // Load WASM from node_modules via Vite's new URL() asset resolution.
-      // This copies the files to the studio's own CDN — no external fetches,
-      // no CSP issues.
-      const coreURL = new URL(
-        '../node_modules/@ffmpeg/core-st/dist/esm/ffmpeg-core.js',
-        import.meta.url,
-      ).href
-      const wasmURL = new URL(
-        '../node_modules/@ffmpeg/core-st/dist/esm/ffmpeg-core.wasm',
-        import.meta.url,
-      ).href
-
-      await ffmpeg.load({ coreURL, wasmURL })
-
       setMsg('Preparing video…')
       await ffmpeg.writeFile('input.mp4', await fetchFile(file))
+
+      // Probe real pixels so the scale hits the SAME decode envelope as the
+      // auto-normalize pass (BOTH axes — the old height-only cap let a
+      // 1210-wide file through and it died on the ZC boxes).
+      const vf: string[] = []
+      const obj = URL.createObjectURL(file)
+      try {
+        const { w, h } = await probeVideoDims(obj)
+        if (w > MAX_W || h > MAX_H) {
+          const sc = Math.min(MAX_W / w, MAX_H / h)
+          vf.push('-vf', `scale=${Math.floor(w * sc / 2) * 2}:${Math.floor(h * sc / 2) * 2}`)
+        }
+      } catch (e) { /* probe failed → compress without scaling */ }
+      finally { URL.revokeObjectURL(obj) }
 
       setMsg(`Compressing to ~${TARGET_MB} MB…`)
 
       // CRF 28 = good quality / file-size balance.
-      // Scale: cap portrait height at 1920 px (9:16 signage), preserve aspect ratio.
       await ffmpeg.exec([
         '-i', 'input.mp4',
         '-c:v', 'libx264',
         '-crf', '28',
         '-preset', 'fast',
-        '-vf', "scale='if(gt(ih,1920),trunc(1920*iw/ih/2)*2,iw)':'if(gt(ih,1920),1920,ih)'",
+        ...vf,
         '-c:a', 'aac',
         '-b:a', '96k',
         '-movflags', '+faststart',
@@ -194,6 +268,29 @@ export function VideoCompressInput(props: Props) {
 
       {/* ── Native Sanity file input (always shown — handles normal uploads) ── */}
       {props.renderDefault(props)}
+
+      {/* ── Auto-normalize status (kiosk decode envelope 1080×1920) ─────────── */}
+      {normPhase !== 'idle' && (
+        <Card padding={3} radius={2} border
+          tone={normPhase === 'error' ? 'critical' : normPhase === 'done' ? 'positive' : 'primary'}>
+          <Stack space={2}>
+            <Flex align="center" gap={2}>
+              {(normPhase === 'checking' || normPhase === 'working') && <Spinner />}
+              <Text size={1} style={{ flex: 1 }}>
+                {normPhase === 'done' ? `✅ ${normMsg}`
+                  : normPhase === 'error' ? `❌ ย่อวิดีโออัตโนมัติไม่สำเร็จ: ${normMsg} — วิดีโอกว้างเกิน ${MAX_W}px อาจไม่เล่นบนกล่องบางรุ่น`
+                  : normMsg}
+              </Text>
+            </Flex>
+            {normPhase === 'working' && normPct > 0 && (
+              <div style={{ background: 'var(--card-border-color)', borderRadius: 4, height: 6, overflow: 'hidden' }}>
+                <div style={{ background: 'var(--card-focus-ring-color, #2276fc)', height: '100%',
+                  width: `${normPct}%`, transition: 'width 0.3s ease' }} />
+              </div>
+            )}
+          </Stack>
+        </Card>
+      )}
 
       {/* ── Video poster (first-frame capture) ───────────────────────────────── */}
       {videoRef && (

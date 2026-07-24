@@ -19,6 +19,24 @@ export function fileRefToUrl(ref: string, projectId: string, dataset: string): s
   return `https://cdn.sanity.io/files/${projectId}/${dataset}/${body.slice(0, lastDash)}.${body.slice(lastDash + 1)}`
 }
 
+/** Read a video's intrinsic pixel size (and duration) from metadata only. */
+export function probeVideoDims(src: string, timeoutMs = 20000): Promise<{ w: number; h: number; dur: number }> {
+  return new Promise((resolve, reject) => {
+    const v = document.createElement('video')
+    v.muted = true
+    v.preload = 'metadata'
+    const timer = setTimeout(() => { v.removeAttribute('src'); reject(new Error('อ่านข้อมูลวิดีโอไม่ทัน')) }, timeoutMs)
+    v.addEventListener('error', () => { clearTimeout(timer); reject(new Error('อ่านข้อมูลวิดีโอไม่ได้')) }, { once: true })
+    v.addEventListener('loadedmetadata', () => {
+      clearTimeout(timer)
+      const out = { w: v.videoWidth, h: v.videoHeight, dur: v.duration || 0 }
+      v.removeAttribute('src')
+      out.w && out.h ? resolve(out) : reject(new Error('วิดีโอไม่มีขนาดภาพ'))
+    }, { once: true })
+    v.src = src
+  })
+}
+
 export function captureVideoFrame(src: string, timeoutMs = 30000): Promise<Blob> {
   return new Promise((resolve, reject) => {
     const v = document.createElement('video')

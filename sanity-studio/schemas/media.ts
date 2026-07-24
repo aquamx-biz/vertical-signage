@@ -125,6 +125,7 @@ export default defineType({
       title: '📺 Video File (MP4)',
       type: 'file',
       options: { accept: 'video/*' },
+      description: 'อัปโหลดได้ทุกขนาด/ทุกสัดส่วน — ระบบตรวจและย่อให้พอดีเพดานถอดรหัสของกล่องจอ (1080×1920) อัตโนมัติ เหมือนที่รูปภาพถูกย่อโดย CDN',
       components: { input: VideoCompressInput },
       hidden: ({ document }) => {
         const doc = document as any
