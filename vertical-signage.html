@@ -1566,6 +1566,29 @@ body {
 .detail-vm { background: var(--bronze-strong); color: #fff; text-align: center; font-family: 'Prompt','IBM Plex Sans Thai',sans-serif; font-weight: 800; letter-spacing: 0.02em; font-size: 1.7vh; padding: 1.5vh; border-radius: 1.4vh; display: flex; align-items: center; justify-content: center; gap: 0.8vh; cursor: pointer; touch-action: manipulation; user-select: none; }
 /* Pinned footer — keeps the primary CTA anchored at the bottom while .detail-body scrolls */
 .detail-foot { flex-shrink: 0; padding: 1.4vh 2.6vh 2.2vh; border-top: 0.12vh solid rgba(255,255,255,0.08); background: rgba(20,26,40,0.97); }
+
+/* ── Step 2 (handoff) goes FULL-CARD ─────────────────────────────────
+   The hero gallery is step-1 context; on the ACTION page it stole 67% of
+   the card and squeezed the QR + phone UI into the bottom third. Hide it
+   (display:none also stops compositing the layer — kiosk GPU rule) and
+   let the handoff panel own the card. Back → class off → hero returns. */
+.detail-card.handoff-mode .detail-gallery { display: none; }
+.detail-card.handoff-mode .detail-body { padding-top: 7vh; }   /* clear the ← / ✕ buttons */
+/* step-1 reading material (desc + menu/details) also steps aside — the
+   action page is title + QR + phone ONLY, no scrolling to reach the button */
+.detail-card.handoff-mode .detail-sub,
+.detail-card.handoff-mode .detail-dyn { display: none; }
+.handoff-offer-title {
+    display: none;
+    font-family: 'Prompt','IBM Plex Sans Thai',sans-serif;
+    font-size: 2.4vh; font-weight: 600; line-height: 1.35;
+    color: #fff;
+    padding-right: 6vh;            /* clear the ✕ button */
+    margin-bottom: 1.8vh;
+}
+.detail-card.handoff-mode .handoff-offer-title { display: block; }
+/* with the card to ourselves, the QR earns scan-from-standing size */
+.detail-card.handoff-mode .qr-wrap img { width: 24vh; height: 24vh; }
 /* Back arrow — mirrors .detail-close (top-right); shown only on the QR/handoff step */
 .detail-back { position: absolute; top: 1.4vh; left: 1.4vh; z-index: 5; width: 4.2vh; height: 4.2vh; border-radius: 50%; background: rgba(8,12,22,0.6); border: 0.15vh solid rgba(255,255,255,0.34); color: #fff; font-size: 2.4vh; line-height: 1; cursor: pointer; display: none; align-items: center; justify-content: center; backdrop-filter: blur(8px); }
 .detail-vm:active { filter: brightness(1.08); }
@@ -1799,6 +1822,9 @@ html.lite .bottombar-track { transform: none !important; }
                 <!-- Step 2: QR + phone handoff (hidden until "View on mobile" tapped)
                      — the "View on mobile" trigger now lives in the pinned .detail-foot below -->
                 <div class="handoff-step" id="handoffStep" style="display:none;">
+                    <!-- Step-2 title: the hero (which carried the title) is hidden in
+                         handoff-mode, so this line keeps "what am I scanning" visible -->
+                    <div class="handoff-offer-title" id="handoffTitle"></div>
                     <!-- Compact scan ROW (QR left + text right) — matches the /offer
                          design's .pv-scan, instead of a big centred QR block. -->
                     <div class="handoff-scan">
@@ -4079,6 +4105,7 @@ function openDetail(ctx) {
 
     const hs = document.getElementById('handoffStep');
     if (hs) hs.style.display = 'none';
+    document.querySelector('.detail-card')?.classList.remove('handoff-mode');   // fresh popup always starts at step 1
     const vm = document.getElementById('detailVm');
     // Step-1 button = the VERB only ("จอง →", "สมัคร →") — no "บนมือถือ" yet.
     // Mentioning mobile here made people think tapping would jump to their phone
@@ -4207,6 +4234,11 @@ function showHandoff() {
     const foot = document.getElementById('detailFoot'); if (foot) foot.style.display = 'none';
     const back = document.getElementById('detailBack'); if (back) back.style.display = 'flex';
     const hs = document.getElementById('handoffStep'); if (hs) hs.style.display = 'block';
+    // FULL-CARD mode: hide the step-1 hero so QR + phone own the card; carry
+    // the title down so "what am I scanning" stays answered.
+    const card = document.querySelector('.detail-card'); if (card) card.classList.add('handoff-mode');
+    const hTitleEl = document.getElementById('handoffTitle');
+    if (hTitleEl) hTitleEl.textContent = (document.getElementById('detailTitle')?.textContent || '');
     resetIdle();
 }
 
@@ -4256,6 +4288,7 @@ function hideHandoff() {
     const hs = document.getElementById('handoffStep'); if (hs) hs.style.display = 'none';
     const foot = document.getElementById('detailFoot'); if (foot) foot.style.display = '';
     const back = document.getElementById('detailBack'); if (back) back.style.display = 'none';
+    const card = document.querySelector('.detail-card'); if (card) card.classList.remove('handoff-mode');
     resetIdle();
 }
 
