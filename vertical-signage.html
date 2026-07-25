@@ -1587,8 +1587,22 @@ body {
     margin-bottom: 1.8vh;
 }
 .detail-card.handoff-mode .handoff-offer-title { display: block; }
-/* with the card to ourselves, the QR earns scan-from-standing size */
-.detail-card.handoff-mode .qr-wrap img { width: 24vh; height: 24vh; }
+/* with the card to ourselves the scan block goes COLUMN: QR centred at a
+   moderate size, caption BELOW it full-width — enlarging the QR inside the
+   old side-by-side row crushed the caption into a 1-word-per-line sliver */
+.detail-card.handoff-mode .handoff-scan {
+    flex-direction: column; align-items: center;
+    text-align: center; gap: 1.6vh;
+}
+.detail-card.handoff-mode .handoff-scan-tx { text-align: center; }
+.detail-card.handoff-mode .qr-wrap img { width: 20vh; height: 20vh; }
+/* provider offers QR *and* phone → the card is shared: smaller QR, tighter
+   gaps, and the QR sub-caption steps aside (the phone label already explains
+   the alternative) so the whole flow fits without scrolling */
+.detail-card.handoff-mode.handoff-both .qr-wrap img { width: 13.5vh; height: 13.5vh; }
+.detail-card.handoff-mode.handoff-both .handoff-scan { gap: 1vh; }
+.detail-card.handoff-mode.handoff-both #handoffSubheading { display: none; }
+.detail-card.handoff-mode.handoff-both .handoff-offer-title { margin-bottom: 1.2vh; }
 /* Back arrow — mirrors .detail-close (top-right); shown only on the QR/handoff step */
 .detail-back { position: absolute; top: 1.4vh; left: 1.4vh; z-index: 5; width: 4.2vh; height: 4.2vh; border-radius: 50%; background: rgba(8,12,22,0.6); border: 0.15vh solid rgba(255,255,255,0.34); color: #fff; font-size: 2.4vh; line-height: 1; cursor: pointer; display: none; align-items: center; justify-content: center; backdrop-filter: blur(8px); }
 .detail-vm:active { filter: brightness(1.08); }
@@ -2095,7 +2109,7 @@ async function loadProviders() {
             description_en:     p.description_en ?? '',
             subCategoryIds:     p.offers?.flatMap(o => o.subCategories ?? []) ?? p.subCategoryIds ?? [],
             unitRef:            p.unitRef ?? '',
-            defaultHandoffType: p.defaultHandoffType ?? 'qr',
+            defaultHandoffType: p.defaultHandoffType ?? 'both',
             category:           p.category,
             booking:            p.booking ?? null,   // shop schedule — merged with offer overrides at popup time
             openDays:           p.openDays ?? null,  // structured opening — read by shopBooking()
@@ -2596,7 +2610,7 @@ function adaptPlaylistToSlots(pl) {
                 hours: hoursLabel(item.provider),
                 amenities: Array.isArray(item.provider.amenities) ? item.provider.amenities : [],
                 description: item.provider.description_th || item.provider.description_en || '',
-                defaultHandoffType: item.provider.defaultHandoffType || 'qr',
+                defaultHandoffType: item.provider.defaultHandoffType || 'both',
                 unitRef: item.provider.unitRef || '',
                 offers: Array.isArray(item.provider.offers) ? item.provider.offers : []
             } : null,
@@ -4095,7 +4109,10 @@ function openDetail(ctx) {
         // the generic /o/{slug} page. A3: provider's preferred handoff channel.
         ctaURL: ctx.deepLink || ctx.ctaURL || '',
         ctaType: ctx.ctaType || null,   // step-2 heading verb ("📱 จอง บนมือถือ")
-        handoffType: (ctx.provider && ctx.provider.defaultHandoffType) || 'qr'
+        // Unset provider setting defaults to BOTH — the phone field is the lead
+        // channel, and most vendors never touch this setting (a real ad aired
+        // QR-only for weeks because a form-created provider doc had it blank).
+        handoffType: (ctx.provider && ctx.provider.defaultHandoffType) || 'both'
     };
 
     // Per-CTA body (menu / order / book / event / store tags / contact + promo).
@@ -4105,7 +4122,7 @@ function openDetail(ctx) {
 
     const hs = document.getElementById('handoffStep');
     if (hs) hs.style.display = 'none';
-    document.querySelector('.detail-card')?.classList.remove('handoff-mode');   // fresh popup always starts at step 1
+    document.querySelector('.detail-card')?.classList.remove('handoff-mode', 'handoff-both');   // fresh popup always starts at step 1
     const vm = document.getElementById('detailVm');
     // Step-1 button = the VERB only ("จอง →", "สมัคร →") — no "บนมือถือ" yet.
     // Mentioning mobile here made people think tapping would jump to their phone
@@ -4217,6 +4234,8 @@ function showHandoff() {
     show('#handoffPhoneLabel', showPhone);
     show('.phone-row', showPhone);
     show('#sendLinkBtn', showPhone);
+    // QR+phone together share the card → CSS shrinks the QR so nothing scrolls
+    document.querySelector('.detail-card')?.classList.toggle('handoff-both', showQR && showPhone);
 
     const unitRefEl = document.getElementById('handoffUnitRef');
     if (unitRefEl) {
@@ -4229,7 +4248,11 @@ function showHandoff() {
     const pi = document.getElementById('phoneInput'); if (pi) pi.value = '';
     const pcp = document.getElementById('phoneConfirmPanel'); if (pcp) pcp.style.display = 'none';
     const scp = document.getElementById('sendConfirmPanel');  if (scp) scp.style.display = 'none';
-    const slb = document.getElementById('sendLinkBtn');       if (slb) slb.style.display = '';
+    // Restore the send button ONLY for providers whose handoff includes phone —
+    // the old unconditional '' overrode the handoffType rule above and produced
+    // a "ส่งเบอร์โทร" button with no phone field on qr-only providers.
+    const slb = document.getElementById('sendLinkBtn');
+    if (slb) slb.style.display = showPhone ? '' : 'none';
 
     const foot = document.getElementById('detailFoot'); if (foot) foot.style.display = 'none';
     const back = document.getElementById('detailBack'); if (back) back.style.display = 'flex';
