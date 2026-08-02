@@ -2,6 +2,7 @@ import { defineConfig, definePlugin } from 'sanity'
 import { structureTool } from 'sanity/structure'
 import { visionTool } from '@sanity/vision'
 import { schemaTypes } from './schemas'
+import unitSource from './schemas/unitSource'
 import { initPlaylistAction }    from './actions/initPlaylistAction'
 import { ProjectPublishAction } from './actions/projectPublishAction'
 import { AddToPlaylistAction }  from './actions/addToPlaylistAction'
@@ -100,9 +101,10 @@ const dashboardPlugin = definePlugin({
 const PROJECT_ID = 'awjj9g8u'
 const DATASET    = 'production'
 
-export default defineConfig({
+export default defineConfig([{
   name: 'vertical-signage-studio',
   title: 'Vertical Signage CMS',
+  basePath: '/studio',
 
   projectId: PROJECT_ID,
   dataset:   DATASET,
@@ -246,7 +248,7 @@ export default defineConfig({
         const items = [
 
           // ── Digital Signage ────────────────────────────────────────────────
-          (can('project') || can('playlist') || can('media') || can('offer') || can('provider') || can('categoryConfig') || can('ratecard')) &&
+          (can('project') || can('playlist') || can('media') || can('offer') || can('provider') || can('categoryConfig') || can('ratecard') || can('unitBoard')) &&
           group('digital-signage', 'Digital Signage', '🖥', [
             can('project')  && S.documentTypeListItem('project').title('Projects'),
             can('playlist') && S.listItem()
@@ -306,6 +308,7 @@ export default defineConfig({
                   .documentId('categoryConfig-global')
                   .title('Global Category Config')
               ),
+            can('unitBoard') && S.documentTypeListItem('unitBoard').title('Unit Boards (จอราคาห้อง)'),
             can('ratecard') && S.listItem()
               .title('Rate Card (website)')
               .id('ratecard-sme')
@@ -315,6 +318,13 @@ export default defineConfig({
                   .documentId('ratecard-sme')
                   .title('Rate Card — SME')
               ),
+          ]),
+
+          // ── Market Intelligence ────────────────────────────────────────────
+          (can('unitProfile') || can('marketSnapshot')) &&
+          group('market-intel', 'Market Intelligence', '📊', [
+            can('unitProfile')    && S.documentTypeListItem('unitProfile').title('Unit Profiles (ห้องคัดขึ้นบอร์ด)'),
+            can('marketSnapshot') && S.documentTypeListItem('marketSnapshot').title('Market Snapshots (สถิติตลาด)'),
           ]),
 
           // ── CRM ────────────────────────────────────────────────────────────
@@ -474,4 +484,17 @@ export default defineConfig({
       return prev
     },
   },
-})
+},
+{
+  // ── AquaMx Internal — dataset private สำหรับ contact co-broke (PDPA) ──
+  // เข้าจาก workspace switcher มุมซ้ายบน หรือ /internal
+  name: 'aquamx-internal',
+  title: 'AquaMx Internal (co-broke)',
+  basePath: '/internal',
+
+  projectId: PROJECT_ID,
+  dataset:   'internal',
+
+  plugins: [structureTool(), visionTool()],
+  schema: { types: [unitSource] },
+}])
