@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>board-in-player embed test</title>
+<style>
+  /* Mirrors vertical-signage.html .signage geometry: 9:16 frame, 7vh/1fr/4vh rows */
+  html,body{margin:0;height:100%;background:#111;display:flex;align-items:center;justify-content:center}
+  /* lock the frame to true 9:16 and size the bars as % of the frame (=vh on a real kiosk) */
+  .signage{position:relative;width:min(100vw,56.25vh);height:min(100vh,177.78vw);
+           background:#050608;overflow:hidden;display:grid;grid-template-rows:7% 1fr 4%}
+  .topbar,.bottombar{background:#0a1526;color:#e8ecf4;display:flex;align-items:center;
+           justify-content:space-between;padding:0 3vh;font-family:system-ui;font-size:1.8vh;z-index:2}
+  .bottombar{font-size:1.3vh;color:#8fa2bd;justify-content:center}
+  /* stage row: the board plays here as a 9:16 asset, object-fit:cover style —
+     rendered at full width, center-cropped vertically (≈105px logical each side) */
+  .stagewrap{position:relative;overflow:hidden}
+  iframe{position:absolute;left:0;top:50%;transform:translateY(-50%);
+         width:100%;aspect-ratio:9/16;border:0;display:block}
+</style>
+</head>
+<body>
+<div class="signage">
+  <div class="topbar"><span>PARK 24 · 18:42</span><span>☀ 33°</span></div>
+  <div class="stagewrap"><iframe id="fr" src="/board.html"></iframe></div>
+  <script>
+    // ?src=/_board-19-test/ swaps which board build the mock player plays
+    const src = new URLSearchParams(location.search).get('src');
+    if (src) document.getElementById('fr').src = src;
+  </script>
+  <div class="bottombar">LIVE IN BALANCE · PREMIUM LIVING · BANGKOK</div>
+</div>
+</body>
+</html>

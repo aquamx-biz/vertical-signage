@@ -113,6 +113,10 @@ jobs:
               # Category-screen icons. build.mjs copies icons/ into $DIR;
               # push the whole folder so every project's kiosk can load them.
               [ -d "$DIR/icons" ] && cp -rf "$DIR/icons" "$WORK/"
+              # Unit-price boards (board/rent/, board/sale/). Replace wholesale
+              # so a board deactivated in Sanity disappears from the site too.
+              rm -rf "$WORK/board"
+              [ -d "$DIR/board" ] && cp -rf "$DIR/board" "$WORK/"
 
               cd "$WORK"
               git config user.email "actions@github.com"
