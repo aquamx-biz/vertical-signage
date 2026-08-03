@@ -19,7 +19,11 @@ export default defineType({
     defineField({ name: 'project', title: 'Project', type: 'reference', to: [{ type: 'projectSite' }] }),
     defineField({ name: 'projectName', title: 'Project Name', type: 'string' }),
     defineField({ name: 'intent', title: 'Intent', type: 'string', options: { list: ['rent', 'sale'] } }),
-    defineField({ name: 'bedType', title: 'Bed Type', type: 'string', options: { list: ['studio', '1bed', '2bed', '3bed'] } }),
+    defineField({ name: 'bedType', title: 'Bed Type', type: 'string', options: { list: [
+      { title: 'Studio', value: 'studio' }, { title: '1 Bed', value: '1bed' },
+      { title: '2 Bed', value: '2bed' }, { title: '3 Bed', value: '3bed' },
+      { title: '4 Bed+ / Penthouse', value: '4bed' },
+    ] } }),
     defineField({ name: 'sqm', title: 'Size (sqm)', type: 'number' }),
     defineField({ name: 'floorZone', title: 'Floor Zone', type: 'string', options: { list: ['low', 'mid', 'high'] },
       description: 'public เห็นแค่ zone — ชั้นจริงอยู่ใน unitSource (workspace Internal)' }),
@@ -53,6 +57,27 @@ export default defineType({
       description: 'ตรวจแล้วแต่ไม่อยากโชว์บนจอ — ระบบคัดอัตโนมัติจะข้ามห้องนี้',
     }),
     defineField({ name: 'lastCheckedAt', title: 'Last Checked', type: 'date' }),
+    defineField({
+      name: 'firstSeenAt', title: 'First Seen · พบครั้งแรก', type: 'date',
+      description: 'รอบแรกที่ pipeline พบห้องนี้ — ห้องที่เพิ่งพบในรอบล่าสุดติดป้าย NEW บนบอร์ด',
+    }),
+    defineField({
+      name: 'priceHistory', title: 'Price History · ประวัติราคา', type: 'array',
+      description: 'time-series ต่อห้อง — pipeline เติมทุกรอบที่ราคาเปลี่ยน (ห้ามลบของเก่า)',
+      of: [{
+        type: 'object',
+        name: 'pricePoint',
+        fields: [
+          defineField({ name: 'date', title: 'Date', type: 'date', validation: R => R.required() }),
+          defineField({ name: 'price', title: 'Price ฿', type: 'number', validation: R => R.required() }),
+          defineField({ name: 'nListings', title: 'N Listings', type: 'number' }),
+        ],
+        preview: {
+          select: { date: 'date', price: 'price' },
+          prepare: ({ date, price }) => ({ title: `${date} — ฿${(price ?? 0).toLocaleString()}` }),
+        },
+      }],
+    }),
     defineField({ name: 'internalNote', title: 'Internal Note', type: 'text' }),
   ],
 

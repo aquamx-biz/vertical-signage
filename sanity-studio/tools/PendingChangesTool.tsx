@@ -36,10 +36,10 @@ interface Row {
   projTitle?: string | null                  // playlistItem: project · juristic provider: projectSite
 }
 
-const TYPES = ['media', 'offer', 'provider', 'playlistItem', 'buildingUpdate']
+const TYPES = ['media', 'offer', 'provider', 'playlistItem', 'buildingUpdate', 'unitBoard']
 const TYPE_TH: Record<string, string> = {
   media: '🖼 สื่อ (Media)', offer: '🎫 โฆษณา (Offer)', provider: '🏪 ร้าน (Provider)',
-  playlistItem: '📋 สลอตเพลย์ลิสต์', buildingUpdate: '📌 ประกาศอาคาร',
+  playlistItem: '📋 สลอตเพลย์ลิสต์', buildingUpdate: '📌 ประกาศอาคาร', unitBoard: '🏷 บอร์ดราคายูนิต',
 }
 // ?manual=1 is required — the endpoint ignores Sanity's automatic per-publish
 // webhook calls so individual publishes never burn a rebuild; only these

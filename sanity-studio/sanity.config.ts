@@ -41,8 +41,9 @@ import { ScreenHealthTool }     from './tools/ScreenHealthTool'
 import { PendingChangesTool }   from './tools/PendingChangesTool'
 import { KioskHealthTool }      from './tools/KioskHealthTool'
 import { ContentFootprintTool } from './tools/ContentFootprintTool'
+import { UnitBoardsTool }       from './tools/UnitBoardsTool'
 import {
-  DashboardIcon, RocketIcon, DesktopIcon, ActivityIcon, PackageIcon, HelpCircleIcon,
+  DashboardIcon, RocketIcon, DesktopIcon, ActivityIcon, PackageIcon, HelpCircleIcon, ThListIcon,
 } from '@sanity/icons'
 import { accessControlPlugin, accessStore } from './plugins/accessControl'
 import { paneWidthOverride }               from './plugins/paneWidthOverride'
@@ -76,6 +77,12 @@ const dashboardPlugin = definePlugin({
       title:     'Pending Publish',
       icon:      RocketIcon,
       component: PendingChangesTool,
+    },
+    {
+      name:      'unit-boards',
+      title:     'Unit Boards',
+      icon:      ThListIcon,
+      component: UnitBoardsTool,
     },
     {
       name:      'screen-health',

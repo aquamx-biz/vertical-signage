@@ -31,7 +31,7 @@ export default defineType({
         type: 'object',
         fields: [
           defineField({ name: 'intent', type: 'string', options: { list: ['rent', 'sale'] } }),
-          defineField({ name: 'bedType', type: 'string', options: { list: ['studio', '1bed', '2bed', '3bed'] } }),
+          defineField({ name: 'bedType', type: 'string', options: { list: ['studio', '1bed', '2bed', '3bed', '4bed'] } }),
           defineField({ name: 'floorZone', type: 'string', options: { list: ['low', 'mid', 'high'] } }),
           defineField({ name: 'median', type: 'number' }),
           defineField({ name: 'mean', type: 'number' }),
