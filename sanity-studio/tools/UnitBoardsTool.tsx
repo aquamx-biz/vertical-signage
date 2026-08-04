@@ -34,6 +34,7 @@ export interface Profile {
   yieldPct?: number; spreadPct?: number; nListings?: number; nPortals?: number
   postedByOwner?: boolean; dualListed?: boolean; pinToBoard?: boolean; hideFromBoard?: boolean
   status?: string; lastCheckedAt?: string; firstSeenAt?: string
+  priceHistory?: Array<{ date?: string; price?: number; nListings?: number }>
   __pick?: string
 }
 export interface Policy {
@@ -121,7 +122,8 @@ const NAME_TO_CODE: Record<string, string> = {
 
 const PROJ = `refCode, intent, projectName, bedType, sqm, floorZone, priceTHB, pricePerSqm,
   vsFloorPct, vsZonePct, dealTier, hotDeal, goodInvest, negotiable, yieldPct, spreadPct,
-  nListings, nPortals, postedByOwner, dualListed, pinToBoard, hideFromBoard, status, lastCheckedAt, firstSeenAt`
+  nListings, nPortals, postedByOwner, dualListed, pinToBoard, hideFromBoard, status, lastCheckedAt, firstSeenAt,
+  priceHistory`
 
 interface SourceDoc { refCode: string; floorActual?: number; listings?: Array<{ portal?: string; url?: string; intent?: string; posterType?: string; posterName?: string }> }
 interface Unit { refCode: string; bed?: string; sqm?: number; zone?: string; rent?: Profile; sale?: Profile }
@@ -135,6 +137,22 @@ const th: React.CSSProperties = { position: 'sticky', top: 0, background: '#0f34
 const td: React.CSSProperties = { padding: '5px 8px', borderBottom: '1px solid #eef1f5', whiteSpace: 'nowrap', fontSize: 13, verticalAlign: 'top' }
 const num: React.CSSProperties = { ...td, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }
 const chipStyle = (bg: string, fg: string): React.CSSProperties => ({ display: 'inline-block', background: bg, color: fg, borderRadius: 4, padding: '1px 6px', fontSize: 11, fontWeight: 700, marginRight: 4 })
+
+/** ราคาขยับจากรอบก่อน (priceHistory สะสมโดยวงจรรายสัปดาห์) — ชี้เมาส์ดูทั้งเส้น */
+function PriceMove({ p }: { p?: Profile }) {
+  const h = p?.priceHistory
+  if (!h || h.length < 2) return null
+  const prev = h[h.length - 2]?.price, now = h[h.length - 1]?.price
+  if (!prev || !now || prev === now) return null
+  const pct = Math.round((now / prev - 1) * 100)
+  const hist = h.map(x => `${x.date ?? '—'} · ฿${(x.price ?? 0).toLocaleString('en-US')}`).join('\n')
+  return (
+    <span title={`ประวัติราคา:\n${hist}`}
+      style={{ marginLeft: 4, fontSize: 11, fontWeight: 700, cursor: 'help', color: pct < 0 ? '#166534' : '#c2410c' }}>
+      {pct < 0 ? '▼' : '▲'}{Math.abs(pct)}%
+    </span>
+  )
+}
 
 function DealChip({ p }: { p?: Profile }) {
   if (!p) return null
@@ -156,6 +174,7 @@ export function UnitBoardsTool() {
   const [sources, setSources] = useState<Map<string, SourceDoc>>(new Map())
   const [projDocs, setProjDocs] = useState<Array<{ _id: string; code: string }>>([])
   const [boardPolicies, setBoardPolicies] = useState<Record<string, Partial<Policy>>>({})
+  const [dataRound, setDataRound] = useState<string | null>(null)
 
   const [proj, setProj] = useState<string>('')
   const [polR, setPolR] = useState<Policy>({ ...DEFAULT_POLICY, investQ: 0 })
@@ -171,13 +190,17 @@ export function UnitBoardsTool() {
     let dead = false
     ;(async () => {
       try {
-        const [pf, src, pj, bd] = await Promise.all([
+        const [pf, src, pj, bd, rd] = await Promise.all([
           client.fetch<Profile[]>(`*[_type == "unitProfile" && status != "expired"]{ ${PROJ} }`),
           internal.fetch<SourceDoc[]>(`*[_type == "unitSource"]{ refCode, floorActual, "listings": listings[]{ portal, url, intent, posterType, posterName } }`).catch(() => []),
           client.fetch<Array<{ _id: string; code: string }>>(`*[_type == "project"]{ _id, "code": code.current }`),
           client.fetch<Array<{ code: string; mode: string; policy?: Partial<Policy> }>>(`*[_type == "unitBoard"]{ "code": project->code.current, mode, policy }`),
+          // รอบข้อมูลล่าสุด — ใบ scrapeRound จากวงจรรายสัปดาห์; ยังไม่มีรอบแรกก็ถอยไปใช้ lastCheckedAt
+          client.fetch<string | null>(`coalesce(*[_type == "scrapeRound"] | order(roundDate desc)[0].roundDate,
+            *[_type == "unitProfile"] | order(lastCheckedAt desc)[0].lastCheckedAt)`).catch(() => null),
         ])
         if (dead) return
+        setDataRound(rd ?? null)
         setProfiles(pf ?? [])
         setSources(new Map((src ?? []).map(s => [s.refCode, s])))
         setProjDocs(pj ?? [])
@@ -357,6 +380,16 @@ export function UnitBoardsTool() {
           <Button text={saving ? 'Saving…' : 'Save to lineup (draft)'} tone="primary" disabled={!projDoc || saving || overQuota}
             title={!projDoc ? 'โครงการนี้ยังไม่มี project doc — สร้างก่อนจึงบันทึกได้' : 'เขียน drafts.unitBoard พร้อม policy + lineup ปัจจุบัน'}
             onClick={save} />
+          {dataRound && (() => {
+            const days = Math.floor((Date.now() - new Date(dataRound).getTime()) / 86400000)
+            const stale = days > 9   // วงจรรายสัปดาห์ + ผ่อน 2 วัน — เกินนี้คือรอบวันอาทิตย์พลาด
+            return (
+              <Badge tone={stale ? 'caution' : 'primary'} fontSize={1}
+                title={stale ? `ข้อมูลค้าง ${days} วัน — รอบ scrape วันอาทิตย์อาจไม่ได้รัน` : 'รอบเก็บข้อมูลล่าสุดที่ตารางนี้ใช้'}>
+                ข้อมูลรอบ · {dataRound}{stale ? ` (ค้าง ${days} วัน!)` : ''}
+              </Badge>
+            )
+          })()}
         </Flex>
 
         <Inline space={2}>
@@ -415,14 +448,14 @@ export function UnitBoardsTool() {
                     <td style={num}>{u.sqm ?? '—'}</td>
                     <td style={td}>{u.zone ?? '—'}</td>
                     <td style={num}>{src?.floorActual ?? '—'}</td>
-                    <td style={num}>{fmtK(u.rent?.priceTHB)}</td>
+                    <td style={num}>{fmtK(u.rent?.priceTHB)}<PriceMove p={u.rent} /></td>
                     <td style={{ ...num, color: (u.rent?.vsFloorPct ?? 0) < 0 ? '#166534' : '#9aa3b2', fontWeight: (u.rent?.vsFloorPct ?? 0) < 0 ? 700 : 400 }}>
                       {u.rent?.vsFloorPct != null ? `${u.rent.vsFloorPct > 0 ? '+' : ''}${u.rent.vsFloorPct}%` : '—'}</td>
                     <td style={td}><DealChip p={u.rent} /></td>
                     <td style={td}>{u.rent && <Checkbox checked={selR.has(u.refCode)} onChange={() => {
                       const s = new Set(selR); s.has(u.refCode) ? s.delete(u.refCode) : s.add(u.refCode); setSelR(s)
                     }} />}</td>
-                    <td style={num}>{fmtM(u.sale?.priceTHB)}</td>
+                    <td style={num}>{fmtM(u.sale?.priceTHB)}<PriceMove p={u.sale} /></td>
                     <td style={{ ...num, color: (u.sale?.vsFloorPct ?? 0) < 0 ? '#166534' : '#9aa3b2', fontWeight: (u.sale?.vsFloorPct ?? 0) < 0 ? 700 : 400 }}>
                       {u.sale?.vsFloorPct != null ? `${u.sale.vsFloorPct > 0 ? '+' : ''}${u.sale.vsFloorPct}%` : '—'}</td>
                     <td style={td}><DealChip p={u.sale} /></td>

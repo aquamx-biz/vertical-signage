@@ -42,8 +42,10 @@ import { PendingChangesTool }   from './tools/PendingChangesTool'
 import { KioskHealthTool }      from './tools/KioskHealthTool'
 import { ContentFootprintTool } from './tools/ContentFootprintTool'
 import { UnitBoardsTool }       from './tools/UnitBoardsTool'
+import { BuildingsAnalysisTool } from './tools/BuildingsAnalysisTool'
 import {
   DashboardIcon, RocketIcon, DesktopIcon, ActivityIcon, PackageIcon, HelpCircleIcon, ThListIcon,
+  BarChartIcon,
 } from '@sanity/icons'
 import { accessControlPlugin, accessStore } from './plugins/accessControl'
 import { paneWidthOverride }               from './plugins/paneWidthOverride'
@@ -83,6 +85,12 @@ const dashboardPlugin = definePlugin({
       title:     'Unit Boards',
       icon:      ThListIcon,
       component: UnitBoardsTool,
+    },
+    {
+      name:      'building-analysis',
+      title:     'Building Analysis',
+      icon:      BarChartIcon,
+      component: BuildingsAnalysisTool,
     },
     {
       name:      'screen-health',
@@ -332,6 +340,7 @@ export default defineConfig([{
           group('market-intel', 'Market Intelligence', '📊', [
             can('unitProfile')    && S.documentTypeListItem('unitProfile').title('Unit Profiles (ห้องคัดขึ้นบอร์ด)'),
             can('marketSnapshot') && S.documentTypeListItem('marketSnapshot').title('Market Snapshots (สถิติตลาด)'),
+            can('scrapeRound')    && S.documentTypeListItem('scrapeRound').title('Scrape Rounds (สรุปรอบเก็บข้อมูล)'),
           ]),
 
           // ── CRM ────────────────────────────────────────────────────────────

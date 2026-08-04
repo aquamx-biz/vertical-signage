@@ -36,6 +36,7 @@ import unitBoard          from './unitBoard'
 import siteStats          from './siteStats'
 import screenStatus       from './screenStatus'
 import marketSnapshot     from './marketSnapshot'
+import scrapeRound        from './scrapeRound'
 import unitProfile        from './unitProfile'
 
 export const schemaTypes = [
@@ -77,5 +78,6 @@ export const schemaTypes = [
   siteStats,
   screenStatus,
   marketSnapshot,
+  scrapeRound,
   unitProfile,
 ]
