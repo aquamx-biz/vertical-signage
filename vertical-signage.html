@@ -2880,12 +2880,17 @@ function renderCommercial(s) {
         : '';
     const isNotice = !!s._notice;
     const showText = !isNotice && !isWeb;
-    const showBotGrad = !((isNotice || isWeb) && !(s.ctas || []).length);
+    // Web slides bring their own background, so BOTH scrims are pure damage:
+    // the bottom one (65% tall, 88% black at the floor) was visibly sinking the
+    // lower cards of a unit board. Scrims exist to keep white text legible over
+    // photos — a baked page needs neither.
+    const showBotGrad = !isWeb && !(isNotice && !(s.ctas || []).length);
+    const showTopGrad = !isWeb;
     return `
         <div class="slot-media">${mediaImg}</div>
         ${videoHTML}
         ${webHTML}
-        <div class="slot-grad-top"></div>
+        ${showTopGrad ? '<div class="slot-grad-top"></div>' : ''}
         ${showBotGrad ? '<div class="slot-grad-bot"></div>' : ''}
         ${s.logo ? `<div class="slot-logo">${s.logo}</div>` : ''}
         ${s.providerLogo ? `<img class="slot-plogo" src="${sizedImg(s.providerLogo, 240, 240)}" alt="">` : ''}

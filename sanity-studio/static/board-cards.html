@@ -33,21 +33,18 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: var(--stag
   /* กึ่งกลางด้วย fixed + translate — grid/flex centering จะ "ตกไปชิดขอบบน"
      เองอัตโนมัติเมื่อของใหญ่กว่ากล่อง (กติกา overflow alignment ของเบราว์เซอร์) */
   position: fixed; top: 50%; left: 50%;
-  width: 1080px; height: 1920px;
+  width: 1080px; height: 1686px;   /* ความสูง + แถบบน/ล่าง ถูก fitStage() คำนวณใหม่ตามกล่องจริง */
   transform: translate(-50%, -50%);
   transform-origin: center center;
   background: var(--stage);
   color: #fff;
   font-family: Anuphan, 'IBM Plex Sans Thai', 'Noto Sans JP', sans-serif;
-  /* แบนด์ปลอดภัย — วัดจากจอจริง (พิกัดในระบบ 1080×1920):
-     บน   แถบ navy จบ 146 · ปุ่ม ☰ MENU จบ 294 · โลโก้ aquamx 192–324  → เริ่มที่ 350
-     ล่าง ปุ่ม CTA ของ player เริ่ม 1632 · ticker เริ่ม 1832            → จบที่ 1610 */
-  padding: 350px 46px 310px;
+  padding: 0 46px;   /* บน/ล่างมาจาก fitStage() */
   display: flex; flex-direction: column;
 }
 
 /* ── Header ── */
-.bh { margin: 0 0 20px; }
+.bh { margin: 0 0 16px; }
 .unit-chip {
   float: right; margin-top: 8px;
   display: inline-flex; align-items: center; gap: 8px;
@@ -57,7 +54,7 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: var(--stag
   padding: 8px 18px; font-size: 23px; font-weight: 700;
   transition: opacity 0.4s;
 }
-.bh .m { font-size: 74px; font-weight: 800; letter-spacing: 0.02em; line-height: 1.05; }
+.bh .m { font-size: 66px; font-weight: 800; letter-spacing: 0.02em; line-height: 1.05; }
 .bh .m .accent { color: var(--cyan); }
 .bh .p {
   font-family: 'IBM Plex Mono', monospace; font-weight: 700;
@@ -68,7 +65,7 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: var(--stag
 /* ── Cards ── */
 .cards { flex: 1; display: flex; flex-direction: column; gap: 14px; min-height: 0; }
 .c {
-  flex: 1; min-height: 0; max-height: 168px;
+  flex: 1; min-height: 0; max-height: 270px;
   display: flex; align-items: center; gap: 24px;
   background: var(--card);
   border: 1px solid var(--line);
@@ -76,22 +73,22 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: var(--stag
   padding: 0 30px;
 }
 .c .ic {
-  width: 88px; height: 88px; border-radius: 18px;
+  width: 96px; height: 96px; border-radius: 20px;
   background: rgba(255,255,255,0.12);
   display: flex; align-items: center; justify-content: center; gap: 4px;
   flex-shrink: 0;
 }
-.c .ic svg { width: 40px; height: 40px; fill: none; stroke: #E8EDF6; stroke-width: 1.6; }
-.c .ic.multi svg { width: 34px; height: 34px; }
+.c .ic svg { width: 44px; height: 44px; fill: none; stroke: #E8EDF6; stroke-width: 1.6; }
+.c .ic.multi svg { width: 38px; height: 38px; }
 .c .nm { flex: 1; min-width: 0; }
-.c .nm .t { font-size: 37px; font-weight: 700; line-height: 1.2; transition: opacity 0.4s; white-space: nowrap; }
-.c .nm .t.tight { font-size: 30px; }   /* ชื่อยาว (เช่น เพนต์เฮาส์ ญี่ปุ่น) — หดแทนที่จะล้น */
-.c .nm .s { font-size: 24px; color: var(--dim); margin-top: 4px; transition: opacity 0.4s; white-space: nowrap; }
-.c .fl { text-align: right; font-size: 21px; font-weight: 800; line-height: 1.5; flex-shrink: 0; letter-spacing: 0.04em; }
+.c .nm .t { font-size: 40px; font-weight: 700; line-height: 1.2; transition: opacity 0.4s; white-space: nowrap; }
+.c .nm .t.tight { font-size: 33px; }   /* ชื่อยาว (เช่น เพนต์เฮาส์ ญี่ปุ่น) — หดแทนที่จะล้น */
+.c .nm .s { font-size: 26px; color: var(--dim); margin-top: 4px; transition: opacity 0.4s; white-space: nowrap; }
+.c .fl { text-align: right; font-size: 22px; font-weight: 800; line-height: 1.5; flex-shrink: 0; letter-spacing: 0.04em; }
 .c .fl span { transition: opacity 0.4s; }
-.c .prw { flex-shrink: 0; min-width: 182px; text-align: right; }
-.c .pr { font-family: 'IBM Plex Mono', monospace; font-weight: 700; font-size: 47px; color: var(--bronze); transition: opacity 0.4s; }
-.c .pru { font-size: 21px; color: rgba(255,255,255,0.5); margin-top: 2px; transition: opacity 0.4s; }
+.c .prw { flex-shrink: 0; min-width: 196px; text-align: right; }
+.c .pr { font-family: 'IBM Plex Mono', monospace; font-weight: 700; font-size: 51px; color: var(--bronze); transition: opacity 0.4s; }
+.c .pru { font-size: 22px; color: rgba(255,255,255,0.5); margin-top: 2px; transition: opacity 0.4s; }
 .g { color: var(--green); } .o { color: var(--orange); } .w { color: #fff; }
 
 /* ── Pager — จุดหน้า + ป้ายภาษา อยู่แถวเดียวกันในพื้นที่ปลอดภัย
@@ -198,7 +195,18 @@ const SALE_FLIP_MS = 3500  /* ล้านบาท ↔ ฿/ตรม. */
 const FLAG_MS = 3500       /* หลายธง → สลับทีละอัน (กติกาเดียวกับบอร์ด split-flap) */
 const rows = (DATA.rows || []).slice(0, 21)   /* เพดาน 3 หน้า */
 const pages = []
-for (let i = 0; i < rows.length; i += PER_PAGE) pages.push(rows.slice(i, i + PER_PAGE))
+/* เกลี่ยห้องให้ทุกหน้าเท่า ๆ กัน (19 ห้อง → 7·6·6 ไม่ใช่ 7·7·5) — ไม่มีหน้าไหน
+   โล่งครึ่งหน้า และการ์ดได้พื้นที่มากที่สุดเท่าที่จำนวนหน้าเดิมจะให้ได้ */
+{
+  const n = rows.length
+  const pageCount = Math.max(1, Math.ceil(n / PER_PAGE))
+  const base = Math.floor(n / pageCount), rem = n % pageCount
+  let i = 0
+  for (let p = 0; p < pageCount; p++) {
+    const take = base + (p < rem ? 1 : 0)
+    pages.push(rows.slice(i, i + take)); i += take
+  }
+}
 
 /* ── Render ─────────────────────────────────────────────────────────────── */
 const $ = id => document.getElementById(id)
@@ -252,10 +260,23 @@ function paintPrices() {   /* sale flip — แตะเฉพาะราคา
   $("chipT").textContent = saleM ? t.chipSaleM : t.chipSaleQ
 }
 
-/* ย่อทั้งแผงให้พอดีกล่องที่ถูกวางไว้ — จอจริง 1080×1920 ได้ scale = 1 พอดี */
+/* ── เต็มกล่องที่ได้จริง ไม่ย่อ ไม่มีขอบดำ ─────────────────────────────────
+ * player ให้พื้นที่สไลด์แค่ช่วง "ใต้แถบ navy ถึงเหนือ ticker" (วัดจากจอจริง
+ * = 146–1832 ของ 1920 → สูง 1686) เดิมบอร์ดฝืนออกแบบเต็ม 1920 แล้วหดตัวเอง
+ * ให้พอดี ผลคือทุกอย่างเล็กลง 12% + มีขอบดำซ้ายขวา และยังกันแถบบน/ล่างซ้ำ
+ * กับที่ player กันให้แล้ว
+ * ตอนนี้: ความสูงงานออกแบบปรับตามสัดส่วนกล่องจริง → scale = 1 บนจอ = เต็มพอดี
+ * แถบปลอดภัยเหลือเท่าที่ต้องหลบ "ของที่ลอยทับในช่องนี้" เท่านั้น —
+ * โลโก้ aquamx จบที่ 9.9% ของช่อง · ปุ่ม CTA เริ่มที่ 88.8% ของช่อง */
 const stageEl = $("stage")
+const SAFE_TOP = 0.105, SAFE_BOT = 0.120
 function fitStage() {
-  const s = Math.min(innerWidth / 1080, innerHeight / 1920)
+  let h = Math.round(innerHeight * 1080 / innerWidth)   // ความสูงในหน่วยงานออกแบบ = สัดส่วนกล่องจริง
+  h = Math.max(1400, Math.min(2100, h))                 // หน้าต่างสัดส่วนแปลก ๆ → กลับไป letterbox
+  const s = Math.min(innerWidth / 1080, innerHeight / h)
+  stageEl.style.height = h + "px"
+  stageEl.style.paddingTop = Math.round(h * SAFE_TOP) + "px"
+  stageEl.style.paddingBottom = Math.round(h * SAFE_BOT) + "px"
   stageEl.style.transform = `translate(-50%, -50%) scale(${s})`
 }
 fitStage()
