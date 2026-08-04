@@ -6,40 +6,54 @@
 <title>Board Preview · เหมือนบนจอจริง</title>
 <link href="https://fonts.googleapis.com/css2?family=Anuphan:wght@600;700;800&family=IBM+Plex+Mono:wght@700&display=swap" rel="stylesheet">
 <style>
-/* จำลองกรอบ player จริง: จอ 9:16 + แถบ navy บน (140px) / ล่าง (110px) ที่ทับแบนด์
-   ปลอดภัยของบอร์ด — เทมเพลตบอร์ดเว้นที่ไว้ให้แล้ว เห็นตรงนี้ยังไง บนจอจริงเห็นแบบนั้น */
+/* จำลองจอจริง 1080×1920 พร้อม "ของที่ player วางทับ" ทุกชิ้น ตามพิกัดที่วัดจากจอจริง:
+   แถบ navy 12–146 · ปุ่ม ☰ MENU 188–294 · ชิปหมวด · โลโก้ aquamx 192–324 (ขวาบน)
+   ปุ่ม CTA 1632–1755 (ซ้ายล่าง) · ticker 1832–1909
+   เห็นตรงนี้ยังไง = บนจอเห็นแบบนั้น */
 * { box-sizing: border-box; margin: 0; }
 body { min-height: 100vh; background: #1A2332; display: flex; align-items: center; justify-content: center; font-family: Anuphan, sans-serif; padding: 16px; }
-.stage { position: relative; width: 1080px; height: 1920px; transform-origin: center; overflow: hidden; border-radius: 18px; box-shadow: 0 30px 80px rgba(0,0,0,.5); background: #0B1017; flex-shrink: 0; }
+.stage { position: relative; width: 1080px; height: 1920px; transform-origin: center; overflow: hidden; border-radius: 18px; box-shadow: 0 30px 80px rgba(0,0,0,.5); background: #060B14; flex-shrink: 0; }
 .stage iframe { width: 1080px; height: 1920px; border: 0; display: block; }
-.hd, .ft { position: absolute; left: 0; right: 0; background: #0E3361; color: #fff; display: flex; align-items: center; z-index: 3; }
-.hd { top: 0; height: 140px; justify-content: space-between; padding: 0 44px; }
+.chrome { position: absolute; inset: 0; z-index: 3; pointer-events: none; }
+.hd, .ft { position: absolute; left: 0; right: 0; background: #0E3361; color: #fff; display: flex; align-items: center; }
+.hd { top: 12px; height: 134px; justify-content: space-between; padding: 0 44px; }
 .hd b { font-size: 40px; letter-spacing: .06em; font-weight: 800; }
 .hd span { font-size: 26px; opacity: .78; }
-.ft { bottom: 0; height: 110px; justify-content: center; gap: 20px; font-size: 24px; letter-spacing: .12em; opacity: .97; font-weight: 700; }
+.ft { top: 1832px; height: 88px; justify-content: center; gap: 20px; font-size: 24px; letter-spacing: .12em; font-weight: 700; opacity: .97; }
+.menu { position: absolute; left: 49px; top: 188px; height: 106px; padding: 0 40px; border-radius: 53px; background: rgba(10,16,26,.72); border: 2px solid rgba(255,255,255,.28); color: #fff; display: flex; align-items: center; gap: 20px; font-size: 34px; font-weight: 800; letter-spacing: .06em; }
+.chip { position: absolute; left: 265px; top: 196px; height: 90px; padding: 0 30px; border-radius: 45px; background: rgba(10,16,26,.6); border: 2px solid rgba(255,255,255,.22); color: #fff; display: flex; align-items: center; gap: 14px; font-size: 30px; font-weight: 700; }
+.chip::before { content: ''; width: 16px; height: 16px; border-radius: 50%; background: #6dd5e8; }
+.plogo { position: absolute; left: 895px; top: 192px; width: 133px; height: 132px; border-radius: 26px; background: #0E3361; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 27px; font-weight: 800; letter-spacing: .02em; }
+.cta { position: absolute; left: 68px; top: 1632px; width: 398px; height: 123px; border-radius: 22px; background: rgba(8,12,22,.72); border: 3px solid rgba(255,255,255,.42); color: #fff; display: flex; align-items: center; justify-content: center; gap: 18px; font-size: 33px; font-weight: 700; }
 .tag { position: fixed; top: 10px; left: 14px; color: #8fa0b8; font-size: 13px; z-index: 9; }
+.tag b { color: #fff; }
 </style>
 </head>
 <body>
-<div class="tag">Preview · จำลองกรอบจอจริง (แถบ navy = header/footer ของ player)</div>
+<div class="tag">Preview · <b>ของที่ player วางทับทั้งหมดอยู่ในภาพนี้แล้ว</b> — แถบ navy / ปุ่ม MENU / ชิปหมวด / โลโก้ / ปุ่ม CTA / ticker</div>
 <div class="stage" id="stage">
   <iframe id="fr" title="board"></iframe>
-  <div class="hd"><b id="pj">AQUAMX</b><span id="clock"></span></div>
-  <div class="ft">AQUAMX</div>
+  <div class="chrome">
+    <div class="hd"><b id="pj">AQUAMX</b><span id="clock"></span></div>
+    <div class="menu">☰ MENU</div>
+    <div class="chip" id="chip">ขาย ›</div>
+    <div class="plogo">aquamx</div>
+    <div class="cta" id="ctaLbl">เลือกห้องที่สนใจ →</div>
+    <div class="ft">AQUAMX</div>
+  </div>
 </div>
 <script>
-/* ?tpl=cards|flap · #sim=<payload> ส่งต่อให้เทมเพลตตรง ๆ · ชื่อโครงการอ่านจาก payload */
 const P = new URLSearchParams(location.search)
 const tpl = P.get('tpl') === 'flap' ? 'board.html' : 'board-cards.html'
 document.getElementById('fr').src = './' + tpl + location.hash
 try {
   const sim = JSON.parse(decodeURIComponent(location.hash.slice(5)))
   if (sim.project) document.getElementById('pj').textContent = sim.project
+  if (sim.mode) document.getElementById('chip').textContent = (sim.mode === 'sale' ? 'ขาย' : 'เช่า') + ' ›'
 } catch (e) {}
 const tick = () => document.getElementById('clock').textContent =
   new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })
 tick(); setInterval(tick, 30000)
-/* ย่อจอ 1080×1920 ให้พอดีหน้าต่าง */
 function fit() {
   const s = Math.min((innerWidth - 32) / 1080, (innerHeight - 32) / 1920)
   document.getElementById('stage').style.transform = `scale(${s})`

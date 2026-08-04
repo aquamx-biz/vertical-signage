@@ -12,9 +12,12 @@
    Safe bands match board.html: player wrapper's navy header/footer overlap
    140px top / 110px bottom — nothing critical may live there. */
 :root {
-  --stage:  #0B1017;
-  --card:   #151D2A;
-  --line:   rgba(255,255,255,0.13);
+  /* หมึกน้ำเงินเข้ม = พื้นหลัง · การ์ด = navy แบรนด์ (สีเดียวกับโลโก้)
+     คู่นี้ทำให้การ์ดลอยขึ้นมาแบบ tonal และปล่อยให้ธงเขียว/ส้ม + ราคาบรอนซ์
+     เป็นสีเดียวที่สะดุดตาบนจอ */
+  --stage:  #060B14;
+  --card:   #0E3361;
+  --line:   rgba(255,255,255,0.16);
   --cyan:   #9BE8FF;
   --bronze: #E09A55;
   --green:  #7DE8A4;
@@ -36,65 +39,70 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: var(--stag
   background: var(--stage);
   color: #fff;
   font-family: Anuphan, 'IBM Plex Sans Thai', 'Noto Sans JP', sans-serif;
-  padding: 140px 46px 110px;
+  /* แบนด์ปลอดภัย — วัดจากจอจริง (พิกัดในระบบ 1080×1920):
+     บน   แถบ navy จบ 146 · ปุ่ม ☰ MENU จบ 294 · โลโก้ aquamx 192–324  → เริ่มที่ 350
+     ล่าง ปุ่ม CTA ของ player เริ่ม 1632 · ticker เริ่ม 1832            → จบที่ 1610 */
+  padding: 350px 46px 310px;
   display: flex; flex-direction: column;
 }
 
 /* ── Header ── */
-.bh { margin: 10px 0 26px; }
+.bh { margin: 0 0 20px; }
 .unit-chip {
-  float: right; margin-top: 16px;
-  display: inline-flex; align-items: center; gap: 10px;
+  float: right; margin-top: 8px;
+  display: inline-flex; align-items: center; gap: 8px;
   background: rgba(155,232,255,0.12);
   border: 2px solid rgba(155,232,255,0.35);
-  color: var(--cyan); border-radius: 16px;
-  padding: 10px 22px; font-size: 26px; font-weight: 700;
+  color: var(--cyan); border-radius: 14px;
+  padding: 8px 18px; font-size: 23px; font-weight: 700;
   transition: opacity 0.4s;
 }
-.bh .m { font-size: 92px; font-weight: 800; letter-spacing: 0.02em; line-height: 1.05; }
+.bh .m { font-size: 74px; font-weight: 800; letter-spacing: 0.02em; line-height: 1.05; }
 .bh .m .accent { color: var(--cyan); }
 .bh .p {
   font-family: 'IBM Plex Mono', monospace; font-weight: 700;
-  font-size: 30px; letter-spacing: 0.2em; color: rgba(255,255,255,0.66);
-  margin-top: 10px;
+  font-size: 26px; letter-spacing: 0.18em; color: rgba(255,255,255,0.66);
+  margin-top: 8px;
 }
 
 /* ── Cards ── */
-.cards { flex: 1; display: flex; flex-direction: column; gap: 16px; min-height: 0; }
+.cards { flex: 1; display: flex; flex-direction: column; gap: 14px; min-height: 0; }
 .c {
-  flex: 1; min-height: 0; max-height: 200px;
-  display: flex; align-items: center; gap: 28px;
+  flex: 1; min-height: 0; max-height: 168px;
+  display: flex; align-items: center; gap: 24px;
   background: var(--card);
-  border: 2px solid var(--line);
-  border-radius: 28px;
-  padding: 0 36px;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  padding: 0 30px;
 }
 .c .ic {
-  width: 108px; height: 108px; border-radius: 24px;
-  background: rgba(255,255,255,0.07);
+  width: 88px; height: 88px; border-radius: 18px;
+  background: rgba(255,255,255,0.12);
   display: flex; align-items: center; justify-content: center; gap: 4px;
   flex-shrink: 0;
 }
-.c .ic svg { width: 46px; height: 46px; fill: none; stroke: #E8EDF6; stroke-width: 1.6; }
-.c .ic.multi svg { width: 40px; height: 40px; }
+.c .ic svg { width: 40px; height: 40px; fill: none; stroke: #E8EDF6; stroke-width: 1.6; }
+.c .ic.multi svg { width: 34px; height: 34px; }
 .c .nm { flex: 1; min-width: 0; }
-.c .nm .t { font-size: 42px; font-weight: 700; line-height: 1.2; transition: opacity 0.4s; white-space: nowrap; }
-.c .nm .t.tight { font-size: 34px; }   /* ชื่อยาว (เช่น เพนต์เฮาส์ ญี่ปุ่น) — หดแทนที่จะล้น */
-.c .nm .s { font-size: 28px; color: var(--dim); margin-top: 6px; transition: opacity 0.4s; white-space: nowrap; }
-.c .fl { text-align: right; font-size: 24px; font-weight: 800; line-height: 1.5; flex-shrink: 0; letter-spacing: 0.04em; }
+.c .nm .t { font-size: 37px; font-weight: 700; line-height: 1.2; transition: opacity 0.4s; white-space: nowrap; }
+.c .nm .t.tight { font-size: 30px; }   /* ชื่อยาว (เช่น เพนต์เฮาส์ ญี่ปุ่น) — หดแทนที่จะล้น */
+.c .nm .s { font-size: 24px; color: var(--dim); margin-top: 4px; transition: opacity 0.4s; white-space: nowrap; }
+.c .fl { text-align: right; font-size: 21px; font-weight: 800; line-height: 1.5; flex-shrink: 0; letter-spacing: 0.04em; }
 .c .fl span { transition: opacity 0.4s; }
-.c .prw { flex-shrink: 0; min-width: 210px; text-align: right; }
-.c .pr { font-family: 'IBM Plex Mono', monospace; font-weight: 700; font-size: 54px; color: var(--bronze); transition: opacity 0.4s; }
-.c .pru { font-size: 24px; color: rgba(255,255,255,0.5); margin-top: 2px; transition: opacity 0.4s; }
+.c .prw { flex-shrink: 0; min-width: 182px; text-align: right; }
+.c .pr { font-family: 'IBM Plex Mono', monospace; font-weight: 700; font-size: 47px; color: var(--bronze); transition: opacity 0.4s; }
+.c .pru { font-size: 21px; color: rgba(255,255,255,0.5); margin-top: 2px; transition: opacity 0.4s; }
 .g { color: var(--green); } .o { color: var(--orange); } .w { color: #fff; }
 
-/* ── Pager ── */
-.dots { display: flex; align-items: center; justify-content: center; gap: 14px; padding: 24px 0 4px; }
+/* ── Pager — จุดหน้า + ป้ายภาษา อยู่แถวเดียวกันในพื้นที่ปลอดภัย
+   (เดิม lang-ind absolute ไปจมใต้ ticker ของ player) ── */
+.footrow { position: relative; display: flex; align-items: center; justify-content: center; padding-top: 16px; }
+.dots { display: flex; align-items: center; justify-content: center; gap: 14px; }
 .dots i { width: 14px; height: 14px; border-radius: 50%; background: rgba(255,255,255,0.25); transition: all 0.4s; }
 .dots i.on { background: var(--cyan); width: 40px; border-radius: 8px; }
 .lang-ind {
-  position: absolute; right: 46px; bottom: 118px;
-  font-size: 22px; color: rgba(255,255,255,0.45); letter-spacing: 0.08em;
+  position: absolute; right: 0; top: 50%; transform: translateY(-50%);
+  font-size: 21px; color: rgba(255,255,255,0.45); letter-spacing: 0.08em;
   transition: opacity 0.4s; white-space: nowrap;
 }
 .lang-ind b { color: var(--cyan); font-weight: 700; }
@@ -112,8 +120,10 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: var(--stag
     <div class="p" id="headP"></div>
   </div>
   <div class="cards" id="cards"></div>
-  <div class="dots" id="dots"></div>
-  <div class="lang-ind" id="langInd"></div>
+  <div class="footrow">
+    <div class="dots" id="dots"></div>
+    <div class="lang-ind" id="langInd"></div>
+  </div>
 </div>
 
 <script>
