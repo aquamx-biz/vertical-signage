@@ -109,6 +109,7 @@ export default defineType({
         list: [
           { title: 'Video (MP4)',       value: 'video' },
           { title: 'Image (JPG / PNG)', value: 'image' },
+          { title: 'Web page (HTML)',   value: 'web' },
         ],
         layout: 'radio',
       },
@@ -117,6 +118,25 @@ export default defineType({
         Rule.custom((value, context) => {
           if ((context.document as any)?.kind === 'promo' && !value)
             return 'Type is required for promo media'
+          return true
+        }),
+    }),
+    // Web slide — หน้า HTML ที่ bake อยู่บนเว็บของโครงการเอง (เช่นบอร์ดราคาห้อง)
+    // ต้องเป็น URL ในโดเมนเดียวกับ player เท่านั้น: ข้ามโดเมนจะโดน service worker /
+    // CORS บนกล่องจอ (เคสเดียวกับรูป Sanity CDN ที่เคยพัง)
+    defineField({
+      name: 'webUrl',
+      title: '📺 Web page URL',
+      type: 'string',
+      description: 'ลิงก์หน้าเว็บที่จะแสดงบนจอ — ใช้ path ในเว็บโครงการเดียวกัน เช่น /board-cards/rent/ (ห้ามใส่โดเมนอื่น)',
+      hidden: ({ document }) => (document as any)?.type !== 'web',
+      validation: Rule =>
+        Rule.custom((value, context) => {
+          const doc = context.document as any
+          if (doc?.type !== 'web') return true
+          if (!value) return 'ใส่ลิงก์หน้าเว็บ เช่น /board-cards/rent/'
+          if (!/^\//.test(String(value)))
+            return 'ต้องขึ้นต้นด้วย / (path ในเว็บโครงการเดียวกัน) — โดเมนอื่นจอโหลดไม่ได้'
           return true
         }),
     }),

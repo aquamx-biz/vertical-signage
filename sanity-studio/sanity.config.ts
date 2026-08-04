@@ -37,12 +37,11 @@ import { LedgerOverview }         from './components/LedgerOverview'
 import { AccountCodeTreeView }    from './tools/AccountCodeTreeView'
 import { HowToTool }            from './tools/HowToTool'
 import { DashboardTool }        from './tools/DashboardTool'
-import { PendingChangesTool }   from './tools/PendingChangesTool'
-import { ContentFootprintTool } from './tools/ContentFootprintTool'
+import { ContentTool }          from './tools/ContentTool'
 import { MarketIntelTool }      from './tools/MarketIntelTool'
 import { HealthTool }           from './tools/HealthTool'
 import {
-  DashboardIcon, RocketIcon, ActivityIcon, PackageIcon, HelpCircleIcon,
+  DashboardIcon, RocketIcon, ActivityIcon, HelpCircleIcon,
   BarChartIcon,
 } from '@sanity/icons'
 import { accessControlPlugin, accessStore } from './plugins/accessControl'
@@ -73,10 +72,10 @@ const dashboardPlugin = definePlugin({
       component: DashboardTool,
     },
     {
-      name:      'pending-changes',
-      title:     'Pending Publish',
+      name:      'content',
+      title:     'Content',
       icon:      RocketIcon,
-      component: PendingChangesTool,
+      component: ContentTool,
     },
     {
       name:      'market-intel',
@@ -89,12 +88,6 @@ const dashboardPlugin = definePlugin({
       title:     'Health',
       icon:      ActivityIcon,
       component: HealthTool,
-    },
-    {
-      name:      'content-footprint',
-      title:     'Content Footprint',
-      icon:      PackageIcon,
-      component: ContentFootprintTool,
     },
   ],
 })

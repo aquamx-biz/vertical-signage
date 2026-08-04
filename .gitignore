@@ -54,3 +54,10 @@ mockup-board-inverted.html
 _rounds/
 _analysis-live.html
 _analysis-preview.html
+
+# แนวทางวิดีโอบอร์ด (ยกเลิก — ใช้ HTML บนเว็บโครงการแทน) เก็บไฟล์ไว้ในเครื่องเฉย ๆ
+_board-cards-*.mp4
+_mock-*.html
+tools/record-board.mjs
+package.json
+package-lock.json

@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>aquamx board</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.14.0/dist/tabler-icons.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;700&family=IBM+Plex+Sans+Thai:wght@400;500&display=swap" rel="stylesheet">
+<style>
+html,body{margin:0;padding:0;background:#000;width:100%;height:100%;overflow:hidden}
+/* Fixed 9:16 canvas with SAFE BANDS top/bottom so the board plays like any
+ * other media in vertical-signage.html: the player's stage is 1080×1709
+ * (topbar 7vh=134px, bottombar 4vh=77px), and a 9:16 asset rendered there as
+ * object-fit:cover loses ~105px off BOTH the top and bottom (symmetric center
+ * crop). Bands: 140px top / 110px bottom keep every element clear of the crop
+ * and of the player chrome; standalone they just read as generous margins. */
+#stage{width:1080px;height:1920px;background:#072147;position:absolute;top:50%;left:50%;transform-origin:center;display:flex;flex-direction:column;padding:140px 46px 110px;box-sizing:border-box;font-family:'IBM Plex Sans Thai',Nunito,system-ui,sans-serif}
+.tile{display:inline-block;width:34px;height:56px;line-height:56px;background:#0E3361;border-radius:6px;margin:0 3px;font-family:'IBM Plex Mono',Consolas,monospace;font-size:36px;font-weight:500;text-align:center;color:#E8A66B;position:relative;overflow:hidden}
+.tile i.mid{position:absolute;left:0;right:0;top:50%;height:3px;background:#072147}
+.ltile{display:inline-block;width:44px;height:68px;line-height:68px;background:#FAF6ED;border-radius:6px;margin:0 3px;font-family:'IBM Plex Mono',Consolas,monospace;font-size:44px;font-weight:700;text-align:center;color:#072147;position:relative;overflow:hidden}
+.ltile i.mid{position:absolute;left:0;right:0;top:50%;height:3px;background:#D9D2C0}
+.ctxt{font-family:'IBM Plex Mono',Consolas,monospace;font-size:34px;color:#FAF6ED;display:inline-block}
+.bl{color:#9fb3d1}
+.rmk{font-family:'IBM Plex Mono',Consolas,monospace;font-size:31px;font-weight:500;display:inline-block;text-align:right;transition:opacity .25s}
+.rmk .ti{font-size:34px;vertical-align:-3px;margin-right:9px}
+.rg{color:#7BC99A}.ro{color:#E8A66B}.rw{color:#FAF6ED}
+.colh{font-family:'IBM Plex Mono',Consolas,monospace;font-size:26px;letter-spacing:.05em;color:#C9864C;display:inline-block}
+.colh .ti{font-size:32px;vertical-align:-2px}
+.brow{white-space:nowrap;margin-bottom:13px;display:flex;align-items:center}
+.bedic{font-size:36px;color:#FAF6ED;margin-right:4px}
+.sqcell{display:inline-flex !important;flex-direction:column;align-items:flex-end;line-height:1.1}
+.sqbar{display:block;width:70px;height:5px;background:#0E3361;border-radius:3px;margin-top:4px;overflow:hidden}
+.sqbar i{display:block;height:100%;background:#C9864C;border-radius:3px}
+.lvl{display:inline-flex;align-items:flex-end;gap:4px}
+.lvl i{width:9px;background:#1d3a66;border-radius:2px}
+.lvl i.on{background:#9fb3d1}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div style="display:flex;justify-content:space-between;align-items:center">
+    <span style="font-size:58px;font-weight:500;color:#FAF6ED;letter-spacing:.02em"><i class="ti ti-building-skyscraper" style="font-size:50px;color:#C9864C;margin-right:18px;vertical-align:-3px" aria-hidden="true"></i><span id="projName"></span></span>
+    <span id="intentLabel"></span>
+  </div>
+  <div style="margin-top:32px">
+    <div class="brow" style="margin-bottom:18px">
+      <span class="colh hswap" data-w="TYPE" style="width:136px;text-align:left"><i class="ti ti-bed" aria-hidden="true"></i></span><span class="colh hswap" data-w="SQM" style="width:86px;text-align:right"><i class="ti ti-ruler-2" aria-hidden="true"></i></span><span class="colh hswap" data-w="FLOOR" style="width:122px;text-align:left;margin-left:38px"><i class="ti ti-stairs" aria-hidden="true"></i></span><span class="colh hswap" data-w="UPDATE" style="width:136px;text-align:right"><i class="ti ti-calendar" aria-hidden="true"></i></span><span class="colh" id="punit" style="width:228px;text-align:right;margin-left:38px"></span><span class="colh hswap" data-w="REMARKS" style="flex:1;text-align:right"><i class="ti ti-tag" aria-hidden="true"></i></span>
+    </div>
+    <div id="board"></div>
+  </div>
+  <div id="disclaimer" style="margin-top:18px;font-size:28px;color:#9fb3d1">All prices are subject to change and availability without prior notice &middot; T&amp;C apply</div>
+</div>
+<script>
+/* ── Data ──────────────────────────────────────────────────────────────────
+ * Baked deployments inject window.__BOARD__ (see build.mjs):
+ *   {
+ *     project: "PARK 24",
+ *     mode:    "rent" | "sale",
+ *     dataAsOf:"2026-07-29",              // ISO date — doc _updatedAt at bake time
+ *     rows: [{
+ *       type: "1BED", sqm: 55, floor: "HIGH",
+ *       updated: "2026-07-29",            // ISO date
+ *       price: 29000,                     // baht — rent: ฿/mo · sale: total ฿
+ *       remarks: [{ text: "SAVE 36%", tone: "green" }]
+ *     }]
+ *   }
+ * Prices are stored as real numbers (the same documents feed the company
+ * website) — all display formatting (18.0K / 6.50M / ฿/SQM) happens here.
+ * Opened standalone (no bake), it falls back to demo data; append ?demo=sale
+ * to preview the sale layout.
+ */
+const DEMO_RENT = { project: "PARK 24", mode: "rent", dataAsOf: "2026-07-29", rows: [{"type":"STUDIO","sqm":30,"floor":"LOW","updated":"2026-07-29","price":18000,"remarks":[{"text":"SUPER","tone":"green"}]},{"type":"STUDIO","sqm":34,"floor":"HIGH","updated":"2026-07-29","price":20000,"remarks":[{"text":"SUPER","tone":"green"}]},{"type":"STUDIO","sqm":27,"floor":"LOW","updated":"2026-07-29","price":20000,"remarks":[{"text":"BEST","tone":"green"}]},{"type":"1BED","sqm":29,"floor":"LOW","updated":"2026-07-29","price":15000,"remarks":[{"text":"SUPER","tone":"green"},{"text":"HOT","tone":"orange"},{"text":"NEGO","tone":"white"}]},{"type":"1BED","sqm":28,"floor":"LOW","updated":"2026-07-29","price":16000,"remarks":[{"text":"SUPER","tone":"green"},{"text":"NEGO","tone":"white"},{"text":"OWNER","tone":"green"}]},{"type":"1BED","sqm":29,"floor":"MID","updated":"2026-07-29","price":16000,"remarks":[{"text":"SUPER","tone":"green"},{"text":"NEGO","tone":"white"},{"text":"OWNER","tone":"green"}]},{"type":"1BED","sqm":30,"floor":"LOW","updated":"2026-07-29","price":18000,"remarks":[{"text":"SUPER","tone":"green"}]},{"type":"1BED","sqm":29,"floor":"MID","updated":"2026-07-29","price":20000,"remarks":[{"text":"SUPER","tone":"green"},{"text":"HOT","tone":"orange"},{"text":"INVESTABLE","tone":"green"},{"text":"NEGO","tone":"white"}]},{"type":"1BED","sqm":34,"floor":"LOW","updated":"2026-07-29","price":20000,"remarks":[{"text":"SUPER","tone":"green"}]},{"type":"1BED","sqm":33,"floor":"HIGH","updated":"2026-07-29","price":22000,"remarks":[{"text":"SUPER","tone":"green"},{"text":"NEGO","tone":"white"},{"text":"OWNER","tone":"green"}]},{"type":"1BED","sqm":55,"floor":"HIGH","updated":"2026-07-29","price":29000,"remarks":[{"text":"SUPER","tone":"green"}]},{"type":"1BED","sqm":55,"floor":"HIGH","updated":"2026-07-29","price":29000,"remarks":[{"text":"SUPER","tone":"green"},{"text":"NEGO","tone":"white"},{"text":"OWNER","tone":"green"}]},{"type":"1BED","sqm":58,"floor":"MID","updated":"2026-07-29","price":30000,"remarks":[{"text":"SUPER","tone":"green"}]},{"type":"1BED","sqm":56,"floor":"MID","updated":"2026-07-29","price":30000,"remarks":[{"text":"SUPER","tone":"green"}]},{"type":"2BED","sqm":55,"floor":"HIGH","updated":"2026-07-29","price":30000,"remarks":[{"text":"SUPER","tone":"green"}]},{"type":"2BED","sqm":54,"floor":"HIGH","updated":"2026-07-29","price":30000,"remarks":[{"text":"SUPER","tone":"green"},{"text":"INVESTABLE","tone":"green"},{"text":"OWNER","tone":"green"}]},{"type":"2BED","sqm":58,"floor":"LOW","updated":"2026-07-29","price":30000,"remarks":[{"text":"SUPER","tone":"green"}]},{"type":"2BED","sqm":66,"floor":"MID","updated":"2026-07-29","price":32000,"remarks":[{"text":"SUPER","tone":"green"}]},{"type":"3BED","sqm":107,"floor":"LOW","updated":"2026-07-29","price":70000,"remarks":[{"text":"SUPER","tone":"green"}]}] }
+const DEMO_SALE = { project: "PARK 24", mode: "sale", dataAsOf: "2026-07-29", rows: [{"type":"STUDIO","sqm":30,"floor":"MID","updated":"2026-07-29","price":4500000,"remarks":[{"text":"SUPER","tone":"green"},{"text":"INVESTABLE","tone":"green"}]},{"type":"STUDIO","sqm":33,"floor":"MID","updated":"2026-07-29","price":6300000,"remarks":[{"text":"BEST","tone":"green"}]},{"type":"1BED","sqm":28,"floor":"MID","updated":"2026-07-29","price":4500000,"remarks":[{"text":"SUPER","tone":"green"},{"text":"HOT","tone":"orange"},{"text":"INVESTABLE","tone":"green"},{"text":"NEGO","tone":"white"}]},{"type":"1BED","sqm":30,"floor":"MID","updated":"2026-07-29","price":4500000,"remarks":[{"text":"SUPER","tone":"green"},{"text":"INVESTABLE","tone":"green"},{"text":"NEGO","tone":"white"}]},{"type":"1BED","sqm":30,"floor":"HIGH","updated":"2026-07-29","price":4900000,"remarks":[{"text":"SUPER","tone":"green"}]},{"type":"1BED","sqm":39,"floor":"LOW","updated":"2026-07-29","price":9000000,"remarks":[{"text":"SUPER","tone":"green"},{"text":"INVESTABLE","tone":"green"},{"text":"NEGO","tone":"white"}]},{"type":"1BED","sqm":31,"floor":"LOW","updated":"2026-07-29","price":9430000,"remarks":[{"text":"SUPER","tone":"green"},{"text":"INVESTABLE","tone":"green"},{"text":"OWNER","tone":"green"}]},{"type":"1BED","sqm":29,"floor":"LOW","updated":"2026-07-29","price":9760000,"remarks":[{"text":"SUPER","tone":"green"},{"text":"NEGO","tone":"white"}]},{"type":"2BED","sqm":54,"floor":"MID","updated":"2026-07-29","price":8000000,"remarks":[{"text":"SUPER","tone":"green"},{"text":"HOT","tone":"orange"},{"text":"INVESTABLE","tone":"green"}]},{"type":"2BED","sqm":56,"floor":"HIGH","updated":"2026-07-29","price":9850000,"remarks":[{"text":"SUPER","tone":"green"}]},{"type":"2BED","sqm":53,"floor":"LOW","updated":"2026-07-29","price":14890000,"remarks":[{"text":"SUPER","tone":"green"}]},{"type":"2BED","sqm":53,"floor":"LOW","updated":"2026-07-29","price":16110000,"remarks":[{"text":"SUPER","tone":"green"}]},{"type":"2BED","sqm":53,"floor":"MID","updated":"2026-07-29","price":17370000,"remarks":[{"text":"SUPER","tone":"green"}]},{"type":"2BED","sqm":53,"floor":"MID","updated":"2026-07-29","price":17370000,"remarks":[{"text":"SUPER","tone":"green"}]},{"type":"2BED","sqm":53,"floor":"MID","updated":"2026-07-29","price":17540000,"remarks":[{"text":"SUPER","tone":"green"}]},{"type":"2BED","sqm":56,"floor":"MID","updated":"2026-07-29","price":18060000,"remarks":[{"text":"SUPER","tone":"green"}]},{"type":"2BED","sqm":67,"floor":"LOW","updated":"2026-07-29","price":20010000,"remarks":[{"text":"SUPER","tone":"green"}]},{"type":"2BED","sqm":67,"floor":"MID","updated":"2026-07-29","price":21660000,"remarks":[{"text":"SUPER","tone":"green"}]},{"type":"3BED","sqm":120,"floor":"LOW","updated":"2026-07-29","price":28000000,"remarks":[{"text":"SUPER","tone":"green"},{"text":"INVESTABLE","tone":"green"},{"text":"NEGO","tone":"white"},{"text":"OWNER","tone":"green"}]}] }
+/* demo rows = real Park 24 engine picks (regenerate: scratchpad gen-demo.mjs) */
+const fill19 = b => ({ ...b, rows: Array.from({ length: 19 }, (_, i) => b.rows[i % b.rows.length]) })
+/* #sim=<urlencoded JSON> — live preview payload from the units-all tool
+ * (current simulated/pinned picks), overrides the demo when no bake exists. */
+let HASH_DATA = null
+if (location.hash.startsWith("#sim=")) {
+  try { HASH_DATA = JSON.parse(decodeURIComponent(location.hash.slice(5))) } catch (e) {}
+}
+const DATA = window.__BOARD__ || HASH_DATA ||
+  fill19(new URLSearchParams(location.search).get("demo") === "sale" ? DEMO_SALE : DEMO_RENT)
+const MODE = DATA.mode === "sale" ? "sale" : "rent"
+
+/* ── Formatting (numbers → board strings) ─────────────────────────────────── */
+const MONS = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"]
+const fmtRentK = p => { const k = p/1000; return (k < 100 ? k.toFixed(1) : String(Math.round(k))) + "K" }
+const fmtSaleM = p => { const m = p/1e6
+  let s = m.toFixed(1)                                   // ทศนิยมเดียวเสมอ: 7.5 / 14.0 / 24.1
+  if (s.length > 4) s = String(Math.round(m))            // ≥100M → "100" (กันล้นแป้น)
+  return s }
+const fmtSqmK  = (p, sqm) => String(Math.round(p/sqm/1000)) + "K"
+const fmtUpd   = iso => { const d = new Date(iso); return isNaN(d) ? "" : String(d.getDate()).padStart(2,"0") + MONS[d.getMonth()] }
+const TONE = { green:"rg", orange:"ro", white:"rw" }
+
+document.getElementById("projName").textContent = (DATA.project || "").toUpperCase()
+document.getElementById("punit").textContent    = MODE === "rent" ? "฿/MO" : "฿ (M)"
+
+/* rows → the legacy tuple shape the renderer was built around:
+ * [TYPE, SQM, FLOOR, UPDATE, price, (sale: perSqm,) remarks[[text, toneClass]]] */
+const rows = (DATA.rows || []).map(u => {
+  const rmk = (u.remarks && u.remarks.length ? u.remarks : [{ text:"", tone:"white" }])
+    .map(r => [r.text, TONE[r.tone] || "rw"])
+  const base = [String(u.type||"").toUpperCase(), String(u.sqm||""), String(u.floor||"").toUpperCase(), fmtUpd(u.updated)]
+  return MODE === "sale"
+    ? [...base, fmtSaleM(u.price), fmtSqmK(u.price, u.sqm), rmk]
+    : [...base, fmtRentK(u.price), rmk]
+})
+
+const IC = { INVESTABLE: "ti-trending-up", "GOOD INVEST": "ti-trending-up", SAVE: "ti-tag", SUPER: "ti-tag", BEST: "ti-tag", GOOD: "ti-tag", OWNER: "ti-user-check", NEW: "ti-sparkles", RARE: "ti-diamond", BIG: "ti-arrows-maximize", HOT: "ti-flame", YIELD: "ti-trending-up", NEGO: "ti-arrows-exchange", NEGOTIABLE: "ti-arrows-exchange" };
+function fit(){const s=Math.min(innerWidth/1080,innerHeight/1920);document.getElementById("stage").style.transform="translate(-50%,-50%) scale("+s+")";}
+addEventListener("resize",fit);fit();
+function rmkHTML(txt){const ic=IC[txt]||IC[txt.split(" ")[0]]||"";return (ic?'<i class="ti '+ic+'" aria-hidden="true"></i>':"")+txt;}
+const board=document.getElementById("board");
+const priceTiles=[];const rmkEls=[];
+const NP = MODE==="rent"?5:4;
+/* ข้อมูลเป็นภาพ: โซฟา=studio · เตียง×1-3 · มงกุฎ=4BED+ · SQM เลข+บาร์ relative
+ * · FLOOR ขีดระดับ 3 ขั้น · เก็บเวอร์ชันตัวหนังสือไว้ใน dataset ให้สลับทุก 9 วิ */
+const BEDN={"STUDIO":0,"1BED":1,"2BED":2,"3BED":3,"4BED+":4};
+const maxSqm=Math.max(...rows.map(r=>+r[1]||0),1);
+rows.forEach((r)=>{
+  const div=document.createElement("div");div.className="brow";
+  const ty=document.createElement("span");ty.className="ctxt";ty.style.width="136px";ty.style.textAlign="left";
+  const bn=BEDN[r[0]];
+  ty.innerHTML=bn===0?'<i class="ti ti-sofa bedic" aria-hidden="true"></i>'
+    :bn>=4?'<i class="ti ti-crown bedic" aria-hidden="true"></i>'
+    :Array.from({length:bn||1},()=>'<i class="ti ti-bed bedic" aria-hidden="true"></i>').join("");
+  div.appendChild(ty);
+  const sq=document.createElement("span");sq.className="ctxt sqcell";sq.style.width="86px";
+  sq.innerHTML="<span>"+r[1]+"</span><span class=\"sqbar\"><i style=\"width:"+Math.round((+r[1]/maxSqm)*70)+"px\"></i></span>";
+  div.appendChild(sq);
+  const fl=document.createElement("span");fl.className="ctxt bl";fl.style.width="122px";fl.style.textAlign="left";fl.style.marginLeft="38px";
+  const lv=r[2]==="HIGH"?3:r[2]==="MID"?2:1;
+  fl.innerHTML='<span class="lvl">'+[1,2,3].map(i=>'<i class="'+(i<=lv?"on":"")+'" style="height:'+(8+i*7)+'px"></i>').join("")+"</span>";
+  div.appendChild(fl);
+  const up=document.createElement("span");up.className="ctxt bl";up.style.width="136px";up.style.textAlign="right";up.textContent=r[3];div.appendChild(up);
+  ty.dataset.ic=ty.innerHTML;ty.dataset.tx=r[0];ty.classList.add("dswap");
+  sq.dataset.ic=sq.innerHTML;sq.dataset.tx="<span>"+r[1]+"</span>";sq.classList.add("dswap");
+  fl.dataset.ic=fl.innerHTML;fl.dataset.tx=r[2];fl.classList.add("dswap");
+  const pc=document.createElement("span");pc.style.width="228px";pc.style.textAlign="right";pc.style.marginLeft="38px";
+  const rowTiles=[];
+  const padded=r[4].padStart(NP);
+  for(const ch of padded){const t=document.createElement("span");t.className="tile";t.textContent=" ";t.dataset.m=ch;if(MODE==="sale")t.dataset.k=r[5].padStart(padded.length)[rowTiles.length]||" ";const i=document.createElement("i");i.className="mid";t.appendChild(i);pc.appendChild(t);rowTiles.push(t);}
+  priceTiles.push(rowTiles);div.appendChild(pc);
+  const rmList=MODE==="sale"?r[6]:r[5];
+  const rm=document.createElement("span");rm.className="rmk "+rmList[0][1];rm.style.flex="1";rm.innerHTML=rmkHTML(rmList[0][0]);rm.dataset.idx="0";div.appendChild(rm);
+  rmkEls.push([rm,rmList]);board.appendChild(div);
+});
+/* Auto-fit: beyond 17 rows the column would overflow the 110px bottom safe
+ * band at the original 13px gap. Tighten every row gap evenly (never below
+ * 4px) until the disclaimer sits back inside the band — type sizes never
+ * change, so 18–19 rows fit at the same legibility. (offsetTop is in logical
+ * 1080×1920 px — the stage transform doesn't affect it.)
+ * Re-runs when the webfonts finish loading: fallback-font layout is shorter,
+ * so measuring only at parse time misses the overflow (FOUT race). */
+function autoFit(){
+  if(rows.length<2)return;
+  const disc=document.getElementById("disclaimer");
+  const over=disc.offsetTop+disc.offsetHeight-(1920-110);
+  if(over<=0)return;
+  const els=document.querySelectorAll("#board .brow");
+  const cur=parseInt(els[0].style.marginBottom)||13;
+  const g=Math.max(4,cur-Math.ceil(over/rows.length));
+  els.forEach(el=>el.style.marginBottom=g+"px");
+}
+autoFit();
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(autoFit);
+addEventListener("load",autoFit);
+const label=document.getElementById("intentLabel");
+const labelText=MODE==="rent"?"FOR RENT":"FOR SALE";const labelTiles=[];
+for(const ch of labelText){const t=document.createElement("span");t.className="ltile";t.textContent=" ";t.dataset.target=ch;const i=document.createElement("i");i.className="mid";t.appendChild(i);label.appendChild(t);labelTiles.push(t);}
+function spinEl(t,target,delay,charset){
+  if(target===" "){t.style.visibility="hidden";return;}
+  t.style.visibility="";
+  let n=0,max=6+Math.floor(Math.random()*8);
+  setTimeout(()=>{const iv=setInterval(()=>{n++;const line=t.querySelector("i.mid");
+    if(n>=max){t.childNodes[0].nodeValue=target;clearInterval(iv);}
+    else t.childNodes[0].nodeValue=charset[Math.floor(Math.random()*charset.length)];
+    if(line)t.appendChild(line);},50);},delay);
+}
+const NUM="0123456789.,K";const ABC="ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+labelTiles.forEach((t,i)=>spinEl(t,t.dataset.target,150+i*60,ABC));
+setInterval(()=>labelTiles.forEach((t,i)=>spinEl(t,t.dataset.target,i*60,ABC)),12000);
+priceTiles.forEach((row,r)=>row.forEach((t,i)=>spinEl(t,t.dataset.m,250+r*90+i*40,NUM)));
+if(MODE==="sale"){
+  let mode="m";
+  setInterval(()=>{mode=mode==="m"?"k":"m";
+    priceTiles.forEach((row,r)=>row.forEach((t,i)=>spinEl(t,mode==="m"?t.dataset.m:t.dataset.k,r*70+i*40,NUM)));
+    document.getElementById("punit").textContent=mode==="m"?"฿ (M)":"฿/SQM";
+  },6000);
+}else{
+  setInterval(()=>{const row=priceTiles[Math.floor(Math.random()*priceTiles.length)];row.forEach((t,i)=>spinEl(t,t.dataset.m,i*45,NUM));},7000);
+}
+setTimeout(()=>setInterval(()=>{
+  rmkEls.forEach(([el,list],r)=>{if(list.length<2)return;
+    setTimeout(()=>{el.style.opacity="0";
+      setTimeout(()=>{const next=(parseInt(el.dataset.idx)+1)%list.length;el.dataset.idx=String(next);
+        el.innerHTML=rmkHTML(list[next][0]);el.className="rmk "+list[next][1];el.style.opacity="1";},250);},r*60);});
+},6000),3000);
+/* Header icon ↔ word flip — สอนความหมายไอคอนในตัว จังหวะช้ากว่า remark
+ * และไล่ทีละคอลัมน์ · หัวราคา (punit) นิ่งเสมอเพราะถือหน่วย */
+const hswaps=[...document.querySelectorAll(".hswap")];
+hswaps.forEach(el=>{el.dataset.ic=el.innerHTML;el.style.transition="opacity .25s";});
+const dswaps=[...document.querySelectorAll(".dswap")];
+dswaps.forEach(el=>{el.style.transition="opacity .25s";});
+let hShowText=false;
+setInterval(()=>{hShowText=!hShowText;
+  hswaps.forEach((el,i)=>setTimeout(()=>{
+    el.style.opacity="0";
+    setTimeout(()=>{el.innerHTML=hShowText?el.dataset.w:el.dataset.ic;el.style.opacity="1";},250);
+  },i*120));
+  dswaps.forEach((el,i)=>setTimeout(()=>{
+    el.style.opacity="0";
+    setTimeout(()=>{el.innerHTML=hShowText?el.dataset.tx:el.dataset.ic;el.style.opacity="1";},250);
+  },350+Math.floor(i/3)*45));
+},9000);
+</script>
+</body>
+</html>

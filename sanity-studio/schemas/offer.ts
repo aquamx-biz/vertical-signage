@@ -390,6 +390,18 @@ export default defineType({
           defineField({ name: 'name_en', title: 'Name (EN)', type: 'string' }),
           defineField({ name: 'price', title: '📺 Price', type: 'string' }),
           defineField({ name: 'image', title: 'Image', type: 'image', options: { hotspot: true } }),
+          // cart contract (2026-08-04): stable id + per-item cap — both optional,
+          // plain menus behave exactly as before (player falls back to _key/99)
+          defineField({
+            name: 'refCode', title: 'Ref Code · รหัสถาวร', type: 'string',
+            description: 'รหัสประจำตัวถาวรของชิ้นนี้ (ห้องใช้รหัสห้อง เช่น 39BS-U012) — ห้ามมี : หรือ , · เว้นว่างได้',
+            validation: Rule => Rule.custom(v => !v || !/[:,]/.test(v) ? true : 'ห้ามมี : หรือ ,'),
+          }),
+          defineField({
+            name: 'maxQty', title: 'Max Qty · เพดานต่อรายการ', type: 'number',
+            description: 'สั่งได้สูงสุดกี่ชิ้น — ห้อง = 1 (ปุ่มกลายเป็น "เลือก ✓") · โปรจำกัดสิทธิ์ = N · เว้นว่าง = ไม่จำกัด (99)',
+            validation: Rule => Rule.min(1).integer(),
+          }),
         ],
       }],
     }),

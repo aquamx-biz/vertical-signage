@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Board Preview · เหมือนบนจอจริง</title>
+<link href="https://fonts.googleapis.com/css2?family=Anuphan:wght@600;700;800&family=IBM+Plex+Mono:wght@700&display=swap" rel="stylesheet">
+<style>
+/* จำลองกรอบ player จริง: จอ 9:16 + แถบ navy บน (140px) / ล่าง (110px) ที่ทับแบนด์
+   ปลอดภัยของบอร์ด — เทมเพลตบอร์ดเว้นที่ไว้ให้แล้ว เห็นตรงนี้ยังไง บนจอจริงเห็นแบบนั้น */
+* { box-sizing: border-box; margin: 0; }
+body { min-height: 100vh; background: #1A2332; display: flex; align-items: center; justify-content: center; font-family: Anuphan, sans-serif; padding: 16px; }
+.stage { position: relative; width: 1080px; height: 1920px; transform-origin: center; overflow: hidden; border-radius: 18px; box-shadow: 0 30px 80px rgba(0,0,0,.5); background: #0B1017; flex-shrink: 0; }
+.stage iframe { width: 1080px; height: 1920px; border: 0; display: block; }
+.hd, .ft { position: absolute; left: 0; right: 0; background: #0E3361; color: #fff; display: flex; align-items: center; z-index: 3; }
+.hd { top: 0; height: 140px; justify-content: space-between; padding: 0 44px; }
+.hd b { font-size: 40px; letter-spacing: .06em; font-weight: 800; }
+.hd span { font-size: 26px; opacity: .78; }
+.ft { bottom: 0; height: 110px; justify-content: center; gap: 20px; font-size: 24px; letter-spacing: .12em; opacity: .97; font-weight: 700; }
+.tag { position: fixed; top: 10px; left: 14px; color: #8fa0b8; font-size: 13px; z-index: 9; }
+</style>
+</head>
+<body>
+<div class="tag">Preview · จำลองกรอบจอจริง (แถบ navy = header/footer ของ player)</div>
+<div class="stage" id="stage">
+  <iframe id="fr" title="board"></iframe>
+  <div class="hd"><b id="pj">AQUAMX</b><span id="clock"></span></div>
+  <div class="ft">AQUAMX</div>
+</div>
+<script>
+/* ?tpl=cards|flap · #sim=<payload> ส่งต่อให้เทมเพลตตรง ๆ · ชื่อโครงการอ่านจาก payload */
+const P = new URLSearchParams(location.search)
+const tpl = P.get('tpl') === 'flap' ? 'board.html' : 'board-cards.html'
+document.getElementById('fr').src = './' + tpl + location.hash
+try {
+  const sim = JSON.parse(decodeURIComponent(location.hash.slice(5)))
+  if (sim.project) document.getElementById('pj').textContent = sim.project
+} catch (e) {}
+const tick = () => document.getElementById('clock').textContent =
+  new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })
+tick(); setInterval(tick, 30000)
+/* ย่อจอ 1080×1920 ให้พอดีหน้าต่าง */
+function fit() {
+  const s = Math.min((innerWidth - 32) / 1080, (innerHeight - 32) / 1920)
+  document.getElementById('stage').style.transform = `scale(${s})`
+  document.body.style.height = Math.max(innerHeight, 1920 * s + 32) + 'px'
+}
+fit(); addEventListener('resize', fit)
+</script>
+</body>
+</html>

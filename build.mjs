@@ -78,6 +78,9 @@ const swSource = readFileSync(join(__dirname, 'sw.js'), 'utf8')
 // Split-flap unit-price board template (FOR RENT / FOR SALE), baked per project
 // per mode to ../{code}/board/{mode}/index.html from published unitBoard docs.
 const boardTemplate = readFileSync(join(__dirname, 'board.html'), 'utf8')
+// สองหน้าตาของบอร์ดเดียวกัน: split-flap (/board/) กับ การ์ด 3 ภาษา (/board-cards/)
+// ใช้ข้อมูลชุดเดียวกัน — media doc ชี้ URL ไหนก็ได้ตามที่โครงการเลือก
+const cardsTemplate = readFileSync(join(__dirname, 'board-cards.html'), 'utf8')
 
 // unitProfile.projectName is a free string from the scraping pipeline and does
 // not always equal project.title ("The Lumpini 24" vs "Lumpini 24") — map per
@@ -134,6 +137,7 @@ const PLAYLIST_PROJ_MIN = `
         "url":             select(
                              media->type == "image" => coalesce(media->imageFiles[0].asset->url, media->imageFile.asset->url, media->posterImage.asset->url),
                              media->type == "video" => media->videoFile.asset->url,
+                             media->type == "web"   => media->webUrl,
                              coalesce(media->videoFile.asset->url, media->imageFiles[0].asset->url, media->imageFile.asset->url, media->posterImage.asset->url)
                            ),
         "images":          media->imageFiles[].asset->url,
@@ -160,6 +164,7 @@ const PLAYLIST_PROJ_V7 = `
         "url":                select(
                                 media->type == "image" => coalesce(media->imageFiles[0].asset->url, media->imageFile.asset->url, media->posterImage.asset->url),
                                 media->type == "video" => media->videoFile.asset->url,
+                                media->type == "web"   => media->webUrl,
                                 coalesce(media->videoFile.asset->url, media->imageFile.asset->url, media->imageFiles[0].asset->url, media->posterImage.asset->url)
                               ),
         "images":             media->imageFiles[].asset->url,
@@ -479,6 +484,14 @@ for (const project of projects) {
     const boardDir = join(outDir, 'board', mode)
     mkdirSync(boardDir, { recursive: true })
     writeFileSync(join(boardDir, 'index.html'), boardHtml, 'utf8')
+
+    const cardsHtml = cardsTemplate.replace(
+      '</head>',
+      `<script>/* baked by build.mjs — rev ${boardData.rev} */\nwindow.__BOARD__ = ${JSON.stringify(boardData)};\n</script>\n</head>`
+    )
+    const cardsDir = join(outDir, 'board-cards', mode)
+    mkdirSync(cardsDir, { recursive: true })
+    writeFileSync(join(cardsDir, 'index.html'), cardsHtml, 'utf8')
   }
 
   // _headers: Netlify reads this from the publish directory unconditionally.
@@ -486,7 +499,8 @@ for (const project of projects) {
   writeFileSync(
     join(outDir, '_headers'),
     `/index.html\n  Cache-Control: no-cache, no-store, must-revalidate\n  Pragma: no-cache\n  Expires: 0\n` +
-    `/board/*\n  Cache-Control: no-cache, no-store, must-revalidate\n  Pragma: no-cache\n  Expires: 0\n`,
+    `/board/*\n  Cache-Control: no-cache, no-store, must-revalidate\n  Pragma: no-cache\n  Expires: 0\n` +
+    `/board-cards/*\n  Cache-Control: no-cache, no-store, must-revalidate\n  Pragma: no-cache\n  Expires: 0\n`,
     'utf8'
   )
 
@@ -500,6 +514,10 @@ for (const project of projects) {
     `    Pragma        = "no-cache"\n` +
     `    Expires       = "0"\n\n` +
     `[[headers]]\n  for = "/board/*"\n  [headers.values]\n` +
+    `    Cache-Control = "no-cache, no-store, must-revalidate"\n` +
+    `    Pragma        = "no-cache"\n` +
+    `    Expires       = "0"\n\n` +
+    `[[headers]]\n  for = "/board-cards/*"\n  [headers.values]\n` +
     `    Cache-Control = "no-cache, no-store, must-revalidate"\n` +
     `    Pragma        = "no-cache"\n` +
     `    Expires       = "0"\n\n` +

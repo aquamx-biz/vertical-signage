@@ -10,8 +10,9 @@
  * Select มือแยกฝั่งพร้อมเตือนเกิน quota · เหตุผลการคัด (SELECT/BED/ธง/FILL) ·
  * Posted by (Owner/agent) · Save ลง drafts.unitBoard-<code>-<mode>
  *
- * ยังไม่พอร์ต (อยู่บนหน้า _units-all.html เดิม): Excel column filter panels ·
- * archive รายรอบ · ปุ่ม Preview บอร์ด split-flap
+ * พอร์ตครบจาก _units-all.html แล้ว: freeze 6 คอลัมน์ · sorting ทุกคอลัมน์ตัวเลข ·
+ * Excel filters (Type/Zone/Posted by/Status) · tooltip หัวคอลัมน์ · ฿/SQM/Spread/Update ·
+ * Preview บอร์ด (#sim=) — เหลือโดยตั้งใจ: archive รายรอบ (อยู่หน้า static ตามบทบาทเดิม)
  */
 import React, { useEffect, useMemo, useState } from 'react'
 import { useClient } from 'sanity'
@@ -135,8 +136,30 @@ const cleanAgent = (n: string) =>
 
 const th: React.CSSProperties = { position: 'sticky', top: 0, background: '#0f3460', color: '#fff', padding: '7px 8px', fontSize: 11, textTransform: 'uppercase', textAlign: 'left', whiteSpace: 'nowrap', cursor: 'pointer', zIndex: 2 }
 const td: React.CSSProperties = { padding: '5px 8px', borderBottom: '1px solid #eef1f5', whiteSpace: 'nowrap', fontSize: 13, verticalAlign: 'top' }
+/* freeze 6 คอลัมน์แรก (# ถึง Floor) ติดซ้ายระหว่างเลื่อน — ตามหน้า units-all เดิม */
+const FROZEN_W = [44, 112, 78, 66, 78, 70]
+const fzLeft = (i: number) => FROZEN_W.slice(0, i).reduce((a, b) => a + b, 0)
+const fzSize = (i: number): React.CSSProperties => ({ minWidth: FROZEN_W[i] - 16, maxWidth: FROZEN_W[i] - 16, overflow: 'hidden', textOverflow: 'ellipsis', boxSizing: 'content-box' })
+const thFz = (i: number): React.CSSProperties => ({ ...th, left: fzLeft(i), zIndex: 4, ...fzSize(i) })
+const tdFz = (i: number, bg: string): React.CSSProperties => ({ ...td, position: 'sticky', left: fzLeft(i), background: bg, zIndex: 1, ...fzSize(i) })
 const num: React.CSSProperties = { ...td, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }
 const chipStyle = (bg: string, fg: string): React.CSSProperties => ({ display: 'inline-block', background: bg, color: fg, borderRadius: 4, padding: '1px 6px', fontSize: 11, fontWeight: 700, marginRight: 4 })
+
+/** unitProfile → row ที่ board.html อ่าน — mirror ของ profileToRow/remarksFor
+ *  ใน board-engine.mjs (KEEP IN SYNC) · ใช้กับปุ่ม Preview (#sim= hash) */
+function profileToRow(p: Profile) {
+  const remarks: Array<{ text: string; tone: string }> = []
+  if (p.dealTier) remarks.push({ text: p.dealTier.toUpperCase(), tone: 'green' })
+  if (p.hotDeal) remarks.push({ text: 'HOT', tone: 'orange' })
+  if (p.goodInvest) remarks.push({ text: 'INVESTABLE', tone: 'green' })
+  if (p.negotiable) remarks.push({ text: 'NEGO', tone: 'white' })
+  if (p.postedByOwner) remarks.push({ text: 'OWNER', tone: 'green' })
+  return {
+    type: BED_LABEL[p.bedType ?? ''] ?? String(p.bedType ?? '').toUpperCase(),
+    sqm: p.sqm, floor: String(p.floorZone ?? '').toUpperCase(),
+    updated: p.lastCheckedAt, price: p.priceTHB, remarks: remarks.slice(0, 4),
+  }
+}
 
 /** ราคาขยับจากรอบก่อน (priceHistory สะสมโดยวงจรรายสัปดาห์) — ชี้เมาส์ดูทั้งเส้น */
 function PriceMove({ p }: { p?: Profile }) {
@@ -154,14 +177,37 @@ function PriceMove({ p }: { p?: Profile }) {
   )
 }
 
+/* เหตุผลจริงที่ห้องตกตัวกรองคุณภาพ (กันขยะ scraper ขึ้นจอ) — โชว์ใน tooltip */
+function sanityFailReason(p: Profile, mode: string): string | null {
+  const [lo, hi] = SQM_BOUNDS[p.bedType ?? ''] ?? [15, 400]
+  if (!(p.sqm != null && p.sqm >= lo && p.sqm <= hi))
+    return `ขนาด ${p.sqm ?? '?'} ตรม. ผิดช่วงของ ${(p.bedType ?? '').toUpperCase()} (${lo}–${hi} ตรม.)`
+  const [plo, phi] = PRICE_BOUNDS[mode] ?? [0, Infinity]
+  if (!(p.priceTHB != null && p.priceTHB >= plo && p.priceTHB <= phi))
+    return `ราคา ฿${(p.priceTHB ?? 0).toLocaleString('en-US')} อยู่นอกช่วงที่เป็นไปได้`
+  const [qlo, qhi] = PSQM_BOUNDS[mode] ?? [0, Infinity]
+  const psqm = (p.priceTHB ?? 0) / (p.sqm || 1)
+  if (!(psqm >= qlo && psqm <= qhi))
+    return `฿/ตรม. = ${Math.round(psqm).toLocaleString('en-US')} นอกช่วงปกติ (${qlo.toLocaleString('en-US')}–${qhi.toLocaleString('en-US')})`
+  if (p.vsFloorPct != null && p.vsFloorPct < -50) return `ถูกกว่าชั้นถึง ${Math.abs(p.vsFloorPct)}% — ถูกเกินจริง น่าจะกรอกราคาผิด`
+  if (p.spreadPct != null && p.spreadPct > 60) return `ราคาแต่ละพอร์ทัลต่างกัน ${p.spreadPct}% — ข้อมูลไม่น่าไว้ใจ`
+  return null
+}
+
 function DealChip({ p }: { p?: Profile }) {
   if (!p) return null
   const out: React.ReactNode[] = []
   if (p.dealTier === 'super') out.push(<span key="d" style={chipStyle('#166534', '#fff')} title={`ถูกกว่าค่าเฉลี่ยชั้น ${Math.abs(p.vsFloorPct ?? 0)}%`}>SUPER</span>)
   else if (p.dealTier === 'best') out.push(<span key="d" style={chipStyle('#d1f2dd', '#166534')} title={`ถูกกว่าค่าเฉลี่ยชั้น ${Math.abs(p.vsFloorPct ?? 0)}%`}>BEST</span>)
   else if (p.dealTier === 'good') out.push(<span key="d" style={chipStyle('#d1f2dd', '#166534')} title={`ถูกกว่าค่าเฉลี่ยโซน ${Math.abs(p.vsZonePct ?? 0)}%`}>GOOD</span>)
-  if (!passesSanity(p, p.intent)) out.push(<span key="x" style={chipStyle('#fde8e8', '#c2410c')} title="ข้อมูลผิดปกติ — ไม่เข้าคัดอัตโนมัติ">ตกตัวกรอง</span>)
-  return <>{out}</>
+  const reason = sanityFailReason(p, p.intent)
+  if (reason) out.push(
+    <span key="x" style={{ ...chipStyle('#fde8e8', '#c2410c'), cursor: 'help' }}
+      title={`ข้อมูลน่าสงสัยว่าผิด — ระบบกันไม่ให้ถูกคัดขึ้นบอร์ดอัตโนมัติ (ยังเลือกมือได้ถ้าตรวจแล้วว่าจริง)\nสาเหตุ: ${reason}`}>
+      ตกตัวกรอง</span>)
+  if (!out.length) return null
+  /* เรียงแนวตั้ง — คอลัมน์ Deal แคบลง ป้ายไม่ดันกันในแนวนอน */
+  return <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 2 }}>{out}</div>
 }
 
 export function UnitBoardsTool() {
@@ -185,6 +231,8 @@ export function UnitBoardsTool() {
   const [q, setQ] = useState('')
   const [sort, setSort] = useState<{ k: string; d: number }>({ k: '', d: 1 })
   const [saving, setSaving] = useState(false)
+  const [colF, setColF] = useState<Record<string, Set<string>>>({})   // Excel filters รายคอลัมน์
+  const [openF, setOpenF] = useState<string | null>(null)
 
   useEffect(() => {
     let dead = false
@@ -244,9 +292,36 @@ export function UnitBoardsTool() {
   const minsSum = (P: Policy) => P.studioMin + P.b1Min + P.b2Min + P.b3Min + P.b4Min
   const overQuota = flagsSum(polR) > polR.quota || minsSum(polR) > polR.quota || flagsSum(polS) > polS.quota || minsSum(polS) > polS.quota
 
+  /* ── Excel filters (Type / Zone / Posted by / Status) — ค่าเริ่มต้น = ติ๊กครบทุกค่า ── */
+  const postedOf = (u: Unit) => {
+    const src = sources.get(u.refCode)
+    const owner = u.rent?.postedByOwner || u.sale?.postedByOwner || (src?.listings ?? []).some(l => l.posterType === 'owner')
+    const hasAgent = (src?.listings ?? []).some(l => l.posterType !== 'owner' && l.posterName)
+    return owner ? 'Owner' : hasAgent ? 'Agent' : '—'
+  }
+  const statusesOf = (u: Unit) => [u.rent?.status, u.sale?.status].filter(Boolean) as string[]
+  const fval = (fk: string, u: Unit) =>
+    fk === 'type' ? (BED_LABEL[u.bed ?? ''] ?? u.bed ?? '—') :
+    fk === 'zone' ? (u.zone ?? '—') :
+    fk === 'posted' ? postedOf(u) : ''
+  const distinctVals = (fk: string) => fk === 'status'
+    ? [...new Set(units.flatMap(statusesOf))].sort()
+    : [...new Set(units.map(u => fval(fk, u)))].sort()
+  const passF = (u: Unit) => Object.entries(colF).every(([fk, set]) =>
+    fk === 'status' ? statusesOf(u).some(s2 => set.has(s2)) : set.has(fval(fk, u)))
+  const toggleF = (fk: string, v: string) => {
+    const all = distinctVals(fk)
+    const cur = colF[fk] ? new Set(colF[fk]) : new Set(all)
+    cur.has(v) ? cur.delete(v) : cur.add(v)
+    const n = { ...colF }
+    if (cur.size === all.length) delete n[fk]; else n[fk] = cur
+    setColF(n)
+  }
+
   const shown = useMemo(() => {
     const s = q.trim().toUpperCase()
     let list = units.filter(u => {
+      if (!passF(u)) return false
       const agents = [...new Set((sources.get(u.refCode)?.listings ?? []).filter(l => l.posterType !== 'owner' && l.posterName).map(l => l.posterName!))]
       const ok =
         mode === 'all' ? true :
@@ -266,9 +341,13 @@ export function UnitBoardsTool() {
           case 'sqm': return u.sqm ?? -1
           case 'rent': return u.rent?.priceTHB ?? -1
           case 'sale': return u.sale?.priceTHB ?? -1
+          case 'rpsqm': return u.rent?.pricePerSqm ?? -1
+          case 'spsqm': return u.sale?.pricePerSqm ?? -1
           case 'yield': return u.rent?.yieldPct ?? u.sale?.yieldPct ?? -1
           case 'vsr': return u.rent?.vsFloorPct ?? 9999
           case 'vss': return u.sale?.vsFloorPct ?? 9999
+          case 'spread': return Math.max(u.rent?.spreadPct ?? -1, u.sale?.spreadPct ?? -1)
+          case 'upd': return u.rent?.lastCheckedAt ?? u.sale?.lastCheckedAt ?? ''
           case 'fl': return sources.get(u.refCode)?.floorActual ?? -1
           default: return u.refCode
         }
@@ -284,7 +363,7 @@ export function UnitBoardsTool() {
       })
     }
     return list
-  }, [units, mode, q, sort, sources, onR, onS])
+  }, [units, mode, q, sort, sources, onR, onS, colF])
 
   const stat = useMemo(() => ({
     units: units.length,
@@ -299,11 +378,24 @@ export function UnitBoardsTool() {
 
   const projDoc = projDocs.find(d => d.code === NAME_TO_CODE[proj])
 
+  /* lineup → orderItems ของ offer บอร์ด (mirror ของ tools/seed-board-offers.mjs — KEEP IN SYNC) */
+  const BED_TH: Record<string, string> = { studio: 'สตูดิโอ', '1bed': '1 ห้องนอน', '2bed': '2 ห้องนอน', '3bed': '3 ห้องนอน', '4bed': '4 ห้องนอน+' }
+  const BED_EN: Record<string, string> = { studio: 'Studio', '1bed': '1 Bedroom', '2bed': '2 Bedroom', '3bed': '3 Bedroom', '4bed': '4 Bed+' }
+  const ZONE_TH: Record<string, string> = { low: 'ชั้นล่าง', mid: 'ชั้นกลาง', high: 'ชั้นสูง' }
+  const ZONE_EN: Record<string, string> = { low: 'Low floor', mid: 'Mid floor', high: 'High floor' }
+  const toOrderItem = (p: Profile, m2: string) => ({
+    _key: p.refCode, refCode: p.refCode, maxQty: 1,
+    name_th: `${BED_TH[p.bedType ?? ''] ?? p.bedType} · ${p.sqm} ตรม. · ${ZONE_TH[p.floorZone ?? ''] ?? ''} (${(p.floorZone ?? '').toUpperCase()})`,
+    name_en: `${BED_EN[p.bedType ?? ''] ?? p.bedType} · ${p.sqm} sqm · ${ZONE_EN[p.floorZone ?? ''] ?? ''}`,
+    price: m2 === 'rent' ? `${((p.priceTHB ?? 0) / 1e3).toFixed(1)}K ฿/ด.` : `${((p.priceTHB ?? 0) / 1e6).toFixed(1)}M`,
+  })
+
   async function save() {
     if (!projDoc) return
     setSaving(true)
     try {
       const code = NAME_TO_CODE[proj]
+      let offersTouched = 0, offersMissing: string[] = []
       for (const [m2, sim, pol] of [['rent', simR, polR], ['sale', simS, polS]] as const) {
         if (!sim.rows.length) continue
         await client.createOrReplace({
@@ -317,8 +409,22 @@ export function UnitBoardsTool() {
           lineupWarnings: [...sim.warnings, 'บันทึกจาก Studio · Unit Boards tool'],
           lineupGeneratedAt: new Date().toISOString(),
         })
+        // เขียน orderItems เข้า offer ของบอร์ดด้วย — modal ลิสต์ห้อง/cart บนจอใช้ชุดเดียวกับ lineup เป๊ะ
+        const oid = `offer-board-${code}-${m2}`
+        const existing = (await client.getDocument(`drafts.${oid}`)) ?? (await client.getDocument(oid))
+        if (existing) {
+          const { _rev, _createdAt, _updatedAt, ...rest } = existing as any
+          await client.createOrReplace({ ...rest, _id: `drafts.${oid}`, orderItems: sim.rows.map(p => toOrderItem(p, m2)) })
+          offersTouched++
+        } else offersMissing.push(m2)
       }
-      toast.push({ status: 'success', title: 'บันทึกเป็น draft แล้ว', description: `rent ${simR.rows.length} · sale ${simS.rows.length} แถว — กด publish ใน Pending Publish เพื่อปล่อยขึ้นจอ` })
+      toast.push({
+        status: 'success', title: 'บันทึกเป็น draft แล้ว',
+        description: `rent ${simR.rows.length} · sale ${simS.rows.length} แถว`
+          + (offersTouched ? ` · อัปเดตลิสต์ห้องใน offer บอร์ด ${offersTouched} ฝั่ง` : '')
+          + (offersMissing.length ? ` · ⚠ ยังไม่มี offer บอร์ดฝั่ง ${offersMissing.join('/')} (รัน seed-board-offers ก่อน)` : '')
+          + ' — กด publish ใน Pending Publish เพื่อปล่อยขึ้นจอ',
+      })
     } catch (e: any) {
       toast.push({ status: 'error', title: 'บันทึกไม่สำเร็จ', description: e?.message })
     } finally { setSaving(false) }
@@ -367,10 +473,32 @@ export function UnitBoardsTool() {
   const H = (label: string, key?: string, title?: string) => (
     <th style={th} title={title} onClick={() => key && setSort(s => ({ k: key, d: s.k === key ? -s.d : 1 }))}>{label}{key ? ' ↕' : ''}</th>
   )
+  /* หัวคอลัมน์แบบมี Excel filter — ▾ เปิดแผงติ๊กเลือกค่า */
+  const FilterHead = ({ label, fk, style, title }: { label: string; fk: string; style?: React.CSSProperties; title?: string }) => (
+    <th style={style ?? th} title={title}>
+      <span onClick={() => setOpenF(openF === fk ? null : fk)} style={{ cursor: 'pointer' }}>
+        {label} <span style={{ color: colF[fk] ? '#ffd28a' : undefined }}>{colF[fk] ? '▼' : '▾'}</span>
+      </span>
+      {openF === fk && (
+        <div style={{ position: 'absolute', top: '100%', left: 0, background: '#fff', color: '#14213A', border: '1px solid #d1d5db', borderRadius: 8, padding: 8, zIndex: 30, minWidth: 140, boxShadow: '0 10px 24px rgba(0,0,0,0.18)', textTransform: 'none', fontWeight: 400, cursor: 'default' }}>
+          {distinctVals(fk).map(v => (
+            <label key={v} style={{ display: 'flex', gap: 6, alignItems: 'center', fontSize: 12.5, padding: '2px 0', cursor: 'pointer' }}>
+              <input type="checkbox" checked={colF[fk] ? colF[fk].has(v) : true} onChange={() => toggleF(fk, v)} /> {v}
+            </label>
+          ))}
+          <div onClick={() => { const n = { ...colF }; delete n[fk]; setColF(n) }}
+            style={{ fontSize: 11.5, color: '#0f3460', cursor: 'pointer', marginTop: 6, fontWeight: 700 }}>ล้างตัวกรอง (ติ๊กครบ)</div>
+        </div>
+      )}
+    </th>
+  )
 
   return (
-    <Box padding={4} style={{ height: '100%', overflow: 'auto' }}>
-      <Stack space={4}>
+    <Flex direction="column" padding={4} gap={4} style={{ height: '100%', minHeight: 0 }}>
+      <style>{`.ub-scroll::-webkit-scrollbar{height:13px;width:13px}
+        .ub-scroll::-webkit-scrollbar-thumb{background:#8fa0b8;border-radius:7px;border:2px solid #eef1f5}
+        .ub-scroll::-webkit-scrollbar-track{background:#eef1f5}`}</style>
+      <Stack space={4} style={{ flexShrink: 0 }}>
         <Flex align="center" gap={3} wrap="wrap">
           <Text size={2} weight="bold">Unit Boards · คัดห้องขึ้นบอร์ดราคา</Text>
           <select value={proj} onChange={e => setProj(e.currentTarget.value)}
@@ -380,6 +508,22 @@ export function UnitBoardsTool() {
           <Button text={saving ? 'Saving…' : 'Save to lineup (draft)'} tone="primary" disabled={!projDoc || saving || overQuota}
             title={!projDoc ? 'โครงการนี้ยังไม่มี project doc — สร้างก่อนจึงบันทึกได้' : 'เขียน drafts.unitBoard พร้อม policy + lineup ปัจจุบัน'}
             onClick={save} />
+          {([['Preview เช่า', 'rent', simR], ['Preview ขาย', 'sale', simS]] as const).map(([label, m2, sim]) => (
+            <Button key={m2} text={label} mode="ghost" fontSize={1} disabled={!sim.rows.length}
+              title="เห็นเหมือนบนจอจริง: บอร์ดการ์ดในกรอบ player (header/footer navy) ด้วย lineup ที่เห็นอยู่ตอนนี้ — ยังไม่ต้อง Save"
+              onClick={() => {
+                const payload = { project: proj.toUpperCase(), mode: m2, dataAsOf: dataRound ?? undefined, rows: sim.rows.map(profileToRow) }
+                window.open(`/static/board-preview.html?tpl=cards#sim=${encodeURIComponent(JSON.stringify(payload))}`, '_blank')
+              }} />
+          ))}
+          {([['flap เช่า', 'rent', simR], ['flap ขาย', 'sale', simS]] as const).map(([label, m2, sim]) => (
+            <Button key={'f' + m2} text={label} mode="bleed" fontSize={0} disabled={!sim.rows.length}
+              title="บอร์ด split-flap (หน้ายืนเดี่ยว /board/) ในกรอบจอจริง"
+              onClick={() => {
+                const payload = { project: proj.toUpperCase(), mode: m2, dataAsOf: dataRound ?? undefined, rows: sim.rows.map(profileToRow) }
+                window.open(`/static/board-preview.html?tpl=flap#sim=${encodeURIComponent(JSON.stringify(payload))}`, '_blank')
+              }} />
+          ))}
           {dataRound && (() => {
             const days = Math.floor((Date.now() - new Date(dataRound).getTime()) / 86400000)
             const stale = days > 9   // วงจรรายสัปดาห์ + ผ่อน 2 วัน — เกินนี้คือรอบวันอาทิตย์พลาด
@@ -422,14 +566,35 @@ export function UnitBoardsTool() {
           <Box style={{ width: 220 }}><TextInput fontSize={1} placeholder="Search Ref / Agent" value={q} onChange={e => setQ(e.currentTarget.value)} /></Box>
           <Text size={1} muted>{shown.length} units</Text>
         </Flex>
+      </Stack>
 
-        <Card radius={2} border style={{ overflow: 'auto', maxHeight: '62vh' }}>
+      {/* ตารางกินพื้นที่ที่เหลือของจอ — แถบเลื่อนแนวนอน/แนวตั้งอยู่ในสายตาเสมอ ไม่จมใต้ fold */}
+      <div className="ub-scroll" style={{ flex: 1, minHeight: 220, overflow: 'auto', border: '1px solid #e3e8ef', borderRadius: 6, background: '#fff' }}>
           <table style={{ borderCollapse: 'collapse', width: 'max-content', minWidth: '100%' }}>
             <thead><tr>
-              {H('#')}{H('Ref', 'ref')}{H('Type')}{H('SQM', 'sqm')}{H('Zone')}{H('Floor', 'fl', 'ชั้นจริง (internal)')}
-              {H('Rent (K)', 'rent')}{H('vs Floor', 'vsr')}{H('Rent Deal')}{H('Select R')}
-              {H('Sale (M)', 'sale')}{H('vs Floor', 'vss')}{H('Sale Deal')}{H('Select S')}
-              {H('Yield', 'yield')}{H('Posted by')}{H('Status')}{H('Board')}{H('Sources')}
+              <th style={thFz(0)} title="ลำดับตามการเรียง/กรองปัจจุบัน">#</th>
+              <th style={thFz(1)} title="รหัสห้องอ้างอิงภายใน" onClick={() => setSort(s => ({ k: 'ref', d: s.k === 'ref' ? -s.d : 1 }))}>Ref ↕</th>
+              <FilterHead label="Type" fk="type" style={thFz(2)} title="ประเภทห้อง — กด ▾ กรองได้" />
+              <th style={thFz(3)} title="ขนาดห้อง (ตร.ม.)" onClick={() => setSort(s => ({ k: 'sqm', d: s.k === 'sqm' ? -s.d : 1 }))}>SQM ↕</th>
+              <FilterHead label="Zone" fk="zone" style={thFz(4)} title="โซนชั้น แบ่งจากช่วงชั้นของตึก — กด ▾ กรองได้" />
+              <th style={thFz(5)} title="ชั้นจริง (internal dataset)" onClick={() => setSort(s => ({ k: 'fl', d: s.k === 'fl' ? -s.d : 1 }))}>Floor ↕</th>
+              {H('Rent (K)', 'rent', 'ค่าเช่า/เดือน ต่ำสุดที่พบข้ามพอร์ทัล')}
+              {H('฿/SQM', 'rpsqm', 'ค่าเช่าต่อตร.ม./เดือน')}
+              {H('vs Floor', 'vsr', 'เทียบค่าเฉลี่ย ฿/ตรม. ของชั้นเดียวกัน — ติดลบ = ถูกกว่าชั้น')}
+              {H('Rent Deal', undefined, 'ธงดีลฝั่งเช่า (ชี้ที่ธงดูเหตุผล+ตัวเลข)')}
+              {H('Select R', undefined, 'เลือกมือขึ้นบอร์ดเช่า — นับรวมใน quota')}
+              {H('Sale (M)', 'sale', 'ราคาขายต่ำสุดที่พบข้ามพอร์ทัล')}
+              {H('฿/SQM', 'spsqm', 'ราคาขายต่อตร.ม.')}
+              {H('vs Floor', 'vss', 'เทียบค่าเฉลี่ย ฿/ตรม. ของชั้นเดียวกัน — ติดลบ = ถูกกว่าชั้น')}
+              {H('Sale Deal', undefined, 'ธงดีลฝั่งขาย (ชี้ที่ธงดูเหตุผล+ตัวเลข)')}
+              {H('Select S', undefined, 'เลือกมือขึ้นบอร์ดขาย — นับรวมใน quota')}
+              {H('Yield', 'yield', 'ค่าเช่าทั้งปี ÷ ราคาขาย (%) — เฉพาะห้อง dual')}
+              {H('Spread', 'spread', 'ช่วงราคาข้ามพอร์ทัล (สูงสุด−ต่ำสุด)/ต่ำสุด — กว้าง = ต่อรองได้')}
+              {H('Update', 'upd', 'รอบข้อมูลล่าสุดที่ยังพบห้องนี้ในตลาด')}
+              <FilterHead label="Posted by" fk="posted" title="เจ้าของโพสต์เอง หรือผ่าน agent — กด ▾ กรองได้" />
+              <FilterHead label="Status" fk="status" title="สถานะ cleansing ของทีม (แยกฝั่งเช่า/ขาย) — กด ▾ กรองได้" />
+              {H('Board', undefined, 'ติด lineup ปัจจุบัน + เหตุผลที่ถูกคัด (SELECT/BED/ธง/FILL)')}
+              {H('Sources', undefined, 'ลิงก์ประกาศต้นทางทุกพอร์ทัล')}
             </tr></thead>
             <tbody>
               {shown.map((u, i) => {
@@ -442,13 +607,14 @@ export function UnitBoardsTool() {
                 const links = [...new Map((src?.listings ?? []).filter(l => l.url).map(l => [l.url!, l])).values()]
                 return (
                   <tr key={u.refCode} style={{ background: onBoard ? '#f4fbf6' : undefined }}>
-                    <td style={num}>{i + 1}</td>
-                    <td style={{ ...td, fontWeight: 700 }}>{u.refCode}</td>
-                    <td style={td}>{BED_LABEL[u.bed ?? ''] ?? u.bed ?? '—'}</td>
-                    <td style={num}>{u.sqm ?? '—'}</td>
-                    <td style={td}>{u.zone ?? '—'}</td>
-                    <td style={num}>{src?.floorActual ?? '—'}</td>
+                    <td style={{ ...tdFz(0, onBoard ? '#f4fbf6' : '#fff'), textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{i + 1}</td>
+                    <td style={{ ...tdFz(1, onBoard ? '#f4fbf6' : '#fff'), fontWeight: 700 }}>{u.refCode}</td>
+                    <td style={tdFz(2, onBoard ? '#f4fbf6' : '#fff')}>{BED_LABEL[u.bed ?? ''] ?? u.bed ?? '—'}</td>
+                    <td style={{ ...tdFz(3, onBoard ? '#f4fbf6' : '#fff'), textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{u.sqm ?? '—'}</td>
+                    <td style={tdFz(4, onBoard ? '#f4fbf6' : '#fff')}>{u.zone ?? '—'}</td>
+                    <td style={{ ...tdFz(5, onBoard ? '#f4fbf6' : '#fff'), textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{src?.floorActual ?? '—'}</td>
                     <td style={num}>{fmtK(u.rent?.priceTHB)}<PriceMove p={u.rent} /></td>
+                    <td style={num}>{u.rent?.pricePerSqm != null ? u.rent.pricePerSqm.toLocaleString('en-US') : '—'}</td>
                     <td style={{ ...num, color: (u.rent?.vsFloorPct ?? 0) < 0 ? '#166534' : '#9aa3b2', fontWeight: (u.rent?.vsFloorPct ?? 0) < 0 ? 700 : 400 }}>
                       {u.rent?.vsFloorPct != null ? `${u.rent.vsFloorPct > 0 ? '+' : ''}${u.rent.vsFloorPct}%` : '—'}</td>
                     <td style={td}><DealChip p={u.rent} /></td>
@@ -456,6 +622,7 @@ export function UnitBoardsTool() {
                       const s = new Set(selR); s.has(u.refCode) ? s.delete(u.refCode) : s.add(u.refCode); setSelR(s)
                     }} />}</td>
                     <td style={num}>{fmtM(u.sale?.priceTHB)}<PriceMove p={u.sale} /></td>
+                    <td style={num}>{u.sale?.pricePerSqm != null ? u.sale.pricePerSqm.toLocaleString('en-US') : '—'}</td>
                     <td style={{ ...num, color: (u.sale?.vsFloorPct ?? 0) < 0 ? '#166534' : '#9aa3b2', fontWeight: (u.sale?.vsFloorPct ?? 0) < 0 ? 700 : 400 }}>
                       {u.sale?.vsFloorPct != null ? `${u.sale.vsFloorPct > 0 ? '+' : ''}${u.sale.vsFloorPct}%` : '—'}</td>
                     <td style={td}><DealChip p={u.sale} /></td>
@@ -463,6 +630,8 @@ export function UnitBoardsTool() {
                       const s = new Set(selS); s.has(u.refCode) ? s.delete(u.refCode) : s.add(u.refCode); setSelS(s)
                     }} />}</td>
                     <td style={{ ...num, color: (y ?? 0) >= 5 ? '#166534' : undefined, fontWeight: (y ?? 0) >= 5 ? 700 : 400 }}>{y != null ? y.toFixed(1) + '%' : '—'}</td>
+                    <td style={num}>{(() => { const sp = Math.max(u.rent?.spreadPct ?? -1, u.sale?.spreadPct ?? -1); return sp >= 0 ? sp + '%' : '—' })()}</td>
+                    <td style={{ ...td, fontSize: 12 }}>{(u.rent?.lastCheckedAt ?? u.sale?.lastCheckedAt ?? '—').slice(5)}</td>
                     <td style={{ ...td, whiteSpace: 'normal', maxWidth: 180 }}>
                       {owner && <span style={chipStyle('#d1f2dd', '#166534')} title="เจ้าของโพสต์เอง">🏠 Owner</span>}
                       {agents.slice(0, 2).map(a => <span key={a} style={chipStyle('#f3f4f6', '#374151')} title={agents.join(' · ')}>{a}</span>)}
@@ -484,9 +653,8 @@ export function UnitBoardsTool() {
               })}
             </tbody>
           </table>
-        </Card>
-        <Text size={1} muted>internal use only — มีชั้นจริง + ลิงก์ต้นทาง · Save = draft เท่านั้น ทีมยัง publish ผ่าน Pending Publish ตามเดิม</Text>
-      </Stack>
-    </Box>
+      </div>
+      <Text size={1} muted style={{ flexShrink: 0 }}>internal use only — มีชั้นจริง + ลิงก์ต้นทาง · Save = draft เท่านั้น ทีมยัง publish ผ่าน Pending Publish ตามเดิม</Text>
+    </Flex>
   )
 }
