@@ -25,7 +25,7 @@ export function BuildingsAnalysisTool() {
   }, [])
 
   return (
-    <Flex direction="column" style={{height: 'calc(100vh - 50px)'}}>
+    <Flex direction="column" style={{height: '100%'}}>
       <Card padding={2} borderBottom tone="transparent">
         <Flex align="center" gap={3}>
           <Text size={1} weight="semibold">Round · รอบข้อมูล</Text>

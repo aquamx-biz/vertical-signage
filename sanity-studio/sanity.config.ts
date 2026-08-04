@@ -37,14 +37,12 @@ import { LedgerOverview }         from './components/LedgerOverview'
 import { AccountCodeTreeView }    from './tools/AccountCodeTreeView'
 import { HowToTool }            from './tools/HowToTool'
 import { DashboardTool }        from './tools/DashboardTool'
-import { ScreenHealthTool }     from './tools/ScreenHealthTool'
 import { PendingChangesTool }   from './tools/PendingChangesTool'
-import { KioskHealthTool }      from './tools/KioskHealthTool'
 import { ContentFootprintTool } from './tools/ContentFootprintTool'
-import { UnitBoardsTool }       from './tools/UnitBoardsTool'
-import { BuildingsAnalysisTool } from './tools/BuildingsAnalysisTool'
+import { MarketIntelTool }      from './tools/MarketIntelTool'
+import { HealthTool }           from './tools/HealthTool'
 import {
-  DashboardIcon, RocketIcon, DesktopIcon, ActivityIcon, PackageIcon, HelpCircleIcon, ThListIcon,
+  DashboardIcon, RocketIcon, ActivityIcon, PackageIcon, HelpCircleIcon,
   BarChartIcon,
 } from '@sanity/icons'
 import { accessControlPlugin, accessStore } from './plugins/accessControl'
@@ -81,28 +79,16 @@ const dashboardPlugin = definePlugin({
       component: PendingChangesTool,
     },
     {
-      name:      'unit-boards',
-      title:     'Unit Boards',
-      icon:      ThListIcon,
-      component: UnitBoardsTool,
-    },
-    {
-      name:      'building-analysis',
-      title:     'Building Analysis',
+      name:      'market-intel',
+      title:     'Market Intel',
       icon:      BarChartIcon,
-      component: BuildingsAnalysisTool,
+      component: MarketIntelTool,
     },
     {
-      name:      'screen-health',
-      title:     'Screen Health',
-      icon:      DesktopIcon,
-      component: ScreenHealthTool,
-    },
-    {
-      name:      'kiosk-health',
-      title:     'Fleet Health',
+      name:      'health',
+      title:     'Health',
       icon:      ActivityIcon,
-      component: KioskHealthTool,
+      component: HealthTool,
     },
     {
       name:      'content-footprint',
