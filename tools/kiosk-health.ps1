@@ -56,6 +56,7 @@ foreach ($Box in $Boxes) {
     $WifiRssi = 0; $WifiLink = 0; $WifiFreq = 0; $WifiReachLost = -1  # WiFi signal / link speed / band / IP-reachability losses
     $NetType = ""  # "wifi" | "eth" (wired) — a box on ethernet has no WiFi metrics
     $Chip = ""     # real SoC (RK3588/RK3568/RK3566) — beacon 'board' is the model name
+    $HomeApp = ""  # default HOME package — launcher3 = no kiosk home (drift risk)
 
     # 1. tailscale reachability
     $null = tailscale ping --c 2 --timeout 5s $Ip 2>$null
@@ -147,6 +148,13 @@ foreach ($Box in $Boxes) {
         $Chip = (((& $Adb -s $Serial shell "grep -ioE 'RK3[0-9]{3}[A-Za-z]?' /proc/cpuinfo | head -1") -join "").Trim()).ToUpper()
         if (-not $Chip) { $plat = ((& $Adb -s $Serial shell "getprop ro.board.platform") -join "").Trim(); if ($plat -match '^rk3[0-9]{3}') { $Chip = $plat.ToUpper() } }
 
+        # HOME app — what takes over the screen when the player dies. A stock
+        # launcher (launcher3/QuickstepLauncher) means NO kiosk home = the screen
+        # drifts to a blank launcher on any crash (the noble/lumpini drift root
+        # cause). A kiosk pkg (fully/yodeck) here = the OS can bring it back.
+        # NOTE the -a MAIN is required; without it resolve returns "No activity found".
+        $HomeApp = ((& $Adb -s $Serial shell "cmd package resolve-activity -a android.intent.action.MAIN -c android.intent.category.HOME 2>/dev/null | grep -oE 'packageName=[^ ]+' | head -1") -join "").Trim() -replace 'packageName=',''
+
         # WiFi — signal / link speed / band (one cheap passive command, no active test)
         $WifiStat = (& $Adb -s $Serial shell "cmd wifi status") -join " "
         if ($WifiStat -match "Wifi is connected") { $NetType = "wifi" }
@@ -215,7 +223,7 @@ foreach ($Box in $Boxes) {
         $dxFixed = if ($dx) { $dx.fixed -join '|' } else { "" }     # ASCII '|' — page renders as bullets (no non-ASCII in this .ps1)
         $dxPending = if ($dx) { $dx.pending -join '|' } else { "" }
         $dxAssessed = if ($dx) { [string]$dx.assessed } else { "" }  # date the human diagnosis was last made (YYYY-MM-DD)
-        $payload = @{ device=$Name; anrToday=$AnrToday; anrYesterday=$AnrYest; anr7d=$Anr7d; anr7dPrev=$Anr7dPrev; topCpu=$TopCpu; cores=$Cores; ramUsedPct=$ramUsedPct; ramFreeMB=$MemFree; ramTotalMB=$MemTotal; storagePct=$StoragePct; storageTotalMB=$StorageTotalMB; storageFreeMB=$StorageFreeMB; cacheMB=$CacheMB; apps=$Apps; focus=$Focus; screenRes=$ScreenRes; wifiRssi=$WifiRssi; wifiLink=$WifiLink; wifiFreq=$WifiFreq; wifiReachLost=$WifiReachLost; netType=$NetType; chip=$Chip; screenAwake=$Awake; load1="$Load1";
+        $payload = @{ device=$Name; anrToday=$AnrToday; anrYesterday=$AnrYest; anr7d=$Anr7d; anr7dPrev=$Anr7dPrev; topCpu=$TopCpu; cores=$Cores; ramUsedPct=$ramUsedPct; ramFreeMB=$MemFree; ramTotalMB=$MemTotal; storagePct=$StoragePct; storageTotalMB=$StorageTotalMB; storageFreeMB=$StorageFreeMB; cacheMB=$CacheMB; apps=$Apps; focus=$Focus; screenRes=$ScreenRes; wifiRssi=$WifiRssi; wifiLink=$WifiLink; wifiFreq=$WifiFreq; wifiReachLost=$WifiReachLost; netType=$NetType; chip=$Chip; homeApp=$HomeApp; screenAwake=$Awake; load1="$Load1";
             anrCause=$dxCause; anrFixed=$dxFixed; anrPending=$dxPending; anrAssessed=$dxAssessed } | ConvertTo-Json -Compress
         # PS 5.1 Invoke-RestMethod sends a string body as Latin-1 (mangles Thai) —
         # hand it UTF-8 bytes so the payload stays intact end to end.

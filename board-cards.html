@@ -22,8 +22,17 @@
   --dim:    rgba(255,255,255,0.58);
 }
 * { box-sizing: border-box; margin: 0; }
-html, body { width: 1080px; height: 1920px; overflow: hidden; }
-body {
+/* หน้านี้ออกแบบตายตัวที่ 1080×1920 แล้ว "ย่อทั้งแผง" ให้พอดีกล่องที่ถูกวางไว้
+   (จอจริง = พอดี 1:1 · ใน iframe ของ player หรือหน้าต่างเล็กกว่า = ย่อลงตามสัดส่วน
+   ไม่ตัด ไม่ล้น) — สัดส่วนคงเดิม แบนด์ปลอดภัยบน/ล่างจึงยังตรงกับ header/footer เสมอ */
+html, body { width: 100%; height: 100%; overflow: hidden; background: var(--stage); }
+.stage {
+  /* กึ่งกลางด้วย fixed + translate — grid/flex centering จะ "ตกไปชิดขอบบน"
+     เองอัตโนมัติเมื่อของใหญ่กว่ากล่อง (กติกา overflow alignment ของเบราว์เซอร์) */
+  position: fixed; top: 50%; left: 50%;
+  width: 1080px; height: 1920px;
+  transform: translate(-50%, -50%);
+  transform-origin: center center;
   background: var(--stage);
   color: #fff;
   font-family: Anuphan, 'IBM Plex Sans Thai', 'Noto Sans JP', sans-serif;
@@ -96,14 +105,16 @@ body {
 </style>
 </head>
 <body>
-<div class="bh">
-  <span class="unit-chip">฿ <span id="chipT"></span></span>
-  <div class="m" id="headM"></div>
-  <div class="p" id="headP"></div>
+<div class="stage" id="stage">
+  <div class="bh">
+    <span class="unit-chip">฿ <span id="chipT"></span></span>
+    <div class="m" id="headM"></div>
+    <div class="p" id="headP"></div>
+  </div>
+  <div class="cards" id="cards"></div>
+  <div class="dots" id="dots"></div>
+  <div class="lang-ind" id="langInd"></div>
 </div>
-<div class="cards" id="cards"></div>
-<div class="dots" id="dots"></div>
-<div class="lang-ind" id="langInd"></div>
 
 <script>
 /* ── Data — contract เดียวกับ board.html ────────────────────────────────────
@@ -230,6 +241,15 @@ function paintPrices() {   /* sale flip — แตะเฉพาะราคา
   })
   $("chipT").textContent = saleM ? t.chipSaleM : t.chipSaleQ
 }
+
+/* ย่อทั้งแผงให้พอดีกล่องที่ถูกวางไว้ — จอจริง 1080×1920 ได้ scale = 1 พอดี */
+const stageEl = $("stage")
+function fitStage() {
+  const s = Math.min(innerWidth / 1080, innerHeight / 1920)
+  stageEl.style.transform = `translate(-50%, -50%) scale(${s})`
+}
+fitStage()
+addEventListener("resize", fitStage)
 
 const REC = new URLSearchParams(location.search).get("rec") === "1"
 paint()

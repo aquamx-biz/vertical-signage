@@ -29,7 +29,7 @@ function resSpec(scr: string): { label: string; dims: string; is4k: boolean } {
   const label = is4k ? '4K' : big >= 1800 ? '1080p' : big >= 1200 ? '720p' : `${big}p`
   return { label, dims: `${w}×${h}`, is4k }
 }
-interface Health { device: string; anrToday: number; anrYesterday: number; anr7d: number; anr7dPrev: number; topCpu: string; cores: number; ramUsedPct: number; ramFreeMB: number; ramTotalMB: number; storagePct: number; storageTotalMB: number; storageFreeMB: number; cacheMB: number; apps: string; focus: string; screenRes: string; wifiRssi: number; wifiLink: number; wifiFreq: number; wifiReachLost: number; netType: string; chip: string; screenAwake: string; checkedMinAgo: number; anrCause: string; anrFixed: string; anrPending: string; anrAssessed: string }
+interface Health { device: string; anrToday: number; anrYesterday: number; anr7d: number; anr7dPrev: number; topCpu: string; cores: number; ramUsedPct: number; ramFreeMB: number; ramTotalMB: number; storagePct: number; storageTotalMB: number; storageFreeMB: number; cacheMB: number; apps: string; focus: string; screenRes: string; wifiRssi: number; wifiLink: number; wifiFreq: number; wifiReachLost: number; netType: string; chip: string; homeApp: string; screenAwake: string; checkedMinAgo: number; anrCause: string; anrFixed: string; anrPending: string; anrAssessed: string }
 interface Row { device: string; beacon?: Beacon; health?: Health; ghosts?: number }
 
 const fmtUp = (m: number) => (m >= 1440 ? `${Math.floor(m / 1440)}d ${Math.floor((m % 1440) / 60)}h` : m >= 60 ? `${Math.floor(m / 60)}h ${m % 60}m` : `${m}m`)
@@ -111,6 +111,19 @@ function playerCell(focus: string): { txt: string; col: string } {
     case '':                   return { txt: 'ไม่มี player รัน ⚠', col: RED }
     default:                   return { txt: `${appName(focus)} ⚠ (จอหลุด)`, col: RED }
   }
+}
+
+// HOME app = what the OS shows when the player dies. A stock launcher means NO
+// kiosk home → the screen drifts to a blank launcher on any crash (can't self-heal
+// without a reboot). A kiosk pkg here = the box can recover on its own.
+function homeCell(pkg: string): { txt: string; col: string } {
+  if (!pkg) return { txt: '—', col: '#cbd2dd' }
+  if (/launcher3|nexuslauncher|quickstep|trebuchet/i.test(pkg)) return { txt: 'Launcher เปล่า ⚠ (จอหลุดง่าย)', col: RED }
+  if (pkg === 'android')          return { txt: 'ไม่ได้ตั้ง home ⚠ (resolver)', col: RED }  // resolves to the system resolver = no default kiosk home
+  if (/aquamx|homeapp/i.test(pkg)) return { txt: 'AquaMX Home ✓', col: '#1b5e3a' }
+  if (/fully|ozerov/i.test(pkg))  return { txt: 'Fully (kiosk home) ✓', col: '#1b5e3a' }
+  if (/yodeck/i.test(pkg))        return { txt: 'Yodeck (kiosk home) ✓', col: '#1b5e3a' }
+  return { txt: appName(pkg), col: '#334155' }
 }
 
 // GB label from MB (1 decimal under 100GB, whole above)
@@ -447,6 +460,15 @@ export function KioskHealthTool() {
                 if (!h?.focus) return <td key={r.device} style={{ ...cell, color: '#cbd2dd', fontSize: 12 }}>—</td>
                 const p = playerCell(h.focus)
                 return <td key={r.device} style={{ ...cell, fontSize: 12, fontWeight: 500, wordBreak: 'break-word', color: p.col }}>{p.txt}</td>
+              })}
+            </tr>
+            <tr style={{ borderBottom: '1px solid #f1f3f6' }}>
+              <td style={lbl}>Home app<span style={{ display: 'block', fontSize: 10, fontWeight: 400, color: '#9aa7b8' }}>ตัวที่คุมจอเมื่อ player ตาย</span></td>
+              {rows.map(r => {
+                const h = r.health
+                if (!h) return <td key={r.device} style={{ ...cell, color: '#cbd2dd', fontSize: 12 }}>—</td>
+                const hc = homeCell(h.homeApp)
+                return <td key={r.device} style={{ ...cell, fontSize: 12, fontWeight: 500, wordBreak: 'break-word', color: hc.col }}>{hc.txt}</td>
               })}
             </tr>
             {METRICS.map(m => (

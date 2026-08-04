@@ -183,10 +183,16 @@ export default defineType({
     }),
   ],
   preview: {
-    select: { projTitle: 'project.title', mode: 'mode', isActive: 'isActive', rows: 'rows' },
-    prepare: ({ projTitle, mode, isActive, rows }) => ({
-      title: `${projTitle ?? '—'} — ${mode === 'sale' ? 'FOR SALE' : 'FOR RENT'}`,
-      subtitle: `${rows?.length ?? 0} unit(s)${isActive === false ? '  ·  ⏸ inactive' : ''}`,
-    }),
+    // lineup (คัดจาก Unit Boards tool) มาก่อน rows (แถวกรอกมือแบบเดิม) —
+    // นับ rows อย่างเดียวทำให้บอร์ดที่มี lineup 19 ห้องขึ้นว่า "0 unit(s)"
+    select: { projTitle: 'project.title', mode: 'mode', isActive: 'isActive', rows: 'rows', lineup: 'lineup' },
+    prepare: ({ projTitle, mode, isActive, rows, lineup }) => {
+      const n = lineup?.length ?? 0
+      return {
+        title: `${projTitle ?? '—'} — ${mode === 'sale' ? 'FOR SALE' : 'FOR RENT'}`,
+        subtitle: `${n || rows?.length || 0} unit(s)${n ? ' · lineup' : rows?.length ? ' · manual' : ''}`
+          + `${isActive === false ? '  ·  ⏸ inactive' : ''}`,
+      }
+    },
   },
 })
