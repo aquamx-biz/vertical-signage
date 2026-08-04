@@ -1474,8 +1474,19 @@ body {
 .detail-mit .th { width: 3.4vh; height: 3.4vh; border-radius: 0.7vh; background: #11151c; background-size: cover; background-position: center; flex-shrink: 0; }
 .detail-mit .nm { flex: 1; font-size: 1.4vh; color: rgba(255,255,255,0.88); }
 .detail-mit .pr { font-size: 1.4vh; color: var(--bronze); font-weight: 700; white-space: nowrap; }
-.detail-qty { display: inline-flex; align-items: center; gap: 0.8vh; flex-shrink: 0; margin-left: 0.8vh; font-size: 1.3vh; color: #fff; background: rgba(255,255,255,0.1); border: 0.1vh solid rgba(255,255,255,0.2); border-radius: 0.7vh; padding: 0.2vh 0.8vh; }
-.detail-qty b { min-width: 1vh; text-align: center; font-weight: 700; }
+.detail-qty { display: inline-flex; align-items: center; gap: 0.4vh; flex-shrink: 0; margin-left: 0.8vh; font-size: 1.5vh; color: #fff; background: rgba(255,255,255,0.1); border: 0.1vh solid rgba(255,255,255,0.2); border-radius: 0.7vh; padding: 0.1vh 0.3vh; }
+.detail-qty b { min-width: 2vh; text-align: center; font-weight: 700; }
+/* real tap targets — the −/＋ were decoration before the cart was wired */
+.detail-qty .q-dec, .detail-qty .q-inc {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 3.4vh; height: 3.4vh; border-radius: 0.6vh;
+    font-size: 1.9vh; font-weight: 700;
+    cursor: pointer; touch-action: manipulation; user-select: none;
+}
+.detail-qty .q-dec:active, .detail-qty .q-inc:active { background: rgba(255,255,255,0.18); }
+/* item in the cart → the row's qty pill lights up */
+.detail-qty.has { border-color: var(--dot-cyan); background: rgba(109,213,232,0.12); }
+.detail-qty.has b { color: var(--dot-cyan); }
 .detail-tags { display: flex; flex-wrap: wrap; gap: 0.7vh; margin: 0.6vh 0; }
 .detail-tags .c { font-size: 1.2vh; color: #fff; background: rgba(255,255,255,0.1); border: 0.1vh solid rgba(255,255,255,0.22); border-radius: 0.8vh; padding: 0.4vh 1vh; }
 .detail-lab { font-size: 1.1vh; color: rgba(255,255,255,0.55); text-transform: uppercase; letter-spacing: 0.1em; margin: 0.9vh 0 0.5vh; }
@@ -4005,7 +4016,7 @@ function buildDetailDyn(ctx){
         const items = ctx.orderItems||[], ful = ctx.fulfillment||[];
         return (store?`<div class="detail-substore">${store}</div>`:'')
              + (ful.length?`<div class="detail-tags">${ful.map(f=>`<span class="c">${esc(FUL[f]||f)}</span>`).join('')}</div>`:'')
-             + (items.length ? items.map((m,i)=>`<div class="detail-mit"><span class="th"${m.image?` style="background-image:url('${m.image}')"`:''}></span><span class="nm">${nm(m)}</span><span class="pr">${m.price?esc(m.price):''}</span><span class="detail-qty">−<b>${i===0?1:0}</b>+</span></div>`).join('')
+             + (items.length ? items.map((m,i)=>`<div class="detail-mit"><span class="th"${m.image?` style="background-image:url('${m.image}')"`:''}></span><span class="nm">${nm(m)}</span><span class="pr">${m.price?esc(m.price):''}</span><span class="detail-qty" data-i="${i}"><span class="q-dec">−</span><b>0</b><span class="q-inc">＋</span></span></div>`).join('')
                              : `<div class="detail-mit"><span class="th"></span><span class="nm">${isTH?'เพิ่มสินค้า…':'Add a product…'}</span><span class="pr"></span></div>`);
     }
     if (t==='book'){
@@ -4289,6 +4300,17 @@ function buildIntentQuery(ctaType) {
         if (d && d.dataset.iso) p.set('d', d.dataset.iso);
         if (t && t.dataset.t)   p.set('t', t.dataset.t);
     }
+    if (ctaType === 'order') {
+        // cart built on the kiosk rides along: items=<menuIndex>:<qty>,…
+        // (indexes match the offer's orderItems order — the mobile page
+        // resolves them against the same array)
+        const parts = [];
+        document.querySelectorAll('#detailDyn .detail-qty').forEach(q => {
+            const n = parseInt(q.querySelector('b')?.textContent, 10) || 0;
+            if (n > 0 && q.dataset.i != null) parts.push(q.dataset.i + ':' + n);
+        });
+        if (parts.length) p.set('items', parts.join(','));
+    }
     return '?' + p.toString();
 }
 
@@ -4301,6 +4323,22 @@ detailOverlay.addEventListener('click', function (e) {
     detailOverlay.querySelectorAll(group).forEach(c => c.classList.remove('on'));
     chip.classList.add('on');
     if (group === '.detail-date') updateSlotAvail();       // re-check slots for the new day
+    resetIdle();
+});
+
+/* Order qty controls — tap −/＋ per menu item to build the cart. Quantities
+   live in the DOM (like the booking chips) and are read at QR time by
+   buildIntentQuery's `order` case. */
+detailOverlay.addEventListener('click', function (e) {
+    const btn = e.target.closest('.q-dec, .q-inc');
+    if (!btn) return;
+    const qty = btn.closest('.detail-qty');
+    const b = qty && qty.querySelector('b');
+    if (!b) return;
+    let n = (parseInt(b.textContent, 10) || 0) + (btn.classList.contains('q-inc') ? 1 : -1);
+    n = Math.max(0, Math.min(99, n));
+    b.textContent = n;
+    qty.classList.toggle('has', n > 0);
     resetIdle();
 });
 
