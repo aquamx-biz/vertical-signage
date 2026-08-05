@@ -66,10 +66,18 @@ const [projects, boards, providers] = await Promise.all([
   q(`*[_type == "project" && !(_id in path("drafts.**"))]{ _id, "code": code.current, title }`),
   q(`*[_type == "unitBoard"]{ _id, mode, "code": project->code.current,
       "rows": lineup[]->{ refCode, bedType, sqm, floorZone, priceTHB } }`),
-  q(`*[_type == "provider" && name_en == "aquamx" && !(_id in path("drafts.**"))]{ _id }`),
+  // slug + status, NOT name_en: two provider docs carried name_en "aquamx" for
+  // months (one made by hand, one auto-created by a LINE login), so [0] picked
+  // whichever the index returned first and board offers landed on the wrong
+  // record. slug is unique by schema and the retired twin fails `status`.
+  q(`*[_type == "provider" && slug.current == "aquamx" && status == true && !(_id in path("drafts.**"))]{ _id }`),
 ])
+if (providers.length > 1) {
+  console.error(`มี provider slug "aquamx" ที่ status=true มากกว่าหนึ่งใบ (${providers.length}) — รวมให้เหลือใบเดียวก่อน`)
+  process.exit(1)
+}
 const providerId = providers[0]?._id
-if (!providerId) { console.error('ไม่พบ provider "aquamx"'); process.exit(1) }
+if (!providerId) { console.error('ไม่พบ provider slug "aquamx" ที่เปิดใช้งานอยู่'); process.exit(1) }
 
 // ต่อ (code, mode): draft ชนะ published (คือ lineup ล่าสุดที่ทีมกำลังคัด)
 const byKey = new Map()
