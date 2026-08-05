@@ -162,15 +162,15 @@ const MODE = DATA.mode === "sale" ? "sale" : "rent"
 /* ── i18n — หมุน ไทย → EN → 日本語 (ป้ายเท่านั้น ตัวเลข/ธงคงที่) ─────────── */
 const L = {
   th: { bedU: "ตรม.", beds: { STUDIO: "สตูดิโอ", "1BED": "1 ห้องนอน", "2BED": "2 ห้องนอน", "3BED": "3 ห้องนอน", "4BED+": "4 นอน+ เพนต์เฮาส์" },
-        zones: { LOW: "ชั้นล่าง", MID: "ชั้นกลาง", HIGH: "ชั้นสูง" },
+        zones: { LOW: "ชั้นล่าง", MID: "ชั้นกลาง", HIGH: "ชั้นสูง" }, floorWord: "ชั้น",
         chipRent: "ค่าเช่า/เดือน · ฿/MO", rentU: "฿/เดือน",
         chipSaleM: "ราคาขาย · ล้านบาท", chipSaleQ: "ราคาขาย · ฿/ตรม.", saleM: "ล้านบาท", saleQ: "฿/ตรม.", ind: "ไทย" },
   en: { bedU: "sqm", beds: { STUDIO: "Studio", "1BED": "1 Bedroom", "2BED": "2 Bedroom", "3BED": "3 Bedroom", "4BED+": "4 Bed+ Penthouse" },
-        zones: { LOW: "Low floor", MID: "Mid floor", HIGH: "High floor" },
+        zones: { LOW: "Low floor", MID: "Mid floor", HIGH: "High floor" }, floorWord: "Floor",
         chipRent: "Rent per month · ฿/MO", rentU: "฿/mo",
         chipSaleM: "Sale price · ฿ Million", chipSaleQ: "Sale price · ฿/sqm", saleM: "฿ Million", saleQ: "฿/sqm", ind: "EN" },
   ja: { bedU: "㎡", beds: { STUDIO: "ワンルーム", "1BED": "1LDK", "2BED": "2LDK", "3BED": "3LDK", "4BED+": "4LDK+ ペントハウス" },
-        zones: { LOW: "低層階", MID: "中層階", HIGH: "高層階" },
+        zones: { LOW: "低層階", MID: "中層階", HIGH: "高層階" }, floorWord: "",
         chipRent: "家賃/月 · ฿/MO", rentU: "฿/月",
         chipSaleM: "販売価格 · 百万฿", chipSaleQ: "販売価格 · ฿/㎡", saleM: "百万฿", saleQ: "฿/㎡", ind: "日本語" },
 }
@@ -237,7 +237,7 @@ function paint() {
     return `<div class="c">
       <span class="ic${multi ? " multi" : ""}">${iconFor(r.type)}</span>
       <span class="nm"><div class="t">${t.beds[r.type] || r.type} · ${r.sqm} ${t.bedU}</div>
-        <div class="s">${t.zones[r.floor] || ""} (${r.floor})</div></span>
+        <div class="s">${r.floorNo != null ? t.floorWord ? `${t.floorWord} ${r.floorNo}` : `${r.floorNo}階` : `${t.zones[r.floor] || ""} (${r.floor})`}</div></span>
       <span class="fl">${flags}</span>
       <span class="prw"><div class="pr">${pr}</div><div class="pru">${pru}</div></span>
     </div>`

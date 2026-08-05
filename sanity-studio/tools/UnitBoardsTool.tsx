@@ -147,7 +147,7 @@ const chipStyle = (bg: string, fg: string): React.CSSProperties => ({ display: '
 
 /** unitProfile → row ที่ board.html อ่าน — mirror ของ profileToRow/remarksFor
  *  ใน board-engine.mjs (KEEP IN SYNC) · ใช้กับปุ่ม Preview (#sim= hash) */
-function profileToRow(p: Profile) {
+function profileToRow(p: Profile & { floorActual?: number }) {
   const remarks: Array<{ text: string; tone: string }> = []
   if (p.dealTier) remarks.push({ text: p.dealTier.toUpperCase(), tone: 'green' })
   if (p.hotDeal) remarks.push({ text: 'HOT', tone: 'orange' })
@@ -157,6 +157,7 @@ function profileToRow(p: Profile) {
   return {
     type: BED_LABEL[p.bedType ?? ''] ?? String(p.bedType ?? '').toUpperCase(),
     sqm: p.sqm, floor: String(p.floorZone ?? '').toUpperCase(),
+    floorNo: p.floorActual ?? null,
     updated: p.lastCheckedAt, price: p.priceTHB, remarks: remarks.slice(0, 4),
   }
 }
@@ -383,12 +384,18 @@ export function UnitBoardsTool() {
   const BED_EN: Record<string, string> = { studio: 'Studio', '1bed': '1 Bedroom', '2bed': '2 Bedroom', '3bed': '3 Bedroom', '4bed': '4 Bed+' }
   const ZONE_TH: Record<string, string> = { low: 'ชั้นล่าง', mid: 'ชั้นกลาง', high: 'ชั้นสูง' }
   const ZONE_EN: Record<string, string> = { low: 'Low floor', mid: 'Mid floor', high: 'High floor' }
-  const toOrderItem = (p: Profile, m2: string) => ({
-    _key: p.refCode, refCode: p.refCode, maxQty: 1,
-    name_th: `${BED_TH[p.bedType ?? ''] ?? p.bedType} · ${p.sqm} ตรม. · ${ZONE_TH[p.floorZone ?? ''] ?? ''} (${(p.floorZone ?? '').toUpperCase()})`,
-    name_en: `${BED_EN[p.bedType ?? ''] ?? p.bedType} · ${p.sqm} sqm · ${ZONE_EN[p.floorZone ?? ''] ?? ''}`,
-    price: m2 === 'rent' ? `${((p.priceTHB ?? 0) / 1e3).toFixed(1)}K ฿/ด.` : `${((p.priceTHB ?? 0) / 1e6).toFixed(1)}M`,
-  })
+  /* ชั้นจริงมาก่อนโซน — โซนยุบ 24 ชั้นเหลือ 3 คำ ห้องคนละชั้นเลยอ่านเหมือนกัน */
+  const toOrderItem = (p: Profile, m2: string) => {
+    const f = sources.get(p.refCode)?.floorActual
+    const flTh = f != null ? `ชั้น ${f}` : `${ZONE_TH[p.floorZone ?? ''] ?? ''} (${(p.floorZone ?? '').toUpperCase()})`
+    const flEn = f != null ? `Floor ${f}` : (ZONE_EN[p.floorZone ?? ''] ?? '')
+    return {
+      _key: p.refCode, refCode: p.refCode, maxQty: 1,
+      name_th: `${BED_TH[p.bedType ?? ''] ?? p.bedType} · ${p.sqm} ตรม. · ${flTh}`,
+      name_en: `${BED_EN[p.bedType ?? ''] ?? p.bedType} · ${p.sqm} sqm · ${flEn}`,
+      price: m2 === 'rent' ? `${((p.priceTHB ?? 0) / 1e3).toFixed(1)}K ฿/ด.` : `${((p.priceTHB ?? 0) / 1e6).toFixed(1)}M`,
+    }
+  }
 
   async function save() {
     if (!projDoc) return
@@ -512,7 +519,7 @@ export function UnitBoardsTool() {
             <Button key={m2} text={label} mode="ghost" fontSize={1} disabled={!sim.rows.length}
               title="เห็นเหมือนบนจอจริง: บอร์ดการ์ดในกรอบ player (header/footer navy) ด้วย lineup ที่เห็นอยู่ตอนนี้ — ยังไม่ต้อง Save"
               onClick={() => {
-                const payload = { project: proj.toUpperCase(), mode: m2, dataAsOf: dataRound ?? undefined, rows: sim.rows.map(profileToRow) }
+                const payload = { project: proj.toUpperCase(), mode: m2, dataAsOf: dataRound ?? undefined, rows: sim.rows.map(p => profileToRow({ ...p, floorActual: sources.get(p.refCode)?.floorActual })) }
                 window.open(`/static/board-preview.html?tpl=cards#sim=${encodeURIComponent(JSON.stringify(payload))}`, '_blank')
               }} />
           ))}
@@ -520,7 +527,7 @@ export function UnitBoardsTool() {
             <Button key={'f' + m2} text={label} mode="bleed" fontSize={0} disabled={!sim.rows.length}
               title="บอร์ด split-flap (หน้ายืนเดี่ยว /board/) ในกรอบจอจริง"
               onClick={() => {
-                const payload = { project: proj.toUpperCase(), mode: m2, dataAsOf: dataRound ?? undefined, rows: sim.rows.map(profileToRow) }
+                const payload = { project: proj.toUpperCase(), mode: m2, dataAsOf: dataRound ?? undefined, rows: sim.rows.map(p => profileToRow({ ...p, floorActual: sources.get(p.refCode)?.floorActual })) }
                 window.open(`/static/board-preview.html?tpl=flap#sim=${encodeURIComponent(JSON.stringify(payload))}`, '_blank')
               }} />
           ))}

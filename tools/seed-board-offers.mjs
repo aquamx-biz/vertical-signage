@@ -21,8 +21,8 @@ const ONLY = argOf('--project')
 
 const TOKEN = process.env.SANITY_WRITE_TOKEN ?? process.env.SANITY_TOKEN
 const API = 'https://awjj9g8u.api.sanity.io/v2024-01-01'
-async function q(query) {   // raw (ไม่ใส่ perspective) — ต้องเห็น drafts ด้วย
-  const r = await fetch(`${API}/data/query/production?query=${encodeURIComponent(query)}`,
+async function q(query, dataset = 'production') {   // raw (ไม่ใส่ perspective) — ต้องเห็น drafts ด้วย
+  const r = await fetch(`${API}/data/query/${dataset}?query=${encodeURIComponent(query)}`,
     { headers: { Authorization: `Bearer ${TOKEN}` } })
   if (!r.ok) throw new Error(`query ${r.status}: ${await r.text()}`)
   return (await r.json()).result
@@ -42,16 +42,25 @@ const BED_TH = { studio: 'สตูดิโอ', '1bed': '1 ห้องนอ�
 const BED_EN = { studio: 'Studio', '1bed': '1 Bedroom', '2bed': '2 Bedroom', '3bed': '3 Bedroom', '4bed': '4 Bed+' }
 const ZONE_TH = { low: 'ชั้นล่าง', mid: 'ชั้นกลาง', high: 'ชั้นสูง' }
 const ZONE_EN = { low: 'Low floor', mid: 'Mid floor', high: 'High floor' }
+/* ชั้นจริงมาก่อนโซนเสมอ — โซนยุบ 24 ชั้นเหลือ 3 คำ ทำให้ห้องคนละชั้นอ่านเหมือนกัน
+   (ชั้น 17/21/22 กลายเป็น "ชั้นกลาง" หมด ลูกค้าและทีมแยกไม่ออกว่าห้องไหนเป็นห้องไหน) */
 export function profileToOrderItem(p, mode) {
+  const fl = p.floorActual != null
+    ? { th: `ชั้น ${p.floorActual}`, en: `Floor ${p.floorActual}` }
+    : { th: `${ZONE_TH[p.floorZone] ?? ''} (${(p.floorZone ?? '').toUpperCase()})`, en: ZONE_EN[p.floorZone] ?? '' }
   return {
     _key: p.refCode,
     refCode: p.refCode,
     maxQty: 1,
-    name_th: `${BED_TH[p.bedType] ?? p.bedType} · ${p.sqm} ตรม. · ${ZONE_TH[p.floorZone] ?? ''} (${(p.floorZone ?? '').toUpperCase()})`,
-    name_en: `${BED_EN[p.bedType] ?? p.bedType} · ${p.sqm} sqm · ${ZONE_EN[p.floorZone] ?? ''}`,
+    name_th: `${BED_TH[p.bedType] ?? p.bedType} · ${p.sqm} ตรม. · ${fl.th}`,
+    name_en: `${BED_EN[p.bedType] ?? p.bedType} · ${p.sqm} sqm · ${fl.en}`,
     price: mode === 'rent' ? `${(p.priceTHB / 1e3).toFixed(1)}K ฿/ด.` : `${(p.priceTHB / 1e6).toFixed(1)}M`,
   }
 }
+
+const floorRows = await q(`*[_type == "unitSource" && defined(floorActual)]{ refCode, floorActual }`, 'internal')
+  .catch(() => [])
+const FLOOR_BY_REF = new Map((floorRows ?? []).map(f => [f.refCode, f.floorActual]))
 
 const [projects, boards, providers] = await Promise.all([
   q(`*[_type == "project" && !(_id in path("drafts.**"))]{ _id, "code": code.current, title }`),
@@ -79,7 +88,7 @@ for (const [k, b] of byKey) {
   if (!proj) { console.log(`⚠ ${k}: ไม่พบ project doc`); continue }
   const rows = (b.rows ?? []).filter(r => r?.refCode && r.priceTHB != null)
   if (!rows.length) { console.log(`⚠ ${k}: unitBoard ไม่มี lineup — ข้าม (คัดใน Unit Boards แล้ว Save ก่อน)`); continue }
-  const orderItems = rows.map(r => profileToOrderItem(r, mode))
+  const orderItems = rows.map(r => profileToOrderItem({ ...r, floorActual: FLOOR_BY_REF.get(r.refCode) }, mode))
 
   const oid = `offer-board-${code}-${mode}`
   const existing = (await q(`*[_id in ["drafts.${oid}", "${oid}"]] | order(_id desc)[0]`)) ?? null

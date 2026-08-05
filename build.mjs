@@ -101,13 +101,23 @@ const UNIT_PROJECT_NAMES = {
 // the build (only refCodes are used).
 console.log('Fetching contact-verified refCodes from internal dataset…')
 let CONTACTABLE = new Set()
+// Real floor number per unit. floorZone buckets 24 storeys into LOW/MID/HIGH,
+// which made genuinely different units read identically on the board ("1 นอน ·
+// 56 ตรม. · ชั้นกลาง" was three units on floors 17, 21 and 22). The floor number
+// itself is public on every source listing — only the contact phone is private.
+let FLOOR_BY_REF = new Map()
 try {
   const refs = await sanityFetch(
     `*[_type == "unitSource" && defined(bestContact.phone) && bestContact.phone != ""].refCode`,
     'internal'
   )
   CONTACTABLE = new Set(refs ?? [])
-  console.log(`  ${CONTACTABLE.size} unit(s) have a verified contact`)
+  const floors = await sanityFetch(
+    `*[_type == "unitSource" && defined(floorActual)]{ refCode, floorActual }`,
+    'internal'
+  )
+  FLOOR_BY_REF = new Map((floors ?? []).map(f => [f.refCode, f.floorActual]))
+  console.log(`  ${CONTACTABLE.size} unit(s) have a verified contact · ${FLOOR_BY_REF.size} with a real floor`)
 } catch (e) {
   console.warn(`  ⚠  internal dataset unreachable (${e.message}) — boards fall back to manual rows`)
 }
@@ -474,8 +484,9 @@ for (const project of projects) {
     const contactable = (unitProfiles ?? []).filter(p => p.intent === mode && CONTACTABLE.has(p.refCode))
     const auto = selectWithPolicy(contactable, mode, b.policy ?? {})
     const source = lineup.length ? 'lineup' : auto.rows.length ? 'auto' : 'manual'
-    const rows = source === 'lineup' ? lineup.map(profileToRow)
-      : source === 'auto' ? auto.rows.map(profileToRow)
+    const withFloor = p => profileToRow({ ...p, floorActual: FLOOR_BY_REF.get(p.refCode) })
+    const rows = source === 'lineup' ? lineup.map(withFloor)
+      : source === 'auto' ? auto.rows.map(withFloor)
       : (b.rows ?? []).map(r => ({
           type:    r.unitType,
           sqm:     r.sizeSqm,

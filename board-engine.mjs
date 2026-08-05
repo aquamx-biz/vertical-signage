@@ -150,6 +150,11 @@ export function profileToRow(p) {
     type:    BED_LABEL[p.bedType] ?? String(p.bedType ?? '').toUpperCase(),
     sqm:     p.sqm,
     floor:   String(p.floorZone ?? '').toUpperCase(),
+    // Real storey when we have it (internal dataset). The zone above still
+    // drives the split-flap level bars; the card board prints this instead,
+    // because "ชั้น 21" tells a passer-by more than "ชั้นกลาง" — and it stops
+    // three different units from rendering as the same line.
+    floorNo: p.floorActual ?? null,
     updated: p.lastCheckedAt,
     price:   p.priceTHB,
     remarks: remarksFor(p),
