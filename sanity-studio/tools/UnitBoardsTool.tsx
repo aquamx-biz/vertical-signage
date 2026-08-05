@@ -247,6 +247,9 @@ export function UnitBoardsTool() {
   const [saving, setSaving] = useState(false)
   const [colF, setColF] = useState<Record<string, Set<string>>>({})   // Excel filters รายคอลัมน์
   const [openF, setOpenF] = useState<string | null>(null)
+  // ช่องค้นในแผงตัวกรอง — เก็บไว้ที่นี่เพราะ FilterHead ถูกสร้างใหม่ทุก render
+  // ถ้าเก็บ state ไว้ข้างใน มันจะโดนรีเซ็ตทุกครั้งที่ตารางวาดใหม่ · เปิดได้ทีละแผงจึงใช้ตัวเดียวพอ
+  const [fq, setFq] = useState('')
 
   useEffect(() => {
     let dead = false
@@ -333,31 +336,44 @@ export function UnitBoardsTool() {
     return [...seen.values()]
   }, [sources, agentCanon])
 
-  /* ── Excel filters (Type / Zone / Posted by / Status) — ค่าเริ่มต้น = ติ๊กครบทุกค่า ── */
-  /* สามค่า ไม่ใช่สอง: ห้องที่มีทั้งประกาศเจ้าของและประกาศ agent เคยถูกตีเป็น "Owner" เฉย ๆ
-     พอกรอง Agent มันหายไปทั้งที่มี agent อยู่จริง — ใน Noble BE19 หายทีเดียว 57 จาก 234 ห้อง */
-  const postedOf = (u: Unit) => {
-    const src = sources.get(u.refCode)
-    const owner = u.rent?.postedByOwner || u.sale?.postedByOwner || (src?.listings ?? []).some(l => l.posterType === 'owner')
-    const hasAgent = agentsOf(u.refCode).length > 0
-    return owner && hasAgent ? 'Owner + Agent' : owner ? 'Owner' : hasAgent ? 'Agent' : '—'
-  }
+  /* ── Excel filters (Type / Zone / Posted by / Status) — ค่าเริ่มต้น = ติ๊กครบทุกค่า ──
+     หนึ่งแถวให้ได้ "หลายค่า" ตามไฟล์เดิม (_units-all.html · FCOLS บรรทัด 61408):
+     Posted by คืน 🏠 Owner + ชื่อ agent ทีละเจ้า ไม่ใช่ป้ายรวมว่า "Agent" — คนถึงจะ
+     ติ๊กดูเฉพาะ PropertyScout หรือเอา PropertyScout ออกได้ · แถวผ่านถ้าค่าใดค่าหนึ่งถูกติ๊ก */
   const statusesOf = (u: Unit) => [u.rent?.status, u.sale?.status].filter(Boolean) as string[]
-  const fval = (fk: string, u: Unit) =>
-    fk === 'type' ? (BED_LABEL[u.bed ?? ''] ?? u.bed ?? '—') :
-    fk === 'zone' ? (u.zone ?? '—') :
-    fk === 'posted' ? postedOf(u) : ''
-  const distinctVals = (fk: string) => fk === 'status'
-    ? [...new Set(units.flatMap(statusesOf))].sort()
-    : [...new Set(units.map(u => fval(fk, u)))].sort()
-  const passF = (u: Unit) => Object.entries(colF).every(([fk, set]) =>
-    fk === 'status' ? statusesOf(u).some(s2 => set.has(s2)) : set.has(fval(fk, u)))
+  const fvals = (fk: string, u: Unit): string[] => {
+    if (fk === 'type') return [BED_LABEL[u.bed ?? ''] ?? u.bed ?? '—']
+    if (fk === 'zone') return [u.zone ?? '—']
+    if (fk === 'status') return statusesOf(u)
+    if (fk === 'posted') {
+      const src = sources.get(u.refCode)
+      const out: string[] = []
+      if (u.rent?.postedByOwner || u.sale?.postedByOwner || (src?.listings ?? []).some(l => l.posterType === 'owner'))
+        out.push('🏠 Owner')
+      agentsOf(u.refCode).filter(cleanAgent).forEach(a => out.push(a))
+      return out.length ? out : ['(ไม่ระบุ)']
+    }
+    return []
+  }
+  /* เรียงตามจำนวนมากไปน้อยเหมือนไฟล์เดิม — เรียงตามตัวอักษรแล้วรายใหญ่จมกลางลิสต์ 80+ ชื่อ */
+  const valCounts = (fk: string) => {
+    const c = new Map<string, number>()
+    units.forEach(u => fvals(fk, u).forEach(v => c.set(v, (c.get(v) ?? 0) + 1)))
+    return [...c.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'th'))
+  }
+  const distinctVals = (fk: string) => valCounts(fk).map(([v]) => v)
+  const passF = (u: Unit) => Object.entries(colF).every(([fk, set]) => fvals(fk, u).some(v => set.has(v)))
   const toggleF = (fk: string, v: string) => {
     const all = distinctVals(fk)
     const cur = colF[fk] ? new Set(colF[fk]) : new Set(all)
     cur.has(v) ? cur.delete(v) : cur.add(v)
     const n = { ...colF }
     if (cur.size === all.length) delete n[fk]; else n[fk] = cur
+    setColF(n)
+  }
+  const setAllF = (fk: string, on: boolean) => {
+    const n = { ...colF }
+    if (on) delete n[fk]; else n[fk] = new Set<string>()
     setColF(n)
   }
 
@@ -394,6 +410,19 @@ export function UnitBoardsTool() {
           case 'spread': return Math.max(u.rent?.spreadPct ?? -1, u.sale?.spreadPct ?? -1)
           case 'upd': return u.rent?.lastCheckedAt ?? u.sale?.lastCheckedAt ?? ''
           case 'fl': return sources.get(u.refCode)?.floorActual ?? -1
+          /* ธงเปิด/ปิด — เรียงให้ห้องที่ติดธงขึ้นก่อน แล้วแพ้ชนะกันด้วยตัวเลขชุดเดียวกับที่
+             bucket ของ engine ใช้จัดอันดับ (HOT=จำนวนประกาศแข่ง · NEGO=spread · INVEST=yield) */
+          case 'hotr': return u.rent?.hotDeal ? -(u.rent.nListings ?? 0) : 1e6
+          case 'hots': return u.sale?.hotDeal ? -(u.sale.nListings ?? 0) : 1e6
+          case 'inv': return (u.rent?.goodInvest || u.sale?.goodInvest)
+            ? -(u.rent?.yieldPct ?? u.sale?.yieldPct ?? 0) : 1e6
+          case 'nego': return (u.rent?.negotiable || u.sale?.negotiable)
+            ? -Math.max(u.rent?.spreadPct ?? 0, u.sale?.spreadPct ?? 0) : 1e6
+          case 'board': return -((onR.has(u.refCode) ? 1 : 0) + (onS.has(u.refCode) ? 1 : 0))
+          case 'type': return BED_ORDER.indexOf(u.bed ?? '')
+          case 'zone': return ['low', 'mid', 'high'].indexOf(u.zone ?? '')
+          case 'posted': return agentsOf(u.refCode).filter(cleanAgent)[0] ?? 'zzz'
+          case 'status': return statusesOf(u).join(' ')
           default: return u.refCode
         }
       }
@@ -524,25 +553,47 @@ export function UnitBoardsTool() {
   const H = (label: string, key?: string, title?: string) => (
     <th style={th} title={title} onClick={() => key && setSort(s => ({ k: key, d: s.k === key ? -s.d : 1 }))}>{label}{key ? ' ↕' : ''}</th>
   )
-  /* หัวคอลัมน์แบบมี Excel filter — ▾ เปิดแผงติ๊กเลือกค่า */
-  const FilterHead = ({ label, fk, style, title }: { label: string; fk: string; style?: React.CSSProperties; title?: string }) => (
-    <th style={style ?? th} title={title}>
-      <span onClick={() => setOpenF(openF === fk ? null : fk)} style={{ cursor: 'pointer' }}>
-        {label} <span style={{ color: colF[fk] ? '#ffd28a' : undefined }}>{colF[fk] ? '▼' : '▾'}</span>
-      </span>
-      {openF === fk && (
-        <div style={{ position: 'absolute', top: '100%', left: 0, background: '#fff', color: '#14213A', border: '1px solid #d1d5db', borderRadius: 8, padding: 8, zIndex: 30, minWidth: 140, boxShadow: '0 10px 24px rgba(0,0,0,0.18)', textTransform: 'none', fontWeight: 400, cursor: 'default' }}>
-          {distinctVals(fk).map(v => (
-            <label key={v} style={{ display: 'flex', gap: 6, alignItems: 'center', fontSize: 12.5, padding: '2px 0', cursor: 'pointer' }}>
-              <input type="checkbox" checked={colF[fk] ? colF[fk].has(v) : true} onChange={() => toggleF(fk, v)} /> {v}
-            </label>
-          ))}
-          <div onClick={() => { const n = { ...colF }; delete n[fk]; setColF(n) }}
-            style={{ fontSize: 11.5, color: '#0f3460', cursor: 'pointer', marginTop: 6, fontWeight: 700 }}>ล้างตัวกรอง (ติ๊กครบ)</div>
+  /* หัวคอลัมน์แบบมี Excel filter — ▾ เปิดแผงติ๊กเลือกค่า
+     ครบตามแผงของไฟล์เดิม: ช่องพิมพ์ค้นในลิสต์ · Select all / Clear · เลขจำนวนต่อท้ายทุกค่า ·
+     เรียงตามจำนวนมากไปน้อย (Posted by มี 80+ ชื่อ ถ้าไม่มีสามอย่างนี้คือใช้งานไม่ได้จริง) */
+  const linkS: React.CSSProperties = { fontSize: 11.5, color: '#0f3460', cursor: 'pointer', fontWeight: 700 }
+  /* คลิกที่ชื่อคอลัมน์ = เรียง · คลิกที่ ▾ = เปิดแผงกรอง (แยกเป้าคลิกแบบไฟล์เดิม
+     ที่ th ทั้งใบเรียงได้ ส่วน .cf หยุด propagation ไว้เอง) */
+  const FilterHead = ({ label, fk, style, title, sk }: { label: string; fk: string; style?: React.CSSProperties; title?: string; sk?: string }) => {
+    const caret = (
+      <span onClick={e => { e.stopPropagation(); setOpenF(openF === fk ? null : fk); setFq('') }}
+        style={{ cursor: 'pointer', color: colF[fk] ? '#ffd28a' : undefined, marginLeft: 4 }}>{colF[fk] ? '▼' : '▾'}</span>
+    )
+    const onSort = () => sk && setSort(s => ({ k: sk, d: s.k === sk ? -s.d : 1 }))
+    if (openF !== fk) return (
+      <th style={style ?? th} title={title} onClick={onSort}>{label}{sk ? ' ↕' : ''}{caret}</th>
+    )
+    const t = fq.trim().toUpperCase()
+    const rows = valCounts(fk).filter(([v]) => !t || v.toUpperCase().includes(t))
+    return (
+      <th style={style ?? th} title={title} onClick={onSort}>
+        {label}{sk ? ' ↕' : ''}{caret}
+        <div onClick={e => e.stopPropagation()} style={{ position: 'absolute', top: '100%', left: 0, background: '#fff', color: '#14213A', border: '1px solid #d1d5db', borderRadius: 8, padding: 8, zIndex: 30, minWidth: 240, boxShadow: '0 10px 24px rgba(0,0,0,0.18)', textTransform: 'none', fontWeight: 400, cursor: 'default' }}>
+          <input value={fq} onChange={e => setFq(e.currentTarget.value)} placeholder="พิมพ์กรองรายชื่อ..." autoFocus
+            style={{ width: '100%', boxSizing: 'border-box', fontSize: 12.5, padding: '4px 6px', border: '1px solid #d1d5db', borderRadius: 5, marginBottom: 6 }} />
+          <div style={{ display: 'flex', gap: 10, marginBottom: 4 }}>
+            <span style={linkS} onClick={() => setAllF(fk, true)}>Select all</span>
+            <span style={linkS} onClick={() => setAllF(fk, false)}>Clear</span>
+          </div>
+          <div style={{ maxHeight: 260, overflowY: 'auto' }}>
+            {rows.map(([v, c]) => (
+              <label key={v} style={{ display: 'flex', gap: 6, alignItems: 'center', fontSize: 12.5, padding: '2px 0', cursor: 'pointer' }}>
+                <input type="checkbox" checked={colF[fk] ? colF[fk].has(v) : true} onChange={() => toggleF(fk, v)} />
+                <span title={v} style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{v}</span>
+                <span style={{ color: '#9aa3b2', fontSize: 11 }}>{c}</span>
+              </label>
+            ))}
+            {!rows.length && <div style={{ fontSize: 12, color: '#9aa3b2', padding: '4px 0' }}>ไม่พบชื่อที่ตรง</div>}
+          </div>
         </div>
-      )}
-    </th>
-  )
+      </th>
+    )
+  }
 
   return (
     <Flex direction="column" padding={4} gap={4} style={{ height: '100%', minHeight: 0 }}>
@@ -625,26 +676,30 @@ export function UnitBoardsTool() {
             <thead><tr>
               <th style={thFz(0)} title="ลำดับตามการเรียง/กรองปัจจุบัน">#</th>
               <th style={thFz(1)} title="รหัสห้องอ้างอิงภายใน" onClick={() => setSort(s => ({ k: 'ref', d: s.k === 'ref' ? -s.d : 1 }))}>Ref ↕</th>
-              <FilterHead label="Type" fk="type" style={thFz(2)} title="ประเภทห้อง — กด ▾ กรองได้" />
+              <FilterHead label="Type" fk="type" sk="type" style={thFz(2)} title="ประเภทห้อง — กดชื่อคอลัมน์เพื่อเรียง กด ▾ กรองได้" />
               <th style={thFz(3)} title="ขนาดห้อง (ตร.ม.)" onClick={() => setSort(s => ({ k: 'sqm', d: s.k === 'sqm' ? -s.d : 1 }))}>SQM ↕</th>
-              <FilterHead label="Zone" fk="zone" style={thFz(4)} title="โซนชั้น แบ่งจากช่วงชั้นของตึก — กด ▾ กรองได้" />
+              <FilterHead label="Zone" fk="zone" sk="zone" style={thFz(4)} title="โซนชั้น แบ่งจากช่วงชั้นของตึก — กดชื่อคอลัมน์เพื่อเรียง กด ▾ กรองได้" />
               <th style={thFz(5)} title="ชั้นจริง (internal dataset)" onClick={() => setSort(s => ({ k: 'fl', d: s.k === 'fl' ? -s.d : 1 }))}>Floor ↕</th>
               {H('Rent (K)', 'rent', 'ค่าเช่า/เดือน ต่ำสุดที่พบข้ามพอร์ทัล')}
               {H('฿/SQM', 'rpsqm', 'ค่าเช่าต่อตร.ม./เดือน')}
               {H('vs Floor', 'vsr', 'เทียบค่าเฉลี่ย ฿/ตรม. ของชั้นเดียวกัน — ติดลบ = ถูกกว่าชั้น')}
               {H('Rent Deal', 'rdeal', 'ธงดีลฝั่งเช่า (ชี้ที่ธงดูเหตุผล+ตัวเลข) — เรียงจากดีลแรงสุด: SUPER → BEST → GOOD → ไม่มีธง')}
               {H('Select R', undefined, 'เลือกมือขึ้นบอร์ดเช่า — นับรวมใน quota')}
+              {H('Hot', 'hotr', 'HOT = agent ≥2 รายแข่งปล่อยห้องนี้')}
               {H('Sale (M)', 'sale', 'ราคาขายต่ำสุดที่พบข้ามพอร์ทัล')}
               {H('฿/SQM', 'spsqm', 'ราคาขายต่อตร.ม.')}
               {H('vs Floor', 'vss', 'เทียบค่าเฉลี่ย ฿/ตรม. ของชั้นเดียวกัน — ติดลบ = ถูกกว่าชั้น')}
               {H('Sale Deal', 'sdeal', 'ธงดีลฝั่งขาย (ชี้ที่ธงดูเหตุผล+ตัวเลข) — เรียงจากดีลแรงสุด: SUPER → BEST → GOOD → ไม่มีธง')}
               {H('Select S', undefined, 'เลือกมือขึ้นบอร์ดขาย — นับรวมใน quota')}
+              {H('Hot', 'hots', 'HOT = agent ≥2 รายแข่งขายห้องนี้')}
+              {H('Invest', 'inv', 'INVESTABLE = มีทั้งเช่าและขาย และ yield สูงกว่าค่าเฉลี่ยตึก')}
               {H('Yield', 'yield', 'ค่าเช่าทั้งปี ÷ ราคาขาย (%) — เฉพาะห้อง dual')}
+              {H('Nego', 'nego', 'NEGO = ลงประกาศ ≥3 พอร์ทัล และราคาต่างกัน ≥5% — มีช่องต่อรอง')}
               {H('Spread', 'spread', 'ช่วงราคาข้ามพอร์ทัล (สูงสุด−ต่ำสุด)/ต่ำสุด — กว้าง = ต่อรองได้')}
               {H('Update', 'upd', 'รอบข้อมูลล่าสุดที่ยังพบห้องนี้ในตลาด')}
-              <FilterHead label="Posted by" fk="posted" title="เจ้าของโพสต์เอง หรือผ่าน agent — กด ▾ กรองได้" />
-              <FilterHead label="Status" fk="status" title="สถานะ cleansing ของทีม (แยกฝั่งเช่า/ขาย) — กด ▾ กรองได้" />
-              {H('Board', undefined, 'ติด lineup ปัจจุบัน + เหตุผลที่ถูกคัด (SELECT/BED/ธง/FILL)')}
+              <FilterHead label="Posted by" fk="posted" sk="posted" title="ใครลงประกาศ — 🏠 Owner = เจ้าของโพสต์เอง (ไม่มีชื่อ agent โดยนิยาม) · ชื่อ = agent/agency ที่โพสต์ — กดชื่อคอลัมน์เพื่อเรียง กด ▾ ติ๊กเลือก/เอาออกรายเจ้าได้" />
+              <FilterHead label="Status" fk="status" sk="status" title="สถานะ cleansing ของทีม (แยกฝั่งเช่า/ขาย) — กดชื่อคอลัมน์เพื่อเรียง กด ▾ กรองได้" />
+              {H('Board', 'board', 'ติด lineup ปัจจุบัน + เหตุผลที่ถูกคัด (SELECT/BED/ธง/FILL)')}
               {H('Sources', undefined, 'ลิงก์ประกาศต้นทางทุกพอร์ทัล')}
             </tr></thead>
             <tbody>
@@ -672,6 +727,8 @@ export function UnitBoardsTool() {
                     <td style={td}>{u.rent && <Checkbox checked={selR.has(u.refCode)} onChange={() => {
                       const s = new Set(selR); s.has(u.refCode) ? s.delete(u.refCode) : s.add(u.refCode); setSelR(s)
                     }} />}</td>
+                    <td style={td}>{u.rent?.hotDeal
+                      ? <span style={chipStyle('#ffedd5', '#c2410c')} title={`มี ${u.rent.nListings ?? 0} ประกาศแข่งปล่อยห้องนี้`}>HOT</span> : ''}</td>
                     <td style={num}>{fmtM(u.sale?.priceTHB)}<PriceMove p={u.sale} /></td>
                     <td style={num}>{u.sale?.pricePerSqm != null ? u.sale.pricePerSqm.toLocaleString('en-US') : '—'}</td>
                     <td style={{ ...num, color: (u.sale?.vsFloorPct ?? 0) < 0 ? '#166534' : '#9aa3b2', fontWeight: (u.sale?.vsFloorPct ?? 0) < 0 ? 700 : 400 }}>
@@ -680,7 +737,13 @@ export function UnitBoardsTool() {
                     <td style={td}>{u.sale && <Checkbox checked={selS.has(u.refCode)} onChange={() => {
                       const s = new Set(selS); s.has(u.refCode) ? s.delete(u.refCode) : s.add(u.refCode); setSelS(s)
                     }} />}</td>
+                    <td style={td}>{u.sale?.hotDeal
+                      ? <span style={chipStyle('#ffedd5', '#c2410c')} title={`มี ${u.sale.nListings ?? 0} ประกาศแข่งขายห้องนี้`}>HOT</span> : ''}</td>
+                    <td style={td}>{(u.rent?.goodInvest || u.sale?.goodInvest)
+                      ? <span style={chipStyle('#d1f2dd', '#166534')} title="มีทั้งเช่าและขาย และ yield สูงกว่าค่าเฉลี่ยตึก">INVEST</span> : ''}</td>
                     <td style={{ ...num, color: (y ?? 0) >= 5 ? '#166534' : undefined, fontWeight: (y ?? 0) >= 5 ? 700 : 400 }}>{y != null ? y.toFixed(1) + '%' : '—'}</td>
+                    <td style={td}>{(u.rent?.negotiable || u.sale?.negotiable)
+                      ? <span style={chipStyle('#f3f4f6', '#374151')} title="ลงหลายพอร์ทัลและราคาต่างกัน ≥5% — มีช่องต่อรอง">NEGO</span> : ''}</td>
                     <td style={num}>{(() => { const sp = Math.max(u.rent?.spreadPct ?? -1, u.sale?.spreadPct ?? -1); return sp >= 0 ? sp + '%' : '—' })()}</td>
                     <td style={{ ...td, fontSize: 12 }}>{(u.rent?.lastCheckedAt ?? u.sale?.lastCheckedAt ?? '—').slice(5)}</td>
                     <td style={{ ...td, whiteSpace: 'normal', maxWidth: 180 }}>
