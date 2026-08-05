@@ -68,7 +68,15 @@ const FILES = {
     'fw-cards-1785239136793.json', 'mh-fw.json'],
   'Mahogany': ['mh-cards.json'],
 }
+/* ">3 นอน = 4bed (4 Bed+/Penthouse)" คือกติกาที่ตกลงกันไว้ แต่ "มากกว่า 3" ต้องเป็นเลข
+   ห้องนอนจริง ๆ ก่อน — พอร์ทัลบางใบส่งขยะมาเป็นเลขห้องนอน (8882, 9991, 7901 บนห้อง
+   33–56 ตร.ม. ที่ประกาศบอกเองว่า 1–2 นอน) ถ้าปล่อยผ่าน ทุกใบจะกลายเป็น 4bed เงียบ ๆ
+   แล้วห้องเล็กจะไปโผล่ในโควตา 4BED+ ของบอร์ด · เกิน 8 นอนถือว่าอ่านผิด ทิ้งการ์ดทิ้ง
+   (เดาไม่ได้ว่ากี่นอน และ bedType เป็นส่วนหนึ่งของ fingerprint จะเดาแล้วยุบห้องผิด) */
+const BED_MAX = 8
 const BED = n => n === 0 ? 'studio' : n === 1 ? '1bed' : n === 2 ? '2bed' : n === 3 ? '3bed' : '4bed'
+const bedOk = n => Number.isFinite(n) && n >= 0 && n <= BED_MAX
+const BED_JUNK = []
 const cards = []
 const seenUrls = new Set()   // ไฟล์บางชุดทับซ้อนกัน — URL เดียวนับครั้งเดียว
 
@@ -80,6 +88,7 @@ if (ROUND_FILE) {
   for (const r of rows) {
     if (!r.building || !['rent', 'sale'].includes(r.intent)) continue
     if (r.price == null || r.sqm == null || r.bed == null || r.floor == null) continue
+    if (!bedOk(+r.bed)) { BED_JUNK.push(`${r.building} · bed=${r.bed} · ${r.url ?? ''}`); continue }
     const floor = parseInt(r.floor); if (!Number.isFinite(floor)) continue
     if (r.url) { if (seenUrls.has(r.url)) continue; seenUrls.add(r.url) }
     if (!passesSanity({ bedType: BED(+r.bed), sqm: +r.sqm, priceTHB: +r.price }, r.intent)) continue
@@ -100,6 +109,7 @@ if (!ROUND_FILE) for (const [portal, files] of Object.entries(FILES)) {
       const building = r.building ?? (fn.includes('39bs') ? '39 by Sansiri' : fn.includes('mh-') ? 'Mahogany Tower' : null)
       if (!building || !['rent', 'sale'].includes(r.intent)) continue
       if (r.price == null || r.sqm == null || r.bed == null || r.floor == null) continue
+      if (!bedOk(+r.bed)) { BED_JUNK.push(`${building} · bed=${r.bed} · ${r.url ?? ''}`); continue }
       const floor = parseInt(r.floor); if (!Number.isFinite(floor)) continue
       if (r.url) { if (seenUrls.has(r.url)) continue; seenUrls.add(r.url) }
       // กรองขยะ scraper ด้วยเกณฑ์เดียวกับ board-engine (sqm/ราคา/฿ต่อตรม.)
@@ -119,6 +129,11 @@ console.log(`round ${ROUND} · cards ${cards.length} listings จาก ${CARDS_
 if (!cards.length) { console.error('ไม่พบ card files — เช็ค --dir'); process.exit(1) }
 
 const ROUND_WARNINGS = []   // เตือนที่เกิดก่อนขั้นจับคู่ห้อง — ไหลลงใบสรุปรอบ (scrapeRound)
+if (BED_JUNK.length) {
+  console.warn(`⚠ ทิ้ง ${BED_JUNK.length} การ์ดที่เลขห้องนอนเกิน ${BED_MAX} (อ่านผิดแน่ ๆ):`)
+  BED_JUNK.slice(0, 8).forEach(x => console.warn(`    ${x}`))
+  ROUND_WARNINGS.push(`ทิ้ง ${BED_JUNK.length} การ์ดที่เลขห้องนอนเกิน ${BED_MAX}`)
+}
 /* ── ยามชั้นกองค่าเดียว ────────────────────────────────────────────────────
    2026-08-05: รอบเก็บของ FazWaz หยิบเลขชั้นจากบล็อกสิ่งอำนวยความสะดวก (ชั้นสระ)
    แทนช่อง Floor ของห้อง ทุกห้องในตึกเดียวกันจึงได้เลขเดียวกันทั้งชุด — The Lumpini 24

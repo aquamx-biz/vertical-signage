@@ -22,7 +22,10 @@ export const BED_ORDER = ['studio', '1bed', '2bed', '3bed', '4bed']
 const BED_LABEL  = { studio: 'STUDIO', '1bed': '1BED', '2bed': '2BED', '3bed': '3BED', '4bed': '4BED+' }
 // 3bed stays a wide catch-all until the scrape pipeline starts emitting '4bed'
 // (existing penthouses are tagged 3bed — HQ-U260 is a real 470sqm unit).
-const SQM_BOUNDS = { studio: [20, 50], '1bed': [25, 80], '2bed': [45, 150], '3bed': [80, 500], '4bed': [120, 700] }
+/* 4bed เริ่มที่ 100 ไม่ใช่ 120 — ห้อง "combine" ที่ทุบรวมสองยูนิตมีจริงและอยู่ต่ำกว่า 120
+   (P24-U893/894 ขนาด 108.68 ตร.ม. ลงประกาศว่า 4 นอน 3 น้ำ ตรงกันสองพอร์ทัล) เกณฑ์เดิม
+   ตัดทิ้งทั้งที่ข้อมูลถูก — สำเนาใน sanity-studio/tools/UnitBoardsTool.tsx KEEP IN SYNC */
+const SQM_BOUNDS = { studio: [20, 50], '1bed': [25, 80], '2bed': [45, 150], '3bed': [80, 500], '4bed': [100, 700] }
 const PRICE_BOUNDS = { rent: [5000, 300000], sale: [1000000, 100000000] }
 // ฿/sqm bounds catch mis-parsed prices that total-price bounds miss
 // (a real row: 1bed 33sqm at ฿69,000,001 = ฿2.09M/sqm — scraper garbage)

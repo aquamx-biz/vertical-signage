@@ -22,7 +22,8 @@ import { Badge, Box, Button, Card, Checkbox, Flex, Inline, Spinner, Stack, Text,
 //    import ข้ามรากโปรเจกต์ไม่ได้ จึงคัดลอกแกน logic มาโดยตรง) ──────────────
 const BED_ORDER = ['studio', '1bed', '2bed', '3bed', '4bed']
 const BED_LABEL: Record<string, string> = { studio: 'STUDIO', '1bed': '1BED', '2bed': '2BED', '3bed': '3BED', '4bed': '4BED+' }
-const SQM_BOUNDS: Record<string, [number, number]> = { studio: [20, 50], '1bed': [25, 80], '2bed': [45, 150], '3bed': [80, 500], '4bed': [120, 700] }
+/* 4bed เริ่มที่ 100 — ห้อง combine ที่ทุบรวมสองยูนิตอยู่ต่ำกว่า 120 จริง (ดู board-engine.mjs) */
+const SQM_BOUNDS: Record<string, [number, number]> = { studio: [20, 50], '1bed': [25, 80], '2bed': [45, 150], '3bed': [80, 500], '4bed': [100, 700] }
 const PRICE_BOUNDS: Record<string, [number, number]> = { rent: [5000, 300000], sale: [1000000, 100000000] }
 const PSQM_BOUNDS: Record<string, [number, number]> = { rent: [250, 3500], sale: [50000, 600000] }
 const TIER_RANK: Record<string, number> = { super: 0, best: 1, good: 2 }
