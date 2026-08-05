@@ -111,8 +111,11 @@ for (const [k, b] of byKey) {
       scope: 'project',
       projects: [{ _type: 'reference', _ref: proj._id, _key: 'p0' }],
       displayLang: 'th',
-      title_th: mode === 'rent' ? `ห้องว่างให้เช่า — ${proj.title}` : `ห้องขายราคาพิเศษ — ${proj.title}`,
-      title_en: mode === 'rent' ? `Units for rent — ${proj.title}` : `Units for sale — ${proj.title}`,
+      /* ตั้งชื่อตามที่ทีมแก้ไว้จริงกับ 39 by Sansiri ไม่ใช่ชื่อที่สคริปต์เคยเดา —
+         title_th เป็น "For Rent/For Sale" เพราะบนจอมันอยู่คู่ชิปหมวดที่เป็นอังกฤษ
+         (ของเดิมสคริปต์ตั้ง "ห้องว่างให้เช่า"/"ห้องขายราคาพิเศษ" แล้วทีมพิมพ์ทับทุกครั้ง) */
+      title_th: mode === 'rent' ? `For Rent — ${proj.title}` : `For Sale — ${proj.title}`,
+      title_en: mode === 'rent' ? `Units for rent — ${proj.title}` : `Selected units for sale — ${proj.title}`,
       slug: { _type: 'slug', current: oid },
       category: mode === 'rent' ? 'forRent' : 'forSale',
       subCategories: ['good-deal'],

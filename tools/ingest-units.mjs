@@ -118,6 +118,36 @@ if (!ROUND_FILE) for (const [portal, files] of Object.entries(FILES)) {
 console.log(`round ${ROUND} · cards ${cards.length} listings จาก ${CARDS_DIR}`)
 if (!cards.length) { console.error('ไม่พบ card files — เช็ค --dir'); process.exit(1) }
 
+const ROUND_WARNINGS = []   // เตือนที่เกิดก่อนขั้นจับคู่ห้อง — ไหลลงใบสรุปรอบ (scrapeRound)
+/* ── ยามชั้นกองค่าเดียว ────────────────────────────────────────────────────
+   2026-08-05: รอบเก็บของ FazWaz หยิบเลขชั้นจากบล็อกสิ่งอำนวยความสะดวก (ชั้นสระ)
+   แทนช่อง Floor ของห้อง ทุกห้องในตึกเดียวกันจึงได้เลขเดียวกันทั้งชุด — The Lumpini 24
+   ได้ 41 ทั้ง 285 การ์ด, Noble BE19 ได้ 44 ทั้ง 139 การ์ด และไม่มีอะไรร้อง จนคนไปเห็นเอง
+   บนบอร์ด · ชั้นยังเป็นส่วนหนึ่งของ fingerprint ที่ใช้จับคู่ห้อง ค่าที่กองจึงลามไปยุบห้อง
+   คนละห้องเข้าด้วยกันได้ด้วย ต้องดักตั้งแต่ก่อนแตะข้อมูล ไม่ใช่ตอนขึ้นจอ */
+{
+  const g = {}
+  for (const c of cards) {
+    if (c.floor == null) continue
+    const k = `${c.building}·${c.portal}`
+    ;(g[k] ??= new Map()).set(c.floor, ((g[k].get(c.floor)) ?? 0) + 1)
+  }
+  const poisoned = new Set()
+  for (const [k, m] of Object.entries(g)) {
+    const n = [...m.values()].reduce((a, b) => a + b, 0)
+    if (n >= 5 && m.size === 1) {
+      poisoned.add(k)
+      console.warn(`⚠ ${k}: ${n} การ์ดได้ชั้น ${[...m.keys()][0]} เท่ากันหมด — ค่านี้คือชั้นของตึก/สิ่งอำนวยความสะดวก ไม่ใช่ของห้อง · ทิ้งชั้นของชุดนี้`)
+    }
+  }
+  if (poisoned.size) {
+    let n = 0
+    for (const c of cards) if (poisoned.has(`${c.building}·${c.portal}`)) { c.floor = null; n++ }
+    console.warn(`⚠ ล้างชั้นทิ้ง ${n} การ์ดจาก ${poisoned.size} ชุด — ห้องที่ไม่มีพอร์ทัลอื่นจะแสดงเป็นโซนแทนเลขชั้น`)
+    ROUND_WARNINGS.push(...[...poisoned].map(k => `ชั้นกองค่าเดียวจาก ${k} — ทิ้งค่าชั้นของชุดนี้`))
+  }
+}
+
 // ── 2. โหลดสถานะปัจจุบันจาก Sanity ──────────────────────────────────────────
 const [profiles, sources] = await Promise.all([
   q(`*[_type == "unitProfile"]{ _id, refCode, intent, projectName, bedType, sqm, priceTHB, status,
@@ -230,7 +260,7 @@ unitRows.forEach(u => {
 const seenKeys = new Set()   // refCode·intent ที่พบรอบนี้
 const stats = { newUnits: 0, priceChanges: 0, unchanged: 0, expired: 0, matched: 0, newRefs: [] }
 const prodMut = [], intMut = []
-const warnings = []
+const warnings = [...ROUND_WARNINGS]
 
 for (const u of unitRows) {
   let ref = matchRef(u)
