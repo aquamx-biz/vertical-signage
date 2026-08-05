@@ -76,7 +76,45 @@ const FILES = {
 const BED_MAX = 8
 const BED = n => n === 0 ? 'studio' : n === 1 ? '1bed' : n === 2 ? '2bed' : n === 3 ? '3bed' : '4bed'
 const bedOk = n => Number.isFinite(n) && n >= 0 && n <= BED_MAX
-const BED_JUNK = []
+const BED_JUNK = [], RECONCILED = []
+
+/* ── ตรวจการ์ดกับพยานที่ไม่ผ่านมือ scraper ก่อนรับเข้า ────────────────────────
+   ประกาศเข้ารหัสจำนวนห้องนอนไว้ใน slug ของ URL อยู่แล้ว (1-bedroom-condo-for-sale-…)
+   เป็นแหล่งที่สองที่เป็นอิสระ ใช้ตัดสินเมื่อเลขที่สแครปมาไม่ตรง — 112 ห้องเคยเก็บผิด
+   เพราะไม่มีใครเทียบสองค่านี้
+
+   และ Dot Property เอา "จำนวนห้องนอน" ไปต่อท้าย "ราคา" (12,000,000 + 1 นอน →
+   120000001 · ยืนยันกับหน้าจริงมาแล้ว 4 ใบ) ทำให้ห้อง 28 ตร.ม. ราคา 58 ล้าน
+   ซ่อมได้เมื่อเลขตัวท้ายเท่ากับจำนวนห้องนอน และตัดแล้ว ฿/ตร.ม. กลับเข้ากรอบ —
+   ขาดข้อใดข้อหนึ่งคือไม่ซ่อม ปล่อยให้ passesSanity ตัดทิ้งตามปกติ */
+const PSQM_OK = { rent: [250, 3500], sale: [50000, 600000] }
+const bedFromUrl = u => {
+  let s = String(u ?? ''); try { s = decodeURIComponent(s) } catch {}
+  s = s.toLowerCase()
+  if (/studio[-_ ]?(condo|apartment|for)/.test(s)) return 0
+  const m = /(\d+)[-_ ]?(?:bedroom|bedrooms|bed|beds|br)\b/.exec(s)
+  return m && +m[1] <= BED_MAX ? +m[1] : null
+}
+function reconcile(r, building) {
+  let bed = +r.bed, price = +r.price
+  const sqm = +r.sqm
+  const slug = bedFromUrl(r.url)
+  if (slug != null && slug !== bed) {
+    RECONCILED.push(`${building} · นอน ${r.bed}→${slug} ตาม slug · ${r.url ?? ''}`)
+    bed = slug
+  }
+  const [lo, hi] = PSQM_OK[r.intent] ?? [0, Infinity]
+  const ps = sqm ? price / sqm : null
+  if (ps != null && (ps < lo || ps > hi)) {
+    const s = String(price), tail = +s.slice(-1), head = +s.slice(0, -1)
+    const ps2 = sqm ? head / sqm : null
+    if (tail === bed && ps2 != null && ps2 >= lo && ps2 <= hi) {
+      RECONCILED.push(`${building} · ราคา ${price}→${head} (ตัดเลขห้องนอนที่ต่อท้าย) · ${r.url ?? ''}`)
+      price = head
+    }
+  }
+  return { bed, price }
+}
 const cards = []
 const seenUrls = new Set()   // ไฟล์บางชุดทับซ้อนกัน — URL เดียวนับครั้งเดียว
 
@@ -88,13 +126,14 @@ if (ROUND_FILE) {
   for (const r of rows) {
     if (!r.building || !['rent', 'sale'].includes(r.intent)) continue
     if (r.price == null || r.sqm == null || r.bed == null || r.floor == null) continue
-    if (!bedOk(+r.bed)) { BED_JUNK.push(`${r.building} · bed=${r.bed} · ${r.url ?? ''}`); continue }
+    const fix = reconcile(r, r.building)
+    if (!bedOk(fix.bed)) { BED_JUNK.push(`${r.building} · bed=${r.bed} · ${r.url ?? ''}`); continue }
     const floor = parseInt(r.floor); if (!Number.isFinite(floor)) continue
     if (r.url) { if (seenUrls.has(r.url)) continue; seenUrls.add(r.url) }
-    if (!passesSanity({ bedType: BED(+r.bed), sqm: +r.sqm, priceTHB: +r.price }, r.intent)) continue
+    if (!passesSanity({ bedType: BED(fix.bed), sqm: +r.sqm, priceTHB: fix.price }, r.intent)) continue
     cards.push({
-      building: r.building, intent: r.intent, bedType: BED(+r.bed), sqm: +r.sqm, floor,
-      price: +r.price, portal: r.portal ?? 'unknown', url: r.url ?? null,
+      building: r.building, intent: r.intent, bedType: BED(fix.bed), sqm: +r.sqm, floor,
+      price: fix.price, portal: r.portal ?? 'unknown', url: r.url ?? null,
       sourceId: r.sourceId ?? (r.url ? String(r.portal ?? 'x').toLowerCase().replace(/\W/g, '').slice(0, 2) + ':' + String(r.url).split(/[/_-]/).pop().slice(0, 24) : null),
       posterType: r.posterType ?? 'unknown', posterName: r.posterName ?? null,
     })
@@ -109,14 +148,15 @@ if (!ROUND_FILE) for (const [portal, files] of Object.entries(FILES)) {
       const building = r.building ?? (fn.includes('39bs') ? '39 by Sansiri' : fn.includes('mh-') ? 'Mahogany Tower' : null)
       if (!building || !['rent', 'sale'].includes(r.intent)) continue
       if (r.price == null || r.sqm == null || r.bed == null || r.floor == null) continue
-      if (!bedOk(+r.bed)) { BED_JUNK.push(`${building} · bed=${r.bed} · ${r.url ?? ''}`); continue }
+      const fix = reconcile(r, building)
+      if (!bedOk(fix.bed)) { BED_JUNK.push(`${building} · bed=${r.bed} · ${r.url ?? ''}`); continue }
       const floor = parseInt(r.floor); if (!Number.isFinite(floor)) continue
       if (r.url) { if (seenUrls.has(r.url)) continue; seenUrls.add(r.url) }
       // กรองขยะ scraper ด้วยเกณฑ์เดียวกับ board-engine (sqm/ราคา/฿ต่อตรม.)
-      if (!passesSanity({ bedType: BED(+r.bed), sqm: +r.sqm, priceTHB: +r.price }, r.intent)) continue
+      if (!passesSanity({ bedType: BED(fix.bed), sqm: +r.sqm, priceTHB: fix.price }, r.intent)) continue
       cards.push({
-        building, intent: r.intent, bedType: BED(+r.bed), sqm: +r.sqm, floor,
-        price: +r.price, portal: portal === 'Mahogany' ? (r.portal ?? 'FazWaz') : portal,
+        building, intent: r.intent, bedType: BED(fix.bed), sqm: +r.sqm, floor,
+        price: fix.price, portal: portal === 'Mahogany' ? (r.portal ?? 'FazWaz') : portal,
         url: r.url ?? null,
         sourceId: r.sourceId ?? (r.url ? portal.toLowerCase().replace(/\W/g, '').slice(0, 2) + ':' + String(r.url).split(/[/_-]/).pop().slice(0, 24) : null),
         posterType: r.posterType ?? r.poster ?? 'unknown',
@@ -133,6 +173,11 @@ if (BED_JUNK.length) {
   console.warn(`⚠ ทิ้ง ${BED_JUNK.length} การ์ดที่เลขห้องนอนเกิน ${BED_MAX} (อ่านผิดแน่ ๆ):`)
   BED_JUNK.slice(0, 8).forEach(x => console.warn(`    ${x}`))
   ROUND_WARNINGS.push(`ทิ้ง ${BED_JUNK.length} การ์ดที่เลขห้องนอนเกิน ${BED_MAX}`)
+}
+if (RECONCILED.length) {
+  console.warn(`⚠ แก้ให้ตรงกับประกาศ ${RECONCILED.length} การ์ด:`)
+  RECONCILED.slice(0, 8).forEach(x => console.warn(`    ${x}`))
+  ROUND_WARNINGS.push(`แก้ค่าให้ตรงกับประกาศ ${RECONCILED.length} การ์ด (นอนตาม slug / ราคาตัดเลขต่อท้าย)`)
 }
 /* ── ยามชั้นกองค่าเดียว ────────────────────────────────────────────────────
    2026-08-05: รอบเก็บของ FazWaz หยิบเลขชั้นจากบล็อกสิ่งอำนวยความสะดวก (ชั้นสระ)
