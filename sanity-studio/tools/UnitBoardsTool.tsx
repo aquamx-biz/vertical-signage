@@ -59,6 +59,11 @@ function passesSanity(p: Profile, mode: string): boolean {
 }
 const tierRank = (p: Profile) => TIER_RANK[p.dealTier ?? ''] ?? 3
 const byDeal = (a: Profile, b: Profile) => tierRank(a) - tierRank(b) || (a.vsFloorPct ?? 0) - (b.vsFloorPct ?? 0)
+/* คอลัมน์ Deal ไม่ใช่ตัวเลขเดียว (เป็นธงหลายใบ) — ยุบเป็นคะแนน "ดีลแรงแค่ไหน" ชุดเดียว
+   กับที่บอร์ดใช้คัดจริง (byDeal): tier มาก่อน แล้วแพ้ชนะกันที่ vs Floor · หนีบ vs Floor
+   ไว้ ±99 แล้วบวก 150 กันไม่ให้ค่าไปตรงกับ -1/9999 ที่ตัวเปรียบเทียบอ่านว่า "ไม่มีข้อมูล" */
+const dealScore = (p?: Profile) =>
+  p ? tierRank(p) * 300 + Math.max(-99, Math.min(99, p.vsFloorPct ?? 0)) + 150 : 9999
 
 const BUCKETS: Array<[keyof Policy, string, (p: Profile) => boolean, (a: Profile, b: Profile) => number]> = [
   ['superQ', 'SUPER', p => p.dealTier === 'super', (a, b) => (a.vsFloorPct ?? 0) - (b.vsFloorPct ?? 0)],
@@ -347,6 +352,8 @@ export function UnitBoardsTool() {
           case 'yield': return u.rent?.yieldPct ?? u.sale?.yieldPct ?? -1
           case 'vsr': return u.rent?.vsFloorPct ?? 9999
           case 'vss': return u.sale?.vsFloorPct ?? 9999
+          case 'rdeal': return dealScore(u.rent)
+          case 'sdeal': return dealScore(u.sale)
           case 'spread': return Math.max(u.rent?.spreadPct ?? -1, u.sale?.spreadPct ?? -1)
           case 'upd': return u.rent?.lastCheckedAt ?? u.sale?.lastCheckedAt ?? ''
           case 'fl': return sources.get(u.refCode)?.floorActual ?? -1
@@ -588,12 +595,12 @@ export function UnitBoardsTool() {
               {H('Rent (K)', 'rent', 'ค่าเช่า/เดือน ต่ำสุดที่พบข้ามพอร์ทัล')}
               {H('฿/SQM', 'rpsqm', 'ค่าเช่าต่อตร.ม./เดือน')}
               {H('vs Floor', 'vsr', 'เทียบค่าเฉลี่ย ฿/ตรม. ของชั้นเดียวกัน — ติดลบ = ถูกกว่าชั้น')}
-              {H('Rent Deal', undefined, 'ธงดีลฝั่งเช่า (ชี้ที่ธงดูเหตุผล+ตัวเลข)')}
+              {H('Rent Deal', 'rdeal', 'ธงดีลฝั่งเช่า (ชี้ที่ธงดูเหตุผล+ตัวเลข) — เรียงจากดีลแรงสุด: SUPER → BEST → GOOD → ไม่มีธง')}
               {H('Select R', undefined, 'เลือกมือขึ้นบอร์ดเช่า — นับรวมใน quota')}
               {H('Sale (M)', 'sale', 'ราคาขายต่ำสุดที่พบข้ามพอร์ทัล')}
               {H('฿/SQM', 'spsqm', 'ราคาขายต่อตร.ม.')}
               {H('vs Floor', 'vss', 'เทียบค่าเฉลี่ย ฿/ตรม. ของชั้นเดียวกัน — ติดลบ = ถูกกว่าชั้น')}
-              {H('Sale Deal', undefined, 'ธงดีลฝั่งขาย (ชี้ที่ธงดูเหตุผล+ตัวเลข)')}
+              {H('Sale Deal', 'sdeal', 'ธงดีลฝั่งขาย (ชี้ที่ธงดูเหตุผล+ตัวเลข) — เรียงจากดีลแรงสุด: SUPER → BEST → GOOD → ไม่มีธง')}
               {H('Select S', undefined, 'เลือกมือขึ้นบอร์ดขาย — นับรวมใน quota')}
               {H('Yield', 'yield', 'ค่าเช่าทั้งปี ÷ ราคาขาย (%) — เฉพาะห้อง dual')}
               {H('Spread', 'spread', 'ช่วงราคาข้ามพอร์ทัล (สูงสุด−ต่ำสุด)/ต่ำสุด — กว้าง = ต่อรองได้')}
