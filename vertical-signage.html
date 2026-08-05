@@ -1641,8 +1641,48 @@ body {
     position: relative; z-index: 1;
 }
 .detail-cap .detail-eyebrow { text-shadow: 0 0.1vh 0.7vh rgba(0,0,0,0.75); }
-.detail-cap .detail-title { color: #fff; -webkit-line-clamp: 2; margin: 0.5vh 0 0; text-shadow: 0 0.15vh 0.9vh rgba(0,0,0,0.8); }
-.detail-sub { font-size: 1.55vh; line-height: 1.45; color: rgba(255,255,255,0.82); margin-bottom: 2vh; }
+.detail-cap .detail-title { color: #fff; -webkit-line-clamp: 1; margin: 0.5vh 0 0; text-shadow: 0 0.15vh 0.9vh rgba(0,0,0,0.8); }
+/* ONE line each for title + description, so the per-CTA list below stops being
+   "whatever is left over after the shop's copy". Measured at 9:16: the list had
+   192px when a shop wrote a short description and 108px when it wrote a long
+   one — same popup, same offer, size decided by prose length. Now it is 192px
+   every time, and the overflow goes behind the "...more" chip. */
+.detail-sub {
+    font-size: 1.55vh; line-height: 1.45; color: rgba(255,255,255,0.82);
+    margin-bottom: 0.6vh;
+    display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 1;
+    overflow: hidden;
+    /* flex-shrink:0 is load-bearing, not tidiness: .detail-body is a flex column,
+       and an item with overflow:hidden loses its automatic minimum size — the
+       column squeezed this line down to 7px of a 21px line box (measured). */
+    flex: 0 0 auto;
+}
+/* "...more" — the tail of the sentence, not a button (same voice as the slide's
+   chip, but its OWN class: .slot-more is sized in em against slide type and is
+   claimed by the stage's tap handler). */
+.detail-more {
+    display: inline-block; margin: 0 0 0.5vh; flex: 0 0 auto;
+    font-size: 1.3vh; color: rgba(255,255,255,0.6);
+    cursor: pointer; touch-action: manipulation; user-select: none;
+}
+/* The description line itself is the tap target too (473 × 21px beats a chip on
+   a kiosk); the chip is the visual hint. */
+.detail-card:has(.detail-more) .detail-sub { cursor: pointer; }
+.detail-more:active { color: #fff; }
+/* Expanded: title may run to 3 lines, description gets a capped, scrollable box.
+   The cap is the point — an un-capped description shrinks the list it was
+   supposed to make room for (a 234-character one leaves the list 77px). */
+.detail-card.text-open .detail-title { -webkit-line-clamp: 3; }
+.detail-card.text-open .detail-sub {
+    -webkit-line-clamp: unset; display: block;
+    max-height: 14vh; overflow-y: auto; scrollbar-width: thin;
+}
+/* Building-update popups put the WHOLE announcement in .detail-sub and hide the
+   CTA list, so there is nothing to win by clamping — and everything to lose. */
+.detail-card.update-mode .detail-sub {
+    -webkit-line-clamp: unset; display: block;
+    flex: 1 1 auto; min-height: 0; overflow-y: auto; scrollbar-width: thin;
+}
 /* "View on mobile" button — QR is a later step (matches /offer · /provider) */
 .detail-vm { background: var(--bronze-strong); color: #fff; text-align: center; font-family: 'Prompt','IBM Plex Sans Thai',sans-serif; font-weight: 800; letter-spacing: 0.02em; font-size: 1.7vh; padding: 1.5vh; border-radius: 1.4vh; display: flex; align-items: center; justify-content: center; gap: 0.8vh; cursor: pointer; touch-action: manipulation; user-select: none; }
 /* Pinned footer — keeps the primary CTA anchored at the bottom while .detail-body scrolls */
@@ -3124,6 +3164,7 @@ function layoutSlotText() {
     });
 }
 const MORE_LABEL = '...more';   // one language on purpose — reads as the tail of the sentence
+const LESS_LABEL = '...less';   // its pair, inside the popup only (the slide never collapses)
 
 /* ── CTA row layout — one-shot, ANR-safe ─────────────────────────────
    If a slot has 2 CTAs and both fit on one line at FULL size (font/padding
@@ -4268,6 +4309,33 @@ function buildDetailDyn(ctx){
     return price;
 }
 
+/* Title + description are clamped to one line each; this decides whether a
+   "...more" chip is earned and clears the previous card's state.
+
+   Unlike the slide's layoutSlotText() — one-shot per buildSlots(), because each
+   slide owns its own DOM — the popup is a SINGLE node reused by every offer. So
+   this runs on every open, and the reset is load-bearing: without it the next
+   offer opens already expanded, wearing the last one's chip. */
+function layoutDetailText(isUpdate) {
+    const card = document.querySelector('.detail-card');
+    const ti   = document.getElementById('detailTitle');
+    const su   = document.getElementById('detailSub');
+    if (!card || !ti || !su) return;
+    card.classList.remove('text-open');
+    card.classList.toggle('update-mode', !!isUpdate);
+    const stale = card.querySelector('.detail-more');
+    if (stale) stale.remove();
+    // A notice puts its whole announcement in .detail-sub and hides the CTA list:
+    // nothing is clamped there, so nothing is offered to expand.
+    if (isUpdate) return;
+    const cut = el => el.scrollHeight > el.clientHeight + 1;
+    if (!cut(ti) && !cut(su)) return;
+    const chip = document.createElement('span');
+    chip.className = 'detail-more';
+    chip.textContent = MORE_LABEL;
+    su.insertAdjacentElement('afterend', chip);
+}
+
 function openDetail(ctx) {
     lastDetailCtx = ctx;   // remember for lang-toggle re-render
     // Someone is LOOKING at this popup — yield the whole pipe to its images.
@@ -4388,6 +4456,8 @@ function openDetail(ctx) {
 
     detailOverlay.style.visibility = '';   // clear the closeDetail fallback before reopening
     detailOverlay.classList.add('open');
+    // measure once the panel is laid out with THIS offer's text
+    layoutDetailText(!!ctx.isUpdate);
     clearAllSlotTimers();
     advanceToken++;
     syncInteractingClass();
@@ -4410,6 +4480,22 @@ function closeDetail() {
 const detailCloseBtn = document.getElementById('detailClose');
 if (detailCloseBtn) detailCloseBtn.addEventListener('click', closeDetail);
 detailOverlay.addEventListener('click', e => { if (e.target === detailOverlay) closeDetail(); });
+
+/* "...more" expands IN PLACE — the popup is the last stop, there is no deeper
+   screen to send anyone to (on a slide the same chip opens this popup). Tapping
+   again collapses it. */
+detailOverlay.addEventListener('click', function (e) {
+    const card = document.querySelector('.detail-card');
+    if (!card) return;
+    const chip = card.querySelector('.detail-more');
+    // the clipped description is a tap target in its own right — the chip alone
+    // is a thin target for a finger on a wall-mounted screen
+    if (!chip || !e.target.closest('.detail-more, #detailSub')) return;
+    e.stopPropagation();
+    const open = card.classList.toggle('text-open');
+    chip.textContent = open ? LESS_LABEL : MORE_LABEL;
+    resetIdle();
+});
 
 /* "View on mobile" → reveal QR + phone handoff (vertical-signage flow) */
 const detailVm = document.getElementById('detailVm');
@@ -4750,7 +4836,14 @@ function openCardDetail(idx) {
         images: galleryList(o, p),       // F — multi-image gallery source
         eyebrow: it.meta || (it._category ? eyebrowLabel(it._category) : ''),
         title: it.name,
-        sub: it.sub,
+        // The popup's second line is what the offer IS, on both routes into it.
+        // This path used to pass it.sub — the SHOP NAME — which the reader had
+        // just tapped through and already knew, spending the line on nothing.
+        // Only the value handed to the popup changes: it.sub still titles the
+        // category card itself, where the shop name earns its place because the
+        // eye is sweeping across shops.
+        sub: (o ? (uiLang === 'th' ? (o.description_th || o.description_en)
+                                   : (o.description_en || o.description_th)) : '') || it.sub,
         offerSlug: o ? (o.slug || null) : null,
         providerSlug: p ? (p.slug || null) : null,
         provider: p,
