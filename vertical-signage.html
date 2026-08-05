@@ -2627,12 +2627,17 @@ function adaptPlaylistToSlots(pl) {
         const posterUrl = item.poster || item.posterImage || item.videoPoster || provImg || '';
         // Full image array for image items (multi-image slideshow). Falls back to
         // the single url when imageFiles[] isn't present.
+        // A web slide's `url` is a PAGE, not a picture — feeding it to the gallery
+        // painted an empty box in the popup (the browser tried to decode HTML as an
+        // image). Web slides take their popup art from the offer instead.
         const imageList = (Array.isArray(item.images) ? item.images.filter(Boolean) : [])
             .length ? item.images.filter(Boolean)
-                    : (!isVid && item.url ? [item.url] : []);
+                    : (!isVid && !isWeb && item.url ? [item.url] : []);
         const stillImage = isVid
             ? (posterUrl || provImg)                      // video → poster, else provider image
-            : (imageList[0] || item.url || item.image || posterUrl || provImg || ''); // image → first image
+            : isWeb
+              ? (imageList[0] || item.offerImg || posterUrl || provImg || '')
+              : (imageList[0] || item.url || item.image || posterUrl || provImg || ''); // image → first image
         // Per-slot dwell, in ms:
         //   image  → imageDurationOverride ?? displayDuration ?? defaultImageDuration ?? 10s
         //   notice → explicit duration if set, else 16s default (kept from v6)
