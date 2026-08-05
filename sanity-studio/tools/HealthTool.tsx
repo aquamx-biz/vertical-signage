@@ -28,7 +28,8 @@ export function HealthTool() {
         </Flex>
       </Card>
       {TABS.map(t => (
-        <Box key={t.key} style={{flex: 1, minHeight: 0, overflow: 'hidden', display: tab === t.key ? 'block' : 'none'}}>
+        // ดูคำอธิบายใน ContentTool — hidden ตัดเนื้อหาของเครื่องมือที่ไม่มีตัวเลื่อนของตัวเอง
+        <Box key={t.key} style={{flex: 1, minHeight: 0, overflow: 'auto', display: tab === t.key ? 'block' : 'none'}}>
           <t.comp />
         </Box>
       ))}

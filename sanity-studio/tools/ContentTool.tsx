@@ -28,7 +28,11 @@ export function ContentTool() {
         </Flex>
       </Card>
       {TABS.map(t => (
-        <Box key={t.key} style={{flex: 1, minHeight: 0, overflow: 'hidden', display: tab === t.key ? 'block' : 'none'}}>
+        // overflow:auto ไม่ใช่ hidden — เครื่องมือที่เป็นเอกสารยาว (Pending Publish,
+        // Content Footprint) ไม่มีตัวเลื่อนของตัวเอง สมัยยังไม่จับมารวมแท็บมันเลื่อนทั้งหน้า
+        // พอมาอยู่ในกล่อง flex ที่ hidden รายการที่เกินจอถูกตัดหายโดยไม่มีแถบเลื่อน
+        // ส่วนเครื่องมือที่จัดการ scroll เอง (Unit Boards) สูง 100% พอดีกล่อง ไม่มีแถบซ้อน
+        <Box key={t.key} style={{flex: 1, minHeight: 0, overflow: 'auto', display: tab === t.key ? 'block' : 'none'}}>
           <t.comp />
         </Box>
       ))}
