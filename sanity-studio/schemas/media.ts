@@ -88,14 +88,14 @@ export default defineType({
           return true
         }).warning(),
       ],
-      description: 'พาดหัวที่ขึ้นจอ — ใช้ "ชื่อโปรโม/บริการ" (กด ⤵ ดึงจาก Offer) ไม่ใช่ชื่อร้าน เพราะชื่อร้านขึ้นจากโลโก้/ป๊อปอัปอยู่แล้ว · เป็นภาษาตาม "ภาษาหลักบนจอ" ด้านบน · ⚠️ แสดงเต็มบนจอไม่เกิน ~38 ตัวอักษรไทย / ~34 ตัวถ้า English ล้วน (จอแสดง English เป็นตัวพิมพ์เล็กทั้งหมดตามสไตล์แบรนด์) — ยาวกว่านี้จอตัดเป็น "…" · พิมพ์ | ตรงจุดที่ยอมให้ขึ้นบรรทัดใหม่บนจอ เช่น "Sell • Rent •|Free Listing" (เครื่องหมายไม่แสดงจริง)',
+      description: 'พาดหัวที่ขึ้นจอ — ใช้ "ชื่อโปรโม/บริการ" (กด ⤵ ดึงจาก Offer) ไม่ใช่ชื่อร้าน เพราะชื่อร้านขึ้นเองอยู่แล้วเป็นแถวโลโก้+ชื่อร้านเหนือพาดหัว · เป็นภาษาตาม "ภาษาหลักบนจอ" ด้านบน · ⚠️ พาดหัวขึ้นจอ "บรรทัดเดียว" — วัดจริงที่ ~35 ตัวอักษรไทย / ~34 ตัวถ้า English ล้วน (จอแสดง English เป็นตัวพิมพ์เล็กทั้งหมดตามสไตล์แบรนด์) ยาวกว่านั้นจอตัดแล้วต่อท้ายด้วย "…more" · ข้อความเต็มไม่หาย: คนดูแตะแล้วเห็นทั้งหมดในป๊อปอัป (ป๊อปอัปรับได้ ~80 ตัวอักษรไทย / 3 บรรทัด) — เขียนให้ ~32 ตัวแรกอ่านรู้เรื่องจบในตัว แล้วรายละเอียดค่อยไปต่อในป๊อปอัป · หมายเหตุ: เครื่องหมาย | (ตัวช่วยขึ้นบรรทัดใหม่) ไม่มีผลกับพาดหัวแล้วตั้งแต่จอเปลี่ยนมาเป็นบรรทัดเดียว — ของเดิมที่พิมพ์ไว้ไม่เสียหาย จอไม่แสดงเครื่องหมายนี้',
       components:  { input: MediaTitleInput },
     }),
     defineField({
       name:        'altText',
-      title:       'Title (English)',
+      title:       '📺 Title (English) · พาดหัวภาษาอังกฤษ',
       type:        'string',
-      description: 'English version of the title — กด ✨ แปลจากช่องบนแล้วตรวจก่อนบันทึก · Can be auto-filled by 🤖 Read Image with AI above (notices + promos). · ⚠️ Fits fully on screen up to ~34 characters (screen renders English lowercase, brand style) — longer gets cut with "…".',
+      description: 'The headline an ENGLISH viewer reads — on the slide, in the tap-through popup, on the QR handoff step, and in the lead record that reaches the shop. Falls back to the offer\'s English title when blank; a NOTICE has no offer, so leaving this empty means English viewers read the Thai announcement. · กด ✨ แปลจากช่องบนแล้วตรวจก่อนบันทึก · Can be auto-filled by 🤖 Read Image with AI above (notices + promos). · ⚠️ One line on the slide: ~34 characters measured (screen renders English lowercase, brand style); longer is cut and gets a "…more" chip that opens the full text in the popup (~63 characters over 3 lines there).',
       components:  { input: createTranslateInput({ sourceField: 'title', sourceLang: 'Thai', targetLang: 'English', buttonLabel: '✨ Translate from Thai' }) },
     }),
 

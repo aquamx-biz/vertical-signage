@@ -79,17 +79,17 @@ export default defineType({
     // ── Identity ─────────────────────────────────────────────────────────────
     defineField({
       name:        'name_th',
-      title:       '📺 Name (Thai)',
+      title:       '📺 Name (Thai) · ชื่อร้าน (ไทย)',
       type:        'string',
-      description: 'Name shown in media. Can differ from the legal entity name (e.g. shop name).',
+      description: 'ชื่อร้านที่คนดูเห็น — ขึ้นเป็นแถวโลโก้+ชื่อร้านเหนือพาดหัวบนสไลด์ทุกใบของร้านนี้, เป็นบรรทัดร้านในป๊อปอัป (สั่ง/จอง/ดูร้าน) และเป็นชื่อที่ติดไปกับ lead ที่ส่งถึงร้าน · ใช้ชื่อร้านจริงได้ ไม่ต้องตรงกับชื่อนิติบุคคล · ⚠️ แถวบนจอรับได้ ~52 ตัวอักษรไทย ยาวกว่านั้นตัดด้วย "…" — ชื่อสั้นอ่านได้ไกลกว่า',
       validation:  Rule => Rule.required(),
       components:  { input: NameThInput },
     }),
     defineField({
       name:        'name_en',
-      title:       '📺 Name (English)',
+      title:       '📺 Name (English) · ชื่อร้าน (อังกฤษ)',
       type:        'string',
-      description: 'Enter the name to be displayed in media. This can differ from the provider\'s legal entity name (e.g. shop name).',
+      description: 'The shop name an ENGLISH viewer sees — same three places as the Thai name (slide shop row, popup store line, lead sent to the shop). Blank falls back to the Thai name. · ⚠️ ~47 characters fit the on-screen row before it is cut with "…".',
       components:  { input: NameEnInput },
     }),
     defineField({
@@ -150,7 +150,7 @@ export default defineType({
     // ── Branding ─────────────────────────────────────────────────────────────
     defineField({
       name: 'logo', title: '📺 Logo', type: 'image', options: { hotspot: true },
-      description: 'ตราร้านแบบจัตุรัส (แนะนำ PNG พื้นโปร่งใส) — ใช้เป็นโลโก้มุมขวาบนของโปสเตอร์บนจอ และไอคอนข้างชื่อร้านในแอป (หน้าร้าน + หน้าโปรโมชั่น). Square brand mark — shown top-right on the on-screen poster and as the store icon in the app.',
+      description: 'ตราร้านแบบจัตุรัส (แนะนำ PNG พื้นโปร่งใส) — บนจอใช้เป็นตราเล็กหน้าชื่อร้าน ในบล็อกข้อความเหนือพาดหัว (ย้ายลงมาจากมุมขวาบนแล้ว: หนึ่งสไลด์มีตราร้านจุดเดียว ตรงที่สายตาอ่านอยู่พอดี) และเป็นไอคอนข้างชื่อร้านในแอป (หน้าร้าน + หน้าโปรโมชั่น) · แสดงบนพื้นขาวขนาดเล็ก ~4.4vh — โลโก้ที่มีตัวหนังสือเยอะจะอ่านไม่ออก ใช้ตราสัญลักษณ์จะดีที่สุด. Square brand mark — the small mark before the shop name in the slide text block, and the store icon in the app.',
     }),
     defineField({
       name: 'coverImage', title: '📺 Cover Image', type: 'image', options: { hotspot: true },
@@ -168,10 +168,22 @@ export default defineType({
     }),
 
     // ── Contact & Location ────────────────────────────────────────────────────
-    defineField({ name: 'locationText', title: '📺 Location',     type: 'string', description: 'e.g. G Floor, Zone A' }),
-    defineField({ name: 'mapUrl',       title: 'Map URL',       type: 'url' }),
-    defineField({ name: 'phone',   title: 'Phone',    type: 'string', components: { input: createRetrieveFromPartyInput('phone')   } }),
-    defineField({ name: 'lineId',  title: 'LINE ID',  type: 'string', components: { input: createRetrieveFromPartyInput('lineId')  } }),
+    // Contact channels are deliberately NOT on the kiosk popup: a screen in a
+    // lobby can't dial or add a LINE friend. The popup hands off (QR / phone
+    // number) and every channel below opens on the customer's own phone after
+    // the scan — keep that split when adding fields here.
+    defineField({ name: 'locationText', title: '📺 Location · ที่ตั้ง', type: 'string',
+      description: 'ตำแหน่งร้านแบบสั้น เช่น "ชั้น G โซน A" — ขึ้นใต้ชื่อร้านในหน้าหมวดหมู่บนจอ และบนหน้าร้านในมือถือ · e.g. G Floor, Zone A',
+    }),
+    defineField({ name: 'mapUrl', title: 'Map URL · ลิงก์แผนที่', type: 'url',
+      description: 'ไม่ขึ้นบนจอ — ปุ่มแผนที่บนมือถือหลังลูกค้าสแกน QR (จอไม่มีปุ่มนำทาง เพราะกดจากจอแล้วพาไปไหนไม่ได้). Not shown on the kiosk; it is the map button on the mobile page after the scan.',
+    }),
+    defineField({ name: 'phone',   title: 'Phone · เบอร์โทรร้าน',    type: 'string', components: { input: createRetrieveFromPartyInput('phone')   },
+      description: 'ไม่ขึ้นบนจอ — เป็นปุ่มโทรบนมือถือหลังสแกน และเป็นเบอร์ที่ทีมใช้ติดต่อร้านเวลามี lead เข้า. Not shown on the kiosk.',
+    }),
+    defineField({ name: 'lineId',  title: 'LINE ID · ไลน์ร้าน',  type: 'string', components: { input: createRetrieveFromPartyInput('lineId')  },
+      description: 'ไม่ขึ้นบนจอ — ปุ่มแอด LINE บนมือถือหลังสแกน · คนละช่องกับ "Lead LINE (Group/User ID)" ด้านล่างที่ใช้ส่งคำขอจองอัตโนมัติ. Not shown on the kiosk.',
+    }),
 
     // ── Lead relay — where booking/order requests get forwarded ─────────────
     // The kiosk/mobile booking flow notifies OUR admin LINE group; these two
@@ -195,7 +207,9 @@ export default defineType({
       description: 'มีผลเมื่อกรอก LINE ID ช่องบนแล้วเท่านั้น',
     }),
 
-    defineField({ name: 'website', title: 'Website',  type: 'url',    components: { input: createRetrieveFromPartyInput('website') } }),
+    defineField({ name: 'website', title: 'Website · เว็บไซต์',  type: 'url',    components: { input: createRetrieveFromPartyInput('website') },
+      description: 'ไม่ขึ้นบนจอ — ลิงก์บนหน้าร้านในมือถือหลังสแกน. Not shown on the kiosk.',
+    }),
     // Opening Hours FIRST — the booking schedule below reads open/close from here
     // (single entry point; no duplicate time fields — user rule 2026-07-15).
     // ── Opening days + hours — STRUCTURED, same shape as the /provider web form
@@ -265,7 +279,9 @@ export default defineType({
         defineField({ name: 'minNoticeUnit', title: 'Min Notice Unit · หน่วย', type: 'string', options: { list: [ { title: 'Hours · ชั่วโมง', value: 'hours' }, { title: 'Days · วัน', value: 'days' } ], layout: 'radio' }, initialValue: 'hours' }),
       ],
     }),
-    defineField({ name: 'amenities', title: 'Amenities / จุดเด่นร้าน', type: 'array', of: [{ type: 'string' }], description: 'Store highlights shown on provider page (parking, wifi, accepts cards, etc.).' }),
+    defineField({ name: 'amenities', title: '📺 Amenities · จุดเด่นร้าน', type: 'array', of: [{ type: 'string' }], options: { layout: 'tags' },
+      description: 'ขึ้นเป็นแถวป้ายเล็กในป๊อปอัป "ดูร้าน" บนจอ (และบนหน้าร้านในมือถือ) — เว้นว่างแล้วป๊อปอัปจะโชว์ที่ว่างเปล่า · คำสั้น ๆ คำละป้าย เช่น "ที่จอดรถ" "Wi-Fi" "รับบัตรเครดิต" "สั่งกลับบ้าน" · แนะนำ 3–5 ป้าย. Store highlights — the tag row in the on-screen "View store" popup.',
+    }),
     defineField({ name: 'submittedBy', title: 'Submitted By', type: 'string', readOnly: true, description: 'Most recent auth identity that submitted via /submit (e.g. "line:Uxxx" / "email:foo@bar.com").' }),
     defineField({
       name: 'owners',
@@ -277,25 +293,32 @@ export default defineType({
     }),
 
     // ── Handoff ───────────────────────────────────────────────────────────────
+    // Handoff = the second step of the on-screen popup: the customer has tapped
+    // the CTA and now has to get the offer OFF the wall and onto their phone.
+    // This field decides which of the two channels that step offers.
     defineField({
       name: 'defaultHandoffType',
-      title: 'Default Handoff Type',
+      title: '📺 Handoff Channel · ช่องทางรับเรื่องต่อบนจอ',
       type: 'string',
       options: {
         list: [
-          { title: 'QR Code', value: 'qr' },
-          { title: 'SMS',     value: 'sms' },
-          { title: 'Both',    value: 'both' },
+          { title: 'Both · คิวอาร์โค้ด + กรอกเบอร์ (แนะนำ)', value: 'both' },
+          { title: 'QR only · คิวอาร์โค้ดอย่างเดียว',          value: 'qr'   },
+          { title: 'Phone only · ให้กรอกเบอร์อย่างเดียว',      value: 'sms'  },
         ],
         layout: 'radio',
       },
-      initialValue: 'qr',
+      // 'both' matches what the player already assumes when this field is blank.
+      // The old 'qr' default silently switched OFF the phone box for every
+      // Studio-created provider — a real ad aired QR-only for weeks that way.
+      initialValue: 'both',
+      description: 'หน้าที่ 2 ของป๊อปอัป (หลังลูกค้ากดปุ่ม CTA) จะให้อะไรบ้าง · Both = โชว์คิวอาร์ให้สแกน และมีช่องกรอกเบอร์ให้คนที่ไม่สแกน — ได้ lead มากที่สุด · QR only = สแกนอย่างเดียว ไม่เก็บเบอร์ (เหมาะกับร้านที่ไม่มีคนรับสาย) · Phone only = ไม่โชว์คิวอาร์ รับเฉพาะเบอร์โทรกลับ · เบอร์ที่ลูกค้ากรอกจะวิ่งเข้า LINE ตามที่ตั้งใน "Lead Relay Mode" ด้านบน',
     }),
     defineField({
       name: 'unitRef',
-      title: 'Unit Reference',
+      title: '📺 Unit Reference · เลขห้อง',
       type: 'string',
-      description: 'Suffix only (e.g. "406"). Combined with project.addressBaseNumber → "120/406". Rent/sale only.',
+      description: 'ใส่เฉพาะเลขห้อง เช่น "406" ระบบต่อกับเลขที่โครงการให้เอง (project.addressBaseNumber → "120/406") · ใช้กับประกาศขาย/เช่าเท่านั้น — จะขึ้นเป็นป้าย 🔖 บนหน้าคิวอาร์ของป๊อปอัป เพื่อให้ลูกค้าที่ถ่ายรูปจอไว้รู้ว่ากำลังดูห้องไหน · Suffix only; shown as the 🔖 chip on the popup\'s QR step for rent/sale listings.',
     }),
   ],
 
