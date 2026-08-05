@@ -14,7 +14,7 @@
  * Excel filters (Type/Zone/Posted by/Status) · tooltip หัวคอลัมน์ · ฿/SQM/Spread/Update ·
  * Preview บอร์ด (#sim=) — เหลือโดยตั้งใจ: archive รายรอบ (อยู่หน้า static ตามบทบาทเดิม)
  */
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useClient } from 'sanity'
 import { Badge, Box, Button, Card, Checkbox, Flex, Inline, Spinner, Stack, Text, TextInput, useToast } from '@sanity/ui'
 
@@ -138,6 +138,14 @@ const fmtK = (n?: number) => n == null ? '—' : (n / 1000).toFixed(1) + 'K'
 const fmtM = (n?: number) => n == null ? '—' : (n / 1e6).toFixed(1) + 'M'
 const cleanAgent = (n: string) =>
   /[A-Za-zก-๙]{3}/.test(n) && !/^[([]/.test(n) && !['line', 'k.', 'tel', 'whatsapp'].includes(n.toLowerCase())
+/* เจ้าเดียวกันสะกดไม่ตรงกันข้ามพอร์ทัล (PropertyScout / Propertyscout) — ถ้านับตามตัวอักษร
+   ตรง ๆ รายใหญ่จะถูกซอยเป็นหลายเจ้าและอันดับเพี้ยน · ยุบเฉพาะพิมพ์เล็ก-ใหญ่กับช่องว่าง
+   เท่านั้น ไม่แตะตัวคำ เพราะ "Serve Service Solution" กับ "…Solutions" เป็นคนละเจ้ากันได้จริง
+   (สำเนาใน tools/gen-analysis.mjs — KEEP IN SYNC) */
+const agentKey = (n: string) => n.toLowerCase().replace(/\s+/g, ' ').trim()
+/* สะกดที่พบบ่อยสุดชนะ · เสมอกันเอาตัวยาวกว่า (มักเป็นชื่อเต็ม) แล้วค่อยเรียงตัวอักษรกันผลสุ่ม */
+const pickSpelling = (m: Map<string, number>) =>
+  [...m].sort((a, b) => b[1] - a[1] || b[0].length - a[0].length || a[0].localeCompare(b[0]))[0][0]
 
 const th: React.CSSProperties = { position: 'sticky', top: 0, background: '#0f3460', color: '#fff', padding: '7px 8px', fontSize: 11, textTransform: 'uppercase', textAlign: 'left', whiteSpace: 'nowrap', cursor: 'pointer', zIndex: 2 }
 const td: React.CSSProperties = { padding: '5px 8px', borderBottom: '1px solid #eef1f5', whiteSpace: 'nowrap', fontSize: 13, verticalAlign: 'top' }
@@ -298,12 +306,41 @@ export function UnitBoardsTool() {
   const minsSum = (P: Policy) => P.studioMin + P.b1Min + P.b2Min + P.b3Min + P.b4Min
   const overQuota = flagsSum(polR) > polR.quota || minsSum(polR) > polR.quota || flagsSum(polS) > polS.quota || minsSum(polS) > polS.quota
 
+  /* ชื่อ agent มาตรฐานของทั้งชุดข้อมูล — สร้างครั้งเดียวเพื่อให้ทุกแถวเรียกเจ้าเดียวกันด้วย
+     สะกดเดียวกัน (ไม่งั้นแถวหนึ่งขึ้น PropertyScout อีกแถวขึ้น Propertyscout) */
+  const agentCanon = useMemo(() => {
+    const spell = new Map<string, Map<string, number>>()
+    sources.forEach(s => (s.listings ?? []).forEach(l => {
+      const n = (l.posterName ?? '').trim()
+      if (!n || l.posterType === 'owner') return
+      const k = agentKey(n)
+      const m = spell.get(k) ?? new Map<string, number>()
+      m.set(n, (m.get(n) ?? 0) + 1)
+      spell.set(k, m)
+    }))
+    const out = new Map<string, string>()
+    spell.forEach((m, k) => out.set(k, pickSpelling(m)))
+    return out
+  }, [sources])
+  const agentsOf = useCallback((refCode: string) => {
+    const seen = new Map<string, string>()
+    ;(sources.get(refCode)?.listings ?? []).forEach(l => {
+      const n = (l.posterName ?? '').trim()
+      if (!n || l.posterType === 'owner') return
+      const k = agentKey(n)
+      seen.set(k, agentCanon.get(k) ?? n)
+    })
+    return [...seen.values()]
+  }, [sources, agentCanon])
+
   /* ── Excel filters (Type / Zone / Posted by / Status) — ค่าเริ่มต้น = ติ๊กครบทุกค่า ── */
+  /* สามค่า ไม่ใช่สอง: ห้องที่มีทั้งประกาศเจ้าของและประกาศ agent เคยถูกตีเป็น "Owner" เฉย ๆ
+     พอกรอง Agent มันหายไปทั้งที่มี agent อยู่จริง — ใน Noble BE19 หายทีเดียว 57 จาก 234 ห้อง */
   const postedOf = (u: Unit) => {
     const src = sources.get(u.refCode)
     const owner = u.rent?.postedByOwner || u.sale?.postedByOwner || (src?.listings ?? []).some(l => l.posterType === 'owner')
-    const hasAgent = (src?.listings ?? []).some(l => l.posterType !== 'owner' && l.posterName)
-    return owner ? 'Owner' : hasAgent ? 'Agent' : '—'
+    const hasAgent = agentsOf(u.refCode).length > 0
+    return owner && hasAgent ? 'Owner + Agent' : owner ? 'Owner' : hasAgent ? 'Agent' : '—'
   }
   const statusesOf = (u: Unit) => [u.rent?.status, u.sale?.status].filter(Boolean) as string[]
   const fval = (fk: string, u: Unit) =>
@@ -328,7 +365,7 @@ export function UnitBoardsTool() {
     const s = q.trim().toUpperCase()
     let list = units.filter(u => {
       if (!passF(u)) return false
-      const agents = [...new Set((sources.get(u.refCode)?.listings ?? []).filter(l => l.posterType !== 'owner' && l.posterName).map(l => l.posterName!))]
+      const agents = agentsOf(u.refCode)
       const ok =
         mode === 'all' ? true :
         mode === 'rent' ? !!u.rent :
@@ -371,7 +408,7 @@ export function UnitBoardsTool() {
       })
     }
     return list
-  }, [units, mode, q, sort, sources, onR, onS, colF])
+  }, [units, mode, q, sort, sources, onR, onS, colF, agentsOf])
 
   const stat = useMemo(() => ({
     units: units.length,
@@ -614,7 +651,7 @@ export function UnitBoardsTool() {
               {shown.map((u, i) => {
                 const src = sources.get(u.refCode)
                 const rzR = onR.get(u.refCode), rzS = onS.get(u.refCode)
-                const agents = [...new Set((src?.listings ?? []).filter(l => l.posterType !== 'owner' && l.posterName).map(l => l.posterName!.trim()).filter(cleanAgent))]
+                const agents = agentsOf(u.refCode).filter(cleanAgent)
                 const owner = u.rent?.postedByOwner || u.sale?.postedByOwner || (src?.listings ?? []).some(l => l.posterType === 'owner')
                 const onBoard = rzR != null || rzS != null
                 const y = u.rent?.yieldPct ?? u.sale?.yieldPct

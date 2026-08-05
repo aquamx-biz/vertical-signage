@@ -38,6 +38,26 @@ const [profiles, sources, rounds] = await Promise.all([
   q(`*[_type == "scrapeRound"] | order(roundDate desc)[0..5]{ roundDate, listings, newUnits, priceChanges, expired }`),
 ])
 
+/* สำเนาใน sanity-studio/tools/UnitBoardsTool.tsx — KEEP IN SYNC · ยุบเฉพาะพิมพ์เล็ก-ใหญ่
+   กับช่องว่าง ไม่แตะตัวคำ เพราะชื่อที่ต่างกันหนึ่งตัวอักษรอาจเป็นคนละบริษัทจริง ๆ */
+const agentKey = n => n.toLowerCase().replace(/\s+/g, ' ').trim()
+const pickSpelling = m =>
+  Object.entries(m).sort((a, b) => b[1] - a[1] || b[0].length - a[0].length || a[0].localeCompare(b[0]))[0][0]
+
+/* สะกดมาตรฐานคิดจากข้อมูลทั้งชุด ไม่ใช่รายโครงการ — ไม่งั้นเจ้าเดียวกันขึ้น "PropertyScout"
+   ในตึกหนึ่งและ "Propertyscout" ในอีกตึก เพราะแต่ละตึกมีสะกดที่พบบ่อยไม่ตรงกัน */
+const AGENT_NAME = (() => {
+  const spell = {}
+  sources.forEach(s => (s.listings ?? []).forEach(l => {
+    const n = (l.posterName ?? '').trim()
+    if (!n) return
+    ;(spell[agentKey(n)] ??= {})[n] = (spell[agentKey(n)][n] ?? 0) + 1
+  }))
+  const out = {}
+  for (const [k, m] of Object.entries(spell)) out[k] = pickSpelling(m)
+  return out
+})()
+
 const BLDS = [...new Set(profiles.map(p => p.projectName))].sort()
 const BEDS = ['studio', '1bed', '2bed', '3bed', '4bed']
 const BED_TH = { studio: 'Studio', '1bed': '1 Bed', '2bed': '2 Bed', '3bed': '3 Bed', '4bed': '4 Bed+' }
@@ -62,9 +82,16 @@ function bldStats(name) {
   const byStatus = {}
   all.forEach(p => byStatus[p.status] = (byStatus[p.status] ?? 0) + 1)
   const yields = act.filter(p => p.yieldPct != null).map(p => p.yieldPct)
-  const agents = {}
+  /* นับตามชื่อที่ยุบพิมพ์เล็ก-ใหญ่แล้ว ไม่งั้น PropertyScout กับ Propertyscout กลายเป็น
+     สองเจ้าและตกอันดับทั้งคู่ · แสดงผลด้วยสะกดที่พบบ่อยสุดของเจ้านั้น */
+  const byKey = {}
   sources.filter(s => s.projectName === name).forEach(s =>
-    (s.listings ?? []).forEach(l => { if (l.posterName) agents[l.posterName] = (agents[l.posterName] ?? 0) + 1 }))
+    (s.listings ?? []).forEach(l => {
+      const n = (l.posterName ?? '').trim()
+      if (n) byKey[agentKey(n)] = (byKey[agentKey(n)] ?? 0) + 1
+    }))
+  const agents = {}
+  for (const [k, c] of Object.entries(byKey)) agents[AGENT_NAME[k] ?? k] = c
   return { name, all, act, rent, sale, refs, dual, byStatus, yields, agents }
 }
 
