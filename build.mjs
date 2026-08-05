@@ -151,7 +151,13 @@ const PLAYLIST_PROJ_MIN = `
 const PLAYLIST_PROJ_V7 = `
         "kind":               media->kind,
         "title":              media->title,
-        "title_en":           media->offer->title_en,
+        // English headline. media.altText is the media's OWN English title (the
+        // Thai side reads media.title, not the offer's) — so it wins, with the
+        // offer's English title as the fallback for promos that never set it.
+        // Notices carry no offer at all: without altText an English viewer used
+        // to read the Thai announcement on the slide, in the tap popup and on
+        // the QR handoff step.
+        "title_en":           coalesce(media->altText, media->offer->title_en),
         "eyebrow":            media->offer->category,
         "sub_th":             media->offer->description_th,
         "sub_en":             media->offer->description_en,
@@ -270,6 +276,12 @@ for (const project of projects) {
         providerType,
         displayName,
         locationText,
+        // mapUrl + amenities are read by the detail popup opened from a category
+        // card (amenities render as the tag row of the "ดูร้าน" body). The
+        // playlist projection above already carries them; this one didn't, so
+        // the same shop showed tags from a slide tap and none from a menu tap.
+        mapUrl,
+        amenities,
         phone,
         lineId,
         website,
@@ -303,7 +315,14 @@ for (const project of projects) {
           price,
           validFrom,
           validTo,
-          booking
+          booking,
+          // The category browser opens the SAME popup as a slide CTA, so it needs
+          // the same item lists — without these the menu/room list rendered as the
+          // "เพิ่มสินค้า…" placeholder when entered from the category screen.
+          menuItems[]{ name_th, name_en, price, "image": image.asset->url },
+          orderItems[]{ name_th, name_en, price, "key": coalesce(refCode, _key), maxQty, "image": image.asset->url },
+          fulfillment,
+          eventInfo
         }
       }
     `),
@@ -320,6 +339,8 @@ for (const project of projects) {
         (!defined(expiresAt) || expiresAt > now())
       ] | order(_createdAt desc){
         title,
+        // notices have no offer → altText is the ONLY English title they own
+        "title_en": altText,
         tags,
         "subCategoryIds": subCategories,
         "url": coalesce(videoFile.asset->url, imageFile.asset->url),

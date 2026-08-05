@@ -239,26 +239,23 @@ body {
     left: 3.5vh; right: 3.5vh;
     bottom: 4vh;        /* base; NOTE the real slots are pos="bl" → overridden below */
     display: flex; flex-direction: column;
-    gap: 1.6vh; z-index: 5;
+    gap: 0.8vh; z-index: 5;
     /* per-element opacity is set in the .slot.active rules (title 0.65, rest 0.75) */
 }
 
 /* Eyebrow pill — outlined, with cyan dot */
 .slot-eyebrow {
-    /* Top-center strip — between MENU (left) and the provider logo (right).
-       Category is metadata, not sales copy: pinning it up here keeps its
-       position identical on every slide and frees the bottom block for the
-       photo/title. Every transform below must carry translateX(-50%). */
-    /* Anchored to the MENU button's vertical CENTER line (top 2.2vh + ~half
-       its 5.26vh height), not its top edge — a 2-line pill grows evenly up
-       AND down, staying level with the button instead of hanging below it. */
-    position: absolute; top: 4.8vh; left: 50%; z-index: 6;
+    /* TOP-RIGHT corner — freed when the shop logo moved down into the text
+       block. Category is metadata, not sales copy; parked here the top strip
+       reads as MENU (left) ⟷ category (right) with the photo open between.
+       Anchored to the MENU button's vertical CENTRE line (top 2.2vh + ~half
+       its 5.26vh height) so a 2-line pill stays level with the button.
+       Every transform below must keep translateY(-50%). */
+    position: absolute; top: 4.8vh; right: 3.5vh; z-index: 6;
     display: inline-flex; align-items: center; gap: 1.4vh;
-    /* 20vh clears the EXPANDED MENU box on the left (same clearance mirrored
-       right), so the pill never collides in any menu state. Long category
-       names wrap to 2 lines inside (.eb-t) instead of squeezing the cyan
-       dot flat — the dot is the eye-leader and must always survive. */
-    max-width: 20vh;
+    /* long category names wrap to 2 lines inside (.eb-t) instead of squeezing
+       the cyan dot flat — the dot is the eye-leader and must always survive */
+    max-width: 26vh;
     padding: 0.9vh 2vh;
     border: 0.15vh solid rgba(255,255,255,0.4);
     border-radius: 5vh;
@@ -268,11 +265,11 @@ body {
     letter-spacing: 0.45vh; text-transform: uppercase;
     color: var(--ink-100);
     cursor: pointer;   /* tappable → opens this category's combined screen */
-    opacity: 0; transform: translate(-50%, calc(-50% - 1.2vh));   /* reveals downward, like the logo */
+    opacity: 0; transform: translateY(calc(-50% - 1.2vh));   /* reveals downward, like the logo */
     transition: opacity 0.6s var(--ease-out) 0.3s, transform 0.6s var(--ease-out) 0.3s;
 }
-.slot-eyebrow:active { transform: translate(-50%, -50%) scale(0.95); }
-.slot.active .slot-eyebrow { opacity: 0.75; transform: translate(-50%, -50%); }
+.slot-eyebrow:active { transform: translateY(-50%) scale(0.95); }
+.slot.active .slot-eyebrow { opacity: 0.75; transform: translateY(-50%); }
 .slot-eyebrow::before {
     content: ''; width: 0.7vh; height: 0.7vh;
     flex-shrink: 0;             /* NEVER squeezed out by a long category name */
@@ -306,12 +303,16 @@ body {
     /* Prompt — narrower & lighter than Mitr (was rounded/wide), so more text fits
        per line. Thai+Latin, already loaded, part of the design system. */
     font-family: 'Prompt', 'IBM Plex Sans Thai', sans-serif;
-    font-size: 5.5vh; font-weight: 600;
+    font-size: 2.97vh; font-weight: 600;   /* was 5.5vh — the photo is the product, not the headline */
     line-height: 1.3;   /* Thai floor: measured ink extents (Prompt 600) need up to
                            1.43em between baselines when a deep descender (สระอุ/ฎ)
                            sits above a stacked สระอี+ไม้โท — 1.3 is already the
                            practical minimum; do NOT tighten for Thai titles */
     letter-spacing: -0.04vh;
+    /* the block is a flex column with align-items:flex-start, so children
+       shrink-to-fit — the title must claim the full width or it can never
+       overflow and layoutSlotText would never see a reason for "...more" */
+    width: 100%;
     color: var(--ink-100);
     /* lowercase — brand voice (aquamx is never capitalised) AND measured
        +29% more characters per line vs uppercase (18 vs 14 at this size):
@@ -326,17 +327,18 @@ body {
    (descenders g/j/p/q/y 0.25em + ascenders 0.74em), so 1.1 keeps a margin.
    Any Thai character in the title keeps the 1.3 rule above. */
 .slot-title.latin { line-height: 1.1; }
-/* Each title line clamps to max 2 visual lines + ellipsis, so a long
-   vendor-set title can never balloon and bury the media (we keep the v6
-   hero size; only overflow is trimmed). */
+/* ONE line only. Overflow is cut and a "...more" chip is appended by
+   layoutSlotText() — the full text lives in the tap-through popup, so the
+   slide stays a poster, not a paragraph. Every slot's text block is now the
+   same height, so the layout no longer jumps between slides. */
 /* Per-word unit for Thai line-breaking (see thaiBreakHTML) — wrap only between words. */
 .nb { white-space: nowrap; }
 .slot-title .br {
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
+    display: block;
     overflow: hidden;
-    word-break: break-word;
+    text-overflow: clip;   /* the three dots live in "...more" — no doubled ellipsis */
+    white-space: nowrap;
+    min-width: 0;
     /* ink-bleed room: descenders on the LAST clamped line (lowercase g/j/p/q/y,
        Thai สระอุ/ฎ) extend below the tight line box and would be shaved by
        overflow:hidden — pad for the ink, pull layout back so spacing to
@@ -349,27 +351,67 @@ body {
     margin-bottom: -0.12em;
 }
 
-/* Sub description — clamp to 2 lines (kiosk = glanceable; full text lives in
-   the tap-through detail popup, same "details behind a tap" rule as the
-   infographic pages). Ellipsis comes free from the line-clamp. */
+/* Sub description — ONE line; overflow gets the "...more" chip (see
+   layoutSlotText). Full text lives in the tap-through detail popup — same
+   "details behind a tap" rule as the infographic pages. */
 .slot-sub {
     font-size: 1.75vh; font-weight: 400;
     line-height: 1.45; color: var(--ink-80);
     max-width: 42vh;
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-    overflow: hidden;
+    display: flex; align-items: baseline; width: 100%;
     opacity: 0; transform: translateY(1.5vh);
     transition: opacity 0.6s var(--ease-out) 0.7s, transform 0.6s var(--ease-out) 0.7s;
     text-shadow: 0 0.15vh 0.8vh rgba(0,0,0,0.6);
+}
+
+/* Shop row — logo + name, directly above the product title. The corner logo
+   (.slot-plogo) is gone: one identity mark per slide, inside the text block
+   where the eye already is. */
+.slot-shop {
+    display: flex; align-items: center; gap: 1.2vh;
+    max-width: 100%;
+    opacity: 0; transform: translateY(1.5vh);
+    transition: opacity 0.6s var(--ease-out) 0.42s, transform 0.6s var(--ease-out) 0.42s;
+}
+.slot-shop img {
+    width: 4.4vh; height: 4.4vh; border-radius: 1.2vh;
+    background: #fff; object-fit: contain; flex-shrink: 0;
+}
+.slot-shop span {
+    font-family: 'Prompt','IBM Plex Sans Thai',sans-serif;
+    font-size: 1.9vh; font-weight: 600; color: var(--ink-100);
+    text-shadow: 0 0.15vh 0.9vh rgba(0,0,0,0.65);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0;
+}
+.slot.active .slot-shop { opacity: 0.9; transform: translateY(0); }
+.slot.exiting .slot-shop, .slot.leaving .slot-shop {
+    opacity: 0; transform: translateY(2vh);
+    transition-duration: 0.4s; transition-delay: 0s;
+}
+
+/* "...more" chip — same font, same colour, no underline: it reads as the tail
+   of the sentence, not a button. flex-shrink:0 keeps it OUT of the clipped
+   zone, so unlike the text it can never be cut away. Tapping it opens the
+   detail popup (handled with the slide's own tap target). */
+.slot-more {
+    flex: 0 0 auto;
+    font-family: inherit; color: inherit; font-weight: inherit;
+    font-size: 0.62em; letter-spacing: 0.02vh; white-space: nowrap;
+    cursor: pointer; touch-action: manipulation;
+}
+.slot-sub .slot-more { font-size: 0.82em; }
+/* the title's line box hosts the text span + chip on one baseline */
+.slot-title .br { display: flex; align-items: baseline; width: 100%; }
+.slot-title .br > .tx, .slot-sub > .tx {
+    flex: 1 1 auto; min-width: 0;
+    overflow: hidden; text-overflow: clip; white-space: nowrap;
 }
 
 /* Price on the slide (like /offer's .tt-price) — bronze-gold, sits under the title.
    Was missing entirely: price was baked but only shown in the tap-through popup. */
 .slot-price {
     font-family: 'Prompt','IBM Plex Sans Thai',sans-serif;
-    font-weight: 700; font-size: 2.6vh; line-height: 1;
+    font-weight: 700; font-size: 2.08vh; line-height: 1;
     color: var(--bronze);
     opacity: 0; transform: translateY(1.5vh);
     transition: opacity 0.6s var(--ease-out) 0.6s, transform 0.6s var(--ease-out) 0.6s;
@@ -406,8 +448,8 @@ body {
    reveal transition (0.5s delay) and its text lingers, overlapping the incoming
    slide's text during the change. */
 .slot.exiting .slot-eyebrow, .slot.leaving .slot-eyebrow {
-    /* separate rule: the top-center pill must keep its -50%,-50% anchor */
-    opacity: 0; transform: translate(-50%, calc(-50% - 1.2vh));
+    /* separate rule: the top-right pill keeps its -50% vertical anchor */
+    opacity: 0; transform: translateY(calc(-50% - 1.2vh));
     transition-duration: 0.4s; transition-delay: 0s;
 }
 .slot.exiting .slot-title,   .slot.leaving .slot-title,
@@ -475,10 +517,14 @@ body {
    dock may stay (media.videoShowCta; data-vcta="0" hides it too).
    manageSlotVideo REMOVES .video-phase when the end card starts → the
    text block reveals through its normal .active transitions. */
+/* display:none, not opacity:0 — hidden-but-laid-out text kept reserving its
+   space, so the shop row floated ~150px above the bottom edge on a clean
+   video. Removed from layout, the shop row (and CTA when shown) settle at
+   the bottom of the block where they belong. */
 .slot.video-phase .slot-title,
 .slot.video-phase .slot-price,
-.slot.video-phase .slot-sub { opacity: 0 !important; }
-.slot.video-phase[data-vcta="0"] .cta-dock { opacity: 0 !important; pointer-events: none; }
+.slot.video-phase .slot-sub { display: none !important; }
+.slot.video-phase[data-vcta="0"] .cta-dock { display: none !important; }
 /* video-safe CTA skin: a ghost button dies on bright frames — go solid.
    (Static images keep the airy 0.55/0.75 ghost look untouched.) */
 .slot[data-video="true"] .cta { background: rgba(8,12,22,0.85); }
@@ -495,16 +541,16 @@ body {
 /* Compact chrome for paired buttons: trim side padding + label↔arrow gap
    only. Vertical padding (touch target) and all text metrics untouched. */
 .cta-dock.cta-row .cta, .cta-dock.cta-measure .cta {
-    padding-left: 1.5vh; padding-right: 1.5vh;
-    gap: 1.4vh;
+    padding-left: 1.28vh; padding-right: 1.28vh;
+    gap: 1.19vh;
 }
 .cta {
     width: 100%;                 /* fill the auto-sized grid column */
     display: flex; align-items: center; justify-content: space-between;
-    gap: 2.4vh;                  /* space between label and arrow */
-    padding: 1.7vh 2.2vh;
+    gap: 2.04vh;                 /* space between label and arrow */
+    padding: 1.45vh 1.87vh;
     font-family: 'Prompt', 'IBM Plex Sans Thai', sans-serif;
-    border-radius: 1.4vh;
+    border-radius: 1.19vh;
     cursor: pointer;
     touch-action: manipulation; user-select: none;
     backdrop-filter: blur(14px) saturate(120%);
@@ -522,8 +568,8 @@ body {
     background: var(--cta-bg);
     color: var(--ink-100);
     border: 0.15vh solid var(--cta-border);
-    font-size: 1.85vh; font-weight: 700;
-    letter-spacing: 0.32vh; text-transform: uppercase;
+    font-size: 1.57vh; font-weight: 700;
+    letter-spacing: 0.27vh; text-transform: uppercase;
     box-shadow: 0 1.2vh 3vh rgba(0,0,0,0.45),
                 inset 0 0 0 0.05vh rgba(255,255,255,0.04);
 }
@@ -539,8 +585,8 @@ body {
     background: var(--cta-bg);
     color: var(--ink-100);
     border: 0.12vh solid rgba(255,255,255,0.28);
-    font-size: 1.85vh; font-weight: 600;
-    letter-spacing: 0.32vh; text-transform: uppercase;
+    font-size: 1.57vh; font-weight: 600;
+    letter-spacing: 0.27vh; text-transform: uppercase;
 }
 .cta-secondary:active {
     background: rgba(8,12,22,0.7);
@@ -548,11 +594,11 @@ body {
 }
 
 .cta .arrow {
-    font-size: 1.85vh; font-weight: 500;
+    font-size: 1.57vh; font-weight: 500;
     opacity: 0.95;
     transition: transform 0.3s var(--ease-out);
 }
-.cta-secondary .arrow { font-size: 1.85vh; }
+.cta-secondary .arrow { font-size: 1.57vh; }
 .cta:active .arrow { transform: translateX(0.4vh); }
 
 /* ── CTA "น่ากด" motion ─────────────────────────────────────────────
@@ -1451,7 +1497,10 @@ body {
     display: flex; align-items: center; justify-content: center;
     backdrop-filter: blur(8px);
 }
-.detail-gallery { position: relative; width: 100%; height: 67%; flex-shrink: 0; }
+/* The photo now fills the WHOLE card and the text rides on top of it (same
+   language as a slide). Text/CTA start at ~37% and the panel grows upward
+   with the content, so nothing ever has to be scrolled to reach the button. */
+.detail-gallery { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; }
 .detail-img { width: 100%; height: 100%; background-size: cover; background-position: center; background-color: #11151c; transition: background-image 0.4s ease; cursor: pointer; position: relative; overflow: hidden; }
 /* Right after a reload the media cache is cold — a tapped popup can wait seconds
    for its image. Show a skeleton shimmer instead of a silent empty panel.
@@ -1549,46 +1598,45 @@ body {
     transition: background 0.25s ease, transform 0.25s ease;
 }
 .detail-gallery-dots .dot.active { background: #fff; transform: scale(1.25); }
-.detail-body { padding: 0.4vh 2.6vh 2.8vh; color: #fff; flex: 1 1 auto; min-height: 0; overflow-y: auto; scrollbar-width: thin; }
+.detail-body {
+    position: relative; z-index: 2;
+    margin-top: auto;                 /* pin the panel to the bottom of the card */
+    /* Fixed 49%: with the footer (~14%) the first text line always lands at
+       ~37% of the card — the level we mocked, identical on every popup so
+       the layout never jumps. Content taller than this scrolls INSIDE
+       .detail-dyn; the title, price and button never move. */
+    height: 53%;
+    padding: 2.4vh 2.6vh 0.6vh; color: #fff;
+    display: flex; flex-direction: column;
+    overflow: hidden;                 /* the panel itself never scrolls… */
+    /* scrim so any photo underneath stays readable */
+    background: linear-gradient(0deg, rgba(5,8,14,0.97) 0%, rgba(5,8,14,0.93) 62%,
+                                     rgba(5,8,14,0.72) 84%, rgba(5,8,14,0.25) 96%, transparent 100%);
+}
+/* …only the per-CTA content does (a booking grid can hold 40+ time chips).
+   Title, price and the primary button therefore stay put — the old layout
+   pushed the button off-screen and people had to scroll to find it. */
+.detail-dyn { flex: 1 1 auto; min-height: 0; overflow-y: auto; scrollbar-width: thin; }
+.detail-dyn::-webkit-scrollbar { width: 0.5vh; }
+.detail-dyn::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.22); border-radius: 1vh; }
 .detail-body::-webkit-scrollbar { width: 0.5vh; }
 .detail-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.22); border-radius: 1vh; }
 .detail-eyebrow { font-size: 1.2vh; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--dot-cyan); }
 .detail-title {
-    font-family: 'Mitr','IBM Plex Sans Thai',sans-serif; font-size: 2.7vh; line-height: 1.02;
+    font-family: 'Mitr','IBM Plex Sans Thai',sans-serif; font-size: 2.03vh; line-height: 1.15;   /* −25% */
     text-transform: uppercase; margin: 0.7vh 0;
     display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3;
     overflow: hidden; word-break: break-word;
 }
 /* Title caption overlaid on the bottom of the popup image (immersive — frees the body below) */
 .detail-cap {
-    position: absolute; left: 0; right: 0; bottom: 0; z-index: 2;
-    padding: 9vh 2.6vh 0.9vh;
+    position: relative; z-index: 2;
+    padding: 0 0 0.4vh;
     pointer-events: none;
 }
 /* Multi-layer image→panel transition: gentle blur ramps in first, then a stronger
    blur, then the colour ramps to the EXACT body colour (rgba(20,26,40)) — each
    layer masked so it fades in progressively. Feels like the photo dissolves. */
-.detail-cap .cap-l { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
-.cap-l.l1 {   /* layer 1 — soft blur, starts early, subtle */
-    backdrop-filter: blur(0.35vh); -webkit-backdrop-filter: blur(0.35vh);
-    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 55%);
-            mask-image: linear-gradient(to bottom, transparent 0%, #000 55%);
-}
-.cap-l.l2 {   /* layer 2 — stronger blur, lower half only */
-    backdrop-filter: blur(1vh); -webkit-backdrop-filter: blur(1vh);
-    -webkit-mask-image: linear-gradient(to bottom, transparent 35%, #000 88%);
-            mask-image: linear-gradient(to bottom, transparent 35%, #000 88%);
-}
-.cap-l.l3 {   /* layer 3 — colour ramp to the body colour, fine-grained stops */
-    background: linear-gradient(to bottom,
-        rgba(20,26,40,0)    0%,
-        rgba(20,26,40,0.05) 16%,
-        rgba(20,26,40,0.16) 32%,
-        rgba(20,26,40,0.34) 48%,
-        rgba(20,26,40,0.58) 64%,
-        rgba(20,26,40,0.82) 82%,
-        rgba(20,26,40,0.97) 100%);
-}
 .detail-cap > .detail-eyebrow, .detail-cap > .detail-title, .detail-cap > .detail-specs {
     position: relative; z-index: 1;
 }
@@ -1598,7 +1646,11 @@ body {
 /* "View on mobile" button — QR is a later step (matches /offer · /provider) */
 .detail-vm { background: var(--bronze-strong); color: #fff; text-align: center; font-family: 'Prompt','IBM Plex Sans Thai',sans-serif; font-weight: 800; letter-spacing: 0.02em; font-size: 1.7vh; padding: 1.5vh; border-radius: 1.4vh; display: flex; align-items: center; justify-content: center; gap: 0.8vh; cursor: pointer; touch-action: manipulation; user-select: none; }
 /* Pinned footer — keeps the primary CTA anchored at the bottom while .detail-body scrolls */
-.detail-foot { flex-shrink: 0; padding: 1.4vh 2.6vh 2.2vh; border-top: 0.12vh solid rgba(255,255,255,0.08); background: rgba(20,26,40,0.97); }
+.detail-foot {
+    position: relative; z-index: 2; flex-shrink: 0;
+    padding: 0.6vh 2.6vh 2.2vh;
+    background: rgba(5,8,14,0.97);    /* continues the body scrim — no seam, no divider */
+}
 
 /* ── Step 2 (handoff) goes FULL-CARD ─────────────────────────────────
    The hero gallery is step-1 context; on the ACTION page it stole 67% of
@@ -1606,9 +1658,22 @@ body {
    (display:none also stops compositing the layer — kiosk GPU rule) and
    let the handoff panel own the card. Back → class off → hero returns. */
 .detail-card.handoff-mode .detail-gallery { display: none; }
-.detail-card.handoff-mode .detail-body { padding-top: 7vh; }   /* clear the ← / ✕ buttons */
+.detail-card.handoff-mode .detail-body {
+    /* step 2 owns the whole card — the 53% overlay height belongs to step 1 */
+    height: 100%; margin-top: 0; padding-top: 6.4vh;   /* 6.4vh just clears the ← / ✕ buttons */
+    background: rgba(5,8,14,0.97);
+}
+/* every row trimmed so the QR + phone + send button finish on ONE page —
+   spacing only, no type was shrunk beyond the QR itself */
+.detail-card.handoff-mode .handoff-offer-title {
+    margin-bottom: 1.2vh;
+    display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden;
+}
+.detail-card.handoff-mode .handoff-scan { padding: 1.4vh; gap: 1.2vh; }
+.detail-card.handoff-mode .or-divider { margin: 1.2vh 0; }
 /* step-1 reading material (desc + menu/details) also steps aside — the
    action page is title + QR + phone ONLY, no scrolling to reach the button */
+.detail-card.handoff-mode .detail-cap,
 .detail-card.handoff-mode .detail-sub,
 .detail-card.handoff-mode .detail-dyn { display: none; }
 .handoff-offer-title {
@@ -1628,11 +1693,11 @@ body {
     text-align: center; gap: 1.6vh;
 }
 .detail-card.handoff-mode .handoff-scan-tx { text-align: center; }
-.detail-card.handoff-mode .qr-wrap img { width: 20vh; height: 20vh; }
+.detail-card.handoff-mode .qr-wrap img { width: 14vh; height: 14vh; }        /* −30% */
 /* provider offers QR *and* phone → the card is shared: smaller QR, tighter
    gaps, and the QR sub-caption steps aside (the phone label already explains
    the alternative) so the whole flow fits without scrolling */
-.detail-card.handoff-mode.handoff-both .qr-wrap img { width: 13.5vh; height: 13.5vh; }
+.detail-card.handoff-mode.handoff-both .qr-wrap img { width: 9.45vh; height: 9.45vh; }   /* −30% */
 .detail-card.handoff-mode.handoff-both .handoff-scan { gap: 1vh; }
 .detail-card.handoff-mode.handoff-both #handoffSubheading { display: none; }
 .detail-card.handoff-mode.handoff-both .handoff-offer-title { margin-bottom: 1.2vh; }
@@ -1849,16 +1914,15 @@ html.lite .bottombar-track { transform: none !important; }
                 <div class="detail-img" id="detailImg"></div>
                 <!-- Listing (For Sale/Rent): chip stays top-left of the image -->
                 <div class="detail-chip" id="detailChip" style="display:none;"></div>
-                <!-- Caption overlaid on the image bottom: category + title (+ listing specs) -->
+                <div class="detail-gallery-dots" id="detailGalleryDots"></div>
+            </div>
+            <div class="detail-body">
+                <!-- category + title + listing specs — first rows of the overlay panel -->
                 <div class="detail-cap">
-                    <i class="cap-l l1"></i><i class="cap-l l2"></i><i class="cap-l l3"></i>
                     <div class="detail-eyebrow" id="detailCat">Category</div>
                     <div class="detail-title" id="detailTitle">Title</div>
                     <div class="detail-specs" id="detailSpecs" style="display:none;"></div>
                 </div>
-                <div class="detail-gallery-dots" id="detailGalleryDots"></div>
-            </div>
-            <div class="detail-body">
                 <div class="detail-sub" id="detailSub"></div>
 
                 <!-- Per-CTA dynamic body (menu / order / book / event / contact /
@@ -2214,6 +2278,9 @@ async function loadBuildingUpdates() {
         return {
             slug:          n.offer?.slug  ?? n.slug  ?? (n.title ?? '').toLowerCase().replace(/\s+/g, '-'),
             title:         n.offer?.title_th ?? n.title ?? '',
+            // A notice never has an offer (the Offer field is hidden for kind=notice),
+            // so media.altText — baked as title_en — is its only English headline.
+            title_en:      n.title_en ?? n.altText ?? n.offer?.title_en ?? '',
             subtitle:      n.offer?.description_th ?? n.subtitle ?? '',
             icon:          n.icon  ?? '📢',
             bgColor:       n.bgColor ?? '#141A08',
@@ -2241,6 +2308,7 @@ async function loadBuildingUpdates() {
                     (!defined(expiresAt) || expiresAt > now())
                    ] | order(_createdAt desc){
             title,
+            "title_en": altText,
             "url": coalesce(videoFile.asset->url, imageFile.asset->url),
             "posterImage": posterImage.asset->url,
             "offer": offer->{ "slug": slug.current, title_th, subCategories, description_th }
@@ -2305,7 +2373,7 @@ async function loadPlaylist() {
         ] | order(order asc){
             "kind":               media->kind,
             "title":              media->title,
-            "title_en":           media->offer->title_en,
+            "title_en":           coalesce(media->altText, media->offer->title_en),
             "eyebrow":            media->offer->category,
             "sub_th":             media->offer->description_th,
             "sub_en":             media->offer->description_en,
@@ -2710,7 +2778,10 @@ function adaptToCategories() {
     out['building-updates'] = {
         title: labelFor('updates') || 'BUILDING UPDATES',
         items: MOCK_UPDATES.map(u => ({
-            name: u.title || '', sub: u.subtitle || '', meta: '', img: u.image || '',
+            // English viewers get the notice's own English title (media.altText);
+            // Thai stays the primary title. Same rule as the slide headline.
+            name: (isTH ? (u.title || u.title_en) : (u.title_en || u.title)) || '',
+            sub: u.subtitle || '', meta: '', img: u.image || '',
             _update: u, _category: 'building-updates'
         }))
     };
@@ -2838,12 +2909,20 @@ function crossfadeMedia(media, url) {
     }
 }
 
+/* Escape vendor-typed text before it goes into innerHTML (shop names now ride
+   into the slide markup; buildDetailDyn has its own local esc). */
+function escHTML(v) {
+    return String(v == null ? '' : v).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+}
+
 function renderCommercial(s) {
     const titleLines = s.titleLines || [s.title];
     // Latin-only titles get a tighter line-height (.latin) — any Thai glyph keeps
     // the Thai-safe 1.3 (stacked vowels/tone marks need the room, see CSS).
     const titleIsLatin = !/[฀-๿]/.test(titleLines.join(''));
-    const titleHTML = titleLines.map(line => `<span class="br">${thaiBreakHTML(line)}</span>`).join('');
+    // one line per title, text in its own span so the "...more" chip can sit
+    // beside it (outside the clipped zone) — see layoutSlotText()
+    const titleHTML = titleLines.map(line => `<span class="br"><span class="tx">${thaiBreakHTML(line)}</span></span>`).join('');
     const ctaHTML = (s.ctas || []).map(c =>
         `<button class="cta cta-${c.kind}">
             <span class="cta-label">${c.label}</span>
@@ -2880,6 +2959,9 @@ function renderCommercial(s) {
         : '';
     const isNotice = !!s._notice;
     const showText = !isNotice && !isWeb;
+    // shop identity now leads the text block (the corner logo is retired)
+    const p = s._provider || {};
+    const shopName = escHTML(uiLang === 'th' ? (p.nameTH || p.nameEN || '') : (p.nameEN || p.nameTH || ''));
     // Web slides bring their own background, so BOTH scrims are pure damage:
     // the bottom one (65% tall, 88% black at the floor) was visibly sinking the
     // lower cards of a unit board. Scrims exist to keep white text legible over
@@ -2893,12 +2975,13 @@ function renderCommercial(s) {
         ${showTopGrad ? '<div class="slot-grad-top"></div>' : ''}
         ${showBotGrad ? '<div class="slot-grad-bot"></div>' : ''}
         ${s.logo ? `<div class="slot-logo">${s.logo}</div>` : ''}
-        ${s.providerLogo ? `<img class="slot-plogo" src="${sizedImg(s.providerLogo, 240, 240)}" alt="">` : ''}
+
         ${s.eyebrow ? `<div class="slot-eyebrow"><span class="eb-t">${s.eyebrow}</span></div>` : ''}
         <div class="slot-content">
+            ${(showText && (s.providerLogo || shopName)) ? `<div class="slot-shop">${s.providerLogo ? `<img src="${sizedImg(s.providerLogo, 240, 240)}" alt="">` : ''}${shopName ? `<span>${shopName}</span>` : ''}</div>` : ''}
             ${showText ? `<div class="slot-title${titleIsLatin ? ' latin' : ''}">${titleHTML}</div>` : ''}
             ${(showText && s._price && (typeof s._price === 'string' || typeof s._price === 'number')) ? `<div class="slot-price">${s._price}</div>` : ''}
-            ${(showText && s.sub) ? `<div class="slot-sub">${thaiBreakHTML(s.sub)}</div>` : ''}
+            ${(showText && s.sub) ? `<div class="slot-sub"><span class="tx">${thaiBreakHTML(s.sub)}</span></div>` : ''}
             ${ctaHTML ? `<div class="cta-dock" data-count="${(s.ctas || []).length}">${ctaHTML}</div>` : ''}
         </div>
         ${(s.stats && s.stats.length) ? `<div class="stat-row">${s.stats.map(st => `<div class="stat-card"><div class="stat-num">${st.num}</div><div class="stat-label">${st.label}</div></div>`).join('')}</div>` : ''}
@@ -3004,7 +3087,38 @@ function buildSlots() {
     });
 
     layoutCtaDocks();
+    layoutSlotText();
 }
+
+/* ── "...more" chips — one-shot, ANR-safe ────────────────────────────
+   Title and description air on ONE line. Where the text actually overflows,
+   append a "...more" chip that opens the detail popup (full text lives
+   there). The chip sits OUTSIDE the clipped span (flex-shrink:0), so it can
+   never be cut away with the text it belongs to.
+   Cost model: same as layoutCtaDocks — measured once per buildSlots(), all
+   reads batched before all writes, never re-run during rotation. Inactive
+   slots are opacity:0 (not display:none) so offsetWidth reads cached layout
+   instead of forcing reflow. Re-run after fonts.ready and on resize. */
+function layoutSlotText() {
+    const lines = Array.from(stage.querySelectorAll('.slot-title .br, .slot-sub'));
+    if (!lines.length) return;
+    // write pass: clear previous chips so re-runs measure the raw text
+    lines.forEach(l => { const c = l.querySelector('.slot-more'); if (c) c.remove(); });
+    // read pass: which lines actually overflow their box?
+    const over = lines.map(l => {
+        const tx = l.querySelector('.tx');
+        return tx ? tx.scrollWidth > tx.clientWidth + 2 : false;
+    });
+    // write pass: append the chip only where it's earned
+    lines.forEach((l, i) => {
+        if (!over[i]) return;
+        const chip = document.createElement('span');
+        chip.className = 'slot-more';
+        chip.textContent = MORE_LABEL;
+        l.appendChild(chip);
+    });
+}
+const MORE_LABEL = '...more';   // one language on purpose — reads as the tail of the sentence
 
 /* ── CTA row layout — one-shot, ANR-safe ─────────────────────────────
    If a slot has 2 CTAs and both fit on one line at FULL size (font/padding
@@ -3043,11 +3157,11 @@ function layoutCtaDocks() {
 // Webfonts (Prompt/IBM Plex Sans Thai) load async and change label widths —
 // re-run the one-shot measure once they're in. Resolves once; later
 // buildSlots() calls measure with fonts already loaded.
-if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => layoutCtaDocks());
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { layoutCtaDocks(); layoutSlotText(); });
 let ctaRelayoutTimer = null;
 window.addEventListener('resize', () => {
     clearTimeout(ctaRelayoutTimer);
-    ctaRelayoutTimer = setTimeout(layoutCtaDocks, 200);
+    ctaRelayoutTimer = setTimeout(() => { layoutCtaDocks(); layoutSlotText(); }, 200);
 });
 
 function pickTransition() {
@@ -3166,6 +3280,13 @@ function manageSlotVideo(idx) {
             try { v.pause(); } catch(e) {}
             v.style.display = 'none';              // fall back to the still layer under the card
             el.classList.remove('video-phase');
+            // the text just re-entered layout (display:none → block); without a
+            // primed frame the transition has nothing to animate FROM and the
+            // card would pop instead of fade
+            const revealEls = el.querySelectorAll('.slot-shop, .slot-title, .slot-price, .slot-sub, .cta-dock');
+            revealEls.forEach(n => { n.style.opacity = '0'; });
+            void el.offsetWidth;
+            revealEls.forEach(n => { n.style.opacity = ''; });
             const media = el.querySelector('.slot-media');
             if (media) crossfadeMedia(media, s._endCardImg);
             advanceTimer = setTimeout(advanceFromMedia, s._endCardMs);
@@ -3919,6 +4040,15 @@ function setDetailGallery(imgs) {
 
 /* ───────── Per-CTA popup body (mirrors the /offer form's renderPopup) ───────── */
 /* Verb per CTA — matches /offer v2's MOBILE_VERB exactly (contact = "View offer"). */
+/* Property (rent/sale) reuses the order/cart MECHANIC but must not sound like a
+   purchase: nobody buys a condo off a lobby screen. Picking a room means "I'm
+   interested — arrange a viewing", so only the wording branches on what the
+   listing IS. Food/retail keeps the cart wording untouched. */
+const PROP_CTA = c => /^(forRent|forSale|rent|sale)$/i.test(String(c || ''));
+const PICK_LABEL = (isProp, on, isTH) => isProp
+    ? (isTH ? (on ? '✓ สนใจแล้ว' : 'สนใจห้องนี้') : (on ? '✓ Added' : 'Interested'))
+    : (isTH ? (on ? '✓ เลือกแล้ว' : 'เลือก')      : (on ? '✓ Selected' : 'Select'));
+
 const MOBILE_VERB = {
     viewMenu:    { th: 'ดูเมนู',    en: 'View menu' },
     order:       { th: 'สั่ง',       en: 'Order' },
@@ -3929,7 +4059,10 @@ const MOBILE_VERB = {
     contact:     { th: 'ดูข้อเสนอ',  en: 'View offer' },
     event:       { th: 'ดูอีเวนต์',  en: 'View' }
 };
-function mobileVerbLabel(ctaType) {
+function mobileVerbLabel(ctaType, category) {
+    // property: "สั่ง บนมือถือ" would promise a purchase — it's a viewing request
+    if (ctaType === 'order' && PROP_CTA(category))
+        return uiLang === 'th' ? 'นัดชมห้อง บนมือถือ' : 'Request a viewing on mobile';
     const v = MOBILE_VERB[ctaType];
     const verb = v ? (uiLang === 'th' ? v.th : v.en) : (uiLang === 'th' ? 'ดู' : 'View');
     return verb + (uiLang === 'th' ? ' บนมือถือ' : ' on mobile');
@@ -4077,6 +4210,10 @@ function buildDetailDyn(ctx){
     }
     if (t==='order'){
         const items = ctx.orderItems||[], ful = ctx.fulfillment||[];
+        // A property board is an enquiry list, not a shopping cart — "สั่ง/Order"
+        // reads as "buy now" to a passer-by. The mechanic is unchanged; only the
+        // words follow what the thing IS (category), so food stays food.
+        const isProp = PROP_CTA(ctx.category);
         return (store?`<div class="detail-substore">${store}</div>`:'')
              + (ful.length?`<div class="detail-tags">${ful.map(f=>`<span class="c">${esc(FUL[f]||f)}</span>`).join('')}</div>`:'')
              + (items.length ? items.map((m,i)=>{
@@ -4085,7 +4222,7 @@ function buildDetailDyn(ctx){
                    const key = esc(String(m.key ?? i));
                    const max = Math.max(1, +m.maxQty || 99);
                    const ctrl = max === 1
-                     ? `<span class="detail-qty pick" data-key="${key}" data-max="1"><b style="display:none">0</b><span class="q-tog">${isTH?'เลือก':'Select'}</span></span>`
+                     ? `<span class="detail-qty pick" data-key="${key}" data-max="1" data-prop="${isProp?1:0}"><b style="display:none">0</b><span class="q-tog">${PICK_LABEL(isProp, false, isTH)}</span></span>`
                      : `<span class="detail-qty" data-key="${key}" data-max="${max}"><span class="q-dec">−</span><b>0</b><span class="q-inc">＋</span></span>`;
                    return `<div class="detail-mit"><span class="th"${m.image?` style="background-image:url('${m.image}')"`:''}></span><span class="nm">${nm(m)}</span><span class="pr">${m.price?esc(m.price):''}</span>${ctrl}</div>`;
                }).join('')
@@ -4214,7 +4351,9 @@ function openDetail(ctx) {
     if (vm) {
         // Order replaces the verb button with a cart button (v2).
         if (ctx.ctaType === 'order') {
-            vm.textContent = uiLang === 'th' ? '🛒 ดูตะกร้า · สั่ง' : '🛒 View cart · Order';
+            vm.textContent = PROP_CTA(ctx.category)
+                ? (uiLang === 'th' ? '📋 นัดชมห้องที่เลือก' : '📋 Request a viewing')
+                : (uiLang === 'th' ? '🛒 ดูตะกร้า · สั่ง'   : '🛒 View cart · Order');
         } else {
             const v = MOBILE_VERB[ctx.ctaType];
             const verb = v ? (uiLang === 'th' ? v.th : v.en)
@@ -4290,7 +4429,7 @@ function showHandoff() {
     // Step 2 owns the mobile wording: "📱 จอง บนมือถือ" (verb-aware) — step 1's
     // button is verb-only so nobody expects an instant jump to their phone.
     const verbMobile = handoffCtx.ctaType
-        ? mobileVerbLabel(handoffCtx.ctaType)
+        ? mobileVerbLabel(handoffCtx.ctaType, handoffCtx.category)
         : (isTH ? 'ดูบนมือถือ' : 'View on mobile');
     setTxt('handoffHeading',    `📱 ${verbMobile}${offerLabel ? ` — ${offerLabel}` : ''}`);
     setTxt('handoffSubheading', isTH ? 'สแกนคิวอาร์โค้ดด้วยโทรศัพท์ของท่านเพื่อดำเนินการต่อ' : 'Scan the QR code with your phone to continue');
@@ -4412,8 +4551,7 @@ detailOverlay.addEventListener('click', function (e) {
     let n = parseInt(b.textContent, 10) || 0;
     if (btn.classList.contains('q-tog')) {
         n = n ? 0 : 1;                                   // max=1 control = select toggle
-        btn.textContent = n ? (uiLang === 'th' ? '✓ เลือกแล้ว' : '✓ Selected')
-                            : (uiLang === 'th' ? 'เลือก' : 'Select');
+        btn.textContent = PICK_LABEL(qty.dataset.prop === '1', !!n, uiLang === 'th');
     } else {
         n += btn.classList.contains('q-inc') ? 1 : -1;
     }
@@ -4524,9 +4662,11 @@ stage.addEventListener('click', e => {
     if (typeof openCategory === 'function' && cat && (cat.items || []).length) openCategory(key);
 });
 
-/* CTA on the current commercial slide → detail of that offer/slot */
+/* CTA on the current commercial slide → detail of that offer/slot.
+   The "...more" chip after a clipped title/description opens the SAME detail
+   popup (that's where the full text lives), so it reuses this handler. */
 stage.addEventListener('click', e => {
-    const btn = e.target.closest('.cta');
+    const btn = e.target.closest('.cta, .slot-more');
     if (!btn) return;
     // Use the slot the tapped button ACTUALLY belongs to — NOT SLOTS[cur]. During a
     // crossfade the outgoing slide is still in the DOM and clickable while `cur` has
@@ -4537,6 +4677,7 @@ stage.addEventListener('click', e => {
     if (!s) return;
     // Which dock button was tapped → carry its (already form-matched) label so the
     // detail/handoff CTA reads identically. Falls back to the slot's primary CTA.
+    // a "...more" tap is not a CTA choice — treat it as the slot's primary offer
     const tappedKind = btn.classList.contains('cta-secondary') ? 'secondary' : 'primary';
     const tappedCta = (s.ctas || []).find(c => c.kind === tappedKind) || (s.ctas || [])[0] || null;
     // For a property listing, prefer its own photo gallery over the slide still.
