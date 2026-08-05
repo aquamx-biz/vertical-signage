@@ -122,21 +122,24 @@ export default defineType({
         }),
     }),
     // Web slide — หน้า HTML ที่ bake อยู่บนเว็บของโครงการเอง (เช่นบอร์ดราคาห้อง)
-    // ต้องเป็น URL ในโดเมนเดียวกับ player เท่านั้น: ข้ามโดเมนจะโดน service worker /
-    // CORS บนกล่องจอ (เคสเดียวกับรูป Sanity CDN ที่เคยพัง)
+    // ต้องเป็น URL เต็ม (https://…): กล่องบางตัวไม่ได้เปิดเว็บโครงการตรง ๆ แต่ให้
+    // แอป aquamx ดาวน์โหลด HTML มาป้อน WebView เอง — หน้าจึงไม่มีโดเมนต้นทาง
+    // path แบบ /board-cards/rent/ เลยชี้ไปที่ที่ไม่มีอยู่จริง → iframe ว่าง = จอดำ
     defineField({
       name: 'webUrl',
       title: '📺 Web page URL',
       type: 'string',
-      description: 'ลิงก์หน้าเว็บที่จะแสดงบนจอ — ใช้ path ในเว็บโครงการเดียวกัน เช่น /board-cards/rent/ (ห้ามใส่โดเมนอื่น)',
+      description: 'ลิงก์เต็มของหน้าเว็บที่จะแสดงบนจอ เช่น https://39-by-sansiri.netlify.app/board-cards/rent/ — ต้องเป็นเว็บของโครงการนั้นเอง (ห้ามเว็บภายนอก)',
       hidden: ({ document }) => (document as any)?.type !== 'web',
       validation: Rule =>
         Rule.custom((value, context) => {
           const doc = context.document as any
           if (doc?.type !== 'web') return true
-          if (!value) return 'ใส่ลิงก์หน้าเว็บ เช่น /board-cards/rent/'
-          if (!/^\//.test(String(value)))
-            return 'ต้องขึ้นต้นด้วย / (path ในเว็บโครงการเดียวกัน) — โดเมนอื่นจอโหลดไม่ได้'
+          if (!value) return 'ใส่ลิงก์เต็ม เช่น https://39-by-sansiri.netlify.app/board-cards/rent/'
+          const v = String(value)
+          if (/^\//.test(v))
+            return 'ใช้ลิงก์เต็ม (https://…) — path อย่างเดียวจะจอดำบนกล่องที่เปิดผ่านแอป aquamx'
+          if (!/^https:\/\//.test(v)) return 'ต้องขึ้นต้นด้วย https://'
           return true
         }),
     }),
