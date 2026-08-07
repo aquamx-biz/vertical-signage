@@ -20,6 +20,7 @@ const LABELS: Record<string, string> = {
   payment:           '💳 Payments',
   procurement:       '📦 Procurements',
   order:             '🛒 Orders',
+  discountCode:      '🎟 Discount Codes',
   receipt:           '🧾 Receipts',
   funding:           '💰 Funding',
   journalEntry:      '📒 Journal Entries',
@@ -34,7 +35,7 @@ const LABELS: Record<string, string> = {
 }
 
 const GROUPS = [
-  { id: 'digital-signage', label: 'Digital Signage', icon: '🖥',  schemas: ['project', 'playlist', 'media', 'offer', 'provider', 'categoryConfig'] },
+  { id: 'digital-signage', label: 'Digital Signage', icon: '🖥',  schemas: ['project', 'playlist', 'media', 'offer', 'provider', 'categoryConfig', 'discountCode'] },
   { id: 'crm',             label: 'CRM',             icon: '👥',  schemas: ['party', 'lead', 'saleOpportunity', 'emailCampaign'] },
   { id: 'projects',        label: 'Projects',        icon: '🏗',  schemas: ['projectSite', 'contract', 'serviceContract', 'installation'] },
   { id: 'finance',         label: 'Finance',         icon: '💰',  schemas: ['payment', 'procurement', 'order', 'receipt', 'funding', 'journalEntry', 'asset', 'assetRegister', 'ledger', 'financialStatement'] },

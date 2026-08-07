@@ -389,6 +389,17 @@ export default defineType({
           defineField({ name: 'name_th', title: 'Name (TH)', type: 'string' }),
           defineField({ name: 'name_en', title: 'Name (EN)', type: 'string' }),
           defineField({ name: 'price', title: '📺 Price', type: 'string' }),
+          // `price` above is DISPLAY TEXT and must stay that way — it carries
+          // units and shorthand the customer reads ("THB 265", "30.0K ฿/ด.").
+          // The handoff page sums it by pulling the first number out with a
+          // regex, which reads "30.0K ฿/ด." as 30. Harmless while the total is
+          // only shown to a human; not harmless the moment a card is charged.
+          // Money must come from priceTHB and never from `price`.
+          defineField({
+            name: 'priceTHB', title: '💳 Price (THB) · ราคาเป็นตัวเลข', type: 'number',
+            description: 'ตัวเลขล้วน ไม่ใส่หน่วย ไม่ใส่ K/M — ใช้คิดเงินจริงเท่านั้น · เว้นว่าง = ชิ้นนี้จ่ายออนไลน์ไม่ได้',
+            validation: Rule => Rule.min(0).precision(2),
+          }),
           defineField({ name: 'image', title: 'Image', type: 'image', options: { hotspot: true } }),
           // cart contract (2026-08-04): stable id + per-item cap — both optional,
           // plain menus behave exactly as before (player falls back to _key/99)
@@ -417,6 +428,51 @@ export default defineType({
         { title: 'Delivery', value: 'delivery' },
         { title: 'Pickup',   value: 'pickup' },
       ] },
+    }),
+
+    // ── Online payment ───────────────────────────────────────────────────────
+    // Opt-IN, per offer. Property listings ride the same cart mechanism as a
+    // restaurant menu (only the words differ), and "นัดดูห้อง" must never turn
+    // into a charge — so this is never inferred from category. An offer only
+    // becomes payable when a human ticks it here AND every item it sells has a
+    // priceTHB AND the shop has a bank account to be paid into.
+    defineField({
+      name: 'payOnline',
+      group: 'cta',
+      title: '💳 Accept payment online · รับชำระเงินออนไลน์',
+      type: 'boolean',
+      hidden: ctaGate('order'),
+      initialValue: false,
+      description: 'เปิดแล้วลูกค้าจ่ายจบบนมือถือ · ต้องกรอก ราคาเป็นตัวเลข (Price THB) ครบทุกชิ้น และร้านต้องมีเลขบัญชีใน Party ก่อน',
+      validation: Rule => Rule.custom((value, context) => {
+        if (!value) return true
+        const items = (context.document?.orderItems ?? []) as { priceTHB?: number }[]
+        if (!items.length) return 'ยังไม่มีรายการสินค้า — เพิ่ม Order Items ก่อน'
+        const missing = items.filter(i => i?.priceTHB == null).length
+        return missing === 0
+          ? true
+          : `มี ${missing} รายการที่ยังไม่ได้ใส่ Price (THB) — เก็บเงินไม่ได้จนกว่าจะครบทุกชิ้น`
+      }),
+    }),
+
+    defineField({
+      name: 'deliveryFeeTHB',
+      group: 'cta',
+      title: '💳 Delivery Fee (THB) · ค่าส่ง',
+      type: 'number',
+      hidden: ({ document }) => !document?.payOnline,
+      description: 'บวกเพิ่มเมื่อลูกค้าเลือก Delivery · เว้นว่าง = ไม่คิดค่าส่ง',
+      validation: Rule => Rule.min(0).precision(2),
+    }),
+
+    defineField({
+      name: 'freeDeliveryOverTHB',
+      group: 'cta',
+      title: '💳 Free Delivery Over (THB) · ส่งฟรีเมื่อซื้อครบ',
+      type: 'number',
+      hidden: ({ document }) => !document?.payOnline || document?.deliveryFeeTHB == null,
+      description: 'ยอดสินค้าถึงเท่านี้แล้วไม่คิดค่าส่ง · เว้นว่าง = คิดค่าส่งเสมอ',
+      validation: Rule => Rule.min(0),
     }),
 
     // Book CTA — per-offer OVERRIDE of the provider's booking schedule.

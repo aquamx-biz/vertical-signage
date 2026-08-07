@@ -304,6 +304,7 @@ export default defineConfig([{
             S.divider(),
             can('offer')    && S.documentTypeListItem('offer').title('Offers'),
             can('provider') && S.documentTypeListItem('provider').title('Providers'),
+            can('discountCode') && S.documentTypeListItem('discountCode').title('Discount Codes (โค้ดส่วนลด)'),
             can('categoryConfig') && S.listItem()
               .title('Global Category Config')
               .id('categoryConfig-global')
