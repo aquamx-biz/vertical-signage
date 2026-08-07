@@ -40,6 +40,7 @@ import { DashboardTool }        from './tools/DashboardTool'
 import { ContentTool }          from './tools/ContentTool'
 import { MarketIntelTool }      from './tools/MarketIntelTool'
 import { HealthTool }           from './tools/HealthTool'
+import { UsageTool }            from './tools/UsageTool'
 import {
   DashboardIcon, RocketIcon, ActivityIcon, HelpCircleIcon,
   BarChartIcon,
@@ -88,6 +89,12 @@ const dashboardPlugin = definePlugin({
       title:     'Health',
       icon:      ActivityIcon,
       component: HealthTool,
+    },
+    {
+      name:      'usage',
+      title:     'การใช้งานจอ',
+      icon:      BarChartIcon,
+      component: UsageTool,
     },
   ],
 })

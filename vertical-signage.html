@@ -4609,7 +4609,10 @@ function showHandoff() {
     let deepLink;
     const intentQ = buildIntentQuery(handoffCtx.ctaType);   // the kiosk pick rides along
     if (handoffCtx.offerSlug)         deepLink = `${CONFIG.HANDOFF_BASE}/o/${handoffCtx.offerSlug}${intentQ}`;
-    else if (handoffCtx.providerSlug) deepLink = `${CONFIG.HANDOFF_BASE}/p/${handoffCtx.providerSlug}`;
+    // ?p= carries the screen that produced the QR. The offer link already has it
+    // (buildIntentQuery); without it here a provider scan lands with no idea which
+    // building it came from, and the scan counter can't attribute it.
+    else if (handoffCtx.providerSlug) deepLink = `${CONFIG.HANDOFF_BASE}/p/${handoffCtx.providerSlug}?p=${encodeURIComponent(window.__BAKED__?.projectCode || '')}`;
     else                              deepLink = `${CONFIG.HANDOFF_BASE}`;
 
     const setTxt = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
@@ -5334,7 +5337,15 @@ async function init() {
                         ua:    navigator.userAgent.slice(-60)
                     })
                 }).then(function (r) {
-                    if (batch && !(r && r.ok)) usageMerge(batch);   // server said no — keep the counts
+                    if (!batch) return;
+                    // A 200 alone isn't proof: the endpoint answers OK for the
+                    // health half even when the counter write failed, so that a
+                    // broken counter can't make the fleet look offline. It says
+                    // so in the body — believe that, and keep the counts.
+                    if (!r || !r.ok) { usageMerge(batch); return; }
+                    return r.json().then(function (j) {
+                        if (!j || j.usage === 'failed') usageMerge(batch);
+                    }, function () { usageMerge(batch); });          // unreadable answer = assume lost
                 }).catch(function () {
                     if (batch) usageMerge(batch);                   // no uplink — keep the counts
                 });
