@@ -2071,6 +2071,71 @@ const CONFIG = {
     SANITY_TOKEN:      '',
 };
 
+/* ========================================================
+   USAGE COUNTERS  (spec: _spec-usage-tracking.md)
+   What people actually do with the screen. Four rules, none optional:
+
+   1. NEVER a fetch per touch. Counts accumulate in memory and ride the
+      health beacon that already POSTs every 5 min — these boxes ANR.
+   2. NEVER localStorage as the store of record. The fleet wipes it: the
+      beacon's own `bid` lives there and mahogany-tower alone has shown up
+      as 10 different "devices" because of it. Unsent counts live in RAM
+      and are worth at most 5 minutes.
+   3. Nothing counted while the page is hidden. A Yodeck-wrapped box can
+      swap our page out and leave it loaded — the loop keeps running with
+      nobody watching, which would inflate the denominator.
+   4. Nothing counted in Studio preview (?preview=1). Half the beacon rows
+      today are staff browsers and the Studio preview iframe.
+
+   Read as: air = aired, tap = touched. tap/air is the number that decides
+   whether a slide earns its slot — a raw tap count just rewards whoever
+   has been on the loop longest.
+======================================================== */
+const TRACK_ON = !new URLSearchParams(location.search).has('preview');
+const SESSION_GAP_MS = 60000;   // touches closer than this are one person
+const newUsage = () => ({
+    air: {}, tap: {},
+    f:   { detail: 0, gallery: 0, cta: 0, qr: 0, phone: 0, menu: 0, cat: 0, sess: 0 },
+    end: { back: 0, cta: 0, idle: 0 },
+    dw:  { d0: 0, d3: 0, d10: 0, d30: 0 },
+});
+let USAGE = newUsage();
+let _lastTouchTs = 0;
+const _seen = () => TRACK_ON && document.visibilityState !== 'hidden';
+/* An aired slide. Called once per showSlot, keyed by Sanity media _id. */
+function uAir(id)  { if (_seen() && id) USAGE.air[id] = (USAGE.air[id] || 0) + 1; }
+/* A touch. Opens a session if the screen has been quiet for a minute — one
+   curious kid mashing the glass 8 times is one person, not eight. */
+function uTouch(id) {
+    if (!_seen()) return;
+    const now = Date.now();
+    if (now - _lastTouchTs > SESSION_GAP_MS) USAGE.f.sess++;
+    _lastTouchTs = now;
+    if (id) USAGE.tap[id] = (USAGE.tap[id] || 0) + 1;
+}
+/* A funnel step: detail | gallery | cta | qr | phone | menu | cat */
+function uStep(k) { if (_seen() && USAGE.f[k] != null) USAGE.f[k]++; }
+/* How a popup ended: back (read it, left) | cta (went on) | idle (walked off) */
+function uEnd(k)  { if (_seen() && USAGE.end[k] != null) USAGE.end[k]++; }
+/* How long they stayed, in buckets — a 2-second open is a mis-tap, a
+   15-second one is real interest, and averaging the two hides both. */
+function uDwell(ms) {
+    if (!_seen()) return;
+    const s = ms / 1000;
+    USAGE.dw[s < 3 ? 'd0' : s < 10 ? 'd3' : s < 30 ? 'd10' : 'd30']++;
+}
+function usageEmpty(u) {
+    return !Object.keys(u.air).length && !Object.keys(u.tap).length
+        && !Object.values(u.f).some(Boolean) && !Object.values(u.end).some(Boolean)
+        && !Object.values(u.dw).some(Boolean);
+}
+/* Put a failed batch back — the beacon clears counts only on HTTP 200, so a
+   dead uplink costs nothing but freshness. */
+function usageMerge(from) {
+    ['air', 'tap'].forEach(m => { for (const k in from[m]) USAGE[m][k] = (USAGE[m][k] || 0) + from[m][k]; });
+    ['f', 'end', 'dw'].forEach(m => { for (const k in from[m]) USAGE[m][k] = (USAGE[m][k] || 0) + from[m][k]; });
+}
+
 // Data-source audit map
 const _ds = {};
 
@@ -2441,6 +2506,12 @@ async function loadPlaylist() {
             "imageDurationOverride": displayDuration,
             "displayDuration":    displayDuration,
             "offerSlug":          media->offer->slug.current,
+            // Usage counters key on this, never on the playlist index (the lineup
+            // reorders weekly) and never on the offer slug (slugs get renamed, and
+            // notices/boards carry no offer at all). MUST stay in sync with
+            // build.mjs PLAYLIST_PROJ_V7 — a live screen and a baked one that
+            // disagree here would report the same slide under two different ids.
+            "mediaId":            media->_id,
             "providerSlug":       coalesce(
                                     touchExploreDefaultProvider->slug.current,
                                     media->offer->provider->slug.current
@@ -2642,6 +2713,7 @@ function adaptPlaylistToSlots(pl) {
             const nDurSec = item.imageDurationOverride ?? item.displayDuration ?? item.defaultDuration ?? item.defaultImageDuration;
             slots.push({
                 kind: 'notice',
+                mediaId: item.mediaId || '',   // usage counters — notices carry no offer
                 durationMs: nDurSec != null ? nDurSec * 1000 : 16000,
                 building: { mark: 'M', name: window.__BAKED__?.projectTitle || 'Building', sub: '', photo: upd.image || item.poster || '' },
                 titleTH: titleStr || 'ประกาศ', titleEN: 'ANNOUNCEMENT',
@@ -2704,6 +2776,7 @@ function adaptPlaylistToSlots(pl) {
         }
         slots.push({
             kind: 'commercial',
+            mediaId: item.mediaId || '',   // usage counters key on this — see the projection comment
             logo: '',
             image: stillImage,
             images: imageList,
@@ -3396,6 +3469,7 @@ function showSlot(idx, isFirst = false) {
     if (devKind) devKind.textContent = SLOTS[idx].kind;
     if (devIdx) devIdx.textContent = idx + 1;
     if (window.__swipeHintOnSlide) window.__swipeHintOnSlide();   // periodic swipe-hint pacing
+    uAir(SLOTS[idx].mediaId);   // one airing — the denominator for tap rate
 
     slots.forEach((el, i) => {
         el.classList.remove('active', 'leaving', 'entering', 'exiting');
@@ -3664,6 +3738,7 @@ document.addEventListener('keydown', e => {
         const dx = t.clientX - sx, dy = t.clientY - sy, dt = Date.now() - st;
         // real swipe only: fast, mostly horizontal, far enough — a tap (dx≈0) falls through to CTAs
         if (dt > 700 || Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.4) return;
+        uTouch('');   // a swipe is a person, even though it belongs to no one slide
         swipeAdvance(dx < 0 ? 1 : -1);
     };
     stage.addEventListener('touchstart', start, { passive: true });
@@ -3761,6 +3836,8 @@ function addTap(el, fn) {
 }
 
 function openMenu() {
+    uTouch('');   // a touch, but not on any one slide
+    uStep('menu');
     isMenuOpen = true;
     menuBtn.classList.add('open');
     categoryPanel.classList.add('open');
@@ -3906,6 +3983,8 @@ function openCategory(catKey) {
         catGrid.appendChild(empty);
     }
     catScreen.classList.add('open');
+    uTouch('');
+    uStep('cat');
     isMenuOpen = true;
     clearAllSlotTimers();
     advanceToken++;
@@ -4078,6 +4157,7 @@ function setDetailGallery(imgs) {
     if (!di) return;
     addTap(di, () => {
         if (_galleryImgs.length <= 1) return;
+        uStep('gallery');
         stopDetailGallery();
         showGalleryImage(_galleryIdx + 1);
         _galleryTimer = setInterval(() => showGalleryImage(_galleryIdx + 1), GALLERY_INTERVAL_MS);
@@ -4338,6 +4418,9 @@ function layoutDetailText(isUpdate) {
 
 function openDetail(ctx) {
     lastDetailCtx = ctx;   // remember for lang-toggle re-render
+    uStep('detail');
+    _detailOpenedAt = Date.now();
+    _detailAdvanced = false;
     // Someone is LOOKING at this popup — yield the whole pipe to its images.
     // The SW prewarm queue resumes when the popup closes.
     try { navigator.serviceWorker?.controller?.postMessage({ action: 'prewarm-pause' }); } catch (e) {}
@@ -4463,7 +4546,18 @@ function openDetail(ctx) {
     syncInteractingClass();
     resetIdle();
 }
+/* `reason` is only passed by the idle auto-return. Everything else is judged by
+   whether the visitor moved FORWARD while it was open (CTA / QR) — reaching the
+   QR and then closing is a finished journey, not a bounce. */
+let _detailOpenedAt = 0, _detailAdvanced = false;
+function _endDetail(reason) {
+    if (!_detailOpenedAt) return;                 // already accounted for
+    uDwell(Date.now() - _detailOpenedAt);
+    uEnd(reason || (_detailAdvanced ? 'cta' : 'back'));
+    _detailOpenedAt = 0;
+}
 function closeDetail() {
+    _endDetail();
     detailOverlay.classList.remove('open');
     // Belt-and-braces: force the overlay out of the compositor after the fade,
     // even if a quirky WebView mishandles the delayed CSS visibility transition.
@@ -4478,7 +4572,7 @@ function closeDetail() {
     resumeRotation();   // re-arm current slot (video/multi-image + dwell) — never stall
 }
 const detailCloseBtn = document.getElementById('detailClose');
-if (detailCloseBtn) detailCloseBtn.addEventListener('click', closeDetail);
+if (detailCloseBtn) detailCloseBtn.addEventListener('click', () => closeDetail());
 detailOverlay.addEventListener('click', e => { if (e.target === detailOverlay) closeDetail(); });
 
 /* "...more" expands IN PLACE — the popup is the last stop, there is no deeper
@@ -4502,6 +4596,8 @@ const detailVm = document.getElementById('detailVm');
 if (detailVm) detailVm.addEventListener('click', showHandoff);
 
 function showHandoff() {
+    uStep('qr');
+    _detailAdvanced = true;   // they went forward — closing after this is not a bounce
     const isTH = uiLang === 'th';
     const offerLabel = isTH
         ? (handoffCtx.offerTitleTH || (handoffCtx.provider && (handoffCtx.provider.nameTH || handoffCtx.provider.nameEN)) || '')
@@ -4669,6 +4765,7 @@ if (sendLinkBtn) sendLinkBtn.addEventListener('click', function() {
     const phone = (document.getElementById('phoneInput').value || '').trim().replace(/\D/g, '');
     const isTH  = uiLang === 'th';
     const validTH = /^0[689]\d{8}$/.test(phone);
+    if (validTH) uStep('phone');   // only a real number counts as a step
     if (!validTH) {
         const msg = document.getElementById('sendConfirmMsg');
         if (msg) {
@@ -4766,6 +4863,10 @@ stage.addEventListener('click', e => {
     const idx = (slotEl && slotEl.dataset.index != null) ? +slotEl.dataset.index : cur;
     const s = SLOTS[idx];
     if (!s) return;
+    // Credit the slide that was actually on screen, not SLOTS[cur] — same reason
+    // as the idx dance above. A CTA press is also a funnel step; "...more" is not.
+    uTouch(s.mediaId);
+    if (btn.classList.contains('cta')) uStep('cta');
     // Which dock button was tapped → carry its (already form-matched) label so the
     // detail/handoff CTA reads identically. Falls back to the slot's primary CTA.
     // a "...more" tap is not a CTA choice — treat it as the slot's primary offer
@@ -4937,6 +5038,7 @@ function hideIdleCountdown() {
     if (el) el.classList.remove('visible');
 }
 function returnToMain() {
+    _endDetail('idle');   // nobody closed it — the screen gave up waiting
     isMenuOpen = false;
     menuBtn.classList.remove('open');
     categoryPanel.classList.remove('open');
@@ -5207,10 +5309,17 @@ async function init() {
                     var m = navigator.userAgent.match(/Android\s+([\d.]+);\s*([^;)]+?)\s*(?:Build|;|\))/i);
                     if (m) { andr = m[1]; board = (m[2] || '').trim(); }
                 } catch (_) {}
+                // Usage counters ride along — this POST already happens, so the
+                // taps cost no extra request. Take the batch OUT of USAGE first
+                // so touches during the flight land in the next one, and put it
+                // back if the post fails: counts are only ever cleared by a 200.
+                var batch = null;
+                if (TRACK_ON && !usageEmpty(USAGE)) { batch = USAGE; USAGE = newUsage(); }
                 fetch(BURL, {
                     method: 'POST', keepalive: true,
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
+                        u:     batch || undefined,
                         p:     (window.__BAKED__ && __BAKED__.projectCode) || 'unknown',
                         rev:   (window.__BAKED__ && __BAKED__.rev) || '',
                         bid:   bid,
@@ -5224,7 +5333,11 @@ async function init() {
                         andr:  andr,     // Android version
                         ua:    navigator.userAgent.slice(-60)
                     })
-                }).catch(function () {});
+                }).then(function (r) {
+                    if (batch && !(r && r.ok)) usageMerge(batch);   // server said no — keep the counts
+                }).catch(function () {
+                    if (batch) usageMerge(batch);                   // no uplink — keep the counts
+                });
             } catch (_) {}
         }
         setTimeout(send, 45000);        // first report after warm-up

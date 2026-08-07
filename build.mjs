@@ -195,6 +195,10 @@ const PLAYLIST_PROJ_V7 = `
         "imageDurationOverride": displayDuration,
         "displayDuration":    displayDuration,
         "offerSlug":          media->offer->slug.current,
+        // Usage counters key on this — see the twin comment in vertical-signage.html.
+        // Both projections must carry it or a baked screen and a live one report
+        // the same slide under different ids.
+        "mediaId":            media->_id,
         "providerSlug":       coalesce(touchExploreDefaultProvider->slug.current, media->offer->provider->slug.current),
         "providerImage":      coalesce(media->offer->provider->coverImage.asset->url, media->offer->provider->logo.asset->url),
         "listing":            media->offer->listing,
