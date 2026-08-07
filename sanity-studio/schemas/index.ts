@@ -17,6 +17,7 @@ import asset              from './asset'
 import assetRegister      from './assetRegister'
 import procurement        from './procurement'
 import payment            from './payment'
+import order              from './order'
 import receipt            from './receipt'
 import funding            from './funding'
 import journalEntry       from './journalEntry'
@@ -56,6 +57,7 @@ export const schemaTypes = [
   assetRegister,
   procurement,
   payment,
+  order,
   receipt,
   funding,
   journalEntry,

@@ -19,6 +19,7 @@ const LABELS: Record<string, string> = {
   installation:      '🔧 Install & Activate',
   payment:           '💳 Payments',
   procurement:       '📦 Procurements',
+  order:             '🛒 Orders',
   receipt:           '🧾 Receipts',
   funding:           '💰 Funding',
   journalEntry:      '📒 Journal Entries',
@@ -36,7 +37,7 @@ const GROUPS = [
   { id: 'digital-signage', label: 'Digital Signage', icon: '🖥',  schemas: ['project', 'playlist', 'media', 'offer', 'provider', 'categoryConfig'] },
   { id: 'crm',             label: 'CRM',             icon: '👥',  schemas: ['party', 'lead', 'saleOpportunity', 'emailCampaign'] },
   { id: 'projects',        label: 'Projects',        icon: '🏗',  schemas: ['projectSite', 'contract', 'serviceContract', 'installation'] },
-  { id: 'finance',         label: 'Finance',         icon: '💰',  schemas: ['payment', 'procurement', 'receipt', 'funding', 'journalEntry', 'asset', 'assetRegister', 'ledger', 'financialStatement'] },
+  { id: 'finance',         label: 'Finance',         icon: '💰',  schemas: ['payment', 'procurement', 'order', 'receipt', 'funding', 'journalEntry', 'asset', 'assetRegister', 'ledger', 'financialStatement'] },
   { id: 'approvals',       label: 'Approvals',       icon: '✅',  schemas: ['approvalRequest', 'approvalRule', 'approvalPosition'] },
   { id: 'operations',      label: 'Operations',      icon: '⚙️', schemas: ['contractType'] },
 ]

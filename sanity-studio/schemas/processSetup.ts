@@ -6,6 +6,9 @@ import { FormulaBaseFieldSelect }   from '../components/FormulaBaseFieldSelect'
 import { FormulaAmountFieldSelect } from '../components/FormulaAmountFieldSelect'
 import { StepDocKeySelect }   from '../components/StepDocKeySelect'
 import { StepFieldKeySelect } from '../components/StepFieldKeySelect'
+import { makeGlAccountInput }   from '../components/GlAccountInput'
+
+const RevenueAccountInput = makeGlAccountInput(['revenue'], { allowCreditBalance: true })
 
 /**
  * Process Setup — configures both the Contract Phase and Installation Phase
@@ -26,6 +29,7 @@ export default defineType({
     { name: 'identity', title: 'Identity'       },
     { name: 'asset',    title: 'Asset Config'   },
     { name: 'service',  title: 'Service Config' },
+    { name: 'revenue',  title: 'Revenue Config' },
     { name: 'workflow', title: 'Pipeline Steps' },
     { name: 'contract', title: 'Contract Phase' },
     { name: 'expense',  title: 'Expense Config' },
@@ -128,6 +132,24 @@ export default defineType({
 
     defineField({
       group:        'identity',
+      name:         'useForReceipt',
+      title:        'Use for Receipt',
+      type:         'boolean',
+      description:  'Enable the Revenue Config tab. Receipts linked to a contract using this setup can pre-fill their line items from the charge catalogue below.',
+      initialValue: false,
+    }),
+
+    defineField({
+      group:        'identity',
+      name:         'useForOrder',
+      title:        'Use for Order',
+      type:         'boolean',
+      description:  'Mark this as a sellable revenue stream. Orders can select this setup and pre-fill their lines from the same charge catalogue.',
+      initialValue: false,
+    }),
+
+    defineField({
+      group:        'identity',
       name:         'usePaymentStatus',
       title:        'Show Payment Status',
       type:         'boolean',
@@ -142,6 +164,116 @@ export default defineType({
       type:         'boolean',
       description:  'Show a Procurement Status summary field on documents using this setup.',
       initialValue: true,
+    }),
+
+    // ── Revenue Config ───────────────────────────────────────────────────────────
+    // The charge catalogue. This is the "how many revenue types are there" answer,
+    // and it lives in DATA — adding a revenue stream is a new Process Setup row plus
+    // charges here, never a schema change. Receipt and Order both snapshot from it.
+    //
+    // NOTE: receiptCharges[] was already read by ReceiptLineItemsInput but had never
+    // been declared, so Receipt's "Pre-fill from template" button could never find
+    // anything. Field names below match that component's GROQ exactly — don't rename
+    // without updating components/ReceiptLineItemsInput.tsx and OrderLineItemsInput.tsx.
+
+    defineField({
+      group:       'revenue',
+      name:        'defaultBillingModel',
+      title:       'Billing Model',
+      type:        'string',
+      description: 'The SHAPE of the money for this revenue stream — not the price. Orders inherit it as their default.',
+      hidden:      ({ document }) => !document?.useForOrder && !document?.useForReceipt,
+      options: {
+        list: [
+          { title: 'One-time — invoiced once, amount known upfront',            value: 'one_time'    },
+          { title: 'Recurring — billed every period (placement fees, rent)',    value: 'recurring'   },
+          { title: 'Success fee — % of a deal, amount unknown until it closes', value: 'success_fee' },
+          { title: 'Milestone — billed in stages against delivery',             value: 'milestone'   },
+        ],
+        layout: 'radio',
+      },
+      initialValue: 'one_time',
+    }),
+
+    defineField({
+      group:       'revenue',
+      name:        'receiptCharges',
+      title:       'Charge Catalogue',
+      type:        'array',
+      description: 'Every line that can be billed under this revenue stream. Receipts and Orders copy these as a snapshot — later edits here never rewrite documents already issued.',
+      hidden:      ({ document }) => !document?.useForOrder && !document?.useForReceipt,
+      of: [defineArrayMember({
+        type:  'object',
+        name:  'receiptCharge',
+        title: 'Charge',
+        fields: [
+          defineField({
+            name:       'label_en',
+            title:      'Label (English)',
+            type:       'string',
+            validation: Rule => Rule.required(),
+          }),
+          defineField({
+            name:  'label_th',
+            title: 'Label (Thai) · ชื่อรายการ',
+            type:  'string',
+          }),
+          defineField({
+            name:        'accountCode',
+            title:       'GL Account (Income)',
+            type:        'reference',
+            to:          [{ type: 'accountCode' }],
+            options:     { disableNew: true },
+            components:  { input: RevenueAccountInput },
+            description: 'Revenue account this charge posts to.',
+          }),
+          defineField({
+            name:        'defaultAmount',
+            title:       'Default Amount (THB)',
+            type:        'number',
+            description: 'Starting price when a document pre-fills from this charge. Leave blank for success-fee charges where the amount is only known at closing.',
+            validation:  Rule => Rule.min(0),
+          }),
+          defineField({
+            name:         'defaultVatType',
+            title:        'Default VAT Type',
+            type:         'string',
+            initialValue: 'exclusive',
+            options: {
+              list: [
+                { title: 'Exclusive (VAT added on top)', value: 'exclusive' },
+                { title: 'Inclusive (VAT included)',     value: 'inclusive' },
+                { title: '0% VAT',                       value: 'zero'      },
+                { title: 'No VAT',                       value: 'none'      },
+              ],
+            },
+          }),
+          defineField({
+            name:         'isActive',
+            title:        'Active',
+            type:         'boolean',
+            description:  'Inactive charges stay on documents already issued but stop appearing in new pre-fills.',
+            initialValue: true,
+          }),
+        ],
+        preview: {
+          select: { en: 'label_en', th: 'label_th', amt: 'defaultAmount', vat: 'defaultVatType', active: 'isActive' },
+          prepare({ en, th, amt, vat, active }: {
+            en?: string; th?: string; amt?: number; vat?: string; active?: boolean
+          }) {
+            const vatLabel: Record<string, string> = {
+              exclusive: '+VAT', inclusive: 'incl. VAT', zero: '0% VAT', none: 'no VAT',
+            }
+            return {
+              title: `${active === false ? '⏸ ' : ''}${en ?? '(no label)'}${th ? ` · ${th}` : ''}`,
+              subtitle: [
+                amt != null ? `${Number(amt).toLocaleString()} THB` : 'amount set per document',
+                vatLabel[vat ?? ''] ?? '',
+              ].filter(Boolean).join('  ·  '),
+            }
+          },
+        },
+      })],
     }),
 
     // ── Asset Config ─────────────────────────────────────────────────────────────

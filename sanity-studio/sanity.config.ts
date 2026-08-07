@@ -47,6 +47,10 @@ import {
 } from '@sanity/icons'
 import { accessControlPlugin, accessStore } from './plugins/accessControl'
 import { paneWidthOverride }               from './plugins/paneWidthOverride'
+import { installApiKey }                   from './utils/installApiKey'
+
+// Sign every call to the handoff API before any component can fire one.
+installApiKey()
 
 const howToPlugin = definePlugin({
   name: 'how-to-guide',
@@ -351,10 +355,11 @@ export default defineConfig([{
           ]),
 
           // ── Finance ────────────────────────────────────────────────────────
-          (can('payment') || can('procurement') || can('receipt') || can('funding') || can('journalEntry') || can('asset') || can('assetRegister') || can('ledger') || can('financialStatement')) &&
+          (can('payment') || can('procurement') || can('order') || can('receipt') || can('funding') || can('journalEntry') || can('asset') || can('assetRegister') || can('ledger') || can('financialStatement')) &&
           group('finance', 'Finance', '💰', [
             can('payment')           && S.documentTypeListItem('payment').title('Payments'),
             can('procurement')       && S.documentTypeListItem('procurement').title('Procurements'),
+            can('order')             && S.documentTypeListItem('order').title('Orders (ใบสั่งซื้อจากลูกค้า)'),
             can('receipt')           && S.documentTypeListItem('receipt').title('Receipts'),
             can('funding')           && S.documentTypeListItem('funding').title('Funding'),
             S.divider(),
