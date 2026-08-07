@@ -19,6 +19,7 @@ import procurement        from './procurement'
 import payment            from './payment'
 import order              from './order'
 import discountCode       from './discountCode'
+import customerOrder      from './customerOrder'
 import receipt            from './receipt'
 import funding            from './funding'
 import journalEntry       from './journalEntry'
@@ -60,6 +61,7 @@ export const schemaTypes = [
   payment,
   order,
   discountCode,
+  customerOrder,
   receipt,
   funding,
   journalEntry,

@@ -19,7 +19,8 @@ const LABELS: Record<string, string> = {
   installation:      '🔧 Install & Activate',
   payment:           '💳 Payments',
   procurement:       '📦 Procurements',
-  order:             '🛒 Orders',
+  order:             '🛒 Orders (ขายพื้นที่จอ)',
+  customerOrder:     '🧾 Customer Orders (ลูกค้าซื้อจากร้าน)',
   discountCode:      '🎟 Discount Codes',
   receipt:           '🧾 Receipts',
   funding:           '💰 Funding',
@@ -38,7 +39,7 @@ const GROUPS = [
   { id: 'digital-signage', label: 'Digital Signage', icon: '🖥',  schemas: ['project', 'playlist', 'media', 'offer', 'provider', 'categoryConfig', 'discountCode'] },
   { id: 'crm',             label: 'CRM',             icon: '👥',  schemas: ['party', 'lead', 'saleOpportunity', 'emailCampaign'] },
   { id: 'projects',        label: 'Projects',        icon: '🏗',  schemas: ['projectSite', 'contract', 'serviceContract', 'installation'] },
-  { id: 'finance',         label: 'Finance',         icon: '💰',  schemas: ['payment', 'procurement', 'order', 'receipt', 'funding', 'journalEntry', 'asset', 'assetRegister', 'ledger', 'financialStatement'] },
+  { id: 'finance',         label: 'Finance',         icon: '💰',  schemas: ['payment', 'procurement', 'order', 'customerOrder', 'receipt', 'funding', 'journalEntry', 'asset', 'assetRegister', 'ledger', 'financialStatement'] },
   { id: 'approvals',       label: 'Approvals',       icon: '✅',  schemas: ['approvalRequest', 'approvalRule', 'approvalPosition'] },
   { id: 'operations',      label: 'Operations',      icon: '⚙️', schemas: ['contractType'] },
 ]
