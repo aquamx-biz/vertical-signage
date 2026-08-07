@@ -8,15 +8,46 @@
 
 ## ทะเบียนกล่อง (device registry)
 
-| ชื่อ | ไซต์ | Tailnet IP (hostname) | LAN IP | บอร์ด/Android | wifi | MAC |
+⚠️ **Tailscale ตั้ง hostname ตามรุ่นบอร์ด ไม่ใช่ชื่อโครงการ** (`zc-h358s-1`, `yf-020e-2`, `rk3566`...)
+→ ดู `tailscale status` เฉย ๆ ไม่รู้ว่าตัวไหนคือโครงการอะไร **ต้องเทียบตารางนี้เสมอ**
+วิธียืนยันโครงการของกล่อง: `curl "http://<ip>:2323/?cmd=deviceInfo&type=json&password=<pwd>"` → ดู `startUrl`
+(กล่อง Fully **Single-App** จะไม่คืน `startUrl` → ยืนยันด้วย adb screenshot ดู header แทน)
+
+ยืนยันจริงทั้งฟลีตครั้งล่าสุด: **2026-08-07** (Fully REST + adb ทุกตัว)
+
+| ชื่อ/โครงการ | Tailnet IP (hostname) | LAN IP¹ | บอร์ด/Android · จอ | wifi | Player stack | สถานะ |
 |---|---|---|---|---|---|---|
-| Gygar43 | mahogany (บ้าน) | 100.71.132.15 (zc-h358s) | 192.168.1.137 | ZC-H358S rk3588s / 13 | Theake_2.4G | B8:41:D9:F1:8F:A8 |
-| noble-be19a | noble-be19 | 100.100.123.43 (yf-020e) | 192.168.1.4 | YF_020E rk3566 / 11 · จอ override 1080p · ไม่มี Yodeck | Aquamx004-5G | (ดู Device Info) |
-| noble-be19b | noble-be19 | 100.87.197.15 (yf-020e-1) | 192.168.1.46 | YF_020E rk3566 / 11 · 4K 2160×3840 | Noble B19_LobbyB_5G | 68:8F:C9:12:B6:BC |
+| **lumpini-24** | 100.103.74.106 (rk3566) | 192.168.1.100 | RK3566 / 11 · 1080p | Aquamx001_2.4G | 🟡 **Fully SingleApp → Yodeck** (Yodeck เปิด netlify เป็น web content) | ✅ กู้แล้ว 2026-08-07 (restart Yodeck) |
+| **mahogany-tower** | 100.123.35.91 (zc-h358s-1) | 192.168.1.100 | ZC-H358S rk3588s / 13 · 1080p | 4G Pocket WIFI_203400 | 🟡 **Fully SingleApp → Yodeck** (Yodeck เปิด netlify) | ✅ เล่นปกติ |
+| **39-by-sansiri** | 100.102.67.15 (zc-h358s-2) | 192.168.1.37 | ZC-H358S rk3588s / 13 · 1080p | aquamx006_5GHz | Fully → netlify ตรง | ✅ เล่นปกติ |
+| **noble-be19a** | 100.100.123.43 (yf-020e) | 192.168.1.2 | YF_020E rk3566 / 11 · **จอ 4K** · override render 1080p (`wm size 1080x1920` `wm density 160`) | Aquamx004-5G | Fully Play (`de.ozerov.fully`) home · ลบ Yodeck แล้ว | ⚠️ 4K panel = เสี่ยง ANR |
+| **noble-be19b** | 100.87.197.15 (yf-020e-1) | 192.168.1.46 | YF_020E rk3566 / 11 · **4K 3840×2160** | Noble B19_LobbyB_5G | Fully | ⚠️ 4K + wifi client isolation |
+| **the-room-skv21** | 100.109.31.88 (yf-020e-2) | 192.168.1.43 | YF_020E rk3566 / 11 · **จอ 4K** | Aquamx003_5G | Fully | ⚠️ 4K panel = เสี่ยง ANR |
+
+**กล่องสำรอง (ที่บ้าน · ปิดอยู่):** Gygar43 · เดิม 100.71.132.15 (zc-h358s) · ZC-H358S rk3588s/13 · wifi Theake_2.4G · MAC B8:41:D9:F1:8F:A8 — ตอนนี้ offline ไม่อยู่ในฟลีต
+
+¹ LAN IP เป็น DHCP เปลี่ยนได้ · แต่ละไซต์เป็นวง 192.168.1.x แยกกัน (ซ้ำได้ข้ามไซต์) → **รีโมทให้ใช้ tailnet IP เสมอ**
+บอร์ด **YF_020E = จอ 4K** (noble×2, the-room) คือกลุ่มเสี่ยง ANR · **ZC-H358S rk3588s = 1080p ตัวแรง** (mahogany, 39-by-sansiri) นิ่งสุด
 
 **adb:** ทุกกล่องเปิด `persist.adb.tcp.port=5555` แล้ว → `adb connect <tailnet-ip>:5555` ได้เลย
 ⚠️ **wifi Noble B19_LobbyB มี client isolation** — คอมกับกล่องอยู่ SSID เดียวกันก็คุยกันตรง ๆ ไม่ได้
 (LAN adb/2323 ใช้ไม่ได้แม้อยู่หน้างาน) → ใช้ tailnet IP เสมอ · mDNS discovery ทะลุได้แต่ unicast โดนบล็อก
+
+### 🟡 กล่อง Yodeck-wrap: **lumpini-24, mahogany-tower** — ห้าม disable Yodeck!
+
+สองกล่องนี้ **Yodeck คือ player** (Fully SingleApp แค่ล็อก kiosk แล้วสั่งเปิด Yodeck · Yodeck เปิดหน้า
+netlify เป็น web content ข้างใน → เลยเห็น `foreground=com.yodeck.android` **และ** beacon=netlify พร้อมกัน)
+วิธีแยกจากกล่อง "Fully → netlify ตรง": `curl .../deviceInfo` แล้ว **`startUrl` = None** = Yodeck-wrap
+
+- ❌ **อย่า `pm disable-user com.yodeck.android`** → Fully จะขึ้น **"Single app not found"** จอดำทันที (เจอมา 2026-08-07)
+  (ต่างจาก noble/be19b ที่เป็น Fully→netlify ตรง — พวกนั้น disable Yodeck ได้ เพราะ Yodeck เป็นตัวก่อกวน)
+- ✅ **อาการจอดำ (Yodeck webview ค้าง) กู้ด้วยการ restart Yodeck เฉย ๆ:**
+  ```bash
+  adb -s <ip>:5555 shell am force-stop com.fullykiosk.singleapp
+  adb -s <ip>:5555 shell monkey -p com.fullykiosk.singleapp -c android.intent.category.LAUNCHER 1
+  # Fully เปิด Yodeck ใหม่ → Yodeck โหลด netlify content → จอกลับมา (screenshot ควรโต >500KB)
+  ```
+- เผลอ disable ไปแล้ว → `pm enable com.yodeck.android` + `pm enable com.yodeck.device_manager` แล้ว restart Fully ตามบล็อกบน
 
 ### ตั้ง Fully เป็น Home app ผ่าน adb (บทเรียน be19b 2026-07-16)
 
