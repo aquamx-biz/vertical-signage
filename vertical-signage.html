@@ -1558,6 +1558,16 @@ body {
 }
 .detail-qty .q-tog:active { background: rgba(255,255,255,0.18); }
 .detail-qty.has .q-tog { color: var(--dot-cyan); }
+/* Cart total — the last place the amount is shown before the customer scans.
+   Distance-legible: the number is the biggest thing in the popup body. */
+.detail-total {
+    display: flex; align-items: baseline; gap: 0.8vh;
+    margin-top: 0.9vh; padding-top: 0.8vh;
+    border-top: 0.1vh solid rgba(255,255,255,0.18);
+}
+.detail-total .lab  { font-size: 1.3vh; color: rgba(255,255,255,0.65); }
+.detail-total .amt  { font-size: 2.4vh; font-weight: 800; color: var(--dot-cyan); letter-spacing: 0.02em; }
+.detail-total .hint { margin-left: auto; font-size: 1.2vh; font-weight: 700; color: rgba(255,255,255,0.75); }
 .detail-tags { display: flex; flex-wrap: wrap; gap: 0.7vh; margin: 0.6vh 0; }
 .detail-tags .c { font-size: 1.2vh; color: #fff; background: rgba(255,255,255,0.1); border: 0.1vh solid rgba(255,255,255,0.22); border-radius: 0.8vh; padding: 0.4vh 1vh; }
 .detail-lab { font-size: 1.1vh; color: rgba(255,255,255,0.55); text-transform: uppercase; letter-spacing: 0.1em; margin: 0.9vh 0 0.5vh; }
@@ -2354,8 +2364,8 @@ async function loadProviders() {
                 "images": images[].asset->url,
                 ctaType, ctaLabel, ctaURL, ctaType2, ctaLabel2, ctaURL2,
                 "menuItems":  menuItems[]{ name_th, name_en, price, "image": image.asset->url },
-                "orderItems": orderItems[]{ name_th, name_en, price, "key": coalesce(refCode, _key), maxQty, "image": image.asset->url },
-                fulfillment, booking, eventInfo
+                "orderItems": orderItems[]{ name_th, name_en, price, priceTHB, "key": coalesce(refCode, _key), maxQty, "image": image.asset->url },
+                fulfillment, payOnline, booking, eventInfo
             }
         }`;
         const results = await sanityFetch(q);
@@ -2535,8 +2545,9 @@ async function loadPlaylist() {
             "validFrom":          media->offer->validFrom,
             "validTo":            media->offer->validTo,
             "menuItems":          media->offer->menuItems[]{ name_th, name_en, price, "image": image.asset->url },
-            "orderItems":         media->offer->orderItems[]{ name_th, name_en, price, "key": coalesce(refCode, _key), maxQty, "image": image.asset->url },
+            "orderItems":         media->offer->orderItems[]{ name_th, name_en, price, priceTHB, "key": coalesce(refCode, _key), maxQty, "image": image.asset->url },
             "fulfillment":        media->offer->fulfillment,
+            "payOnline":          media->offer->payOnline,
             "booking":            media->offer->booking,
             "eventInfo":          media->offer->eventInfo,
             "provider":           media->offer->provider->{
@@ -2845,6 +2856,7 @@ function adaptPlaylistToSlots(pl) {
             _menuItems: Array.isArray(item.menuItems) ? item.menuItems : [],
             _orderItems: Array.isArray(item.orderItems) ? item.orderItems : [],
             _fulfillment: Array.isArray(item.fulfillment) ? item.fulfillment : [],
+            _payOnline: item.payOnline === true,
             // Shop schedule (open/close derived from Opening Hours text when blank)
             // + per-offer overrides (queue fields only), merged field-by-field
             _booking: mergeBooking(shopBooking(item.provider), offerBookingOv(item.booking)),
@@ -4347,12 +4359,23 @@ function buildDetailDyn(ctx){
                    // maxQty = per-item order cap (rooms = 1 → renders as a toggle)
                    const key = esc(String(m.key ?? i));
                    const max = Math.max(1, +m.maxQty || 99);
+                   // priceTHB rides the qty control so the total can be summed
+                   // from a NUMBER. `price` stays the thing the customer READS —
+                   // it carries units and shorthand ("THB 265", "30.0K ฿/ด."),
+                   // and parsing that for money reads "30.0K ฿/ด." as 30.
+                   // No data-thb on a row = that row cannot be totalled.
+                   const thb  = (m.priceTHB != null && isFinite(+m.priceTHB)) ? ` data-thb="${+m.priceTHB}"` : '';
                    const ctrl = max === 1
-                     ? `<span class="detail-qty pick" data-key="${key}" data-max="1" data-prop="${isProp?1:0}"><b style="display:none">0</b><span class="q-tog">${PICK_LABEL(isProp, false, isTH)}</span></span>`
-                     : `<span class="detail-qty" data-key="${key}" data-max="${max}"><span class="q-dec">−</span><b>0</b><span class="q-inc">＋</span></span>`;
+                     ? `<span class="detail-qty pick"${thb} data-key="${key}" data-max="1" data-prop="${isProp?1:0}"><b style="display:none">0</b><span class="q-tog">${PICK_LABEL(isProp, false, isTH)}</span></span>`
+                     : `<span class="detail-qty"${thb} data-key="${key}" data-max="${max}"><span class="q-dec">−</span><b>0</b><span class="q-inc">＋</span></span>`;
                    return `<div class="detail-mit"><span class="th"${m.image?` style="background-image:url('${m.image}')"`:''}></span><span class="nm">${nm(m)}</span><span class="pr">${m.price?esc(m.price):''}</span>${ctrl}</div>`;
                }).join('')
-                             : `<div class="detail-mit"><span class="th"></span><span class="nm">${isTH?'เพิ่มสินค้า…':'Add a product…'}</span><span class="pr"></span></div>`);
+                             : `<div class="detail-mit"><span class="th"></span><span class="nm">${isTH?'เพิ่มสินค้า…':'Add a product…'}</span><span class="pr"></span></div>`)
+             // Total lives here so it can be updated in place on every tap.
+             // Only shown once something is picked AND every picked line has a
+             // real number — a wrong sum is worse than no sum, and this screen
+             // is now the last place a customer sees the amount before paying.
+             + (items.length ? `<div class="detail-total" id="detailTotal" data-pay="${ctx.payOnline?1:0}" style="display:none"></div>` : '');
     }
     if (t==='book'){
         const g = genBookSlots(ctx.booking);
@@ -4748,8 +4771,44 @@ detailOverlay.addEventListener('click', function (e) {
     n = Math.max(0, Math.min(max, n));
     b.textContent = n;
     qty.classList.toggle('has', n > 0);
+    updateCartTotal();
     resetIdle();
 });
+
+/* Cart total on the kiosk.
+   Before payment existed the screen showed a list and no sum — the customer
+   found out what they owed from the shop. Once the QR leads to a payment page
+   this is the last surface that can show the amount BEFORE they commit, so it
+   is worth being strict about.
+
+   Two rules, both deliberate:
+   · Sum only from data-thb (offer.orderItems[].priceTHB). A row without one
+     cannot be priced, so the whole total is suppressed rather than shown short.
+     A number that is quietly missing an item is worse than no number.
+   · Never send this figure anywhere. The QR carries keys and quantities only;
+     the server re-prices from Sanity. A total that travels in a URL is a total
+     the customer can edit. */
+function updateCartTotal() {
+    const box = document.getElementById('detailTotal');
+    if (!box) return;
+    let sum = 0, picked = 0, unpriced = 0;
+    document.querySelectorAll('#detailDyn .detail-qty').forEach(q => {
+        const n = parseInt(q.querySelector('b')?.textContent, 10) || 0;
+        if (n <= 0) return;
+        picked += n;
+        const thb = q.dataset.thb;
+        if (thb == null || !isFinite(+thb)) unpriced++;
+        else sum += (+thb) * n;
+    });
+    if (!picked || unpriced) { box.style.display = 'none'; return; }
+    const isTH = uiLang === 'th';
+    const pay  = box.dataset.pay === '1';
+    box.innerHTML =
+        `<span class="lab">${isTH ? 'รวม' : 'Total'}</span>` +
+        `<span class="amt">฿${sum.toLocaleString()}</span>` +
+        (pay ? `<span class="hint">${isTH ? 'สแกนเพื่อชำระเงิน' : 'Scan to pay'}</span>` : '');
+    box.style.display = '';
+}
 
 /* Handoff back → return to the offer detail (step 1) */
 const detailBack = document.getElementById('detailBack');
@@ -4905,6 +4964,7 @@ stage.addEventListener('click', e => {
         menuItems: s._menuItems || [],
         orderItems: s._orderItems || [],
         fulfillment: s._fulfillment || [],
+        payOnline: s._payOnline === true,
         booking: s._booking || null,
         eventInfo: s._eventInfo || null,
         ctaLabel: tappedCta ? tappedCta.label : null
@@ -4967,6 +5027,7 @@ function openCardDetail(idx) {
         menuItems: o && Array.isArray(o.menuItems) ? o.menuItems : [],
         orderItems: o && Array.isArray(o.orderItems) ? o.orderItems : [],
         fulfillment: o && Array.isArray(o.fulfillment) ? o.fulfillment : [],
+        payOnline: !!(o && o.payOnline),
         // Shop schedule (open/close derived from Opening Hours text when blank)
         // + per-offer overrides (queue fields only), merged field-by-field
         booking: mergeBooking(shopBooking(p), offerBookingOv(o ? o.booking : null)),

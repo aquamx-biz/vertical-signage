@@ -216,8 +216,9 @@ const PLAYLIST_PROJ_V7 = `
         "validFrom":          media->offer->validFrom,
         "validTo":            media->offer->validTo,
         "menuItems":          media->offer->menuItems[]{ name_th, name_en, price, "image": image.asset->url },
-        "orderItems":         media->offer->orderItems[]{ name_th, name_en, price, "key": coalesce(refCode, _key), maxQty, "image": image.asset->url },
+        "orderItems":         media->offer->orderItems[]{ name_th, name_en, price, priceTHB, "key": coalesce(refCode, _key), maxQty, "image": image.asset->url },
         "fulfillment":        media->offer->fulfillment,
+        "payOnline":          media->offer->payOnline,
         "booking":            media->offer->booking,
         "eventInfo":          media->offer->eventInfo,
         "provider":           media->offer->provider->{
