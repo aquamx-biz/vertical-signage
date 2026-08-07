@@ -74,7 +74,12 @@ export default defineType({
       name:         'receiptType',
       title:        '1.2 · Receipt Type',
       type:         'string',
-      initialValue: 'combined',
+      // Was 'combined'. AquaMX is not VAT-registered as of 2026-08-08, and a
+      // ใบกำกับภาษี may only be issued by a registered business — so the
+      // default must not be a document we cannot legally issue. Flip back to
+      // 'combined' once registration lands (with the VAT defaults in order.ts
+      // and processSetup.ts). The option stays selectable for that day.
+      initialValue: 'receipt_only',
       options: {
         list: [
           { title: '🧾 Receipt Only — ใบเสร็จรับเงิน',                               value: 'receipt_only' },

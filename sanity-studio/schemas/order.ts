@@ -250,7 +250,8 @@ export default defineType({
             name:         'vatType',
             title:        'VAT Type',
             type:         'string',
-            initialValue: 'exclusive',
+            // See the VAT note on the document-level vatType below.
+            initialValue: 'none',
             options: {
               list: [
                 { title: 'Exclusive (VAT added on top)', value: 'exclusive' },
@@ -308,11 +309,20 @@ export default defineType({
       }),
     }),
 
+    // VAT — AquaMX is not VAT-registered as of 2026-08-08, so every default
+    // here is 'none'. Charging 7% without a registration is not a rounding
+    // error, it is collecting a tax we cannot remit, so the safe default is
+    // the one that adds nothing. Three places flip together on the day
+    // registration lands: this field, the order line above, and
+    // processSetup.receiptCharges[].defaultVatType (plus the fallback in
+    // OrderLineItemsInput). Until then Receipts should also be issued as
+    // receipt_only — a ใบกำกับภาษี requires the registration.
     defineField({
       group:   'amounts',
       name:    'vatType',
       title:   '2.3 · VAT Type',
       type:    'string',
+      description: 'Not VAT-registered yet — leave as No VAT unless that has changed.',
       options: {
         list: [
           { title: 'Exclusive — VAT added on top', value: 'exclusive' },
@@ -322,7 +332,7 @@ export default defineType({
         ],
         layout: 'radio',
       },
-      initialValue: 'exclusive',
+      initialValue: 'none',
     }),
 
     defineField({

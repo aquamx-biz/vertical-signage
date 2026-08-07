@@ -238,7 +238,12 @@ export default defineType({
             name:         'defaultVatType',
             title:        'Default VAT Type',
             type:         'string',
-            initialValue: 'exclusive',
+            // Not VAT-registered as of 2026-08-08, so a new charge must not
+            // quietly add 7% we have no right to collect. On the day
+            // registration happens this becomes 'exclusive' — here, in
+            // order.ts (document + line), and in OrderLineItemsInput's
+            // fallback. Existing charges keep whatever they were saved with.
+            initialValue: 'none',
             options: {
               list: [
                 { title: 'Exclusive (VAT added on top)', value: 'exclusive' },

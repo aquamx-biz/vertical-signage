@@ -89,7 +89,8 @@ export function OrderLineItemsInput(props: ArrayOfObjectsInputProps) {
         // A success-fee charge legitimately has no price yet — leave it blank
         // rather than writing a fake 0 that reads like "free".
         unitPrice:       charge.defaultAmount,
-        vatType:         charge.defaultVatType ?? 'exclusive',
+        // 'none' not 'exclusive' — not VAT-registered; see the VAT note in order.ts
+        vatType:         charge.defaultVatType ?? 'none',
         lineTotal:       charge.defaultAmount,
       }))
 
