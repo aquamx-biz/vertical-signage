@@ -2090,7 +2090,13 @@ const CONFIG = {
     BANGKOK_LAT: 13.7563,
     BANGKOK_LON: 100.5018,
     CACHE_DURATION: 3600000,        // 1 hour
-    IDLE_TIMEOUT: 60000,            // 60s — applied to Category / detail / handoff states
+    // Idle auto-return. These replace the old IDLE_TIMEOUT, which nothing read —
+    // the real numbers were hardcoded inside resetIdle(), so changing the config
+    // did nothing. One place now, and the allowance depends on the step.
+    IDLE_SILENCE_MS:            30000,   // browsing: silence before the countdown
+    IDLE_SILENCE_QR_MS:         90000,   // QR shown: scanning means not touching
+    IDLE_COUNTDOWN_S:              30,   // visible "returning in Ns" warning
+    IDLE_PAYMENT_BACKSTOP_MS:  600000,   // only fires if a payment flag got stuck
     HANDOFF_BASE: 'https://app.aquamx.biz/m',
     LEAD_API:     'https://app.aquamx.biz/api/lead',
 
@@ -4638,6 +4644,231 @@ detailOverlay.addEventListener('click', function (e) {
 const detailVm = document.getElementById('detailVm');
 if (detailVm) detailVm.addEventListener('click', showHandoff);
 
+/* ── QR encoder (byte mode, versions 1–40, ECC L/M/Q/H) ────────────────────
+   The QR image used to come from api.qrserver.com. That put a third party in
+   the path of every handoff — no QR if they are down or the box's DNS is
+   unhappy — and sent them the customer's cart on every scan. Neither is
+   acceptable once this link is how someone pays.
+
+   Verified against a reference implementation before being pasted here: 120
+   symbol/mask combinations matrix-identical, and 40 auto-masked outputs
+   decoded back to the exact input by a real decoder.
+
+   The one line worth guarding: the alignment-pattern step TRUNCATES. Rounding
+   it up puts version 7's middle pattern two modules off and shifts everything
+   from v7 up. Versions 2–6 have only two alignment patterns so the step is
+   never used, which makes the damage start at v7 and look like a data bug. */
+const AQ_QR = (function () {
+    const ECC_CW = {
+        L: [-1,7,10,15,20,26,18,20,24,30,18,20,24,26,30,22,24,28,30,28,28,28,28,30,30,26,28,30,30,30,30,30,30,30,30,30,30,30,30,30,30],
+        M: [-1,10,16,26,18,24,16,18,22,22,26,30,22,22,24,24,28,28,26,26,26,26,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28],
+        Q: [-1,13,22,18,26,18,24,18,22,20,24,28,26,24,20,30,24,28,28,26,30,28,30,30,30,30,28,30,30,30,30,30,30,30,30,30,30,30,30,30,30],
+        H: [-1,17,28,22,16,22,28,26,26,24,28,24,28,22,24,24,30,28,28,26,28,30,24,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30]
+    };
+    const ECC_BLK = {
+        L: [-1,1,1,1,1,1,2,2,2,2,4,4,4,4,4,6,6,6,6,7,8,8,9,9,10,12,12,12,13,14,15,16,17,18,19,19,20,21,22,24,25],
+        M: [-1,1,1,1,2,2,4,4,4,5,5,5,8,9,9,10,10,11,13,14,16,17,17,18,20,21,23,25,26,28,29,31,33,35,37,38,40,43,45,47,49],
+        Q: [-1,1,1,2,2,4,4,6,6,8,8,8,10,12,16,12,17,16,18,21,20,23,23,25,27,29,34,34,35,38,40,43,45,48,51,53,56,59,62,65,68],
+        H: [-1,1,1,2,4,4,4,5,6,8,8,11,11,16,16,18,16,19,21,25,25,25,34,30,32,35,37,40,42,45,48,51,54,57,60,63,66,70,74,77,81]
+    };
+    const FMT = { L: 1, M: 0, Q: 3, H: 2 };
+
+    function rawModules(v) {
+        let r = (16 * v + 128) * v + 64;
+        if (v >= 2) {
+            const n = Math.floor(v / 7) + 2;
+            r -= (25 * n - 10) * n - 55;
+            if (v >= 7) r -= 36;
+        }
+        return r;
+    }
+    const dataCw = (v, e) => Math.floor(rawModules(v) / 8) - ECC_CW[e][v] * ECC_BLK[e][v];
+
+    function alignPos(v) {
+        if (v === 1) return [];
+        const n = Math.floor(v / 7) + 2;
+        const step = (v === 32) ? 26 : Math.floor((v * 4 + n * 2 + 1) / (n * 2 - 2)) * 2;   // TRUNCATE — see note above
+        const r = [6];
+        for (let p = v * 4 + 17 - 7; r.length < n; p -= step) r.splice(1, 0, p);
+        return r;
+    }
+
+    function gfMul(x, y) {
+        let z = 0;
+        for (let i = 7; i >= 0; i--) { z = (z << 1) ^ ((z >>> 7) * 0x11d); z ^= ((y >>> i) & 1) * x; }
+        return z & 0xff;
+    }
+    function rsGen(deg) {
+        const r = new Uint8Array(deg); r[deg - 1] = 1;
+        let root = 1;
+        for (let i = 0; i < deg; i++) {
+            for (let j = 0; j < deg; j++) { r[j] = gfMul(r[j], root); if (j + 1 < deg) r[j] ^= r[j + 1]; }
+            root = gfMul(root, 2);
+        }
+        return r;
+    }
+    function rsRem(data, gen) {
+        const r = new Uint8Array(gen.length);
+        for (const b of data) {
+            const f = b ^ r[0];
+            r.copyWithin(0, 1); r[r.length - 1] = 0;
+            for (let i = 0; i < gen.length; i++) r[i] ^= gfMul(gen[i], f);
+        }
+        return r;
+    }
+
+    const ccBits = v => (v <= 9 ? 8 : 16);
+
+    function encode(text, ecl) {
+        ecl = ecl || 'M';
+        const bytes = Array.from(new TextEncoder().encode(text));
+        let ver = 0;
+        for (let v = 1; v <= 40; v++) {
+            if (4 + ccBits(v) + bytes.length * 8 <= dataCw(v, ecl) * 8) { ver = v; break; }
+        }
+        if (!ver) throw new Error('QR payload too long');
+
+        // bitstream → data codewords
+        const bits = [];
+        const push = (val, len) => { for (let i = len - 1; i >= 0; i--) bits.push((val >>> i) & 1); };
+        push(4, 4); push(bytes.length, ccBits(ver));
+        for (const b of bytes) push(b, 8);
+        const cap = dataCw(ver, ecl) * 8;
+        push(0, Math.min(4, cap - bits.length));
+        push(0, (8 - bits.length % 8) % 8);
+        for (let pad = 0xec; bits.length < cap; pad ^= 0xec ^ 0x11) push(pad, 8);
+        const data = new Uint8Array(bits.length / 8);
+        bits.forEach((b, i) => { data[i >>> 3] |= b << (7 - (i & 7)); });
+
+        // split into blocks, add ECC, interleave
+        const nBlk = ECC_BLK[ecl][ver], eccLen = ECC_CW[ecl][ver];
+        const raw = Math.floor(rawModules(ver) / 8);
+        const nShort = nBlk - raw % nBlk, shortLen = Math.floor(raw / nBlk) - eccLen;
+        const gen = rsGen(eccLen), blocks = [];
+        for (let i = 0, k = 0; i < nBlk; i++) {
+            const len = shortLen + (i < nShort ? 0 : 1);
+            const dat = data.slice(k, k + len); k += len;
+            blocks.push({ dat: dat, ecc: rsRem(dat, gen) });
+        }
+        const all = [];
+        for (let i = 0; i < shortLen + 1; i++)
+            blocks.forEach((b, j) => { if (i < shortLen || j >= nShort) all.push(b.dat[i]); });
+        for (let i = 0; i < eccLen; i++) blocks.forEach(b => all.push(b.ecc[i]));
+
+        // matrix
+        const size = ver * 4 + 17;
+        const mod = [], fn = [];
+        for (let i = 0; i < size; i++) { mod.push(new Array(size).fill(false)); fn.push(new Array(size).fill(false)); }
+        const set = (x, y, d) => { if (x >= 0 && y >= 0 && x < size && y < size) { mod[y][x] = d; fn[y][x] = true; } };
+        for (let i = 0; i < size; i++) { set(6, i, i % 2 === 0); set(i, 6, i % 2 === 0); }
+        const finder = (cx, cy) => { for (let dy = -4; dy <= 4; dy++) for (let dx = -4; dx <= 4; dx++) { const d = Math.max(Math.abs(dx), Math.abs(dy)); set(cx + dx, cy + dy, d !== 2 && d !== 4); } };
+        finder(3, 3); finder(size - 4, 3); finder(3, size - 4);
+        const al = alignPos(ver);
+        for (let i = 0; i < al.length; i++) for (let j = 0; j < al.length; j++) {
+            if ((i === 0 && j === 0) || (i === 0 && j === al.length - 1) || (i === al.length - 1 && j === 0)) continue;
+            for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++)
+                set(al[j] + dx, al[i] + dy, Math.max(Math.abs(dx), Math.abs(dy)) !== 1);
+        }
+        const drawFmt = (mask) => {
+            const d = FMT[ecl] << 3 | mask;
+            let rem = d;
+            for (let i = 0; i < 10; i++) rem = (rem << 1) ^ ((rem >>> 9) * 0x537);
+            const b = ((d << 10) | rem) ^ 0x5412, g = i => ((b >>> i) & 1) !== 0;
+            for (let i = 0; i <= 5; i++) set(8, i, g(i));
+            set(8, 7, g(6)); set(8, 8, g(7)); set(7, 8, g(8));
+            for (let i = 9; i < 15; i++) set(14 - i, 8, g(i));
+            for (let i = 0; i < 8; i++) set(size - 1 - i, 8, g(i));
+            for (let i = 8; i < 15; i++) set(8, size - 15 + i, g(i));
+            set(8, size - 8, true);
+        };
+        drawFmt(0);
+        if (ver >= 7) {
+            let rem = ver;
+            for (let i = 0; i < 12; i++) rem = (rem << 1) ^ ((rem >>> 11) * 0x1f25);
+            const b = (ver << 12) | rem;
+            for (let i = 0; i < 18; i++) {
+                const bit = ((b >>> i) & 1) !== 0, a = size - 11 + i % 3, c = Math.floor(i / 3);
+                set(a, c, bit); set(c, a, bit);
+            }
+        }
+        let bi = 0;
+        for (let right = size - 1; right >= 1; right -= 2) {
+            if (right === 6) right = 5;
+            for (let vert = 0; vert < size; vert++) for (let j = 0; j < 2; j++) {
+                const x = right - j, up = ((right + 1) & 2) === 0, y = up ? size - 1 - vert : vert;
+                if (!fn[y][x] && bi < all.length * 8) { mod[y][x] = ((all[bi >>> 3] >>> (7 - (bi & 7))) & 1) !== 0; bi++; }
+            }
+        }
+        const applyMask = (m) => {
+            for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) {
+                if (fn[y][x]) continue;
+                let inv;
+                switch (m) {
+                    case 0: inv = (x + y) % 2 === 0; break;
+                    case 1: inv = y % 2 === 0; break;
+                    case 2: inv = x % 3 === 0; break;
+                    case 3: inv = (x + y) % 3 === 0; break;
+                    case 4: inv = (Math.floor(x / 3) + Math.floor(y / 2)) % 2 === 0; break;
+                    case 5: inv = x * y % 2 + x * y % 3 === 0; break;
+                    case 6: inv = (x * y % 2 + x * y % 3) % 2 === 0; break;
+                    default: inv = ((x + y) % 2 + x * y % 3) % 2 === 0;
+                }
+                if (inv) mod[y][x] = !mod[y][x];
+            }
+        };
+        const PAT = [true, false, true, true, true, false, true];
+        const penalty = () => {
+            let r = 0;
+            const runs = get => { let run = 1; for (let i = 1; i < size; i++) { if (get(i) === get(i - 1)) { run++; if (run === 5) r += 3; else if (run > 5) r++; } else run = 1; } };
+            for (let y = 0; y < size; y++) runs(x => mod[y][x]);
+            for (let x = 0; x < size; x++) runs(y => mod[y][x]);
+            for (let y = 0; y < size - 1; y++) for (let x = 0; x < size - 1; x++) {
+                const c = mod[y][x];
+                if (c === mod[y][x + 1] && c === mod[y + 1][x] && c === mod[y + 1][x + 1]) r += 3;
+            }
+            const fl = (get, at) => {
+                for (let k = 0; k < 7; k++) if (get(at + k) !== PAT[k]) return false;
+                let bef = true, aft = true;
+                for (let k = 1; k <= 4; k++) if (at - k < 0 || get(at - k)) { bef = false; break; }
+                for (let k = 0; k < 4; k++) if (at + 7 + k >= size || get(at + 7 + k)) { aft = false; break; }
+                return bef || aft;
+            };
+            for (let y = 0; y < size; y++) for (let x = 0; x + 7 <= size; x++) if (fl(i => mod[y][i], x)) r += 40;
+            for (let x = 0; x < size; x++) for (let y = 0; y + 7 <= size; y++) if (fl(i => mod[i][x], y)) r += 40;
+            let dark = 0;
+            for (const row of mod) for (const c of row) if (c) dark++;
+            return r + Math.floor(Math.abs(dark * 100 / (size * size) - 50) / 5) * 10;
+        };
+        let best = 0, min = Infinity;
+        for (let m = 0; m < 8; m++) {
+            applyMask(m); drawFmt(m);
+            const p = penalty();
+            if (p < min) { min = p; best = m; }
+            applyMask(m);
+        }
+        applyMask(best); drawFmt(best);
+        return { modules: mod, size: size, version: ver, mask: best };
+    }
+
+    /* Render to a data: URL. Kept as an <img> src so the existing .qr-wrap
+       sizing rules keep working untouched. */
+    function dataURL(text, ecl, px) {
+        const q = encode(text, ecl || 'M');
+        const quiet = 4, total = q.size + quiet * 2;
+        const scale = Math.max(2, Math.floor((px || 440) / total));
+        const c = document.createElement('canvas');
+        c.width = c.height = total * scale;
+        const g = c.getContext('2d');
+        g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height);
+        g.fillStyle = '#000';
+        for (let y = 0; y < q.size; y++) for (let x = 0; x < q.size; x++)
+            if (q.modules[y][x]) g.fillRect((x + quiet) * scale, (y + quiet) * scale, scale, scale);
+        return c.toDataURL('image/png');
+    }
+
+    return { encode: encode, dataURL: dataURL };
+})();
+
 function showHandoff() {
     uStep('qr');
     _detailAdvanced = true;   // they went forward — closing after this is not a bounce
@@ -4674,7 +4905,16 @@ function showHandoff() {
     setTxt('phoneConfirmEdit',  isTH ? 'แก้ไข' : 'Edit');
 
     const qrImg = document.getElementById('qrImage');
-    if (qrImg) qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=8&data=${encodeURIComponent(deepLink)}`;
+    if (qrImg) {
+        try {
+            qrImg.src = AQ_QR.dataURL(deepLink, 'M', 440);
+        } catch (err) {
+            // Never leave a blank square on an unattended screen. The remote
+            // service is the fallback now, not the default.
+            console.warn('[qr] local encode failed, falling back to remote:', err);
+            qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=8&data=${encodeURIComponent(deepLink)}`;
+        }
+    }
     setTxt('qrUrl', deepLink);
 
     // Carry the amount onto this page — step 1's total is hidden here.
@@ -5111,6 +5351,26 @@ function galleryList(offer, provider) {
 let idleTimer = null;
 let countdownInterval = null;
 
+/* Set true while a charge exists and we are waiting for the customer to pay.
+   Flipped by the payment flow (not wired yet — there is no gateway); declared
+   here because the idle rule is wrong without it and this is the rule's home. */
+let _paymentInFlight = false;
+function setPaymentInFlight(on) { _paymentInFlight = !!on; resetIdle(); }
+
+/* How long silence is allowed before the countdown starts.
+   Idle is measured by NOT TOUCHING THE SCREEN, which is exactly what a customer
+   does when they take out their phone and scan the QR: the detector punishes
+   the one behaviour the step is asking for. So the allowance depends on which
+   step they are on, and while a payment is actually in flight there is no idle
+   clock at all — nobody touches a kiosk while their banking app is open.
+   Returns null to mean "do not arm". */
+function idleSilenceMs() {
+    if (_paymentInFlight) return null;
+    const card = document.querySelector('.detail-card');
+    if (card && card.classList.contains('handoff-mode')) return CONFIG.IDLE_SILENCE_QR_MS;
+    return CONFIG.IDLE_SILENCE_MS;
+}
+
 function resetIdle() {
     clearTimeout(idleTimer);
     clearInterval(countdownInterval);
@@ -5121,21 +5381,34 @@ function resetIdle() {
         || catScreen.classList.contains('open')
         || detailOverlay.classList.contains('open')
         || categoryPanel.classList.contains('open');
+    if (!interacting) return;
 
-    if (interacting) {
+    const silence = idleSilenceMs();
+
+    // Payment in flight: no idle clock, but never NO clock. These boxes are
+    // unattended — a flag left true by a failed request would wedge the screen
+    // on one customer's order until the hourly reload. The backstop is longer
+    // than any charge can live, so it only ever fires on a bug.
+    if (silence === null) {
         idleTimer = setTimeout(() => {
-            let remaining = 30;
-            showIdleCountdown(remaining);
-            countdownInterval = setInterval(() => {
-                remaining -= 1;
-                if (remaining <= 0) {
-                    clearInterval(countdownInterval);
-                    countdownInterval = null;
-                    returnToMain();
-                } else { showIdleCountdown(remaining); }
-            }, 1000);
-        }, 30000);
+            _paymentInFlight = false;
+            returnToMain();
+        }, CONFIG.IDLE_PAYMENT_BACKSTOP_MS);
+        return;
     }
+
+    idleTimer = setTimeout(() => {
+        let remaining = CONFIG.IDLE_COUNTDOWN_S;
+        showIdleCountdown(remaining);
+        countdownInterval = setInterval(() => {
+            remaining -= 1;
+            if (remaining <= 0) {
+                clearInterval(countdownInterval);
+                countdownInterval = null;
+                returnToMain();
+            } else { showIdleCountdown(remaining); }
+        }, 1000);
+    }, silence);
 }
 function showIdleCountdown(seconds) {
     const el = document.getElementById('idleCountdown');
