@@ -314,12 +314,27 @@ export default defineType({
       validation:  Rule => Rule.min(0),
     }),
 
+    // The card fee is a THIRD PARTY's cut and belongs to nobody on this
+    // document — not our revenue, not the shop's money. It is separate from
+    // platformFeeAmount because of what happens on a refund: the customer gets
+    // 100% back, but this fee was spent the moment the card was charged and is
+    // normally not returned. Without it recorded per order there is no way to
+    // say what a refund actually cost or to deduct it from the party at fault.
+    defineField({
+      group:       'money',
+      name:        'gatewayFeeAmount',
+      title:       '3.9 · Card / Gateway Fee (THB)',
+      type:        'number',
+      description: 'What the payment provider kept. Not our revenue and not the shop’s money — a third party’s cut. Usually NOT returned when an order is refunded.',
+      validation:  Rule => Rule.min(0),
+    }),
+
     defineField({
       group:       'money',
       name:        'merchantPayable',
-      title:       '3.9 · Owed to Shop (THB)',
+      title:       '3.10 · Owed to Shop (THB)',
       type:        'number',
-      description: 'A liability from the moment payment clears, not income. Shop-funded discount: items + delivery − discount − our fee. AquaMX-funded: items + delivery − our fee (the shop is kept whole and the discount comes out of our fee).',
+      description: 'A liability from the moment payment clears, not income. Shop-funded discount: items + delivery − discount − our fee. AquaMX-funded: items + delivery − our fee (the shop is kept whole and the discount comes out of our fee). Deduct the gateway fee here too when a refund was the shop’s fault.',
       validation:  Rule => Rule.min(0),
     }),
 
@@ -389,6 +404,68 @@ export default defineType({
       hidden: ({ document }) => !['refunded', 'cancelled', 'failed'].includes(document?.status as string),
     }),
 
+    // WHY THESE TWO FIELDS EXIST.
+    // The customer always gets 100% back. The card fee does not come back with
+    // it — it was spent when the card was charged. So a refund always leaves
+    // someone out of pocket by gatewayFeeAmount, and "someone" has to be a
+    // name, not an assumption. Recording the cause next to the bearer means the
+    // rule can be audited later instead of re-argued per order.
+    //
+    // The rule this encodes:
+    //   shop did not deliver / out of stock   → provider (deduct from payout)
+    //   customer changed their mind           → customer (withhold from refund,
+    //                                           only with a published policy)
+    //   our system got it wrong               → aquamx
+    //   payment never succeeded               → nobody, no fee was charged
+    //
+    // Charging the CUSTOMER when the shop was at fault invites a chargeback,
+    // which costs many times the fee and counts against our gateway account.
+    defineField({
+      group:  'payment',
+      name:   'refundReason',
+      title:  '4.7 · Why It Was Refunded',
+      type:   'string',
+      hidden: ({ document }) => !['refunded', 'cancelled', 'failed'].includes(document?.status as string),
+      options: {
+        list: [
+          { title: 'Shop did not deliver / out of stock · ร้านไม่ส่ง', value: 'provider_fault' },
+          { title: 'Customer cancelled · ลูกค้ายกเลิกเอง',             value: 'customer_cancelled' },
+          { title: 'Our mistake · ระบบเราผิด',                          value: 'our_fault' },
+          { title: 'Payment never succeeded · จ่ายไม่ผ่าน',             value: 'never_paid' },
+        ],
+        layout: 'radio',
+      },
+    }),
+
+    defineField({
+      group:       'payment',
+      name:        'refundFeeBornBy',
+      title:       '4.8 · Who Absorbs the Card Fee',
+      type:        'string',
+      description: 'The gateway fee is not returned on a refund. Whoever is named here is short by that amount — deduct it from the shop’s payout, withhold it from the customer’s refund, or book it as our cost.',
+      hidden:      ({ document }) => !['refunded', 'cancelled', 'failed'].includes(document?.status as string)
+                                  || (document?.refundReason as string) === 'never_paid',
+      options: {
+        list: [
+          { title: 'Shop · หักจากยอดที่ต้องจ่ายร้าน', value: 'provider' },
+          { title: 'Customer · หักจากยอดคืน',          value: 'customer' },
+          { title: 'AquaMX · เรารับเอง',               value: 'aquamx'   },
+        ],
+        layout: 'radio',
+      },
+      validation: Rule => Rule.custom((value, context) => {
+        const reason = context.document?.refundReason as string | undefined
+        const status = context.document?.status as string | undefined
+        if (!['refunded', 'cancelled', 'failed'].includes(status ?? '')) return true
+        if (!reason || reason === 'never_paid') return true
+        if (!value) return 'Say who absorbs the card fee — a refund always leaves someone out of pocket.'
+        if (reason === 'provider_fault' && value === 'customer') {
+          return 'The shop failed to deliver — withholding the fee from the customer invites a chargeback that costs far more than the fee.'
+        }
+        return true
+      }),
+    }),
+
     // Customer bank details — collected ONLY when a refund cannot go back the
     // way it came. A card or PromptPay charge refunds to source through the
     // gateway with no account number involved, so asking every customer for
@@ -396,7 +473,7 @@ export default defineType({
     defineField({
       group:       'payment',
       name:        'refundBankAccount',
-      title:       '4.7 · Customer Bank Account (manual refund only)',
+      title:       '4.9 · Customer Bank Account (manual refund only)',
       type:        'object',
       description: 'Leave empty when the refund goes back to source. Fill in only for a refund that has to be transferred by hand — then delete it once the transfer is done.',
       hidden:      ({ document }) => !['refunded', 'cancelled', 'failed'].includes(document?.status as string),
@@ -423,11 +500,25 @@ export default defineType({
     }),
 
     // ── 5. Paying the Shop ───────────────────────────────────────────────────
+    // Payout timing is not bookkeeping, it is the only enforcement we have.
+    // A contract saying "the shop covers refunds it caused" is worth nothing
+    // once the money has left our account: we would be chasing a shop that may
+    // never trade with us again. While the money is still here, the deduction
+    // is arithmetic. So releasing it is gated on the delivery actually
+    // happening, with a deliberate, recorded exception rather than a habit.
+
+    defineField({
+      group:       'payout',
+      name:        'deliveryConfirmedAt',
+      title:       '5.1 · Delivery Confirmed',
+      type:        'datetime',
+      description: 'When the customer got what they paid for. Until this is set, the money is ours to hold — set it and the shop can be paid.',
+    }),
 
     defineField({
       group:        'payout',
       name:         'payoutStatus',
-      title:        '5.1 · Payout Status',
+      title:        '5.2 · Payout Status',
       type:         'string',
       initialValue: 'not_due',
       options: {
@@ -440,12 +531,29 @@ export default defineType({
         layout: 'radio',
       },
       description: 'Everything sitting at "Due" is money in our account that belongs to someone else.',
+      validation: Rule => Rule.custom((value, context) => {
+        if (value !== 'paid') return true
+        const confirmed = context.document?.deliveryConfirmedAt
+        const early     = context.document?.payoutReleasedEarly
+        if (confirmed || early) return true
+        return 'Delivery is not confirmed yet. Once this money is gone, a refund the shop caused becomes ours to absorb — set 5.1, or tick 5.3 and say why in the notes.'
+      }),
+    }),
+
+    defineField({
+      group:        'payout',
+      name:         'payoutReleasedEarly',
+      title:        '5.3 · Released Before Delivery Was Confirmed',
+      type:         'boolean',
+      initialValue: false,
+      description:  'Deliberate exception — a shop we trust, or a delivery we cannot confirm. Explain in the notes below. Ticking this accepts that a later refund is ours to chase.',
+      hidden:       ({ document }) => !!document?.deliveryConfirmedAt,
     }),
 
     defineField({
       group:  'payout',
       name:   'payoutDate',
-      title:  '5.2 · Paid to Shop On',
+      title:  '5.4 · Paid to Shop On',
       type:   'date',
       hidden: ({ document }) => (document?.payoutStatus as string) !== 'paid',
     }),
@@ -453,7 +561,7 @@ export default defineType({
     defineField({
       group:       'payout',
       name:        'payoutPayment',
-      title:       '5.3 · Payout Payment Record',
+      title:       '5.5 · Payout Payment Record',
       type:        'reference',
       to:          [{ type: 'payment' }],
       options:     { disableNew: true },
@@ -464,7 +572,7 @@ export default defineType({
     defineField({
       group:       'payout',
       name:        'payoutRef',
-      title:       '5.4 · Transfer Reference',
+      title:       '5.6 · Transfer Reference',
       type:        'string',
       hidden:      ({ document }) => (document?.payoutStatus as string) !== 'paid',
       description: 'Bank slip / transaction reference.',
@@ -473,7 +581,7 @@ export default defineType({
     defineField({
       group: 'payout',
       name:  'internalNotes',
-      title: '5.5 · Internal Notes',
+      title: '5.7 · Internal Notes',
       type:  'text',
       rows:  3,
     }),
