@@ -1735,6 +1735,21 @@ body {
     margin-bottom: 1.8vh;
 }
 .detail-card.handoff-mode .handoff-offer-title { display: block; }
+/* Amount on the QR page — bigger than step 1's total, because this is the
+   figure the customer carries to their banking app. */
+.handoff-amount {
+    display: flex; align-items: baseline; gap: 1vh;
+    margin: -0.6vh 0 1.4vh;
+    padding: 0.9vh 1.3vh;
+    border-radius: 0.9vh;
+    background: rgba(255,255,255,0.06);
+    border: 0.1vh solid rgba(255,255,255,0.16);
+}
+.handoff-amount .lab { font-size: 1.3vh; color: rgba(255,255,255,0.7); }
+.handoff-amount .amt { margin-left: auto; font-size: 2.8vh; font-weight: 800; color: #fff; letter-spacing: 0.02em; }
+/* payOnline → the amount is money leaving their account, not a running tally */
+.handoff-amount.is-pay { background: rgba(109,213,232,0.10); border-color: rgba(109,213,232,0.45); }
+.handoff-amount.is-pay .amt { color: var(--dot-cyan); }
 /* with the card to ourselves the scan block goes COLUMN: QR centred at a
    moderate size, caption BELOW it full-width — enlarging the QR inside the
    old side-by-side row crushed the caption into a 1-word-per-line sliver */
@@ -1986,6 +2001,11 @@ html.lite .bottombar-track { transform: none !important; }
                     <!-- Step-2 title: the hero (which carried the title) is hidden in
                          handoff-mode, so this line keeps "what am I scanning" visible -->
                     <div class="handoff-offer-title" id="handoffTitle"></div>
+                    <!-- The amount, repeated on the QR page. Step 1's total is
+                         inside .detail-dyn, which handoff-mode hides — without
+                         this the customer scans a payment QR having last seen
+                         the figure one screen ago. -->
+                    <div class="handoff-amount" id="handoffAmount" style="display:none"></div>
                     <!-- Compact scan ROW (QR left + text right) — matches the /offer
                          design's .pv-scan, instead of a big centred QR block. -->
                     <div class="handoff-scan">
@@ -4657,6 +4677,9 @@ function showHandoff() {
     if (qrImg) qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=8&data=${encodeURIComponent(deepLink)}`;
     setTxt('qrUrl', deepLink);
 
+    // Carry the amount onto this page — step 1's total is hidden here.
+    updateHandoffAmount();
+
     // A3: honor the provider's preferred handoff channel (qr / sms / both).
     const ht = handoffCtx.handoffType || 'both';
     const show = (sel, on) => { const el = document.querySelector(sel); if (el) el.style.display = on ? '' : 'none'; };
@@ -4788,9 +4811,7 @@ detailOverlay.addEventListener('click', function (e) {
    · Never send this figure anywhere. The QR carries keys and quantities only;
      the server re-prices from Sanity. A total that travels in a URL is a total
      the customer can edit. */
-function updateCartTotal() {
-    const box = document.getElementById('detailTotal');
-    if (!box) return;
+function cartTotalTHB() {
     let sum = 0, picked = 0, unpriced = 0;
     document.querySelectorAll('#detailDyn .detail-qty').forEach(q => {
         const n = parseInt(q.querySelector('b')?.textContent, 10) || 0;
@@ -4800,13 +4821,38 @@ function updateCartTotal() {
         if (thb == null || !isFinite(+thb)) unpriced++;
         else sum += (+thb) * n;
     });
-    if (!picked || unpriced) { box.style.display = 'none'; return; }
+    return { sum, picked, unpriced, ok: picked > 0 && unpriced === 0 };
+}
+
+function updateCartTotal() {
+    const box = document.getElementById('detailTotal');
+    if (!box) return;
+    const t = cartTotalTHB();
+    if (!t.ok) { box.style.display = 'none'; return; }
     const isTH = uiLang === 'th';
     const pay  = box.dataset.pay === '1';
     box.innerHTML =
         `<span class="lab">${isTH ? 'รวม' : 'Total'}</span>` +
-        `<span class="amt">฿${sum.toLocaleString()}</span>` +
+        `<span class="amt">฿${t.sum.toLocaleString()}</span>` +
         (pay ? `<span class="hint">${isTH ? 'สแกนเพื่อชำระเงิน' : 'Scan to pay'}</span>` : '');
+    box.style.display = '';
+}
+
+/* Step 2 (the QR page) hides .detail-dyn — including the total that lives in
+   it — so the amount vanished at exactly the moment the customer is about to
+   commit to paying it. The qty controls are only hidden, not removed, so the
+   figure is re-read from the same source rather than passed around. */
+function updateHandoffAmount() {
+    const box = document.getElementById('handoffAmount');
+    if (!box) return;
+    const t = cartTotalTHB();
+    if (!t.ok) { box.style.display = 'none'; return; }
+    const isTH = uiLang === 'th';
+    const pay  = document.getElementById('detailTotal')?.dataset.pay === '1';
+    box.innerHTML =
+        `<span class="lab">${isTH ? 'ยอดที่ต้องชำระ' : 'Amount to pay'}</span>` +
+        `<span class="amt">฿${t.sum.toLocaleString()}</span>`;
+    box.classList.toggle('is-pay', pay);
     box.style.display = '';
 }
 
