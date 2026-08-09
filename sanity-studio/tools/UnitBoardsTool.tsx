@@ -623,9 +623,18 @@ export function UnitBoardsTool() {
     return (
       <Flex key={p.refCode + m2} align="center" gap={2} style={{ padding: '3px 0', opacity: stageBusy === id ? 0.45 : 1 }}>
         <Text size={1} style={{ width: 92, fontFamily: 'monospace' }}>{p.refCode}</Text>
-        <Text size={1} muted style={{ minWidth: 210, whiteSpace: 'nowrap' }}>
+        <Text size={1} muted style={{ minWidth: 300, whiteSpace: 'nowrap' }}>
           {p.sqm} ตรม. · {sources.get(p.refCode)?.floorActual != null ? `ชั้น ${sources.get(p.refCode)!.floorActual}` : (ZONE_TH[p.floorZone ?? ''] ?? '')}
           {' · '}{(p.priceTHB ?? 0) >= 1e6 ? `${(p.priceTHB! / 1e6).toFixed(1)}M` : `${Math.round((p.priceTHB ?? 0) / 1e3)}K`}
+          {/* ราคาต่อ ตร.ม. — ตัวเดียวที่เทียบห้องคนละขนาดได้ตรง ๆ · โชว์เฉพาะในเครื่องมือ
+              ไม่ส่งขึ้นจอ เพราะบนบอร์ดมี "ถูกกว่าค่าเฉลี่ยชั้นนี้ X%" ที่อ่านง่ายกว่าอยู่แล้ว */}
+          {(() => {
+            const ps = p.pricePerSqm ?? (p.priceTHB && p.sqm ? Math.round(p.priceTHB / p.sqm) : null)
+            if (ps == null) return null
+            return <span style={{ color: '#0f3460', fontWeight: 600 }}>
+              {'  '}{ps >= 1000 ? `${Math.round(ps / 1000)}K` : ps.toLocaleString()} ฿/ตร.ม.{m2 === 'rent' ? '/ด.' : ''}
+            </span>
+          })()}
         </Text>
         <Flex gap={1}>
           {STAGES.map(([v, label, bg]) => (
