@@ -254,6 +254,9 @@ export function UnitBoardsTool() {
   // ช่องค้นในแผงตัวกรอง — เก็บไว้ที่นี่เพราะ FilterHead ถูกสร้างใหม่ทุก render
   // ถ้าเก็บ state ไว้ข้างใน มันจะโดนรีเซ็ตทุกครั้งที่ตารางวาดใหม่ · เปิดได้ทีละแผงจึงใช้ตัวเดียวพอ
   const [fq, setFq] = useState('')
+  /* ต้องอยู่เหนือ `if (loading) return` — hook ที่อยู่ใต้ early return จะถูกเรียก
+     ไม่เท่ากันระหว่าง render ตอนโหลดกับตอนโหลดเสร็จ แล้ว React จะพังทั้งเครื่องมือ */
+  const [stageBusy, setStageBusy] = useState<string | null>(null)
 
   useEffect(() => {
     let dead = false
@@ -579,7 +582,6 @@ export function UnitBoardsTool() {
     ['talking', '💬 กำลังคุย', '#bfdbfe'],
     ['closed', '✅ ปิดดีล', '#bbf7d0'],
   ]
-  const [stageBusy, setStageBusy] = useState<string | null>(null)
   const setStage = async (p: Profile, m2: 'rent' | 'sale', v: string) => {
     const id = `unitProfile-${p.refCode}-${m2}`
     setStageBusy(id)
