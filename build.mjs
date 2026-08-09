@@ -31,7 +31,10 @@ import { readFileSync, mkdirSync, writeFileSync, copyFileSync, cpSync, existsSyn
 import { join, dirname }                                        from 'path'
 import { fileURLToPath }                                        from 'url'
 import { createHash }                                           from 'crypto'
-import { selectWithPolicy, profileToRow, PROFILE_PROJECTION }   from './board-engine.mjs'
+import { selectWithPolicy, profileToRow, PROFILE_PROJECTION, closedTooLong, CLOSED_DAYS } from './board-engine.mjs'
+
+/* ชนิดห้องต้องมีอย่างน้อยเท่านี้ถึงจะได้สไลด์ของตัวเอง */
+const SEG_MIN = 3
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
@@ -485,7 +488,9 @@ for (const project of projects) {
     //   2. auto  — policy-driven engine pick from published + contactable
     //      profiles (until a lineup exists).
     //   3. manual rows — legacy hand-typed rows.
-    const lineup = (b.lineup ?? []).filter(p => p && p.status !== 'expired' && p.status !== 'taken')
+    /* 'taken' ไม่ถูกกรองทิ้งอีกแล้ว — ห้องที่ปิดดีลต้องขึ้นจอเพื่อบอกว่าที่นี่มีดีลเกิดจริง
+       แต่เกิน CLOSED_DAYS วันแล้วต้องหลุดเอง ไม่งั้นบอร์ดกลายเป็นสุสานดีลเก่า */
+    const lineup = (b.lineup ?? []).filter(p => p && p.status !== 'expired' && !closedTooLong(p))
     const contactable = (unitProfiles ?? []).filter(p => p.intent === mode && CONTACTABLE.has(p.refCode))
     const auto = selectWithPolicy(contactable, mode, b.policy ?? {})
     const source = lineup.length ? 'lineup' : auto.rows.length ? 'auto' : 'manual'
@@ -529,6 +534,26 @@ for (const project of projects) {
     const cardsDir = join(outDir, 'board-cards', mode)
     mkdirSync(cardsDir, { recursive: true })
     writeFileSync(join(cardsDir, 'index.html'), cardsHtml, 'utf8')
+
+    /* หน้าแยกตามชนิดห้อง — สไลด์ละชนิด คนที่หา 1 นอนไม่ต้องรอดู 3 นอนผ่านไป
+       ชนิดที่มีไม่ถึง SEG_MIN ห้องไม่ได้หน้าของตัวเอง เพราะสไลด์หนึ่งใบกินเวลา
+       ออกอากาศเท่ากันหมดไม่ว่าจะมีการ์ด 1 ใบหรือ 7 ใบ — 28 วินาทีเพื่อโชว์ห้องเดียว
+       คือการเบียดเวลาของคอนเทนต์ที่ผู้ประกอบการจ่ายเงินซื้อ */
+    const bySeg = {}
+    for (const r of rows) (bySeg[r.type] ??= []).push(r)
+    const segsMade = []
+    for (const [seg, segRows] of Object.entries(bySeg)) {
+      if (segRows.length < SEG_MIN) continue
+      const segData = { ...boardData, rows: segRows, segment: seg }
+      segData.rev = createHash('sha1').update(JSON.stringify(segData)).digest('hex').slice(0, 8)
+      const slug = seg.toLowerCase().replace(/\+/g, 'plus').replace(/[^a-z0-9]/g, '')
+      const dir = join(outDir, 'board-cards', mode, slug)
+      mkdirSync(dir, { recursive: true })
+      writeFileSync(join(dir, 'index.html'), cardsTemplate.replace('</head>',
+        `<script>/* baked by build.mjs — rev ${segData.rev} */\nwindow.__BOARD__ = ${JSON.stringify(segData)};\n</script>\n</head>`), 'utf8')
+      segsMade.push(`${slug}:${segRows.length}`)
+    }
+    console.log(`  board-cards[${mode}]: รวม ${rows.length} · แยกชนิด ${segsMade.join(' ') || '— (ไม่มีชนิดไหนถึง ' + SEG_MIN + ' ห้อง)'}`)
   }
 
   // _headers: Netlify reads this from the publish directory unconditionally.

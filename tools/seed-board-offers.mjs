@@ -47,7 +47,9 @@ const ZONE_EN = { low: 'Low floor', mid: 'Mid floor', high: 'High floor' }
 export function profileToOrderItem(p, mode) {
   const fl = p.floorActual != null
     ? { th: `ชั้น ${p.floorActual}`, en: `Floor ${p.floorActual}` }
-    : { th: `${ZONE_TH[p.floorZone] ?? ''} (${(p.floorZone ?? '').toUpperCase()})`, en: ZONE_EN[p.floorZone] ?? '' }
+    /* ไม่ต่อท้ายด้วยรหัสโซนในวงเล็บ — "ชั้นล่าง" บอกครบแล้ว และฝั่งอังกฤษไม่เคยมีวงเล็บ
+       ลูกค้าไทยเห็น "ชั้นล่าง (LOW)" ส่วนต่างชาติเห็น "Low floor" มาตลอด */
+    : { th: ZONE_TH[p.floorZone] ?? '', en: ZONE_EN[p.floorZone] ?? '' }
   return {
     _key: p.refCode,
     refCode: p.refCode,

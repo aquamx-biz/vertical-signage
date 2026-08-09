@@ -481,7 +481,7 @@ export function UnitBoardsTool() {
   /* ชั้นจริงมาก่อนโซน — โซนยุบ 24 ชั้นเหลือ 3 คำ ห้องคนละชั้นเลยอ่านเหมือนกัน */
   const toOrderItem = (p: Profile, m2: string) => {
     const f = sources.get(p.refCode)?.floorActual
-    const flTh = f != null ? `ชั้น ${f}` : `${ZONE_TH[p.floorZone ?? ''] ?? ''} (${(p.floorZone ?? '').toUpperCase()})`
+    const flTh = f != null ? `ชั้น ${f}` : (ZONE_TH[p.floorZone ?? ''] ?? '')   /* ไม่ต่อรหัสโซนในวงเล็บ */
     const flEn = f != null ? `Floor ${f}` : (ZONE_EN[p.floorZone ?? ''] ?? '')
     return {
       _key: p.refCode, refCode: p.refCode, maxQty: 1,

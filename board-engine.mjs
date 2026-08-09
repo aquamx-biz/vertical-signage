@@ -161,7 +161,26 @@ export function profileToRow(p) {
     updated: p.lastCheckedAt,
     price:   p.priceTHB,
     remarks: remarksFor(p),
+    // Everything below was already fetched and then dropped here. The card
+    // board's second line used to repeat the bed type that its own segment
+    // header states; with the type gone it prints why the room is worth a
+    // look instead, which needs these.
+    pricePerSqm: p.pricePerSqm ?? null,
+    vsFloorPct:  p.vsFloorPct ?? null,
+    // Team-set sales state — the board dims a closed room and labels it
+    // RENTED/SOLD rather than letting it vanish without explanation.
+    takenLabel:  p.dealStage === 'closed' ? (p.intent === 'sale' ? 'sale' : 'rent') : null,
+    actTalking:  p.dealStage === 'talking' || null,
+    actViewing:  p.dealStage === 'viewing' || null,
   }
+}
+
+/** ห้องที่ปิดดีลเกิน N วันหลุดจากบอร์ดเอง — ไม่งั้นบอร์ดจะกลายเป็นสุสานดีลเก่า */
+export const CLOSED_DAYS = 30
+export function closedTooLong(p, today = new Date().toISOString().slice(0, 10)) {
+  if (p.dealStage !== 'closed') return false
+  if (!p.dealStageAt) return false            // ไม่รู้วันที่ → ปล่อยไว้ ให้คนมาเคลียร์เอง
+  return (Date.parse(today) - Date.parse(p.dealStageAt)) / 86400000 > CLOSED_DAYS
 }
 
 /** GROQ projection both build.mjs and the shortlist tool fetch for the engine. */
@@ -169,4 +188,5 @@ export const PROFILE_PROJECTION = `
   refCode, intent, bedType, sqm, floorZone, priceTHB, pricePerSqm,
   vsFloorPct, vsZonePct, vsBuildingPct, dealTier, hotDeal, goodInvest,
   negotiable, yieldPct, spreadPct, nListings, nPortals, postedByOwner,
-  dualListed, pinToBoard, hideFromBoard, status, lastCheckedAt, firstSeenAt`
+  dualListed, pinToBoard, hideFromBoard, status, lastCheckedAt, firstSeenAt,
+  dealStage, dealStageAt`
