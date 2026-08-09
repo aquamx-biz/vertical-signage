@@ -259,6 +259,8 @@ export function UnitBoardsTool() {
   /* ต้องอยู่เหนือ `if (loading) return` — hook ที่อยู่ใต้ early return จะถูกเรียก
      ไม่เท่ากันระหว่าง render ตอนโหลดกับตอนโหลดเสร็จ แล้ว React จะพังทั้งเครื่องมือ */
   const [stageBusy, setStageBusy] = useState<string | null>(null)
+  const [stageOpen, setStageOpen] = useState(false)          // ทั้งแผง — ปิดไว้ก่อน 38 แถวยาวเกินกว่าจะเปิดค้าง
+  const [segShut, setSegShut] = useState<Set<string>>(new Set())   // กลุ่มชนิดห้องที่ถูกพับ
 
   useEffect(() => {
     let dead = false
@@ -800,8 +802,20 @@ export function UnitBoardsTool() {
         {/* สถานะดีลของเฉพาะห้องที่ถูกเลือกขึ้นบอร์ด — ไม่ใช่ทั้ง 234 ห้อง */}
         <Card padding={3} radius={2} border tone="transparent">
           <Stack space={3}>
-            <Text size={1} weight="bold">สถานะดีล · เฉพาะห้องที่จะขึ้นจอ ({simR.rows.length + simS.rows.length} ห้อง)</Text>
-            {([['บอร์ดเช่า', 'rent', simR], ['บอร์ดขาย', 'sale', simS]] as const).map(([label, m2, sim]) => sim.rows.length > 0 && (
+            {/* พับไว้เป็นค่าเริ่มต้น — หัวข้อสรุปให้เห็นว่ามีอะไรค้างอยู่โดยไม่ต้องกางทั้ง 38 แถว */}
+            <Flex align="center" gap={2} style={{ cursor: 'pointer' }} onClick={() => setStageOpen(o => !o)}>
+              <Text size={1} weight="bold">{stageOpen ? '▾' : '▸'} สถานะดีล · เฉพาะห้องที่จะขึ้นจอ ({simR.rows.length + simS.rows.length} ห้อง)</Text>
+              {(() => {
+                const all = [...simR.rows, ...simS.rows]
+                const n = (v: string) => all.filter(p => (p.dealStage ?? '') === v).length
+                const bits = ([['closed', '✅ ปิดดีล'], ['viewing', '👀 นัดชม'], ['talking', '💬 กำลังคุย']] as const)
+                  .filter(([v]) => n(v) > 0).map(([v, l]) => `${l} ${n(v)}`)
+                return bits.length
+                  ? <Text size={1} style={{ color: '#166534' }}>{bits.join(' · ')}</Text>
+                  : <Text size={1} muted>ยังไม่มีห้องไหนถูกทำเครื่องหมาย</Text>
+              })()}
+            </Flex>
+            {stageOpen && ([['บอร์ดเช่า', 'rent', simR], ['บอร์ดขาย', 'sale', simS]] as const).map(([label, m2, sim]) => sim.rows.length > 0 && (
               <Stack key={m2} space={2}>
                 <Text size={1} muted weight="semibold">{label}</Text>
                 {/* จัดกลุ่มตามชนิดห้องให้ตรงกับรูปแบบใหม่ที่ "หนึ่งสไลด์ = หนึ่งชนิด"
@@ -811,20 +825,21 @@ export function UnitBoardsTool() {
                   const ok = rs.length >= SEG_MIN
                   return (
                     <Stack key={b} space={1} style={{ paddingLeft: 8, borderLeft: `3px solid ${ok ? '#166534' : '#e5e7eb'}` }}>
-                      <Inline space={2}>
-                        <Text size={1} weight="bold">{BED_LABEL[b] ?? b}</Text>
+                      <Inline space={2} style={{ cursor: 'pointer' }} onClick={() => setSegShut(x => {
+                        const n = new Set(x); const k = m2 + b; n.has(k) ? n.delete(k) : n.add(k); return n })}>
+                        <Text size={1} weight="bold">{segShut.has(m2 + b) ? '▸' : '▾'} {BED_LABEL[b] ?? b}</Text>
                         <Text size={1} muted>{rs.length} ห้อง</Text>
                         <Text size={0} style={{ color: ok ? '#166534' : '#9aa3b2' }}>
                           {ok ? '→ ได้สไลด์ของตัวเอง' : `→ ไม่ถึง ${SEG_MIN} ห้อง ไม่ได้สไลด์ (ยังอยู่ในป๊อปอัป)`}
                         </Text>
                       </Inline>
-                      {rs.map(p => stageRow(p, m2))}
+                      {!segShut.has(m2 + b) && rs.map(p => stageRow(p, m2))}
                     </Stack>
                   )
                 })}
               </Stack>
             ))}
-            {hiddenHere.length > 0 && (
+            {stageOpen && hiddenHere.length > 0 && (
               <Stack space={1} style={{ paddingTop: 6, borderTop: '1px solid #e6e9f1' }}>
                 <Text size={1} muted weight="semibold">เอาออกจากบอร์ดไว้ ({hiddenHere.length} ห้อง)</Text>
                 {hiddenHere.map(p => (
