@@ -32,6 +32,7 @@ import { join, dirname }                                        from 'path'
 import { fileURLToPath }                                        from 'url'
 import { createHash }                                           from 'crypto'
 import { selectWithPolicy, profileToRow, PROFILE_PROJECTION, closedTooLong, CLOSED_DAYS } from './board-engine.mjs'
+import { marketModel, expectedPsqm, valueVsExpected } from './market-model.mjs'
 
 /* ชนิดห้องต้องมีอย่างน้อยเท่านี้ถึงจะได้สไลด์ของตัวเอง */
 const SEG_MIN = 3
@@ -124,6 +125,19 @@ try {
 } catch (e) {
   console.warn(`  ⚠  internal dataset unreachable (${e.message}) — boards fall back to manual rows`)
 }
+
+/* ค่าคงที่ของตลาด (floor premium · yield · ราคาอ้างอิง) ต้องคิดจากทุกตึกพร้อมกัน
+   ค่ากลางที่ตึกซึ่งข้อมูลไม่พอจะยืมไปใช้ มาจากตึกอื่นทั้งหมด — ดึงรอบเดียวตรงนี้
+   แล้วใช้ตัวเดียวกับที่หน้า Building Analysis พิมพ์ออกมา (market-model.mjs) */
+console.log('Building market model (floor premium · yield) from all buildings…')
+const ALL_PROFILES = await sanityFetch(
+  `*[_type == "unitProfile" && status in ["candidate","verified","published"] && defined(pricePerSqm)]{
+     refCode, intent, projectName, pricePerSqm }`)
+const MARKET = marketModel((ALL_PROFILES ?? []).map(p => ({
+  building: p.projectName, intent: p.intent, psqm: p.pricePerSqm,
+  floor: FLOOR_BY_REF.get(p.refCode) ?? null,
+})))
+console.log(`  floor premium กลาง ${Math.round(MARKET.fpSale).toLocaleString()} ฿/ตร.ม./ชั้น · yield กลาง ${(MARKET.avgYield * 100).toFixed(2)}%`)
 
 // Per-project player template. Most projects use the proven vertical-signage.html.
 // The kiosk player is vertical-signage.html (formerly mockup-v7.html — renamed once it
@@ -494,7 +508,20 @@ for (const project of projects) {
     const contactable = (unitProfiles ?? []).filter(p => p.intent === mode && CONTACTABLE.has(p.refCode))
     const auto = selectWithPolicy(contactable, mode, b.policy ?? {})
     const source = lineup.length ? 'lineup' : auto.rows.length ? 'auto' : 'manual'
-    const withFloor = p => profileToRow({ ...p, floorActual: FLOOR_BY_REF.get(p.refCode) })
+    /* ความคุ้มเทียบ "ราคาที่ควรเป็นของชั้นนั้น" ไม่ใช่เทียบเพื่อนร่วมชั้น — ชั้นที่มีห้องเดียว
+       เคยคำนวณไม่ได้เลย และเปอร์เซ็นต์จากคนละชั้นเอามาแข่งกันไม่ได้เพราะฐานคนละตัว */
+    const mm = unitProjectNames.map(n => MARKET.byBuilding[n]).find(Boolean)
+    const valueOf = p => {
+      if (!mm || p.pricePerSqm == null) return null
+      const f = FLOOR_BY_REF.get(p.refCode)
+      const ref = mode === 'rent' ? mm.rentRef : mm.saleRef
+      const rf  = mode === 'rent' ? mm.refFloorRent : mm.refFloorSale
+      const fp  = mode === 'rent' ? mm.fpRentOwn : mm.fpSale
+      const exp = expectedPsqm(ref, fp, rf, f)
+      const v = valueVsExpected(p.pricePerSqm, exp)
+      return v == null ? null : Math.round(v * 100)
+    }
+    const withFloor = p => ({ ...profileToRow({ ...p, floorActual: FLOOR_BY_REF.get(p.refCode) }), valuePct: valueOf(p) })
     const rows = source === 'lineup' ? lineup.map(withFloor)
       : source === 'auto' ? auto.rows.map(withFloor)
       : (b.rows ?? []).map(r => ({
