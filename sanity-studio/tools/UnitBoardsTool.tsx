@@ -27,6 +27,8 @@ const SQM_BOUNDS: Record<string, [number, number]> = { studio: [20, 50], '1bed':
 const PRICE_BOUNDS: Record<string, [number, number]> = { rent: [5000, 300000], sale: [1000000, 100000000] }
 const PSQM_BOUNDS: Record<string, [number, number]> = { rent: [250, 3500], sale: [50000, 600000] }
 const TIER_RANK: Record<string, number> = { super: 0, best: 1, good: 2 }
+/* ชนิดห้องต้องมีอย่างน้อยเท่านี้ถึงจะได้สไลด์ของตัวเอง — ต้องตรงกับ build.mjs (SEG_MIN) */
+const SEG_MIN = 3
 
 export interface Profile {
   refCode: string; intent: 'rent' | 'sale'; projectName: string
@@ -602,8 +604,9 @@ export function UnitBoardsTool() {
     return (
       <Flex key={p.refCode + m2} align="center" gap={2} style={{ padding: '3px 0', opacity: stageBusy === id ? 0.45 : 1 }}>
         <Text size={1} style={{ width: 92, fontFamily: 'monospace' }}>{p.refCode}</Text>
-        <Text size={1} muted style={{ width: 168, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-          {BED_LABEL[p.bedType ?? ''] ?? p.bedType} · {p.sqm} ตรม. · {sources.get(p.refCode)?.floorActual != null ? `ชั้น ${sources.get(p.refCode)!.floorActual}` : (p.floorZone ?? '').toUpperCase()}
+        <Text size={1} muted style={{ minWidth: 210, whiteSpace: 'nowrap' }}>
+          {p.sqm} ตรม. · {sources.get(p.refCode)?.floorActual != null ? `ชั้น ${sources.get(p.refCode)!.floorActual}` : (ZONE_TH[p.floorZone ?? ''] ?? '')}
+          {' · '}{(p.priceTHB ?? 0) >= 1e6 ? `${(p.priceTHB! / 1e6).toFixed(1)}M` : `${Math.round((p.priceTHB ?? 0) / 1e3)}K`}
         </Text>
         <Flex gap={1}>
           {STAGES.map(([v, label, bg]) => (
@@ -779,9 +782,26 @@ export function UnitBoardsTool() {
           <Stack space={3}>
             <Text size={1} weight="bold">สถานะดีล · เฉพาะห้องที่จะขึ้นจอ ({simR.rows.length + simS.rows.length} ห้อง)</Text>
             {([['บอร์ดเช่า', 'rent', simR], ['บอร์ดขาย', 'sale', simS]] as const).map(([label, m2, sim]) => sim.rows.length > 0 && (
-              <Stack key={m2} space={1}>
+              <Stack key={m2} space={2}>
                 <Text size={1} muted weight="semibold">{label}</Text>
-                {sim.rows.map(p => stageRow(p, m2))}
+                {/* จัดกลุ่มตามชนิดห้องให้ตรงกับรูปแบบใหม่ที่ "หนึ่งสไลด์ = หนึ่งชนิด"
+                    และบอกตรงนี้เลยว่าชนิดไหนจะได้สไลด์จริง คนเลือกจะได้ไม่ต้องเดา */}
+                {BED_ORDER.filter(b => sim.rows.some(p => p.bedType === b)).map(b => {
+                  const rs = sim.rows.filter(p => p.bedType === b)
+                  const ok = rs.length >= SEG_MIN
+                  return (
+                    <Stack key={b} space={1} style={{ paddingLeft: 8, borderLeft: `3px solid ${ok ? '#166534' : '#e5e7eb'}` }}>
+                      <Inline space={2}>
+                        <Text size={1} weight="bold">{BED_LABEL[b] ?? b}</Text>
+                        <Text size={1} muted>{rs.length} ห้อง</Text>
+                        <Text size={0} style={{ color: ok ? '#166534' : '#9aa3b2' }}>
+                          {ok ? '→ ได้สไลด์ของตัวเอง' : `→ ไม่ถึง ${SEG_MIN} ห้อง ไม่ได้สไลด์ (ยังอยู่ในป๊อปอัป)`}
+                        </Text>
+                      </Inline>
+                      {rs.map(p => stageRow(p, m2))}
+                    </Stack>
+                  )
+                })}
               </Stack>
             ))}
             <Text size={0} muted>กดแล้วมีผลทันที ไม่ต้อง publish · ห้องที่ปิดดีลจะโชว์บนจอ 30 วันแล้วหลุดเอง</Text>
