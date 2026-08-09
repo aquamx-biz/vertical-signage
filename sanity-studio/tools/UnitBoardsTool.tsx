@@ -744,7 +744,10 @@ export function UnitBoardsTool() {
   }
 
   return (
-    <Flex direction="column" padding={4} gap={4} style={{ height: '100%', minHeight: 0 }}>
+    /* ไม่ล็อกความสูงไว้ที่จอแล้ว — ของเดิมบีบให้ส่วนบน (สรุป/policy/สถานะดีล) กินที่คงที่
+       แล้วโยนที่เหลือให้ตาราง ซึ่งเหลือไม่กี่แถว · ตอนนี้ทั้งหน้าเลื่อนได้ พอเลื่อนส่วนบน
+       พ้นไป ตารางจะกินเต็มจอ และหัวตารางยังหนึบอยู่ด้านบนเหมือนเดิม */
+    <Flex direction="column" padding={4} gap={4}>
       <style>{`.ub-scroll::-webkit-scrollbar{height:13px;width:13px}
         .ub-scroll::-webkit-scrollbar-thumb{background:#8fa0b8;border-radius:7px;border:2px solid #eef1f5}
         .ub-scroll::-webkit-scrollbar-track{background:#eef1f5}`}</style>
@@ -879,7 +882,7 @@ export function UnitBoardsTool() {
       </Stack>
 
       {/* ตารางกินพื้นที่ที่เหลือของจอ — แถบเลื่อนแนวนอน/แนวตั้งอยู่ในสายตาเสมอ ไม่จมใต้ fold */}
-      <div className="ub-scroll" style={{ flex: 1, minHeight: 220, overflow: 'auto', border: '1px solid #e3e8ef', borderRadius: 6, background: '#fff' }}>
+      <div className="ub-scroll" style={{ height: 'calc(100vh - 96px)', overflow: 'auto', border: '1px solid #e3e8ef', borderRadius: 6, background: '#fff' }}>
           <table style={{ borderCollapse: 'collapse', width: 'max-content', minWidth: '100%' }}>
             <thead><tr>
               <th style={thFz(0)} title="ลำดับตามการเรียง/กรองปัจจุบัน">#</th>
