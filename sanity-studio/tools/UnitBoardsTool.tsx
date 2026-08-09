@@ -259,8 +259,8 @@ export function UnitBoardsTool() {
   /* ต้องอยู่เหนือ `if (loading) return` — hook ที่อยู่ใต้ early return จะถูกเรียก
      ไม่เท่ากันระหว่าง render ตอนโหลดกับตอนโหลดเสร็จ แล้ว React จะพังทั้งเครื่องมือ */
   const [stageBusy, setStageBusy] = useState<string | null>(null)
-  const [stageOpen, setStageOpen] = useState(false)          // ทั้งแผง — ปิดไว้ก่อน 38 แถวยาวเกินกว่าจะเปิดค้าง
-  const [segShut, setSegShut] = useState<Set<string>>(new Set())   // กลุ่มชนิดห้องที่ถูกพับ
+  const [stageOpen, setStageOpen] = useState(true)                 // กางแผงไว้ — หัวข้อกลุ่มคือสาระ
+  const [segOpen, setSegOpen] = useState<Set<string>>(new Set())   // กลุ่มที่กางอยู่ · ว่าง = พับหมด
 
   useEffect(() => {
     let dead = false
@@ -825,15 +825,15 @@ export function UnitBoardsTool() {
                   const ok = rs.length >= SEG_MIN
                   return (
                     <Stack key={b} space={1} style={{ paddingLeft: 8, borderLeft: `3px solid ${ok ? '#166534' : '#e5e7eb'}` }}>
-                      <Inline space={2} style={{ cursor: 'pointer' }} onClick={() => setSegShut(x => {
+                      <Inline space={2} style={{ cursor: 'pointer' }} onClick={() => setSegOpen(x => {
                         const n = new Set(x); const k = m2 + b; n.has(k) ? n.delete(k) : n.add(k); return n })}>
-                        <Text size={1} weight="bold">{segShut.has(m2 + b) ? '▸' : '▾'} {BED_LABEL[b] ?? b}</Text>
+                        <Text size={1} weight="bold">{segOpen.has(m2 + b) ? '▾' : '▸'} {BED_LABEL[b] ?? b}</Text>
                         <Text size={1} muted>{rs.length} ห้อง</Text>
                         <Text size={0} style={{ color: ok ? '#166534' : '#9aa3b2' }}>
                           {ok ? '→ ได้สไลด์ของตัวเอง' : `→ ไม่ถึง ${SEG_MIN} ห้อง ไม่ได้สไลด์ (ยังอยู่ในป๊อปอัป)`}
                         </Text>
                       </Inline>
-                      {!segShut.has(m2 + b) && rs.map(p => stageRow(p, m2))}
+                      {segOpen.has(m2 + b) && rs.map(p => stageRow(p, m2))}
                     </Stack>
                   )
                 })}
