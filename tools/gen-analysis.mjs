@@ -12,6 +12,7 @@
  */
 import { readFileSync, writeFileSync, existsSync } from 'fs'
 import { fileURLToPath } from 'url'
+import { marketModel, floorPremiumOf, iqrKeep } from '../market-model.mjs'
 import { dirname, join } from 'path'
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)))
@@ -65,6 +66,11 @@ const ZONES = ['low', 'mid', 'high']
 const ACTIVE = ['candidate', 'verified', 'published']
 
 const floorByRef = new Map(sources.map(s => [s.refCode, s.floorActual]))
+
+/* ค่าคงที่ของตลาดต่อตึก — ใช้ตัวเดียวกับที่ build.mjs จะใช้ ไม่ให้ Analysis กับจอคนละเลข */
+const MODEL = marketModel(profiles
+  .filter(p => ACTIVE.includes(p.status) && p.pricePerSqm)
+  .map(p => ({ building: p.projectName, intent: p.intent, psqm: p.pricePerSqm, floor: floorByRef.get(p.refCode) ?? null })))
 const med = a => { const s = [...a].sort((x, y) => x - y); return s.length ? s[Math.floor(s.length / 2)] : null }
 const fmt = n => n == null ? '—' : Math.round(n).toLocaleString('en-US')
 const fmtM = n => n == null ? '—' : (n / 1e6).toFixed(1)
@@ -163,11 +169,72 @@ const overviewRows = stats.map(s => {
   return `<tr><th>${esc(s.name)}</th><td>${s.refs.size}</td><td>${s.rent.length}</td><td>${s.sale.length}</td><td>${s.dual.size}</td><td>${fmt(rMed)}</td><td>${fmt(sMed)}</td><td>${y ?? '—'}${y ? '%' : ''}</td><td>${(s.byStatus.verified ?? 0) + (s.byStatus.published ?? 0)}</td><td class="mut">${s.byStatus.expired ?? 0}</td></tr>`
 }).join('')
 
+
+/* ── Floor Premium ─────────────────────────────────────────────────────────
+   บล็อกแรกของทุกตึก เพราะบล็อกอื่นอ้างอิงค่าพวกนี้ · มี note วิธีคำนวณพับไว้
+   เพื่อให้ตรวจย้อนได้ว่าเลขมาจากไหน ไม่ต้องเชื่ออย่างเดียว */
+const n0 = x => x == null ? '—' : Math.round(x).toLocaleString()
+const n1 = x => x == null ? '—' : x.toFixed(1)
+const n2 = x => x == null ? '—' : x.toFixed(2)
+function premiumBlock(name) {
+  const m = MODEL.byBuilding[name]
+  if (!m) return ''
+  const raw = m.fpRaw
+  const note = `<details class="fpnote"><summary>วิธีคำนวณ</summary><pre>
+Floor Premium (ขาย)  — หน่วย ฿/ตร.ม. ต่อ 1 ชั้น
+  1. ตัดห้องผิดปกติออกด้วย IQR        เหลือ ${m.nSale} ห้อง
+  2. เรียงตามชั้น แบ่ง 3 กลุ่ม         กลุ่มละ ${raw ? raw.k : '—'} ห้อง (กลุ่มกลางไม่ใช้)
+  3. กลุ่มชั้นล่าง  median ชั้น ${n1(raw?.loFloor)}   median ฿/ตร.ม. ${n0(raw?.loPsqm)}
+     กลุ่มชั้นบน    median ชั้น ${n1(raw?.hiFloor)}   median ฿/ตร.ม. ${n0(raw?.hiPsqm)}
+  4. (${n0(raw?.hiPsqm)} − ${n0(raw?.loPsqm)}) ÷ (${n1(raw?.hiFloor)} − ${n1(raw?.loFloor)}) = ${n0(raw?.value)}
+  5. ${m.usedGlobalFp
+        ? `ค่าของตึกนี้ ${raw ? (raw.value <= 0 ? 'ติดลบ' : 'คำนวณไม่ได้') : 'คำนวณไม่ได้'} → ใช้ค่ากลางของทุกตึกแทน = ${n0(MODEL.fpSale)}`
+        : `ใช้ค่าของตึกนี้เอง = ${n0(m.fpSale)}`}
+
+yield ของตึก
+  (ค่าเช่าอ้างอิง ${n1(m.rentRef)} × 12) ÷ ราคาขายอ้างอิง ${n0(m.saleRef)} = ${n2((m.yieldUsed ?? 0) * 100)}%
+  ตัด noise ทั้งสองฝั่งก่อนหาร — ตัดฝั่งเดียวจะทำให้ตัวหารเล็กลงข้างเดียว yield พองขึ้น
+
+Floor Premium (เช่า)
+  แบบ A ใช้ yield ตึก   ${n0(m.fpSale)} × ${n2((m.yieldUsed ?? 0) * 100)}% ÷ 12 = ${n2(m.fpRentOwn)}
+  แบบ B ใช้ yield กลาง  ${n0(m.fpSale)} × ${n2(MODEL.avgYield * 100)}% ÷ 12 = ${n2(m.fpRentAvg)}
+
+ราคาอ้างอิงและชั้นอ้างอิง
+  ทั้งคู่มาจากห้องชุดเดียวกัน (หลังตัด IQR) — ราคาใช้ mean ชั้นก็ต้องใช้ mean
+  ขาย  ${n0(m.saleRef)} ฿/ตร.ม. ที่ชั้น ${n1(m.refFloorSale)}
+  เช่า  ${n1(m.rentRef)} ฿/ตร.ม. ที่ชั้น ${n1(m.refFloorRent)}
+
+ราคาที่ควรเป็นของชั้น F = ราคาอ้างอิง + Floor Premium × (F − ชั้นอ้างอิง)
+ความคุ้ม = (ราคาจริง − ราคาที่ควรเป็น) ÷ ราคาที่ควรเป็น    ติดลบ = ถูกกว่าที่ควร
+</pre></details>`
+  return `<h3>Floor Premium · ค่าชั้นของตึกนี้</h3>
+  <div class="tw"><table class="m"><tbody>
+    <tr><th>Floor Premium (ขาย)</th><td><b>${n0(m.fpSale)}</b> ฿/ตร.ม. ต่อชั้น${m.usedGlobalFp ? ' <span class="mut">(ใช้ค่ากลางทุกตึก)</span>' : ''}</td></tr>
+    <tr><th>Floor Premium (เช่า)</th><td><b>${n2(m.fpRentOwn)}</b> ฿/ตร.ม./เดือน ต่อชั้น <span class="mut">· แบบ yield กลาง ${n2(m.fpRentAvg)}</span></td></tr>
+    <tr><th>yield</th><td>ตึกนี้ <b>${n2((m.yieldOwn ?? 0) * 100)}%</b> <span class="mut">· กลางทุกตึก ${n2(MODEL.avgYield * 100)}%</span></td></tr>
+    <tr><th>ค่าเช่าอ้างอิง</th><td>A <b>${n1(m.rentRef)}</b> <span class="mut">· B ${n1(m.rentRefAvg)}</span> ฿/ตร.ม./เดือน</td></tr>
+    <tr><th>ราคาขายอ้างอิง</th><td><b>${n0(m.saleRef)}</b> ฿/ตร.ม.</td></tr>
+    <tr><th>ชั้นอ้างอิง</th><td>เช่า ${n1(m.refFloorRent)} · ขาย ${n1(m.refFloorSale)}</td></tr>
+  </tbody></table></div>${note}`
+}
+function premiumOverview() {
+  const rows = Object.entries(MODEL.byBuilding).filter(([, m]) => m.saleRef != null).map(([b, m]) =>
+    `<tr><th>${esc(b)}</th><td>${m.fpRaw ? n0(m.fpRaw.value) : '—'}${m.usedGlobalFp ? ' <span class="mut">→ ใช้กลาง</span>' : ''}</td>` +
+    `<td>${n0(m.fpSale)}</td><td>${n2((m.yieldOwn ?? 0) * 100)}%</td><td>${n2(m.fpRentOwn)}</td><td>${n2(m.fpRentAvg)}</td>` +
+    `<td class="mut">${m.nSale}/${m.nRent}</td></tr>`).join('')
+  return `<h2>Floor Premium · ค่าชั้น ทุกตึก</h2>
+  <div class="tw"><table class="m"><thead><tr><th>ตึก</th><th>คำนวณได้</th><th>ที่ใช้จริง</th><th>yield ตึก</th><th>เช่า/ชั้น (A)</th><th>เช่า/ชั้น (B)</th><th class="mut">n ขาย/เช่า</th></tr></thead><tbody>${rows}
+  <tr><th>ค่ากลางทุกตึก</th><td colspan="2"><b>${n0(MODEL.fpSale)}</b> ฿/ตร.ม./ชั้น</td><td colspan="4"><b>${n2(MODEL.avgYield * 100)}%</b> yield กลาง</td></tr>
+  </tbody></table></div>
+  <p class="mut">ตึกที่ค่าติดลบหรือห้องขายน้อยกว่า 20 ห้อง ใช้ค่ากลางของทุกตึกแทน · วิธีคำนวณอยู่ในแท็บของแต่ละตึก</p>`
+}
+
 const tabs = [`<button class="tab on" data-t="t-over">ภาพรวม</button>`]
 const panes = [`<section class="pane on" id="t-over">
   <h2>ภาพรวมทุกตึก <span class="n">เฉพาะห้อง active (ทีม cleansing แล้ว — expired/taken ไม่นับ)</span></h2>
   <div class="tw"><table class="m"><thead><tr><th>ตึก</th><th>ห้อง</th><th>เช่า</th><th>ขาย</th><th>Dual</th><th>เช่า ฿/ตรม.</th><th>ขาย ฿/ตรม.</th><th>Yield</th><th>ยืนยันแล้ว</th><th>expired</th></tr></thead><tbody>${overviewRows}</tbody></table></div>
   ${latestRound ? `<p class="mut">รอบเก็บข้อมูลล่าสุด: <b>${latestRound.roundDate}</b> · ${latestRound.listings ?? '—'} ประกาศ · ใหม่ ${latestRound.newUnits ?? 0} · ราคาเปลี่ยน ${latestRound.priceChanges ?? 0} · expired ${latestRound.expired ?? 0}</p>` : '<p class="mut">ยังไม่มีรอบจากวงจรรายสัปดาห์ — ข้อมูลชุดแรกมาจาก pipeline 29 Jul</p>'}
+  ${premiumOverview()}
 </section>`]
 
 for (const s of stats) {
@@ -175,6 +242,7 @@ for (const s of stats) {
   tabs.push(`<button class="tab" data-t="${id}">${esc(s.name)}</button>`)
   panes.push(`<section class="pane" id="${id}">
     <h2>${esc(s.name)} <span class="n">active ${s.refs.size} ห้อง · ${Object.entries(s.byStatus).map(([k, v]) => `${STATUS_TH[k] ?? k} ${v}`).join(' · ')}</span></h2>
+    ${premiumBlock(s.name)}
     <div class="cols">
       <div><h3>เช่า — ราคากลางต่อตรม.</h3>${matrixTable(s.rent, 'rent')}</div>
       <div><h3>ขาย — ราคากลางต่อตรม.</h3>${matrixTable(s.sale, 'sale')}</div>
@@ -213,6 +281,10 @@ table.m{border-collapse:collapse;width:100%;font-size:13.5px}
 .m tbody tr:last-child td,.m tbody tr:last-child th{border-bottom:0}
 .m tbody th{font-weight:600}
 .chip{display:inline-block;background:#F3E7DA;color:#8A5526;border-radius:6px;padding:1px 7px;font-size:11px;font-weight:600;margin-right:4px}
+.fpnote{margin:6px 0 18px}
+.fpnote summary{cursor:pointer;font-size:13px;color:#0f3460;font-weight:600;user-select:none}
+.fpnote pre{background:#f6f8fb;border:1px solid #e3e8ef;border-radius:6px;padding:12px 14px;
+  font-size:12.5px;line-height:1.6;overflow-x:auto;white-space:pre-wrap}
 .ok{color:var(--ok);font-weight:600}.okish{color:#3E6E2F}.bad{color:var(--bad);font-weight:600}
 </style></head><body>
 <header><h1>Building Analysis <span class="n">ข้อมูลสดจาก Sanity · สร้าง ${DATE}</span></h1>
