@@ -882,7 +882,10 @@ export function UnitBoardsTool() {
       </Stack>
 
       {/* ตารางกินพื้นที่ที่เหลือของจอ — แถบเลื่อนแนวนอน/แนวตั้งอยู่ในสายตาเสมอ ไม่จมใต้ fold */}
-      <div className="ub-scroll" style={{ height: 'calc(100vh - 96px)', overflow: 'auto', border: '1px solid #e3e8ef', borderRadius: 6, background: '#fff' }}>
+      {/* กล่องตารางหนึบที่ขอบบนเมื่อเลื่อนส่วนบนพ้นไป — ไม่งั้นทั้งกล่องเลื่อนหายไปกับหน้า
+          แล้วหัวตารางที่ sticky อยู่ "ข้างใน" กล่องก็หายตามไปด้วย (เป็นสิ่งที่เพิ่งเกิด)
+          พอกล่องหนึบ หัวตารางกับคอลัมน์ที่ฟรีซไว้จึงอยู่ครบตลอดการเลื่อน */
+      <div className="ub-scroll" style={{ position: 'sticky', top: 0, height: 'calc(100vh - 120px)', overflow: 'auto', border: '1px solid #e3e8ef', borderRadius: 6, background: '#fff' }}>
           <table style={{ borderCollapse: 'collapse', width: 'max-content', minWidth: '100%' }}>
             <thead><tr>
               <th style={thFz(0)} title="ลำดับตามการเรียง/กรองปัจจุบัน">#</th>
