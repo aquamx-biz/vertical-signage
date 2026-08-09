@@ -56,6 +56,24 @@ export default defineType({
       name: 'hideFromBoard', title: 'Hide from Board · ไม่เอาขึ้นบอร์ด', type: 'boolean',
       description: 'ตรวจแล้วแต่ไม่อยากโชว์บนจอ — ระบบคัดอัตโนมัติจะข้ามห้องนี้',
     }),
+    /* สถานะดีล — คนละเรื่องกับ status ด้านบน · status คือสถานะของ "ข้อมูล"
+       (รอตรวจ/ตรวจแล้ว/หายจากตลาด) ซึ่งมีสามที่กรองใช้อยู่ ถ้าเอาสถานะดีลไปปนจะ
+       เปลี่ยนว่าห้องไหนถูกคัดขึ้นบอร์ด · ตัวนี้คือสถานะของ "การขาย" ที่ทีมกดเอง
+       และเป็นตัวเดียวที่บอร์ดกับป๊อปอัปเอาไปแสดง */
+    defineField({
+      name: 'dealStage', title: 'Deal Stage · สถานะดีล', type: 'string',
+      options: { list: [
+        { title: 'ว่าง — ยังไม่มีความเคลื่อนไหว', value: '' },
+        { title: '👀 อยู่ระหว่างนัดชม',            value: 'viewing' },
+        { title: '💬 กำลังคุยกับผู้สนใจ',           value: 'talking' },
+        { title: '✅ ปิดดีลแล้ว (เช่า/ขายไปแล้ว)',   value: 'closed' },
+      ] },
+      description: 'กดจากแผง "สถานะดีล" ในเครื่องมือ Unit Boards ได้เลย ไม่ต้องมาแก้ที่นี่',
+    }),
+    defineField({
+      name: 'dealStageAt', title: 'Deal Stage Since · เปลี่ยนสถานะเมื่อ', type: 'date',
+      description: 'ห้องที่ปิดดีลจะโชว์บนบอร์ด 30 วันนับจากวันนี้ แล้วหลุดออกเอง',
+    }),
     defineField({ name: 'lastCheckedAt', title: 'Last Checked', type: 'date' }),
     defineField({
       name: 'firstSeenAt', title: 'First Seen · พบครั้งแรก', type: 'date',

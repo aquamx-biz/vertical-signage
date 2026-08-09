@@ -36,6 +36,7 @@ export interface Profile {
   yieldPct?: number; spreadPct?: number; nListings?: number; nPortals?: number
   postedByOwner?: boolean; dualListed?: boolean; pinToBoard?: boolean; hideFromBoard?: boolean
   status?: string; lastCheckedAt?: string; firstSeenAt?: string
+  dealStage?: string; dealStageAt?: string
   priceHistory?: Array<{ date?: string; price?: number; nListings?: number }>
   __pick?: string
 }
@@ -130,6 +131,7 @@ const NAME_TO_CODE: Record<string, string> = {
 const PROJ = `refCode, intent, projectName, bedType, sqm, floorZone, priceTHB, pricePerSqm,
   vsFloorPct, vsZonePct, dealTier, hotDeal, goodInvest, negotiable, yieldPct, spreadPct,
   nListings, nPortals, postedByOwner, dualListed, pinToBoard, hideFromBoard, status, lastCheckedAt, firstSeenAt,
+  dealStage, dealStageAt,
   priceHistory`
 
 interface SourceDoc { refCode: string; floorActual?: number; listings?: Array<{ portal?: string; url?: string; intent?: string; posterType?: string; posterName?: string }> }
@@ -247,6 +249,7 @@ export function UnitBoardsTool() {
   const [sort, setSort] = useState<{ k: string; d: number }>({ k: '', d: 1 })
   const [saving, setSaving] = useState(false)
   const [colF, setColF] = useState<Record<string, Set<string>>>({})   // Excel filters รายคอลัมน์
+  const [numF, setNumF] = useState<Record<string, { min?: number; max?: number }>>({}) // range filters คอลัมน์ตัวเลข
   const [openF, setOpenF] = useState<string | null>(null)
   // ช่องค้นในแผงตัวกรอง — เก็บไว้ที่นี่เพราะ FilterHead ถูกสร้างใหม่ทุก render
   // ถ้าเก็บ state ไว้ข้างใน มันจะโดนรีเซ็ตทุกครั้งที่ตารางวาดใหม่ · เปิดได้ทีละแผงจึงใช้ตัวเดียวพอ
@@ -258,12 +261,14 @@ export function UnitBoardsTool() {
       try {
         const [pf, src, pj, bd, rd] = await Promise.all([
           client.fetch<Profile[]>(`*[_type == "unitProfile" && status != "expired"]{ ${PROJ} }`),
-          internal.fetch<SourceDoc[]>(`*[_type == "unitSource"]{ refCode, floorActual, "listings": listings[]{ portal, url, intent, posterType, posterName } }`).catch(() => []),
+          internal.fetch<SourceDoc[]>(`*[_type == "unitSource"]{ refCode, floorActual, "listings": coalesce(rentListings[]{ portal, url, "intent": "rent", posterType, posterName }, []) + coalesce(saleListings[]{ portal, url, "intent": "sale", posterType, posterName }, []) }`).catch(() => []),
           client.fetch<Array<{ _id: string; code: string }>>(`*[_type == "project"]{ _id, "code": code.current }`),
           client.fetch<Array<{ code: string; mode: string; policy?: Partial<Policy> }>>(`*[_type == "unitBoard"]{ "code": project->code.current, mode, policy }`),
-          // รอบข้อมูลล่าสุด — ใบ scrapeRound จากวงจรรายสัปดาห์; ยังไม่มีรอบแรกก็ถอยไปใช้ lastCheckedAt
+          // รอบข้อมูลล่าสุด — ใบ scrapeRound จากวงจรรายสัปดาห์; ยังไม่มีรอบแรกถอยไปใช้ dataDate
+          // ของ marketSnapshot (audit ⑤: ห้ามใช้ max lastCheckedAt — โดน spot-verify รายห้อง
+          // ปนวันที่ใหม่ แล้วหัวข้อโชว์วันตรวจแทนวันของข้อมูลทั้งชุด)
           client.fetch<string | null>(`coalesce(*[_type == "scrapeRound"] | order(roundDate desc)[0].roundDate,
-            *[_type == "unitProfile"] | order(lastCheckedAt desc)[0].lastCheckedAt)`).catch(() => null),
+            *[_type == "marketSnapshot"] | order(dataDate desc)[0].dataDate)`).catch(() => null),
         ])
         if (dead) return
         setDataRound(rd ?? null)
@@ -364,6 +369,20 @@ export function UnitBoardsTool() {
   }
   const distinctVals = (fk: string) => valCounts(fk).map(([v]) => v)
   const passF = (u: Unit) => Object.entries(colF).every(([fk, set]) => fvals(fk, u).some(v => set.has(v)))
+  /* ค่าตัวเลขต่อคอลัมน์ — หน่วยเดียวกับที่ตาแสดง (Rent เป็น K, Sale เป็น M) จะได้พิมพ์ตามที่เห็น */
+  const nval = (nk: string, u: Unit): number | undefined => {
+    if (nk === 'nsqm') return u.sqm
+    if (nk === 'nfl') return sources.get(u.refCode)?.floorActual
+    if (nk === 'nrent') return u.rent?.priceTHB != null ? u.rent.priceTHB / 1000 : undefined
+    if (nk === 'nsale') return u.sale?.priceTHB != null ? u.sale.priceTHB / 1e6 : undefined
+    return undefined
+  }
+  const passN = (u: Unit) => Object.entries(numF).every(([nk, r]) => {
+    if (r.min == null && r.max == null) return true
+    const v = nval(nk, u)
+    if (v == null) return false                     // กรอง range อยู่ = ห้องไม่มีค่านั้นไม่ต้องโชว์
+    return (r.min == null || v >= r.min) && (r.max == null || v <= r.max)
+  })
   const toggleF = (fk: string, v: string) => {
     const all = distinctVals(fk)
     const cur = colF[fk] ? new Set(colF[fk]) : new Set(all)
@@ -382,6 +401,7 @@ export function UnitBoardsTool() {
     const s = q.trim().toUpperCase()
     let list = units.filter(u => {
       if (!passF(u)) return false
+      if (!passN(u)) return false
       const agents = agentsOf(u.refCode)
       const ok =
         mode === 'all' ? true :
@@ -438,7 +458,7 @@ export function UnitBoardsTool() {
       })
     }
     return list
-  }, [units, mode, q, sort, sources, onR, onS, colF, agentsOf])
+  }, [units, mode, q, sort, sources, onR, onS, colF, numF, agentsOf])
 
   const stat = useMemo(() => ({
     units: units.length,
@@ -547,6 +567,55 @@ export function UnitBoardsTool() {
     )
   }
 
+
+  /* ── สถานะดีล ─────────────────────────────────────────────────────────────
+     เขียนลง "ใบที่ publish แล้ว" ตรง ๆ ไม่ผ่าน draft ต่างจากปุ่ม Save ด้านบน
+     เพราะสองอย่างนี้คนละชนิดกัน: lineup คือการตัดสินใจว่าจะโชว์อะไร (ควรมีคนรีวิว)
+     ส่วนสถานะดีลคือข้อเท็จจริงที่เพิ่งเกิด (ห้องเช่าไปแล้ว) — ถ้าต้องรอ publish
+     จอจะโชว์ว่าห้องยังว่างทั้งที่ปิดไปแล้ว ซึ่งแย่กว่าการข้ามขั้นรีวิว */
+  const STAGES: Array<[string, string, string]> = [
+    ['', 'ว่าง', '#e5e7eb'],
+    ['viewing', '👀 นัดชม', '#fde68a'],
+    ['talking', '💬 กำลังคุย', '#bfdbfe'],
+    ['closed', '✅ ปิดดีล', '#bbf7d0'],
+  ]
+  const [stageBusy, setStageBusy] = useState<string | null>(null)
+  const setStage = async (p: Profile, m2: 'rent' | 'sale', v: string) => {
+    const id = `unitProfile-${p.refCode}-${m2}`
+    setStageBusy(id)
+    try {
+      const patch = client.patch(id)
+      await (v ? patch.set({ dealStage: v, dealStageAt: new Date().toISOString().slice(0, 10) })
+                : patch.unset(['dealStage', 'dealStageAt'])).commit()
+      setProfiles(ps => ps.map(x => x.refCode === p.refCode && x.intent === m2
+        ? { ...x, dealStage: v || undefined, dealStageAt: v ? new Date().toISOString().slice(0, 10) : undefined } : x))
+      toast.push({ status: 'success', title: `${p.refCode} → ${STAGES.find(t => t[0] === v)?.[1] ?? 'ว่าง'}` })
+    } catch (e: any) {
+      toast.push({ status: 'error', title: 'เปลี่ยนสถานะไม่สำเร็จ', description: e?.message })
+    } finally { setStageBusy(null) }
+  }
+  const stageRow = (p: Profile, m2: 'rent' | 'sale') => {
+    const cur = p.dealStage ?? ''
+    const id = `unitProfile-${p.refCode}-${m2}`
+    return (
+      <Flex key={p.refCode + m2} align="center" gap={2} style={{ padding: '3px 0', opacity: stageBusy === id ? 0.45 : 1 }}>
+        <Text size={1} style={{ width: 92, fontFamily: 'monospace' }}>{p.refCode}</Text>
+        <Text size={1} muted style={{ width: 168, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {BED_LABEL[p.bedType ?? ''] ?? p.bedType} · {p.sqm} ตรม. · {sources.get(p.refCode)?.floorActual != null ? `ชั้น ${sources.get(p.refCode)!.floorActual}` : (p.floorZone ?? '').toUpperCase()}
+        </Text>
+        <Flex gap={1}>
+          {STAGES.map(([v, label, bg]) => (
+            <button key={v || 'none'} onClick={() => setStage(p, m2, v)} disabled={stageBusy === id}
+              style={{ fontSize: 11.5, padding: '3px 9px', borderRadius: 999, cursor: 'pointer',
+                border: cur === v ? '1px solid #0f3460' : '1px solid #d1d5db',
+                background: cur === v ? bg : '#fff', fontWeight: cur === v ? 700 : 400 }}>{label}</button>
+          ))}
+        </Flex>
+        {p.dealStageAt && cur === 'closed' && <Text size={0} muted>ปิดเมื่อ {p.dealStageAt}</Text>}
+      </Flex>
+    )
+  }
+
   const FILTERS: Array<[string, string]> = [
     ['all', 'All'], ['rent', 'Has rent'], ['sale', 'Has sale'], ['dual', 'Dual'],
     ['brent', 'On board · rent'], ['bsale', 'On board · sale'], ['fx', 'Filtered out'],
@@ -572,7 +641,8 @@ export function UnitBoardsTool() {
     const t = fq.trim().toUpperCase()
     const rows = valCounts(fk).filter(([v]) => !t || v.toUpperCase().includes(t))
     return (
-      <th style={style ?? th} title={title} onClick={onSort}>
+      /* overflow:visible ตอนแผงเปิด — คอลัมน์ freeze มี overflow:hidden ซึ่งจะ clip แผงกรองจนเหลือแต่ช่องพิมพ์ */
+      <th style={{ ...(style ?? th), overflow: 'visible', zIndex: 40 }} title={title} onClick={onSort}>
         {label}{sk ? ' ↕' : ''}{caret}
         <div onClick={e => e.stopPropagation()} style={{ position: 'absolute', top: '100%', left: 0, background: '#fff', color: '#14213A', border: '1px solid #d1d5db', borderRadius: 8, padding: 8, zIndex: 30, minWidth: 240, boxShadow: '0 10px 24px rgba(0,0,0,0.18)', textTransform: 'none', fontWeight: 400, cursor: 'default' }}>
           <input value={fq} onChange={e => setFq(e.currentTarget.value)} placeholder="พิมพ์กรองรายชื่อ..." autoFocus
@@ -590,6 +660,47 @@ export function UnitBoardsTool() {
               </label>
             ))}
             {!rows.length && <div style={{ fontSize: 12, color: '#9aa3b2', padding: '4px 0' }}>ไม่พบชื่อที่ตรง</div>}
+          </div>
+        </div>
+      </th>
+    )
+  }
+
+  /* หัวคอลัมน์ตัวเลข — ประกาศนอก render ไม่ได้เพราะปิดทับ state หลายตัว แต่ถ้าประกาศในนี้
+     ตรง ๆ React จะเห็นเป็นคนละ component ทุก render → input โดน remount → โฟกัสหลุดทุกตัวอักษร
+     ทางออก: ใช้ useCallback-ref pattern ไม่ได้กับ component — จึงประกาศเป็นฟังก์ชันแล้ว "เรียก"
+     เป็น expression {NumHead({...})} แทนการใช้เป็น <NumHead/> เพื่อไม่สร้าง component boundary */
+  const NumHead = ({ label, nk, sk, style, title }: { label: string; nk: string; sk?: string; style?: React.CSSProperties; title?: string }) => {
+    const r = numF[nk]
+    const active = r != null && (r.min != null || r.max != null)
+    const caret = (
+      <span onClick={e => { e.stopPropagation(); setOpenF(openF === nk ? null : nk) }}
+        style={{ cursor: 'pointer', color: active ? '#ffd28a' : undefined, marginLeft: 4 }}>{active ? '▼' : '▾'}</span>
+    )
+    const onSort = () => sk && setSort(s => ({ k: sk, d: s.k === sk ? -s.d : 1 }))
+    if (openF !== nk) return (
+      <th style={style ?? th} title={title} onClick={onSort}>{label}{sk ? ' ↕' : ''}{caret}</th>
+    )
+    const setR = (part: 'min' | 'max', raw: string) => {
+      const v = raw.trim() === '' ? undefined : Number(raw)
+      const cur = { ...(numF[nk] ?? {}) , [part]: (v != null && Number.isFinite(v)) ? v : undefined }
+      const n = { ...numF }
+      if (cur.min == null && cur.max == null) delete n[nk]; else n[nk] = cur
+      setNumF(n)
+    }
+    const inpS: React.CSSProperties = { width: 86, boxSizing: 'border-box', fontSize: 12.5, padding: '4px 6px', border: '1px solid #d1d5db', borderRadius: 5 }
+    return (
+      <th style={{ ...(style ?? th), overflow: 'visible', zIndex: 40 }} title={title} onClick={onSort}>
+        {label}{sk ? ' ↕' : ''}{caret}
+        <div onClick={e => e.stopPropagation()} style={{ position: 'absolute', top: '100%', left: 0, background: '#fff', color: '#14213A', border: '1px solid #d1d5db', borderRadius: 8, padding: 10, zIndex: 30, minWidth: 210, boxShadow: '0 10px 24px rgba(0,0,0,0.18)', textTransform: 'none', fontWeight: 400, cursor: 'default' }}>
+          <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+            <input type="number" placeholder="ต่ำสุด" autoFocus value={r?.min ?? ''} onChange={e => setR('min', e.currentTarget.value)} style={inpS} />
+            <span style={{ color: '#9aa3b2' }}>–</span>
+            <input type="number" placeholder="สูงสุด" value={r?.max ?? ''} onChange={e => setR('max', e.currentTarget.value)} style={inpS} />
+          </div>
+          <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
+            <span style={linkS} onClick={() => { const n = { ...numF }; delete n[nk]; setNumF(n) }}>Clear</span>
+            <span style={{ fontSize: 11, color: '#9aa3b2' }}>เว้นว่าง = ไม่จำกัดด้านนั้น · ห้องที่ไม่มีค่านี้จะถูกซ่อน</span>
           </div>
         </div>
       </th>
@@ -661,6 +772,20 @@ export function UnitBoardsTool() {
           </Stack>
         </Card>
 
+        {/* สถานะดีลของเฉพาะห้องที่ถูกเลือกขึ้นบอร์ด — ไม่ใช่ทั้ง 234 ห้อง */}
+        <Card padding={3} radius={2} border tone="transparent">
+          <Stack space={3}>
+            <Text size={1} weight="bold">สถานะดีล · เฉพาะห้องที่จะขึ้นจอ ({simR.rows.length + simS.rows.length} ห้อง)</Text>
+            {([['บอร์ดเช่า', 'rent', simR], ['บอร์ดขาย', 'sale', simS]] as const).map(([label, m2, sim]) => sim.rows.length > 0 && (
+              <Stack key={m2} space={1}>
+                <Text size={1} muted weight="semibold">{label}</Text>
+                {sim.rows.map(p => stageRow(p, m2))}
+              </Stack>
+            ))}
+            <Text size={0} muted>กดแล้วมีผลทันที ไม่ต้อง publish · ห้องที่ปิดดีลจะโชว์บนจอ 30 วันแล้วหลุดเอง</Text>
+          </Stack>
+        </Card>
+
         <Flex gap={2} wrap="wrap" align="center">
           {FILTERS.map(([k, l]) => (
             <Button key={k} text={l} mode={mode === k ? 'default' : 'ghost'} tone={mode === k ? 'primary' : 'default'} fontSize={1} padding={2}
@@ -678,16 +803,16 @@ export function UnitBoardsTool() {
               <th style={thFz(0)} title="ลำดับตามการเรียง/กรองปัจจุบัน">#</th>
               <th style={thFz(1)} title="รหัสห้องอ้างอิงภายใน" onClick={() => setSort(s => ({ k: 'ref', d: s.k === 'ref' ? -s.d : 1 }))}>Ref ↕</th>
               <FilterHead label="Type" fk="type" sk="type" style={thFz(2)} title="ประเภทห้อง — กดชื่อคอลัมน์เพื่อเรียง กด ▾ กรองได้" />
-              <th style={thFz(3)} title="ขนาดห้อง (ตร.ม.)" onClick={() => setSort(s => ({ k: 'sqm', d: s.k === 'sqm' ? -s.d : 1 }))}>SQM ↕</th>
+              {NumHead({ label: 'SQM', nk: 'nsqm', sk: 'sqm', style: thFz(3), title: 'ขนาดห้อง (ตร.ม.) — กด ▾ กรองช่วงต่ำสุด-สูงสุดได้' })}
               <FilterHead label="Zone" fk="zone" sk="zone" style={thFz(4)} title="โซนชั้น แบ่งจากช่วงชั้นของตึก — กดชื่อคอลัมน์เพื่อเรียง กด ▾ กรองได้" />
-              <th style={thFz(5)} title="ชั้นจริง (internal dataset)" onClick={() => setSort(s => ({ k: 'fl', d: s.k === 'fl' ? -s.d : 1 }))}>Floor ↕</th>
-              {H('Rent (K)', 'rent', 'ค่าเช่า/เดือน ต่ำสุดที่พบข้ามพอร์ทัล')}
+              {NumHead({ label: 'Floor', nk: 'nfl', sk: 'fl', style: thFz(5), title: 'ชั้นจริง (internal dataset) — กด ▾ กรองช่วงชั้นได้' })}
+              {NumHead({ label: 'Rent (K)', nk: 'nrent', sk: 'rent', title: 'ค่าเช่า/เดือน ต่ำสุดที่พบข้ามพอร์ทัล — กด ▾ กรองช่วงได้ (หน่วย K เช่น 20 = 20,000)' })}
               {H('฿/SQM', 'rpsqm', 'ค่าเช่าต่อตร.ม./เดือน')}
               {H('vs Floor', 'vsr', 'เทียบค่าเฉลี่ย ฿/ตรม. ของชั้นเดียวกัน — ติดลบ = ถูกกว่าชั้น')}
               {H('Rent Deal', 'rdeal', 'ธงดีลฝั่งเช่า (ชี้ที่ธงดูเหตุผล+ตัวเลข) — เรียงจากดีลแรงสุด: SUPER → BEST → GOOD → ไม่มีธง')}
               {H('Select R', undefined, 'เลือกมือขึ้นบอร์ดเช่า — นับรวมใน quota')}
               {H('Hot', 'hotr', 'HOT = agent ≥2 รายแข่งปล่อยห้องนี้')}
-              {H('Sale (M)', 'sale', 'ราคาขายต่ำสุดที่พบข้ามพอร์ทัล')}
+              {NumHead({ label: 'Sale (M)', nk: 'nsale', sk: 'sale', title: 'ราคาขายต่ำสุดที่พบข้ามพอร์ทัล — กด ▾ กรองช่วงได้ (หน่วย M เช่น 8.5 = 8,500,000)' })}
               {H('฿/SQM', 'spsqm', 'ราคาขายต่อตร.ม.')}
               {H('vs Floor', 'vss', 'เทียบค่าเฉลี่ย ฿/ตรม. ของชั้นเดียวกัน — ติดลบ = ถูกกว่าชั้น')}
               {H('Sale Deal', 'sdeal', 'ธงดีลฝั่งขาย (ชี้ที่ธงดูเหตุผล+ตัวเลข) — เรียงจากดีลแรงสุด: SUPER → BEST → GOOD → ไม่มีธง')}
@@ -715,7 +840,19 @@ export function UnitBoardsTool() {
                 return (
                   <tr key={u.refCode} style={{ background: onBoard ? '#f4fbf6' : undefined }}>
                     <td style={{ ...tdFz(0, onBoard ? '#f4fbf6' : '#fff'), textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{i + 1}</td>
-                    <td style={{ ...tdFz(1, onBoard ? '#f4fbf6' : '#fff'), fontWeight: 700 }}>{u.refCode}</td>
+                    <td style={{ ...tdFz(1, onBoard ? '#f4fbf6' : '#fff'), fontWeight: 700 }}>
+                      {/* Ref → เปิด unitProfile ใน Structure (เช่าก่อน ถ้ามีแต่ขายก็ขาย) · src → unitSource ฝั่ง internal (จด contact log) */}
+                      <a href={`/studio/intent/edit/id=unitProfile-${u.refCode}-${u.rent ? 'rent' : 'sale'};type=unitProfile`}
+                        target="_blank" rel="noreferrer" title="เปิดแก้ unitProfile (status/pin/โน้ต)"
+                        style={{ color: 'inherit', textDecoration: 'underline', textDecorationStyle: 'dotted' }}>{u.refCode}</a>
+                      {u.rent && u.sale && (
+                        <a href={`/studio/intent/edit/id=unitProfile-${u.refCode}-sale;type=unitProfile`} target="_blank" rel="noreferrer"
+                          title="เปิดแก้ profile ฝั่งขาย" style={{ marginLeft: 4, fontSize: 10, color: '#0f766e' }}>S</a>
+                      )}
+                      <a href={`/internal/intent/edit/id=unitSource-${u.refCode};type=unitSource`} target="_blank" rel="noreferrer"
+                        title="เปิด unitSource (internal) — ลิงก์ต้นทาง + จด Contact Log หลังโทร"
+                        style={{ marginLeft: 4, fontSize: 10, color: '#92400e' }}>src</a>
+                    </td>
                     <td style={tdFz(2, onBoard ? '#f4fbf6' : '#fff')}>{BED_LABEL[u.bed ?? ''] ?? u.bed ?? '—'}</td>
                     <td style={{ ...tdFz(3, onBoard ? '#f4fbf6' : '#fff'), textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{u.sqm ?? '—'}</td>
                     <td style={tdFz(4, onBoard ? '#f4fbf6' : '#fff')}>{u.zone ?? '—'}</td>
@@ -761,7 +898,13 @@ export function UnitBoardsTool() {
                       {rzS != null && <><Badge tone="positive" fontSize={0}>บอร์ดขาย</Badge><span style={{ fontSize: 10, color: '#6b7280' }}> {rzS}</span></>}
                     </td>
                     <td style={{ ...td, whiteSpace: 'normal', maxWidth: 200, fontSize: 12 }}>
-                      {links.length ? links.map((l, j) => <a key={j} href={l.url} target="_blank" rel="noreferrer" style={{ marginRight: 6 }}>{l.portal}</a>) : '—'}
+                      {links.length ? links.map((l, j) => (
+                        <a key={j} href={l.url} target="_blank" rel="noreferrer"
+                          title={`${l.intent ?? ''} · ${l.posterType === 'owner' ? 'เจ้าของโพสต์เอง' : (l.posterName || 'agent')}`}
+                          style={{ marginRight: 6, ...(l.posterType === 'owner' ? { color: '#166534', fontWeight: 700 } : {}) }}>
+                          {l.posterType === 'owner' ? '🏠' : ''}{l.portal}
+                        </a>
+                      )) : '—'}
                     </td>
                   </tr>
                 )
