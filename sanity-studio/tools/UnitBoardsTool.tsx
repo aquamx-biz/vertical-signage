@@ -598,6 +598,23 @@ export function UnitBoardsTool() {
       toast.push({ status: 'error', title: 'เปลี่ยนสถานะไม่สำเร็จ', description: e?.message })
     } finally { setStageBusy(null) }
   }
+  /* เอาห้องออกจากบอร์ด — ใช้ hideFromBoard ที่ engine เคารพอยู่แล้ว (pool filter)
+     พอเอาออก ตัวคัดจะดึงห้องอันดับถัดไปขึ้นมาแทนทันที บอร์ดจึงยังเต็มโควตา
+     เขียนลงใบ published ตรง ๆ เหตุผลเดียวกับปุ่มสถานะดีล — เป็นคำสั่งของทีม ไม่ใช่ร่างเนื้อหา */
+  const setHidden = async (p: Profile, hide: boolean) => {
+    const ids = ['rent', 'sale'].map(m => `unitProfile-${p.refCode}-${m}`)
+    setStageBusy(p.refCode)
+    try {
+      await Promise.all(ids.map(id => client.patch(id)
+        .set({ hideFromBoard: hide }).commit().catch(() => null)))   // บางห้องมีแค่ฝั่งเดียว
+      setProfiles(ps => ps.map(x => x.refCode === p.refCode ? { ...x, hideFromBoard: hide } : x))
+      toast.push({ status: 'success', title: hide ? `${p.refCode} เอาออกจากบอร์ดแล้ว` : `${p.refCode} กลับขึ้นบอร์ดแล้ว` })
+    } catch (e: any) {
+      toast.push({ status: 'error', title: 'ไม่สำเร็จ', description: e?.message })
+    } finally { setStageBusy(null) }
+  }
+  const hiddenHere = pool.filter(p => p.hideFromBoard)
+
   const stageRow = (p: Profile, m2: 'rent' | 'sale') => {
     const cur = p.dealStage ?? ''
     const id = `unitProfile-${p.refCode}-${m2}`
@@ -617,6 +634,9 @@ export function UnitBoardsTool() {
           ))}
         </Flex>
         {p.dealStageAt && cur === 'closed' && <Text size={0} muted>ปิดเมื่อ {p.dealStageAt}</Text>}
+        <button onClick={() => setHidden(p, true)} disabled={stageBusy === p.refCode} title="เอาห้องนี้ออกจากบอร์ด — ตัวคัดจะดึงห้องถัดไปขึ้นมาแทน"
+          style={{ marginLeft: 'auto', fontSize: 11.5, padding: '3px 10px', borderRadius: 999,
+            border: '1px solid #e5b4b4', background: '#fff', color: '#b42318', cursor: 'pointer' }}>✕ เอาออก</button>
       </Flex>
     )
   }
@@ -804,7 +824,23 @@ export function UnitBoardsTool() {
                 })}
               </Stack>
             ))}
-            <Text size={0} muted>กดแล้วมีผลทันที ไม่ต้อง publish · ห้องที่ปิดดีลจะโชว์บนจอ 30 วันแล้วหลุดเอง</Text>
+            {hiddenHere.length > 0 && (
+              <Stack space={1} style={{ paddingTop: 6, borderTop: '1px solid #e6e9f1' }}>
+                <Text size={1} muted weight="semibold">เอาออกจากบอร์ดไว้ ({hiddenHere.length} ห้อง)</Text>
+                {hiddenHere.map(p => (
+                  <Flex key={p.refCode} align="center" gap={2}>
+                    <Text size={1} style={{ width: 92, fontFamily: 'monospace' }}>{p.refCode}</Text>
+                    <Text size={1} muted style={{ minWidth: 210 }}>
+                      {BED_LABEL[p.bedType ?? ''] ?? p.bedType} · {p.sqm} ตรม.
+                    </Text>
+                    <button onClick={() => setHidden(p, false)} disabled={stageBusy === p.refCode}
+                      style={{ fontSize: 11.5, padding: '3px 10px', borderRadius: 999,
+                        border: '1px solid #0f3460', background: '#fff', color: '#0f3460', cursor: 'pointer' }}>↩ เอากลับขึ้นบอร์ด</button>
+                  </Flex>
+                ))}
+              </Stack>
+            )}
+            <Text size={0} muted>กดแล้วมีผลทันที ไม่ต้อง publish · เอาห้องออกแล้วตัวคัดจะดึงห้องถัดไปขึ้นมาแทน · ห้องที่ปิดดีลโชว์บนจอ 30 วันแล้วหลุดเอง</Text>
           </Stack>
         </Card>
 
