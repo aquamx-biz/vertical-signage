@@ -18,8 +18,13 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useClient } from 'sanity'
 import { Badge, Box, Button, Card, Checkbox, Flex, Inline, Spinner, Stack, Text, TextInput, useToast } from '@sanity/ui'
 
-// ── engine mirror — ต้อง sync กับ ../../board-engine.mjs (Studio bundle
-//    import ข้ามรากโปรเจกต์ไม่ได้ จึงคัดลอกแกน logic มาโดยตรง) ──────────────
+/* สูตรค่ากลางของตลาด — import ไฟล์จริงที่ build.mjs ใช้ ไม่ก๊อปมาวาง
+   ตัวเลข "ควรเป็น" ในแผงสถานะดีล ต้องเป็นตัวเดียวกับ "คุ้มกว่า X%" บนจอเป๊ะ ๆ
+   ถ้าแยกเป็นสองสำเนาแล้ววันหนึ่งเลื่อนออกจากกัน เครื่องมือจะบอกทีมคนละเลขกับที่
+   ลูกค้าเห็น โดยไม่มีใครรู้ว่าฝั่งไหนถูก — ชนิดข้อมูลอยู่ใน ../../market-model.d.mts */
+import { marketModel, expectedPsqm, valueVsExpected } from '../../market-model.mjs'
+
+// ── engine mirror — ต้อง sync กับ ../../board-engine.mjs ────────────────────
 const BED_ORDER = ['studio', '1bed', '2bed', '3bed', '4bed']
 const BED_LABEL: Record<string, string> = { studio: 'STUDIO', '1bed': '1BED', '2bed': '2BED', '3bed': '3BED', '4bed': '4BED+' }
 /* 4bed เริ่มที่ 100 — ห้อง combine ที่ทุบรวมสองยูนิตอยู่ต่ำกว่า 120 จริง (ดู board-engine.mjs) */
@@ -295,6 +300,34 @@ export function UnitBoardsTool() {
   const projectNames = useMemo(() => [...new Set(profiles.map(p => p.projectName))].sort(), [profiles])
   const pool = useMemo(() => profiles.filter(p => p.projectName === proj), [profiles, proj])
 
+  /* ค่าคงที่ของตลาดต่อตึก (floor premium · yield · ราคาอ้างอิง) — ต้องคิดจากทุกตึก
+     พร้อมกัน เพราะตึกที่ข้อมูลไม่พอจะยืมค่ากลางของตึกอื่นไปใช้ · ตัวกรอง status
+     ต้องตรงกับ build.mjs:133 เป๊ะ ไม่งั้นฐานคำนวณคนละชุดกับที่ออกจอ */
+  const MARKET = useMemo(() => marketModel(
+    profiles
+      .filter(p => ['candidate', 'verified', 'published'].includes(p.status ?? '') && p.pricePerSqm != null)
+      .map(p => ({
+        building: p.projectName, intent: p.intent, psqm: p.pricePerSqm as number,
+        floor: sources.get(p.refCode)?.floorActual ?? null,
+      })),
+  ), [profiles, sources])
+
+  /* ราคาที่ห้องนี้ "ควรเป็น" ตามชั้นของมัน — mirror ของ valueOf() ใน build.mjs:514
+     (ตัวที่ทำให้จอขึ้นว่า คุ้มกว่า X%) ปัดเศษเหมือนกันเพื่อให้ทีมจับคู่กับจอได้ตรง */
+  const expectedOf = useCallback((p: Profile, m2: 'rent' | 'sale') => {
+    const mm = MARKET.byBuilding[p.projectName ?? '']
+    if (!mm || p.pricePerSqm == null) return null
+    const exp = expectedPsqm(
+      m2 === 'rent' ? mm.rentRef : mm.saleRef,
+      m2 === 'rent' ? mm.fpRentOwn : mm.fpSale,
+      m2 === 'rent' ? mm.refFloorRent : mm.refFloorSale,
+      sources.get(p.refCode)?.floorActual ?? null,
+    )
+    if (exp == null) return null
+    const v = valueVsExpected(p.pricePerSqm, exp)
+    return { exp, pct: v == null ? null : Math.round(v * 100), borrowed: mm.usedGlobalFp }
+  }, [MARKET, sources])
+
   // เปลี่ยนโครงการ → รีเซ็ต select + โหลด policy ที่ตั้งไว้ใน unitBoard (ถ้ามี)
   useEffect(() => {
     setSelR(new Set()); setSelS(new Set()); setMode('all'); setQ('')
@@ -404,6 +437,13 @@ export function UnitBoardsTool() {
     setColF(n)
   }
 
+  /* กดกรองฝั่งไหน ตารางต้องพูดเรื่องฝั่งนั้น — ช่อง Sources กับ Status เคยเทของ
+     ทั้งสองฝั่งลงมาเสมอ ทำให้กด "Has rent" แล้วยังเห็นลิงก์ประกาศขายปนอยู่ โดยที่
+     ชื่อพอร์ทัลไม่ได้บอกว่าอันไหนเช่าอันไหนขาย (คอลัมน์ราคามีหัวกำกับอยู่แล้วจึงไม่กำกวม) */
+  const intentView: 'rent' | 'sale' | null =
+    mode === 'rent' || mode === 'brent' ? 'rent' :
+    mode === 'sale' || mode === 'bsale' ? 'sale' : null
+
   const shown = useMemo(() => {
     const s = q.trim().toUpperCase()
     let list = units.filter(u => {
@@ -431,8 +471,11 @@ export function UnitBoardsTool() {
           case 'rpsqm': return u.rent?.pricePerSqm ?? -1
           case 'spsqm': return u.sale?.pricePerSqm ?? -1
           case 'yield': return u.rent?.yieldPct ?? u.sale?.yieldPct ?? -1
-          case 'vsr': return u.rent?.vsFloorPct ?? 9999
-          case 'vss': return u.sale?.vsFloorPct ?? 9999
+          /* ห้องที่คำนวณไม่ได้ (ไม่รู้ชั้น) ไปท้ายแถวเสมอ ไม่ว่าจะเรียงขึ้นหรือลง */
+          case 'expr': return u.rent ? (expectedOf(u.rent, 'rent')?.exp ?? 9e9) : 9e9
+          case 'exps': return u.sale ? (expectedOf(u.sale, 'sale')?.exp ?? 9e9) : 9e9
+          case 'vexr': return u.rent ? (expectedOf(u.rent, 'rent')?.pct ?? 9999) : 9999
+          case 'vexs': return u.sale ? (expectedOf(u.sale, 'sale')?.pct ?? 9999) : 9999
           case 'rdeal': return dealScore(u.rent)
           case 'sdeal': return dealScore(u.sale)
           case 'spread': return Math.max(u.rent?.spreadPct ?? -1, u.sale?.spreadPct ?? -1)
@@ -465,7 +508,7 @@ export function UnitBoardsTool() {
       })
     }
     return list
-  }, [units, mode, q, sort, sources, onR, onS, colF, numF, agentsOf])
+  }, [units, mode, q, sort, sources, onR, onS, colF, numF, agentsOf, expectedOf])
 
   const stat = useMemo(() => ({
     units: units.length,
@@ -617,13 +660,27 @@ export function UnitBoardsTool() {
   }
   const hiddenHere = pool.filter(p => p.hideFromBoard)
 
+  /* สองช่องคู่กัน: ราคาที่ควรเป็นของชั้นนี้ + ส่วนต่างจากของจริง — ใช้ทั้งฝั่งเช่าและขาย
+     เขียวคือถูกกว่าที่ควร (ดีลดี) เพราะเป็นเลขตัวเดียวกับที่ขึ้นจอว่า "คุ้มกว่า X%" */
+  const ExpCells = ({ p, m2 }: { p?: Profile; m2: 'rent' | 'sale' }) => {
+    const e = p ? expectedOf(p, m2) : null
+    return <>
+      <td style={num} title={e?.borrowed ? 'ตึกนี้ข้อมูลไม่พอ ใช้ floor premium กลางของทุกตึกแทน' : undefined}>
+        {e ? Math.round(e.exp).toLocaleString('en-US') + (e.borrowed ? '*' : '') : '—'}
+      </td>
+      <td style={{ ...num, color: e?.pct != null && e.pct < 0 ? '#166534' : '#9aa3b2', fontWeight: e?.pct != null && e.pct < 0 ? 700 : 400 }}>
+        {e?.pct != null ? `${e.pct > 0 ? '+' : ''}${e.pct}%` : '—'}
+      </td>
+    </>
+  }
+
   const stageRow = (p: Profile, m2: 'rent' | 'sale') => {
     const cur = p.dealStage ?? ''
     const id = `unitProfile-${p.refCode}-${m2}`
     return (
       <Flex key={p.refCode + m2} align="center" gap={2} style={{ padding: '3px 0', opacity: stageBusy === id ? 0.45 : 1 }}>
         <Text size={1} style={{ width: 92, fontFamily: 'monospace' }}>{p.refCode}</Text>
-        <Text size={1} muted style={{ minWidth: 300, whiteSpace: 'nowrap' }}>
+        <Text size={1} muted style={{ minWidth: 430, whiteSpace: 'nowrap' }}>
           {p.sqm} ตรม. · {sources.get(p.refCode)?.floorActual != null ? `ชั้น ${sources.get(p.refCode)!.floorActual}` : (ZONE_TH[p.floorZone ?? ''] ?? '')}
           {' · '}{(p.priceTHB ?? 0) >= 1e6 ? `${(p.priceTHB! / 1e6).toFixed(1)}M` : `${Math.round((p.priceTHB ?? 0) / 1e3)}K`}
           {/* ราคาต่อ ตร.ม. — ตัวเดียวที่เทียบห้องคนละขนาดได้ตรง ๆ · โชว์เฉพาะในเครื่องมือ
@@ -631,9 +688,25 @@ export function UnitBoardsTool() {
           {(() => {
             const ps = p.pricePerSqm ?? (p.priceTHB && p.sqm ? Math.round(p.priceTHB / p.sqm) : null)
             if (ps == null) return null
-            return <span style={{ color: '#0f3460', fontWeight: 600 }}>
-              {'  '}{ps >= 1000 ? `${Math.round(ps / 1000)}K` : ps.toLocaleString()} ฿/ตร.ม.{m2 === 'rent' ? '/ด.' : ''}
-            </span>
+            const fmtPs = (n: number) => n >= 1000 ? `${Math.round(n / 1000)}K` : Math.round(n).toLocaleString()
+            /* "ควรเป็น" = ราคากลางของตึกนี้ ปรับตามชั้นของห้องแล้ว — เลขเดียวกับที่
+               ทำให้จอขึ้นว่า "คุ้มกว่า X%" ต่างกันแค่จอบอกผลลัพธ์ ที่นี่บอกที่มา
+               ติดลบ = ถูกกว่าที่ควรเป็น = ดีลดี จึงเป็นสีเขียว */
+            const e = expectedOf(p, m2)
+            return <>
+              <span style={{ color: '#0f3460', fontWeight: 600 }}>
+                {'  '}{fmtPs(ps)} ฿/ตร.ม.{m2 === 'rent' ? '/ด.' : ''}
+              </span>
+              {e && e.pct != null && (
+                <span title={`ราคากลางของตึกปรับตามชั้นแล้ว = ${Math.round(e.exp).toLocaleString()} ฿/ตร.ม.`
+                  + (e.borrowed ? ' · ตึกนี้ข้อมูลไม่พอ ใช้ floor premium กลางของทุกตึกแทน' : '')}>
+                  {' · ควรเป็น '}{fmtPs(e.exp)}{e.borrowed ? '*' : ''}
+                  <b style={{ color: e.pct < 0 ? '#067647' : '#b42318', marginLeft: 4 }}>
+                    {e.pct < 0 ? `คุ้มกว่า ${-e.pct}%` : `แพงกว่า ${e.pct}%`}
+                  </b>
+                </span>
+              )}
+            </>
           })()}
         </Text>
         <Flex gap={1}>
@@ -894,13 +967,15 @@ export function UnitBoardsTool() {
               {NumHead({ label: 'Floor', nk: 'nfl', sk: 'fl', style: thFz(5), title: 'ชั้นจริง (internal dataset) — กด ▾ กรองช่วงชั้นได้' })}
               {NumHead({ label: 'Rent (K)', nk: 'nrent', sk: 'rent', title: 'ค่าเช่า/เดือน ต่ำสุดที่พบข้ามพอร์ทัล — กด ▾ กรองช่วงได้ (หน่วย K เช่น 20 = 20,000)' })}
               {H('฿/SQM', 'rpsqm', 'ค่าเช่าต่อตร.ม./เดือน')}
-              {H('vs Floor', 'vsr', 'เทียบค่าเฉลี่ย ฿/ตรม. ของชั้นเดียวกัน — ติดลบ = ถูกกว่าชั้น')}
+              {H('ควรเป็น', 'expr', 'ค่าเช่า/ตร.ม. ที่ควรเป็นสำหรับชั้นนี้ = ค่ากลางของตึก + floor premium × ชั้น')}
+              {H('vs ควร', 'vexr', 'จริงเทียบกับที่ควรเป็น — ติดลบ = คุ้ม · เลขตัวนี้คือตัวที่ขึ้นจอว่า "คุ้มกว่า X%"')}
               {H('Rent Deal', 'rdeal', 'ธงดีลฝั่งเช่า (ชี้ที่ธงดูเหตุผล+ตัวเลข) — เรียงจากดีลแรงสุด: SUPER → BEST → GOOD → ไม่มีธง')}
               {H('Select R', undefined, 'เลือกมือขึ้นบอร์ดเช่า — นับรวมใน quota')}
               {H('Hot', 'hotr', 'HOT = agent ≥2 รายแข่งปล่อยห้องนี้')}
               {NumHead({ label: 'Sale (M)', nk: 'nsale', sk: 'sale', title: 'ราคาขายต่ำสุดที่พบข้ามพอร์ทัล — กด ▾ กรองช่วงได้ (หน่วย M เช่น 8.5 = 8,500,000)' })}
               {H('฿/SQM', 'spsqm', 'ราคาขายต่อตร.ม.')}
-              {H('vs Floor', 'vss', 'เทียบค่าเฉลี่ย ฿/ตรม. ของชั้นเดียวกัน — ติดลบ = ถูกกว่าชั้น')}
+              {H('ควรเป็น', 'exps', 'ราคาขาย/ตร.ม. ที่ควรเป็นสำหรับชั้นนี้ = ค่ากลางของตึก + floor premium × ชั้น')}
+              {H('vs ควร', 'vexs', 'จริงเทียบกับที่ควรเป็น — ติดลบ = คุ้ม · เลขตัวนี้คือตัวที่ขึ้นจอว่า "คุ้มกว่า X%"')}
               {H('Sale Deal', 'sdeal', 'ธงดีลฝั่งขาย (ชี้ที่ธงดูเหตุผล+ตัวเลข) — เรียงจากดีลแรงสุด: SUPER → BEST → GOOD → ไม่มีธง')}
               {H('Select S', undefined, 'เลือกมือขึ้นบอร์ดขาย — นับรวมใน quota')}
               {H('Hot', 'hots', 'HOT = agent ≥2 รายแข่งขายห้องนี้')}
@@ -923,6 +998,7 @@ export function UnitBoardsTool() {
                 const onBoard = rzR != null || rzS != null
                 const y = u.rent?.yieldPct ?? u.sale?.yieldPct
                 const links = [...new Map((src?.listings ?? []).filter(l => l.url).map(l => [l.url!, l])).values()]
+                  .filter(l => !intentView || l.intent === intentView)
                 return (
                   <tr key={u.refCode} style={{ background: onBoard ? '#f4fbf6' : undefined }}>
                     <td style={{ ...tdFz(0, onBoard ? '#f4fbf6' : '#fff'), textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{i + 1}</td>
@@ -945,8 +1021,7 @@ export function UnitBoardsTool() {
                     <td style={{ ...tdFz(5, onBoard ? '#f4fbf6' : '#fff'), textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{src?.floorActual ?? '—'}</td>
                     <td style={num}>{fmtK(u.rent?.priceTHB)}<PriceMove p={u.rent} /></td>
                     <td style={num}>{u.rent?.pricePerSqm != null ? u.rent.pricePerSqm.toLocaleString('en-US') : '—'}</td>
-                    <td style={{ ...num, color: (u.rent?.vsFloorPct ?? 0) < 0 ? '#166534' : '#9aa3b2', fontWeight: (u.rent?.vsFloorPct ?? 0) < 0 ? 700 : 400 }}>
-                      {u.rent?.vsFloorPct != null ? `${u.rent.vsFloorPct > 0 ? '+' : ''}${u.rent.vsFloorPct}%` : '—'}</td>
+                    <ExpCells p={u.rent} m2="rent" />
                     <td style={td}><DealChip p={u.rent} /></td>
                     <td style={td}>{u.rent && <Checkbox checked={selR.has(u.refCode)} onChange={() => {
                       const s = new Set(selR); s.has(u.refCode) ? s.delete(u.refCode) : s.add(u.refCode); setSelR(s)
@@ -955,8 +1030,7 @@ export function UnitBoardsTool() {
                       ? <span style={chipStyle('#ffedd5', '#c2410c')} title={`มี ${u.rent.nListings ?? 0} ประกาศแข่งปล่อยห้องนี้`}>HOT</span> : ''}</td>
                     <td style={num}>{fmtM(u.sale?.priceTHB)}<PriceMove p={u.sale} /></td>
                     <td style={num}>{u.sale?.pricePerSqm != null ? u.sale.pricePerSqm.toLocaleString('en-US') : '—'}</td>
-                    <td style={{ ...num, color: (u.sale?.vsFloorPct ?? 0) < 0 ? '#166534' : '#9aa3b2', fontWeight: (u.sale?.vsFloorPct ?? 0) < 0 ? 700 : 400 }}>
-                      {u.sale?.vsFloorPct != null ? `${u.sale.vsFloorPct > 0 ? '+' : ''}${u.sale.vsFloorPct}%` : '—'}</td>
+                    <ExpCells p={u.sale} m2="sale" />
                     <td style={td}><DealChip p={u.sale} /></td>
                     <td style={td}>{u.sale && <Checkbox checked={selS.has(u.refCode)} onChange={() => {
                       const s = new Set(selS); s.has(u.refCode) ? s.delete(u.refCode) : s.add(u.refCode); setSelS(s)
@@ -977,7 +1051,8 @@ export function UnitBoardsTool() {
                       {!owner && agents.length === 0 && '—'}
                     </td>
                     <td style={{ ...td, fontSize: 11.5 }}>
-                      {u.rent && <div>เช่า·{u.rent.status}</div>}{u.sale && <div>ขาย·{u.sale.status}</div>}
+                      {u.rent && intentView !== 'sale' && <div>เช่า·{u.rent.status}</div>}
+                      {u.sale && intentView !== 'rent' && <div>ขาย·{u.sale.status}</div>}
                     </td>
                     <td style={td}>
                       {rzR != null && <><Badge tone="positive" fontSize={0}>บอร์ดเช่า</Badge><span style={{ fontSize: 10, color: '#6b7280', marginRight: 6 }}> {rzR}</span></>}
@@ -986,9 +1061,13 @@ export function UnitBoardsTool() {
                     <td style={{ ...td, whiteSpace: 'normal', maxWidth: 200, fontSize: 12 }}>
                       {links.length ? links.map((l, j) => (
                         <a key={j} href={l.url} target="_blank" rel="noreferrer"
-                          title={`${l.intent ?? ''} · ${l.posterType === 'owner' ? 'เจ้าของโพสต์เอง' : (l.posterName || 'agent')}`}
+                          title={`${l.intent === 'sale' ? 'ประกาศขาย' : 'ประกาศเช่า'} · ${l.posterType === 'owner' ? 'เจ้าของโพสต์เอง' : (l.posterName || 'agent')}`}
                           style={{ marginRight: 6, ...(l.posterType === 'owner' ? { color: '#166534', fontWeight: 700 } : {}) }}>
-                          {l.posterType === 'owner' ? '🏠' : ''}{l.portal}
+                          {l.posterType === 'owner' ? '🏠' : ''}
+                          {/* โหมด All/Dual แสดงทั้งสองฝั่ง — ต้องมีตัวกำกับ ไม่งั้นชื่อพอร์ทัลเดียวกัน
+                              โผล่สองครั้งแล้วอ่านไม่ออกว่าอันไหนเช่าอันไหนขาย */}
+                          {!intentView && <span style={{ color: '#9ca3af', fontSize: 10 }}>{l.intent === 'sale' ? 'ขาย·' : 'เช่า·'}</span>}
+                          {l.portal}
                         </a>
                       )) : '—'}
                     </td>

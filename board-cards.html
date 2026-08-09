@@ -76,9 +76,6 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: var(--stag
 .c.taken .ic { background: rgba(255,255,255,0.13); }
 .c.taken .ic svg { opacity: 0.6; }
 .c.taken .done { border-color: rgba(255,255,255,0.34); color: rgba(255,255,255,0.86); }
-.hot2 { display: inline-flex; align-items: center; gap: 8px;
-  font-family: 'IBM Plex Mono', monospace; font-weight: 700; font-size: 22px; letter-spacing: 0.08em;
-  color: var(--bronze); border: 1px solid rgba(224,154,85,0.55); border-radius: 999px; padding: 6px 16px; }
 .done { display: inline-flex; align-items: center; gap: 8px;
   font-family: 'IBM Plex Mono', monospace; font-weight: 700; font-size: 24px;
   letter-spacing: 0.10em; color: rgba(255,255,255,0.62);
@@ -182,19 +179,19 @@ const MODE = DATA.mode === "sale" ? "sale" : "rent"
 
 /* ── i18n — หมุน ไทย → EN → 日本語 (ป้ายเท่านั้น ตัวเลข/ธงคงที่) ─────────── */
 const L = {
-  th: { actTalking: "กำลังคุยกับผู้สนใจอยู่", actViewing: "มีนัดเข้าชมแล้ว", actInterest: "มีคนสนใจ %s ราย", actChip: "มีคนถามแล้ว", doneLine: "ปิดดีลแล้ว", worth: "คุ้มกว่า %s%", cheaper: "ถูกกว่าค่าเฉลี่ยชั้นนี้ %s%", psqmU: "฿/ตร.ม.", cont: "ต่อ", bedU: "ตรม.", beds: { STUDIO: "สตูดิโอ", "1BED": "1 ห้องนอน", "2BED": "2 ห้องนอน", "3BED": "3 ห้องนอน", "4BED+": "4 นอน+ เพนต์เฮาส์" },
+  th: { actTalking: "กำลังคุยกับผู้สนใจอยู่", actViewing: "มีนัดเข้าชมแล้ว", actInterest: "มีคนสนใจ %s ราย", doneLine: "ปิดดีลแล้ว", worth: "คุ้มกว่า %s%", cheaper: "ถูกกว่าค่าเฉลี่ยชั้นนี้ %s%", psqmU: "฿/ตร.ม.", cont: "ต่อ", bedU: "ตรม.", beds: { STUDIO: "สตูดิโอ", "1BED": "1 ห้องนอน", "2BED": "2 ห้องนอน", "3BED": "3 ห้องนอน", "4BED+": "4 นอน+ เพนต์เฮาส์" },
         zones: { LOW: "ชั้นล่าง", MID: "ชั้นกลาง", HIGH: "ชั้นสูง" }, floorWord: "ชั้น",
         chipRent: "ค่าเช่า/เดือน · ฿/MO", rentU: "฿/เดือน",
         chipSaleM: "ราคาขาย · ล้านบาท", chipSaleQ: "ราคาขาย · ฿/ตรม.", saleM: "ล้านบาท", saleQ: "฿/ตรม.", ind: "ไทย" },
-  en: { actTalking: "In conversation", actViewing: "Viewing booked", actInterest: "%s people enquired", actChip: "ENQUIRED", doneLine: "Closed", worth: "%s% better value", cheaper: "%s% under this floor", psqmU: "THB/sqm", cont: "CONT.", bedU: "sqm", beds: { STUDIO: "Studio", "1BED": "1 Bedroom", "2BED": "2 Bedroom", "3BED": "3 Bedroom", "4BED+": "4 Bed+ Penthouse" },
+  en: { actTalking: "In conversation", actViewing: "Viewing booked", actInterest: "%s people enquired", doneLine: "Closed", worth: "%s% better value", cheaper: "%s% under this floor", psqmU: "THB/sqm", cont: "CONT.", bedU: "sqm", beds: { STUDIO: "Studio", "1BED": "1 Bedroom", "2BED": "2 Bedroom", "3BED": "3 Bedroom", "4BED+": "4 Bed+ Penthouse" },
         zones: { LOW: "Low floor", MID: "Mid floor", HIGH: "High floor" }, floorWord: "Floor",
         chipRent: "Rent per month · ฿/MO", rentU: "฿/mo",
         chipSaleM: "Sale price · ฿ Million", chipSaleQ: "Sale price · ฿/sqm", saleM: "฿ Million", saleQ: "฿/sqm", ind: "EN" },
-  ja: { actTalking: "商談中", actViewing: "内見予約あり", actInterest: "%s 件の問い合わせ", actChip: "問合せ有", doneLine: "成約済み", worth: "%s% お得", cheaper: "この階の平均より %s% 安い", psqmU: "円/㎡", cont: "つづき", bedU: "㎡", beds: { STUDIO: "ワンルーム", "1BED": "1LDK", "2BED": "2LDK", "3BED": "3LDK", "4BED+": "4LDK+ ペントハウス" },
+  ja: { actTalking: "商談中", actViewing: "内見予約あり", actInterest: "%s 件の問い合わせ", doneLine: "成約済み", worth: "%s% お得", cheaper: "この階の平均より %s% 安い", psqmU: "円/㎡", cont: "つづき", bedU: "㎡", beds: { STUDIO: "ワンルーム", "1BED": "1LDK", "2BED": "2LDK", "3BED": "3LDK", "4BED+": "4LDK+ ペントハウス" },
         zones: { LOW: "低層階", MID: "中層階", HIGH: "高層階" }, floorWord: "",
         chipRent: "家賃/月 · ฿/MO", rentU: "฿/月",
         chipSaleM: "販売価格 · 百万฿", chipSaleQ: "販売価格 · ฿/㎡", saleM: "百万฿", saleQ: "฿/㎡", ind: "日本語" },
-  zh: { actTalking: "洽谈中", actViewing: "已预约看房", actInterest: "%s 人咨询", actChip: "有咨询", doneLine: "已成交", worth: "划算 %s%", cheaper: "比本层均价低 %s%", psqmU: "฿/㎡", cont: "续", bedU: "㎡", beds: { STUDIO: "开间", "1BED": "一室", "2BED": "两室", "3BED": "三室", "4BED+": "四室以上 顶层公寓" },
+  zh: { actTalking: "洽谈中", actViewing: "已预约看房", actInterest: "%s 人咨询", doneLine: "已成交", worth: "划算 %s%", cheaper: "比本层均价低 %s%", psqmU: "฿/㎡", cont: "续", bedU: "㎡", beds: { STUDIO: "开间", "1BED": "一室", "2BED": "两室", "3BED": "三室", "4BED+": "四室以上 顶层公寓" },
         zones: { LOW: "低楼层", MID: "中楼层", HIGH: "高楼层" }, floorWord: "", floorSuffix: "层",
         chipRent: "月租 · ฿/月", rentU: "฿/月",
         chipSaleM: "售价 · 百万฿", chipSaleQ: "售价 · ฿/㎡", saleM: "百万฿", saleQ: "฿/㎡", ind: "中文" },
@@ -298,7 +295,7 @@ function paint() {
       <span class="ic${multi ? " multi" : ""}">${iconFor(r.type)}</span>
       <span class="nm"><div class="t">${r.sqm} ${t.bedU} · ${fl(r, t)}</div>
         <div class="s">${why(r, t)}</div></span>
-      <span class="fl">${(r.actTalking || r.actViewing || r.actInterest) && !r.takenLabel ? `<span class="hot2">${t.actChip}</span>` : ""}${r.takenLabel ? `<span class="done">${r.takenLabel === "sale" ? "SOLD" : "RENTED"}</span>` : flags}</span>
+      <span class="fl">${r.takenLabel ? `<span class="done">${r.takenLabel === "sale" ? "SOLD" : "RENTED"}</span>` : flags}</span>
       <span class="prw"><div class="pr">${pr}</div><div class="pru">${pru}</div></span>
     </div>`
   }
