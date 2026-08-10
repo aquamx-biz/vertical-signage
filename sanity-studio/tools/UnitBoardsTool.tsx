@@ -633,10 +633,16 @@ export function UnitBoardsTool() {
     return (
       <Inline space={2}>
         <Text size={1} weight="bold" style={{ minWidth: 76 }}>{label}</Text>
-        <label style={{ display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer', padding: '2px 8px', borderRadius: 6, background: man ? '#eef6ff' : 'transparent', border: `1px solid ${man ? '#0f3460' : '#d1d5db'}` }}>
-          <input type="checkbox" checked={man} onChange={() => setMan(v => !v)} style={{ cursor: 'pointer' }} />
-          <Text size={1} weight={man ? 'bold' : 'regular'} style={{ color: man ? '#0f3460' : '#6b7280' }}>เลือกเองล้วน</Text>
-        </label>
+        {/* toggle สองฝั่งสลับ — เห็นชัดว่าบอร์ดโหมดไหนโดยไม่ต้องเดา · ฝั่งที่ active ทึบ */}
+        <div style={{ display: 'inline-flex', border: '1px solid #d1d5db', borderRadius: 999, padding: 2, background: '#f3f4f6' }}>
+          {([[false, 'อัตโนมัติ'], [true, 'เลือกเอง']] as const).map(([v, t]) => (
+            <button key={String(v)} onClick={() => setMan(v)}
+              style={{ fontSize: 12, fontWeight: man === v ? 700 : 400, padding: '3px 12px', borderRadius: 999, cursor: 'pointer', border: 'none',
+                background: man === v ? (v ? '#0f3460' : '#fff') : 'transparent',
+                color: man === v ? (v ? '#fff' : '#0f3460') : '#6b7280',
+                boxShadow: man === v ? '0 1px 2px rgba(0,0,0,.12)' : 'none' }}>{t}</button>
+          ))}
+        </div>
         {/* เอาโควตาแบบธง (SUPER/BEST/HOT/NEGO/INVEST) กับ Min sizes ออกตามที่เจ้าของงานสั่ง —
             เหลือแค่ "จำนวนห้อง" · โหมดปกติเติมดีลดีสุดให้เต็มจำนวนนี้ · โหมดเลือกเอง = เฉพาะที่ติ๊ก
             (ห้ามใช้ fragment ใน Inline — มันจะเรียงลงแนวตั้ง ใช้ Inline ซ้อนแทน) */}
