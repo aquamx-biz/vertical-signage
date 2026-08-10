@@ -281,7 +281,7 @@ export function UnitBoardsTool() {
           client.fetch<Profile[]>(`*[_type == "unitProfile" && status != "expired"]{ ${PROJ} }`),
           internal.fetch<SourceDoc[]>(`*[_type == "unitSource"]{ refCode, floorActual, "listings": coalesce(rentListings[]{ portal, url, "intent": "rent", posterType, posterName }, []) + coalesce(saleListings[]{ portal, url, "intent": "sale", posterType, posterName }, []) }`).catch(() => []),
           client.fetch<Array<{ _id: string; code: string }>>(`*[_type == "project"]{ _id, "code": code.current }`),
-          client.fetch<Array<{ code: string; mode: string; policy?: Partial<Policy>; manualOnly?: boolean; lineup?: string[] }>>(`*[_type == "unitBoard"]{ "code": project->code.current, mode, policy, manualOnly, "lineup": lineup[]->refCode }`),
+          client.fetch<Array<{ _id: string; code: string; mode: string; policy?: Partial<Policy>; manualOnly?: boolean; lineup?: string[] }>>(`*[_type == "unitBoard"]{ _id, "code": project->code.current, mode, policy, manualOnly, "lineup": lineup[]->refCode }`),
           // รอบข้อมูลล่าสุด — ใบ scrapeRound จากวงจรรายสัปดาห์; ยังไม่มีรอบแรกถอยไปใช้ dataDate
           // ของ marketSnapshot (audit ⑤: ห้ามใช้ max lastCheckedAt — โดน spot-verify รายห้อง
           // ปนวันที่ใหม่ แล้วหัวข้อโชว์วันตรวจแทนวันของข้อมูลทั้งชุด)
@@ -293,9 +293,13 @@ export function UnitBoardsTool() {
         setProfiles(pf ?? [])
         setSources(new Map((src ?? []).map(s => [s.refCode, s])))
         setProjDocs(pj ?? [])
-        const pol: Record<string, Partial<Policy>> = {}, lup: Record<string, string[]> = {}, man: Record<string, boolean> = {}
+        /* บอร์ดเดียวกันมีทั้ง published + draft (Save เขียน draft) — เดิม forEach เขียนทับตาม
+           ลำดับผลลัพธ์ที่ไม่แน่นอน เลขห้องเลยกระโดดหลัง Save · draft ต้องชนะเสมอ = สถานะที่กำลังแก้ */
+        const best = new Map<string, typeof bd[number]>()
         ;(bd ?? []).forEach(b => { if (!b.code) return; const k = `${b.code}·${b.mode}`
-          if (b.policy) pol[k] = b.policy; lup[k] = b.lineup ?? []; man[k] = !!b.manualOnly })
+          if (!best.has(k) || b._id.startsWith('drafts.')) best.set(k, b) })
+        const pol: Record<string, Partial<Policy>> = {}, lup: Record<string, string[]> = {}, man: Record<string, boolean> = {}
+        best.forEach((b, k) => { if (b.policy) pol[k] = b.policy; lup[k] = b.lineup ?? []; man[k] = !!b.manualOnly })
         setBoardPolicies(pol); setBoardLineups(lup); setBoardManual(man)
         const names = [...new Set((pf ?? []).map(p => p.projectName))].sort()
         setProj(names[0] ?? '')
@@ -363,8 +367,10 @@ export function UnitBoardsTool() {
   /* โหมดเลือกเอง: บอร์ด = ห้องที่ติ๊ก (จาก lineup) ลบด้วย hideFromBoard เหมือนโหมดปกติ —
      ปุ่มลบเขียน published ทันที (ตรงกับ footer "กดแล้วมีผลทันที") · refresh แล้ว lineup กลับมา
      แต่ห้องที่ hide ถูกตัดออก จึงไม่เด้งกลับ · ไม่เติมอัตโนมัติ (ต่างจากโหมดปกติ) */
+  /* โหมดเลือกเอง: บอร์ด = ห้องที่ติ๊กล้วน (selR/selS) · ไม่ยุ่งกับ hideFromBoard เลย
+     (hide เป็นกลไกของโหมดอัตโนมัติ) · เอาออก = ถอดติ๊ก · Save บันทึก selR ตรง ๆ */
   const manualPick = (m2: 'rent' | 'sale', sel: Set<string>) => ({
-    rows: pool.filter(p => p.intent === m2 && sel.has(p.refCode) && !p.hideFromBoard)
+    rows: pool.filter(p => p.intent === m2 && sel.has(p.refCode))
       .sort((a, b) => BED_ORDER.indexOf(a.bedType ?? '') - BED_ORDER.indexOf(b.bedType ?? '') || (a.priceTHB ?? 0) - (b.priceTHB ?? 0)),
     warnings: [] as string[],
   })
@@ -594,6 +600,11 @@ export function UnitBoardsTool() {
           lineupWarnings: [...sim.warnings, 'บันทึกจาก Studio · Unit Boards tool'],
           lineupGeneratedAt: new Date().toISOString(),
         })
+        // ห้องที่เลือกขึ้นบอร์ดต้องไม่ถูก hide (เผื่อเคยถูกเอาออกตอนโหมดอัตโนมัติ) —
+        // ไม่งั้น build.mjs กรอง hide ทิ้ง ห้องที่เลือกจะไม่ขึ้นจอทั้งที่อยู่ใน lineup
+        if (m2 === 'rent' ? manualR : manualS)
+          await Promise.all(sim.rows.map(p => client.patch(`unitProfile-${p.refCode}-${m2}`)
+            .set({ hideFromBoard: false }).commit().catch(() => null)))
         /* ล็อกว่าห้องพวกนี้เคยขึ้นบอร์ดฝั่งนี้ — เขียน published โดยตรง (เหมือน dealStage)
            setIfMissing = วันแรกไม่ถูกทับ · onBoardLastAt = วันล่าสุดเสมอ · "เอาออก"
            ไม่ลบล็อก (ประวัติคือ "เคยขึ้น" ไม่ใช่ "อยู่ตอนนี้") */
@@ -650,7 +661,7 @@ export function UnitBoardsTool() {
             เหลือแค่ "จำนวนห้อง" · โหมดปกติเติมดีลดีสุดให้เต็มจำนวนนี้ · โหมดเลือกเอง = เฉพาะที่ติ๊ก
             (ห้ามใช้ fragment ใน Inline — มันจะเรียงลงแนวตั้ง ใช้ Inline ซ้อนแทน) */}
         {man
-          ? <Text size={1} style={{ color: '#0f3460' }}>บอร์ด = {shownCount} ห้องที่เลือก (ไม่เติมอัตโนมัติ) · ติ๊ก Select {m2 === 'r' ? 'R' : 'S'} เพิ่ม · ✕ เอาออก = หายทันที</Text>
+          ? <Text size={1} style={{ color: '#0f3460' }}>บอร์ด = {shownCount} ห้องที่เลือก (ไม่เติมอัตโนมัติ) · ติ๊ก Select {m2 === 'r' ? 'R' : 'S'} เพิ่ม / ✕ เอาออก แล้ว<b> กด Save</b> เพื่อบันทึก</Text>
           : <Inline space={2}>
               <Text size={1}>จำนวนห้อง</Text>{numIn(P, set, 'quota')}
               <Text size={1} muted>เลือกดีลดีสุดให้เต็มจำนวนนี้อัตโนมัติ</Text>
@@ -703,8 +714,14 @@ export function UnitBoardsTool() {
   /* เอาออกหลายห้องรวดเดียว — พฤติกรรมเดียวกับปุ่ม ✕ เดี่ยว (hide ทั้ง rent+sale ต่อห้อง)
      เขียน published ตรง เหมือน setHidden · ล็อกเคยขึ้นบอร์ดไม่ถูกลบ (ประวัติคงอยู่) */
   const removeMany = async () => {
-    // ทั้งสองโหมด = hide (persist ทันที) — โหมดเลือกเองแค่ไม่เติมกลับ · ห้องที่ hide ถูกตัดจากบอร์ด
-    const refs = [...new Set([...selRemove].map(k => k.split('·')[0]))]
+    // โหมดเลือกเอง = ถอดติ๊ก (local · กด Save บันทึก) · โหมดอัตโนมัติ = hide (published ทันที)
+    const manualRefs = { rent: new Set<string>(), sale: new Set<string>() }
+    const autoRefs = new Set<string>()
+    for (const k of selRemove) { const [ref, m] = k.split('·') as ['string', 'rent' | 'sale']
+      if (m === 'rent' ? manualR : manualS) manualRefs[m].add(ref); else autoRefs.add(ref) }
+    if (manualRefs.rent.size) setSelR(x => { const n = new Set(x); manualRefs.rent.forEach(r => n.delete(r)); return n })
+    if (manualRefs.sale.size) setSelS(x => { const n = new Set(x); manualRefs.sale.forEach(r => n.delete(r)); return n })
+    const refs = [...autoRefs]
     setSelRemove(new Set())
     if (!refs.length) return
     setStageBusy('__bulk__')
@@ -796,9 +813,11 @@ export function UnitBoardsTool() {
           ))}
         </Flex>
         {p.dealStageAt && cur === 'closed' && <Text size={0} muted>ปิดเมื่อ {p.dealStageAt}</Text>}
-        <button onClick={() => setHidden(p, true)}
+        <button onClick={() => (m2 === 'rent' ? manualR : manualS)
+            ? (m2 === 'rent' ? setSelR : setSelS)(x => { const n = new Set(x); n.delete(p.refCode); return n })
+            : setHidden(p, true)}
           disabled={stageBusy === p.refCode}
-          title={(m2 === 'rent' ? manualR : manualS) ? 'เอาห้องนี้ออกจากบอร์ด — มีผลทันที (ไม่เติมกลับ) · เอากลับได้ในรายการด้านล่าง' : 'เอาห้องนี้ออกจากบอร์ด — ตัวคัดจะดึงห้องถัดไปขึ้นมาแทน'}
+          title={(m2 === 'rent' ? manualR : manualS) ? 'ถอดห้องนี้ออกจากที่เลือก — กด Save เพื่อบันทึก' : 'เอาห้องนี้ออกจากบอร์ด — ตัวคัดจะดึงห้องถัดไปขึ้นมาแทน'}
           style={{ marginLeft: 'auto', fontSize: 11.5, padding: '3px 10px', borderRadius: 999,
             border: '1px solid #e5b4b4', background: '#fff', color: '#b42318', cursor: 'pointer' }}>✕ เอาออก</button>
       </Flex>
