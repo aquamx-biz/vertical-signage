@@ -319,7 +319,7 @@ if (COIN_SNAPPED) {
 const [profiles, sources] = await Promise.all([
   q(`*[_type == "unitProfile"]{ _id, refCode, intent, projectName, bedType, sqm, priceTHB, status,
       pinToBoard, hideFromBoard, internalNote, firstSeenAt, priceHistory,
-      dealStage, dealStageAt }`),
+      dealStage, dealStageAt, onBoardFirstAt, onBoardLastAt }`),
   q(`*[_type == "unitSource"]{ _id, refCode, projectName, floorActual,
       rentListings, saleListings, bestContact, cobrokeStatus, cobrokeNote, contactLog,
       "sids": [...coalesce(rentListings, [])[].sourceId, ...coalesce(saleListings, [])[].sourceId] }`, 'internal'),
@@ -490,6 +490,8 @@ for (const u of unitRows) {
       // สถานะดีล (ว่าง/นัดชม/คุย/ปิดดีล) ทีมกรอกมือ — ต้องสงวนเท่ากับ status/pin/hide
       // ไม่งั้น scrape ทุกรอบล้างสิ่งที่ทีมตั้งไว้ (พบ 2026-08-10: ตั้งแล้วหายหลัง ingest)
       dealStage: old?.dealStage, dealStageAt: old?.dealStageAt,
+      // ล็อกเคยขึ้นบอร์ด = ประวัติ ต้องสงวนเท่ากับ dealStage (ไม่งั้น scrape ล้าง)
+      onBoardFirstAt: old?.onBoardFirstAt, onBoardLastAt: old?.onBoardLastAt,
       firstSeenAt: old?.firstSeenAt ?? ROUND, lastCheckedAt: ROUND,
       priceHistory: history,
     } })

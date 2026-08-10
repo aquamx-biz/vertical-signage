@@ -79,6 +79,11 @@ export default defineType({
       name: 'firstSeenAt', title: 'First Seen · พบครั้งแรก', type: 'date',
       description: 'รอบแรกที่ pipeline พบห้องนี้ — ห้องที่เพิ่งพบในรอบล่าสุดติดป้าย NEW บนบอร์ด',
     }),
+    /* ล็อกว่าห้องนี้เคยถูกคัดขึ้นบอร์ดฝั่งนี้ (เช่า/ขายแยกกันเพราะ intent = ฝั่งอยู่แล้ว) —
+       stamp ตอน Save lineup ใน Unit Boards · pipeline สงวนค่าเดิมทุกรอบ ไม่ล้าง */
+    defineField({ name: 'onBoardFirstAt', title: 'ขึ้นบอร์ดครั้งแรก', type: 'date', readOnly: true,
+      description: 'วันแรกที่ห้องนี้ถูกคัดเข้า lineup — มีค่า = เคยขึ้นบอร์ดฝั่งนี้' }),
+    defineField({ name: 'onBoardLastAt', title: 'ขึ้นบอร์ดล่าสุด', type: 'date', readOnly: true }),
     defineField({
       name: 'priceHistory', title: 'Price History · ประวัติราคา', type: 'array',
       description: 'time-series ต่อห้อง — pipeline เติมทุกรอบที่ราคาเปลี่ยน (ห้ามลบของเก่า)',

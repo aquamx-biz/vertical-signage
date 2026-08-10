@@ -42,7 +42,7 @@ export interface Profile {
   hotDeal?: boolean; goodInvest?: boolean; negotiable?: boolean
   yieldPct?: number; spreadPct?: number; nListings?: number; nPortals?: number
   postedByOwner?: boolean; dualListed?: boolean; pinToBoard?: boolean; hideFromBoard?: boolean
-  status?: string; lastCheckedAt?: string; firstSeenAt?: string
+  status?: string; lastCheckedAt?: string; firstSeenAt?: string; onBoardFirstAt?: string; onBoardLastAt?: string
   dealStage?: string; dealStageAt?: string
   priceHistory?: Array<{ date?: string; price?: number; nListings?: number }>
   __pick?: string
@@ -138,7 +138,7 @@ const NAME_TO_CODE: Record<string, string> = {
 const PROJ = `refCode, intent, projectName, bedType, sqm, floorZone, priceTHB, pricePerSqm,
   vsFloorPct, vsZonePct, dealTier, hotDeal, goodInvest, negotiable, yieldPct, spreadPct,
   nListings, nPortals, postedByOwner, dualListed, pinToBoard, hideFromBoard, status, lastCheckedAt, firstSeenAt,
-  dealStage, dealStageAt,
+  dealStage, dealStageAt, onBoardFirstAt, onBoardLastAt,
   priceHistory`
 
 interface SourceDoc { refCode: string; floorActual?: number; listings?: Array<{ portal?: string; url?: string; intent?: string; posterType?: string; posterName?: string }> }
@@ -445,8 +445,8 @@ export function UnitBoardsTool() {
      ทั้งสองฝั่งลงมาเสมอ ทำให้กด "Has rent" แล้วยังเห็นลิงก์ประกาศขายปนอยู่ โดยที่
      ชื่อพอร์ทัลไม่ได้บอกว่าอันไหนเช่าอันไหนขาย (คอลัมน์ราคามีหัวกำกับอยู่แล้วจึงไม่กำกวม) */
   const intentView: 'rent' | 'sale' | null =
-    mode === 'rent' || mode === 'brent' ? 'rent' :
-    mode === 'sale' || mode === 'bsale' ? 'sale' : null
+    mode === 'rent' || mode === 'brent' || mode === 'wasr' ? 'rent' :
+    mode === 'sale' || mode === 'bsale' || mode === 'wass' ? 'sale' : null
 
   const shown = useMemo(() => {
     const s = q.trim().toUpperCase()
@@ -461,6 +461,8 @@ export function UnitBoardsTool() {
         mode === 'dual' ? !!u.rent && !!u.sale :
         mode === 'brent' ? onR.has(u.refCode) :
         mode === 'bsale' ? onS.has(u.refCode) :
+        mode === 'wasr' ? !!u.rent?.onBoardFirstAt :
+        mode === 'wass' ? !!u.sale?.onBoardFirstAt :
         mode === 'fx' ? (!!u.rent && !passesSanity(u.rent, 'rent')) || (!!u.sale && !passesSanity(u.sale, 'sale')) : true
       if (!ok) return false
       if (s) return u.refCode.toUpperCase().includes(s) || agents.some(a => a.toUpperCase().includes(s))
@@ -486,6 +488,7 @@ export function UnitBoardsTool() {
           case 'upd': return u.rent?.lastCheckedAt ?? u.sale?.lastCheckedAt ?? ''
           /* ใหม่สุดก่อนเมื่อกดครั้งแรก — คนกดคอลัมน์นี้กำลังหาห้องที่เพิ่งเข้าวีคนี้ */
           case 'fseen': return [u.rent?.firstSeenAt, u.sale?.firstSeenAt].filter(Boolean).sort().pop() ?? ''
+          case 'onbrd': return [u.rent?.onBoardFirstAt, u.sale?.onBoardFirstAt].filter(Boolean).sort()[0] ?? ''
           case 'fl': return sources.get(u.refCode)?.floorActual ?? -1
           /* ธงเปิด/ปิด — เรียงให้ห้องที่ติดธงขึ้นก่อน แล้วแพ้ชนะกันด้วยตัวเลขชุดเดียวกับที่
              bucket ของ engine ใช้จัดอันดับ (HOT=จำนวนประกาศแข่ง · NEGO=spread · INVEST=yield) */
@@ -566,6 +569,13 @@ export function UnitBoardsTool() {
           lineupWarnings: [...sim.warnings, 'บันทึกจาก Studio · Unit Boards tool'],
           lineupGeneratedAt: new Date().toISOString(),
         })
+        /* ล็อกว่าห้องพวกนี้เคยขึ้นบอร์ดฝั่งนี้ — เขียน published โดยตรง (เหมือน dealStage)
+           setIfMissing = วันแรกไม่ถูกทับ · onBoardLastAt = วันล่าสุดเสมอ · "เอาออก"
+           ไม่ลบล็อก (ประวัติคือ "เคยขึ้น" ไม่ใช่ "อยู่ตอนนี้") */
+        const today = new Date().toISOString().slice(0, 10)
+        await Promise.all(sim.rows.map(p => client.patch(`unitProfile-${p.refCode}-${m2}`)
+          .setIfMissing({ onBoardFirstAt: today })
+          .set({ onBoardLastAt: today }).commit().catch(() => null)))
         // เขียน orderItems เข้า offer ของบอร์ดด้วย — modal ลิสต์ห้อง/cart บนจอใช้ชุดเดียวกับ lineup เป๊ะ
         const oid = `offer-board-${code}-${m2}`
         const existing = (await client.getDocument(`drafts.${oid}`)) ?? (await client.getDocument(oid))
@@ -733,7 +743,8 @@ export function UnitBoardsTool() {
 
   const FILTERS: Array<[string, string]> = [
     ['all', 'All'], ['rent', 'Has rent'], ['sale', 'Has sale'], ['dual', 'Dual'],
-    ['brent', 'On board · rent'], ['bsale', 'On board · sale'], ['fx', 'Filtered out'],
+    ['brent', 'On board · rent'], ['bsale', 'On board · sale'],
+    ['wasr', 'เคยขึ้น · เช่า'], ['wass', 'เคยขึ้น · ขาย'], ['fx', 'Filtered out'],
   ]
   const H = (label: string, key?: string, title?: string) => (
     <th style={th} title={title} onClick={() => key && setSort(s => ({ k: key, d: s.k === key ? -s.d : 1 }))}>{label}{key ? ' ↕' : ''}</th>
@@ -991,6 +1002,7 @@ export function UnitBoardsTool() {
               {H('Spread', 'spread', 'ช่วงราคาข้ามพอร์ทัล (สูงสุด−ต่ำสุด)/ต่ำสุด — กว้าง = ต่อรองได้')}
               {H('Update', 'upd', 'รอบข้อมูลล่าสุดที่ยังพบห้องนี้ในตลาด')}
               <FilterHead label="First seen" fk="fseen" sk="fseen" title="ห้องเข้าระบบครั้งแรกรอบไหน — กด ▾ เลือกเฉพาะรอบล่าสุด = ห้องใหม่ของวีคนี้ · ป้าย NEW = เข้ารอบปัจจุบัน" />
+              {H('เคยขึ้นบอร์ด', 'onbrd', 'ห้องนี้เคยถูกคัดขึ้นบอร์ดฝั่งนี้มั้ย — ● = เคย (ชี้ดูครั้งแรก→ล่าสุด) · ใช้ตัวกรอง "เคยขึ้น · เช่า/ขาย" เพื่อดึงลิสต์ทั้งหมด')}
               <FilterHead label="Posted by" fk="posted" sk="posted" title="ใครลงประกาศ — 🏠 Owner = เจ้าของโพสต์เอง (ไม่มีชื่อ agent โดยนิยาม) · ชื่อ = agent/agency ที่โพสต์ — กดชื่อคอลัมน์เพื่อเรียง กด ▾ ติ๊กเลือก/เอาออกรายเจ้าได้" />
               <FilterHead label="Status" fk="status" sk="status" title="สถานะ cleansing ของทีม (แยกฝั่งเช่า/ขาย) — กดชื่อคอลัมน์เพื่อเรียง กด ▾ กรองได้" />
               {H('Board', 'board', 'ติด lineup ปัจจุบัน + เหตุผลที่ถูกคัด (SELECT/BED/ธง/FILL)')}
@@ -1056,6 +1068,15 @@ export function UnitBoardsTool() {
                       if (!d) return '—'
                       /* NEW = เข้าระบบรอบปัจจุบัน (dataRound) — ตัวกรองสายตาหาห้องใหม่ของวีคนี้ */
                       return <>{d.slice(5)}{d === dataRound && <span style={chipStyle('#ffedd5', '#c2410c')}>NEW</span>}</>
+                    })()}</td>
+                    <td style={{ ...td, fontSize: 12 }}>{(() => {
+                      /* ล็อกเคยขึ้นบอร์ด — จุดเขียวถ้าเคย · hover เห็นช่วงครั้งแรก→ล่าสุด
+                         ฝั่งไหนขึ้นบ้างบอกด้วยตัวอักษร r/s (เช่า/ขายแยกกัน) */
+                      const rb = u.rent?.onBoardFirstAt, sb = u.sale?.onBoardFirstAt
+                      if (!rb && !sb) return <span style={{ color: '#c7ccd4' }}>—</span>
+                      const tip = [rb && `เช่า ${rb}→${u.rent?.onBoardLastAt ?? rb}`, sb && `ขาย ${sb}→${u.sale?.onBoardLastAt ?? sb}`].filter(Boolean).join(' · ')
+                      return <span title={tip} style={{ color: '#166534', fontWeight: 700, cursor: 'help' }}>
+                        ● {rb ? 'r' : ''}{sb ? 's' : ''}</span>
                     })()}</td>
                     <td style={{ ...td, whiteSpace: 'normal', maxWidth: 180 }}>
                       {owner && <span style={chipStyle('#d1f2dd', '#166534')} title="เจ้าของโพสต์เอง">🏠 Owner</span>}
