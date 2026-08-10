@@ -6,7 +6,9 @@
  */
 import { readFileSync, writeFileSync, existsSync } from 'node:fs'
 const DATE = process.argv[2] ?? new Date().toISOString().slice(0, 10)
-const det = JSON.parse(readFileSync(`C:/Users/Lenovo/Downloads/aquamx-dddet-${DATE}.json`, 'utf8'))
+/* รับชื่อไฟล์เป็น arg ตัวที่ 2 (รอบเก็บตก = aquamx-ddleft-...) — ค่าเริ่มต้นคือไฟล์รอบแรก */
+const FILE = process.argv[3] ?? `C:/Users/Lenovo/Downloads/aquamx-dddet-${DATE}.json`
+const det = JSON.parse(readFileSync(FILE, 'utf8'))
 const BLD = new Map(JSON.parse(readFileSync('_rounds/_dd-new-ids.json', 'utf8')).map(x => [String(x.id), x]))
 
 const path = `_rounds/discovered-${DATE}.json`

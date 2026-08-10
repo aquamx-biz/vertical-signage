@@ -318,7 +318,8 @@ if (COIN_SNAPPED) {
 // ── 2. โหลดสถานะปัจจุบันจาก Sanity ──────────────────────────────────────────
 const [profiles, sources] = await Promise.all([
   q(`*[_type == "unitProfile"]{ _id, refCode, intent, projectName, bedType, sqm, priceTHB, status,
-      pinToBoard, hideFromBoard, internalNote, firstSeenAt, priceHistory }`),
+      pinToBoard, hideFromBoard, internalNote, firstSeenAt, priceHistory,
+      dealStage, dealStageAt }`),
   q(`*[_type == "unitSource"]{ _id, refCode, projectName, floorActual,
       rentListings, saleListings, bestContact, cobrokeStatus, cobrokeNote, contactLog,
       "sids": [...coalesce(rentListings, [])[].sourceId, ...coalesce(saleListings, [])[].sourceId] }`, 'internal'),
@@ -486,6 +487,9 @@ for (const u of unitRows) {
       postedByOwner: d.owner, dualListed: u.dual,
       status: old?.status && old.status !== 'expired' ? old.status : old?.status === 'expired' ? 'candidate' : 'candidate',
       pinToBoard: old?.pinToBoard, hideFromBoard: old?.hideFromBoard, internalNote: old?.internalNote,
+      // สถานะดีล (ว่าง/นัดชม/คุย/ปิดดีล) ทีมกรอกมือ — ต้องสงวนเท่ากับ status/pin/hide
+      // ไม่งั้น scrape ทุกรอบล้างสิ่งที่ทีมตั้งไว้ (พบ 2026-08-10: ตั้งแล้วหายหลัง ingest)
+      dealStage: old?.dealStage, dealStageAt: old?.dealStageAt,
       firstSeenAt: old?.firstSeenAt ?? ROUND, lastCheckedAt: ROUND,
       priceHistory: history,
     } })

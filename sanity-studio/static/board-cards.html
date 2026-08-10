@@ -64,6 +64,24 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: var(--stag
 
 /* ── Cards ── */
 .cards { flex: 1; display: flex; flex-direction: column; gap: 14px; min-height: 0; }
+/* แถบคั่น segment — บางและเงียบ ไม่แย่งสายตาจากการ์ด ใช้ตัวอักษรชุดเดียวกับ chip ด้านบน */
+.seg { flex: 0 0 auto; display: flex; align-items: center; gap: 14px;
+  font-family: 'IBM Plex Mono', monospace; font-weight: 700; font-size: 26px;
+  letter-spacing: 0.16em; color: rgba(255,255,255,0.62); padding: 2px 4px 0; }
+.seg::after { content: ""; flex: 1; height: 1px; background: rgba(255,255,255,0.16); }
+.seg b { color: var(--accent); font-weight: 700; }
+.c.taken { background: #2E3540; border-color: rgba(255,255,255,0.20); }
+.c.taken .t, .c.taken .pr { color: rgba(255,255,255,0.82); }
+.c.taken .s, .c.taken .pru { color: rgba(255,255,255,0.58); }
+.c.taken .ic { background: rgba(255,255,255,0.13); }
+.c.taken .ic svg { opacity: 0.6; }
+.c.taken .done { border-color: rgba(255,255,255,0.34); color: rgba(255,255,255,0.86); }
+.done { display: inline-flex; align-items: center; gap: 8px;
+  font-family: 'IBM Plex Mono', monospace; font-weight: 700; font-size: 24px;
+  letter-spacing: 0.10em; color: rgba(255,255,255,0.62);
+  border: 1px solid rgba(255,255,255,0.22); border-radius: 999px; padding: 6px 18px; }
+.done::before { content: "✓"; color: var(--accent); }
+.seg i { font-style: normal; font-size: 20px; letter-spacing: 0.12em; color: rgba(255,255,255,0.38); }
 .c {
   flex: 1; min-height: 0; max-height: 270px;
   display: flex; align-items: center; gap: 24px;
@@ -161,20 +179,24 @@ const MODE = DATA.mode === "sale" ? "sale" : "rent"
 
 /* ── i18n — หมุน ไทย → EN → 日本語 (ป้ายเท่านั้น ตัวเลข/ธงคงที่) ─────────── */
 const L = {
-  th: { bedU: "ตรม.", beds: { STUDIO: "สตูดิโอ", "1BED": "1 ห้องนอน", "2BED": "2 ห้องนอน", "3BED": "3 ห้องนอน", "4BED+": "4 นอน+ เพนต์เฮาส์" },
+  th: { actTalking: "กำลังคุยกับผู้สนใจอยู่", actViewing: "มีนัดเข้าชมแล้ว", actInterest: "มีคนสนใจ %s ราย", doneLine: "ปิดดีลแล้ว", worth: "คุ้มกว่า %s%", cheaper: "ถูกกว่าค่าเฉลี่ยชั้นนี้ %s%", psqmU: "฿/ตร.ม.", cont: "ต่อ", bedU: "ตรม.", beds: { STUDIO: "สตูดิโอ", "1BED": "1 ห้องนอน", "2BED": "2 ห้องนอน", "3BED": "3 ห้องนอน", "4BED+": "4 นอน+ เพนต์เฮาส์" },
         zones: { LOW: "ชั้นล่าง", MID: "ชั้นกลาง", HIGH: "ชั้นสูง" }, floorWord: "ชั้น",
         chipRent: "ค่าเช่า/เดือน · ฿/MO", rentU: "฿/เดือน",
         chipSaleM: "ราคาขาย · ล้านบาท", chipSaleQ: "ราคาขาย · ฿/ตรม.", saleM: "ล้านบาท", saleQ: "฿/ตรม.", ind: "ไทย" },
-  en: { bedU: "sqm", beds: { STUDIO: "Studio", "1BED": "1 Bedroom", "2BED": "2 Bedroom", "3BED": "3 Bedroom", "4BED+": "4 Bed+ Penthouse" },
+  en: { actTalking: "In conversation", actViewing: "Viewing booked", actInterest: "%s people enquired", doneLine: "Closed", worth: "%s% better value", cheaper: "%s% under this floor", psqmU: "THB/sqm", cont: "CONT.", bedU: "sqm", beds: { STUDIO: "Studio", "1BED": "1 Bedroom", "2BED": "2 Bedroom", "3BED": "3 Bedroom", "4BED+": "4 Bed+ Penthouse" },
         zones: { LOW: "Low floor", MID: "Mid floor", HIGH: "High floor" }, floorWord: "Floor",
         chipRent: "Rent per month · ฿/MO", rentU: "฿/mo",
         chipSaleM: "Sale price · ฿ Million", chipSaleQ: "Sale price · ฿/sqm", saleM: "฿ Million", saleQ: "฿/sqm", ind: "EN" },
-  ja: { bedU: "㎡", beds: { STUDIO: "ワンルーム", "1BED": "1LDK", "2BED": "2LDK", "3BED": "3LDK", "4BED+": "4LDK+ ペントハウス" },
+  ja: { actTalking: "商談中", actViewing: "内見予約あり", actInterest: "%s 件の問い合わせ", doneLine: "成約済み", worth: "%s% お得", cheaper: "この階の平均より %s% 安い", psqmU: "円/㎡", cont: "つづき", bedU: "㎡", beds: { STUDIO: "ワンルーム", "1BED": "1LDK", "2BED": "2LDK", "3BED": "3LDK", "4BED+": "4LDK+ ペントハウス" },
         zones: { LOW: "低層階", MID: "中層階", HIGH: "高層階" }, floorWord: "",
         chipRent: "家賃/月 · ฿/MO", rentU: "฿/月",
         chipSaleM: "販売価格 · 百万฿", chipSaleQ: "販売価格 · ฿/㎡", saleM: "百万฿", saleQ: "฿/㎡", ind: "日本語" },
+  zh: { actTalking: "洽谈中", actViewing: "已预约看房", actInterest: "%s 人咨询", doneLine: "已成交", worth: "划算 %s%", cheaper: "比本层均价低 %s%", psqmU: "฿/㎡", cont: "续", bedU: "㎡", beds: { STUDIO: "开间", "1BED": "一室", "2BED": "两室", "3BED": "三室", "4BED+": "四室以上 顶层公寓" },
+        zones: { LOW: "低楼层", MID: "中楼层", HIGH: "高楼层" }, floorWord: "", floorSuffix: "层",
+        chipRent: "月租 · ฿/月", rentU: "฿/月",
+        chipSaleM: "售价 · 百万฿", chipSaleQ: "售价 · ฿/㎡", saleM: "百万฿", saleQ: "฿/㎡", ind: "中文" },
 }
-const LANGS = ["th", "en", "ja"]
+const LANGS = ["th", "en", "ja", "zh"]
 
 /* ── Icons — inline SVG (อีโมจิเรนเดอร์ไม่เท่ากันข้ามกล่อง) ───────────────── */
 const SOFA  = '<svg viewBox="0 0 24 24"><path d="M4 11V8a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v3"/><path d="M2 13a2 2 0 0 1 2-2c1.1 0 2 .9 2 2v1h12v-1a2 2 0 1 1 4 0v4a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1z"/><path d="M5 18v2M19 18v2"/></svg>'
@@ -187,24 +209,42 @@ const iconFor = t =>
   t === "3BED" ? BED + BED + BED :
   CROWN   /* 4BED+ / อื่น ๆ */
 
+const TODAY = (window.__TODAY__ || new Date().toISOString().slice(0, 10))
 const TONE = { green: "g", orange: "o", white: "w" }
 const PER_PAGE = 7
-const LANG_MS = 7000       /* แต่ละภาษาแสดง 7 วิ — หน้าหนึ่งเล่นครบ 3 ภาษาแล้วค่อยเปลี่ยนหน้า */
-const PAGE_MS = LANG_MS * 3
+const LANG_MS = 7000       /* แต่ละภาษาแสดง 7 วิ — หน้าหนึ่งเล่นครบทุกภาษาแล้วค่อยเปลี่ยนหน้า */
+const PAGE_MS = LANG_MS * LANGS.length
 const SALE_FLIP_MS = 3500  /* ล้านบาท ↔ ฿/ตรม. */
 const FLAG_MS = 3500       /* หลายธง → สลับทีละอัน (กติกาเดียวกับบอร์ด split-flap) */
 const rows = (DATA.rows || []).slice(0, 21)   /* เพดาน 3 หน้า */
-const pages = []
-/* เกลี่ยห้องให้ทุกหน้าเท่า ๆ กัน (19 ห้อง → 7·6·6 ไม่ใช่ 7·7·5) — ไม่มีหน้าไหน
-   โล่งครึ่งหน้า และการ์ดได้พื้นที่มากที่สุดเท่าที่จำนวนหน้าเดิมจะให้ได้ */
+const SEG_ORDER = ["STUDIO", "1BED", "2BED", "3BED", "4BED+"]
+/* เรียงตาม segment แล้ว "เกลี่ยหน้าเท่า ๆ กันแบบเดิม" — ไม่ตัดหน้าตาม segment
+   เพราะของจริงมี STUDIO/3BED อยู่ segment ละ 1 ห้องแทบทุกบอร์ด ถ้าบังคับให้ขึ้น
+   หน้าใหม่ มันจะได้ทั้งหน้าไว้โชว์การ์ดใบเดียวบนจอที่วางไว้ 7 ใบ
+   segment จึงถูกสื่อด้วย "หัวคั่น" ไม่ใช่ "ขอบหน้า" · หน้าไหนต่อจาก segment เดิม
+   หัวจะบอกว่าต่อเนื่อง คนอ่านไม่หลงว่าขึ้นกลุ่มใหม่ */
+const pages = [], pageSegs = []
 {
-  const n = rows.length
+  const sorted = SEG_ORDER.flatMap(sg => rows.filter(r => r.type === sg))
+    .concat(rows.filter(r => !SEG_ORDER.includes(r.type)))
+  const n = sorted.length
   const pageCount = Math.max(1, Math.ceil(n / PER_PAGE))
   const base = Math.floor(n / pageCount), rem = n % pageCount
   let i = 0
   for (let p = 0; p < pageCount; p++) {
     const take = base + (p < rem ? 1 : 0)
-    pages.push(rows.slice(i, i + take)); i += take
+    pages.push(sorted.slice(i, i + take)); i += take
+  }
+  let seen = null
+  for (const pg of pages) {
+    const segs = []
+    pg.forEach((r, idx) => {
+      const last = segs[segs.length - 1]
+      if (last && last.seg === r.type) { last.n++; return }
+      segs.push({ seg: r.type, start: idx, n: 1, cont: r.type === seen })
+      seen = r.type
+    })
+    pageSegs.push(segs)
   }
 }
 
@@ -221,12 +261,29 @@ const fmtRentK = p => (p / 1e3).toFixed(1) + "K"
 const fmtSaleM = p => { let s = (p / 1e6).toFixed(1); if (s.length > 4) s = String(Math.round(p / 1e6)); return s + "M" }
 const fmtPsqmK = (p, sqm) => Math.round(p / sqm / 1e3) + "K"
 
+const fl = (r, t) => r.floorNo != null
+  ? (t.floorWord ? `${t.floorWord} ${r.floorNo}` : `${r.floorNo}${t.floorSuffix || "階"}`)
+  : (t.zones[r.floor] || "")
+const why = (r, t) => {
+  if (r.takenLabel) return t.doneLine
+  if (r.actTalking) return t.actTalking
+  if (r.actViewing) return t.actViewing
+  if (r.actInterest) return t.actInterest.replace("%s", r.actInterest)
+  /* valuePct เทียบกับ "ราคาที่ควรเป็นของชั้นนั้น" = ค่ากลางของตึก + ค่าชั้น × ระยะจากชั้นอ้างอิง
+     ห้องชั้นต่ำจึงไม่ได้เครดิตฟรีจากการที่ราคาถูกตามชั้น · ติดลบ = ถูกกว่าที่ควร
+     vsFloorPct เป็นตัวสำรองสำหรับข้อมูลรอบเก่าที่ยังไม่มี valuePct */
+  if (r.valuePct != null && r.valuePct < 0) return t.worth.replace("%s", Math.abs(r.valuePct))
+  if (r.vsFloorPct != null && r.vsFloorPct < 0) return t.cheaper.replace("%s", Math.abs(r.vsFloorPct))
+  const ps = r.pricePerSqm ?? (r.sqm ? Math.round(r.price / r.sqm) : null)
+  return ps ? `${ps.toLocaleString()} ${t.psqmU}` : ""
+}
+
 function paint() {
   const t = L[LANGS[lang]]
   $("headP").textContent = `${DATA.project || ""}${upd ? " · UPDATED " + upd : ""} · ${page + 1}/${pages.length}`
   $("chipT").textContent = MODE === "rent" ? t.chipRent : (saleM ? t.chipSaleM : t.chipSaleQ)
   $("langInd").innerHTML = LANGS.map((x, i) => i === lang ? `<b>${L[x].ind}</b>` : L[x].ind).join(" · ")
-  $("cards").innerHTML = pages[page].map(r => {
+  const cardHtml = r => {
     const multi = r.type === "2BED" || r.type === "3BED"
     /* ธงโชว์ทีละอัน — หลายธงสลับวนตาม flagIdx (ไม่ซ้อนกัน: สีเดียวกันติดกันอ่านเป็นวลีเดียว) */
     const rm = (r.remarks || []).slice(0, 4)
@@ -234,14 +291,18 @@ function paint() {
     const flags = cur ? `<span class="${TONE[cur.tone] || "w"}" data-n="${rm.length}">${cur.text}</span>` : ""
     const pr  = MODE === "rent" ? fmtRentK(r.price) : (saleM ? fmtSaleM(r.price) : fmtPsqmK(r.price, r.sqm))
     const pru = MODE === "rent" ? t.rentU : (saleM ? t.saleM : t.saleQ)
-    return `<div class="c">
+    return `<div class="c${r.takenLabel ? " taken" : ""}">
       <span class="ic${multi ? " multi" : ""}">${iconFor(r.type)}</span>
-      <span class="nm"><div class="t">${t.beds[r.type] || r.type} · ${r.sqm} ${t.bedU}</div>
-        <div class="s">${r.floorNo != null ? t.floorWord ? `${t.floorWord} ${r.floorNo}` : `${r.floorNo}階` : `${t.zones[r.floor] || ""} (${r.floor})`}</div></span>
-      <span class="fl">${flags}</span>
+      <span class="nm"><div class="t">${r.sqm} ${t.bedU} · ${fl(r, t)}</div>
+        <div class="s">${why(r, t)}</div></span>
+      <span class="fl">${r.takenLabel ? `<span class="done">${r.takenLabel === "sale" ? "SOLD" : "RENTED"}</span>` : flags}</span>
       <span class="prw"><div class="pr">${pr}</div><div class="pru">${pru}</div></span>
     </div>`
-  }).join("")
+  }
+  $("cards").innerHTML = pageSegs[page].map(sg =>
+    '<div class="seg"><b>' + (t.beds[sg.seg] || sg.seg) + '</b>' + (sg.cont ? '<i>' + t.cont + '</i>' : '') + '</div>'
+    + pages[page].slice(sg.start, sg.start + sg.n).map(cardHtml).join("")
+  ).join("")
   document.querySelectorAll("#dots i").forEach((d, i) => d.classList.toggle("on", i === page))
   /* ชื่อใดยังล้นคอลัมน์ → หดฟอนต์ลงหนึ่งขั้น */
   document.querySelectorAll("#cards .nm").forEach(nm => {
