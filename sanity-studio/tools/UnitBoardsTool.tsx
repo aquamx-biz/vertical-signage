@@ -1000,9 +1000,15 @@ export function UnitBoardsTool() {
                     border: '1px solid #d1d5db', background: '#fff', color: '#374151' }}>ยกเลิกที่ติ๊ก</button>
               </Flex>
             )}
-            {stageOpen && ([['บอร์ดเช่า', 'rent', simR], ['บอร์ดขาย', 'sale', simS]] as const).map(([label, m2, sim]) => sim.rows.length > 0 && (
+            {/* แสดงหัวบอร์ดทั้งสองฝั่งเสมอ — 0 ห้องต้องเห็นเป็น "0" ไม่ใช่หายไปทั้งบล็อก
+                (ไม่งั้นแยกไม่ออกว่าไม่มีห้อง หรือ UI พลาด) */}
+            {stageOpen && ([['บอร์ดเช่า', 'rent', simR], ['บอร์ดขาย', 'sale', simS]] as const).map(([label, m2, sim]) => (
               <Stack key={m2} space={2}>
-                <Text size={1} muted weight="semibold">{label}</Text>
+                <Inline space={2}>
+                  <Text size={1} muted weight="semibold">{label}</Text>
+                  <Text size={1} weight="bold" style={{ color: sim.rows.length ? '#166534' : '#b42318' }}>{sim.rows.length} ห้อง</Text>
+                  {sim.rows.length === 0 && <Text size={1} muted>ยังไม่ได้เลือก — {(m2 === 'rent' ? manualR : manualS) ? `ติ๊ก Select ${m2 === 'rent' ? 'R' : 'S'} ในตาราง` : 'ไม่มีห้องผ่านเกณฑ์'}</Text>}
+                </Inline>
                 {/* จัดกลุ่มตามชนิดห้องให้ตรงกับรูปแบบใหม่ที่ "หนึ่งสไลด์ = หนึ่งชนิด"
                     และบอกตรงนี้เลยว่าชนิดไหนจะได้สไลด์จริง คนเลือกจะได้ไม่ต้องเดา */}
                 {BED_ORDER.filter(b => sim.rows.some(p => p.bedType === b)).map(b => {
