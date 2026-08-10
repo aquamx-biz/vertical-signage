@@ -391,6 +391,10 @@ export function UnitBoardsTool() {
     if (fk === 'type') return [BED_LABEL[u.bed ?? ''] ?? u.bed ?? '—']
     if (fk === 'zone') return [u.zone ?? '—']
     if (fk === 'status') return statusesOf(u)
+    if (fk === 'fseen') {
+      const d = [u.rent?.firstSeenAt, u.sale?.firstSeenAt].filter(Boolean).sort().pop()
+      return [d ?? '(ไม่ทราบ)']
+    }
     if (fk === 'posted') {
       const src = sources.get(u.refCode)
       const out: string[] = []
@@ -480,6 +484,8 @@ export function UnitBoardsTool() {
           case 'sdeal': return dealScore(u.sale)
           case 'spread': return Math.max(u.rent?.spreadPct ?? -1, u.sale?.spreadPct ?? -1)
           case 'upd': return u.rent?.lastCheckedAt ?? u.sale?.lastCheckedAt ?? ''
+          /* ใหม่สุดก่อนเมื่อกดครั้งแรก — คนกดคอลัมน์นี้กำลังหาห้องที่เพิ่งเข้าวีคนี้ */
+          case 'fseen': return [u.rent?.firstSeenAt, u.sale?.firstSeenAt].filter(Boolean).sort().pop() ?? ''
           case 'fl': return sources.get(u.refCode)?.floorActual ?? -1
           /* ธงเปิด/ปิด — เรียงให้ห้องที่ติดธงขึ้นก่อน แล้วแพ้ชนะกันด้วยตัวเลขชุดเดียวกับที่
              bucket ของ engine ใช้จัดอันดับ (HOT=จำนวนประกาศแข่ง · NEGO=spread · INVEST=yield) */
@@ -984,6 +990,7 @@ export function UnitBoardsTool() {
               {H('Nego', 'nego', 'NEGO = ลงประกาศ ≥3 พอร์ทัล และราคาต่างกัน ≥5% — มีช่องต่อรอง')}
               {H('Spread', 'spread', 'ช่วงราคาข้ามพอร์ทัล (สูงสุด−ต่ำสุด)/ต่ำสุด — กว้าง = ต่อรองได้')}
               {H('Update', 'upd', 'รอบข้อมูลล่าสุดที่ยังพบห้องนี้ในตลาด')}
+              <FilterHead label="First seen" fk="fseen" sk="fseen" title="ห้องเข้าระบบครั้งแรกรอบไหน — กด ▾ เลือกเฉพาะรอบล่าสุด = ห้องใหม่ของวีคนี้ · ป้าย NEW = เข้ารอบปัจจุบัน" />
               <FilterHead label="Posted by" fk="posted" sk="posted" title="ใครลงประกาศ — 🏠 Owner = เจ้าของโพสต์เอง (ไม่มีชื่อ agent โดยนิยาม) · ชื่อ = agent/agency ที่โพสต์ — กดชื่อคอลัมน์เพื่อเรียง กด ▾ ติ๊กเลือก/เอาออกรายเจ้าได้" />
               <FilterHead label="Status" fk="status" sk="status" title="สถานะ cleansing ของทีม (แยกฝั่งเช่า/ขาย) — กดชื่อคอลัมน์เพื่อเรียง กด ▾ กรองได้" />
               {H('Board', 'board', 'ติด lineup ปัจจุบัน + เหตุผลที่ถูกคัด (SELECT/BED/ธง/FILL)')}
@@ -1044,6 +1051,12 @@ export function UnitBoardsTool() {
                       ? <span style={chipStyle('#f3f4f6', '#374151')} title="ลงหลายพอร์ทัลและราคาต่างกัน ≥5% — มีช่องต่อรอง">NEGO</span> : ''}</td>
                     <td style={num}>{(() => { const sp = Math.max(u.rent?.spreadPct ?? -1, u.sale?.spreadPct ?? -1); return sp >= 0 ? sp + '%' : '—' })()}</td>
                     <td style={{ ...td, fontSize: 12 }}>{(u.rent?.lastCheckedAt ?? u.sale?.lastCheckedAt ?? '—').slice(5)}</td>
+                    <td style={{ ...td, fontSize: 12 }}>{(() => {
+                      const d = [u.rent?.firstSeenAt, u.sale?.firstSeenAt].filter(Boolean).sort().pop()
+                      if (!d) return '—'
+                      /* NEW = เข้าระบบรอบปัจจุบัน (dataRound) — ตัวกรองสายตาหาห้องใหม่ของวีคนี้ */
+                      return <>{d.slice(5)}{d === dataRound && <span style={chipStyle('#ffedd5', '#c2410c')}>NEW</span>}</>
+                    })()}</td>
                     <td style={{ ...td, whiteSpace: 'normal', maxWidth: 180 }}>
                       {owner && <span style={chipStyle('#d1f2dd', '#166534')} title="เจ้าของโพสต์เอง">🏠 Owner</span>}
                       {agents.slice(0, 2).map(a => <span key={a} style={chipStyle('#f3f4f6', '#374151')} title={agents.join(' · ')}>{a}</span>)}

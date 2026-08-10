@@ -76,7 +76,14 @@ const FILES = {
 const BED_MAX = 8
 const BED = n => n === 0 ? 'studio' : n === 1 ? '1bed' : n === 2 ? '2bed' : n === 3 ? '3bed' : '4bed'
 const bedOk = n => Number.isFinite(n) && n >= 0 && n <= BED_MAX
-const BED_JUNK = [], RECONCILED = []
+const BED_JUNK = [], RECONCILED = [], SQM_JUNK = []
+// วันที่จาก portal (timestamp/ISO/วันที่ไทยที่แปลงแล้ว) → YYYY-MM-DD · แปลงไม่ได้ = null
+const isoDate = v => {
+  if (v == null || v === '') return null
+  const d = typeof v === 'number' ? new Date(v > 1e11 ? v : v * 1000) : new Date(v)
+  return Number.isNaN(d.getTime()) ? null : d.toISOString().slice(0, 10)
+}
+const ROUND_WARNINGS = []   // เตือนทุกชั้นก่อนจับคู่ห้อง — ไหลลงใบสรุปรอบ (scrapeRound)
 
 /* ── ตรวจการ์ดกับพยานที่ไม่ผ่านมือ scraper ก่อนรับเข้า ────────────────────────
    ประกาศเข้ารหัสจำนวนห้องนอนไว้ใน slug ของ URL อยู่แล้ว (1-bedroom-condo-for-sale-…)
@@ -95,6 +102,18 @@ const bedFromUrl = u => {
   const m = /(\d+)[-_ ]?(?:bedroom|bedrooms|bed|beds|br)\b/.exec(s)
   return m && +m[1] <= BED_MAX ? +m[1] : null
 }
+/* บทเรียน audit 39BS (8 ส.ค. 2026):
+   ① LI ชุดหนึ่ง sqm+price+floor เพี้ยน "ยกชุด" (ค่าของประกาศอื่น) — ยามรายฟิลด์จับไม่ได้
+     เพราะ ฿/ตร.ม. ของชุดที่เพี้ยนก็อยู่ในกรอบ → ต้องมียามไขว้ฟิลด์: sqm ต้องเข้ากับ bedType
+     (1 นอน 90 ตร.ม. ไม่มีจริง) เจอแล้ว "ทิ้ง" ไม่เดาซ่อม เพราะไม่รู้ฟิลด์ไหนถูก
+   ② DP บางส่วนแสดงราคาผ่านการแปลงค่าเงินไป-กลับ → เพี้ยนหลักหน่วย (10,000,000 → 9,999,990)
+     ราคาจริงในตลาดตั้งเป็นพันถ้วนเสมอ → ≥100K และห่างเลขพันถ้วน ≤30 บาท = snap กลับ */
+const SQM_BY_BED = { 0: [18, 46], 1: [24, 72], 2: [45, 130], 3: [78, 260], 4: [100, 500] }
+const sqmFitsBed = (bed, sqm) => {
+  const b = SQM_BY_BED[Math.min(+bed, 4)]
+  return !b || (sqm >= b[0] && sqm <= b[1])
+}
+let COIN_SNAPPED = 0
 function reconcile(r, building) {
   let bed = +r.bed, price = +r.price
   const sqm = +r.sqm
@@ -113,6 +132,14 @@ function reconcile(r, building) {
       price = head
     }
   }
+  // ② currency round-trip snap — เกณฑ์ ≤50/≥950 (ตรวจซ้ำ 9 ส.ค.: ครบ 36/36, false positive 0/428)
+  if (price >= 100000) {
+    const rem = price % 1000
+    if (rem !== 0 && (rem <= 50 || rem >= 950)) { price = Math.round(price / 1000) * 1000; COIN_SNAPPED++ }
+  }
+  // ① ยามไขว้ sqm×bedType — คืน reject ให้ผู้เรียกทิ้งการ์ดนี้
+  if (sqm && !sqmFitsBed(bed, sqm))
+    return { bed, price, reject: `${building} · ${bed}นอน ${sqm}ตร.ม. เป็นไปไม่ได้ · ${r.url ?? ''}` }
   return { bed, price }
 }
 const cards = []
@@ -125,17 +152,27 @@ if (ROUND_FILE) {
   const rows = JSON.parse(readFileSync(ROUND_FILE, 'utf8'))
   for (const r of rows) {
     if (!r.building || !['rent', 'sale'].includes(r.intent)) continue
-    if (r.price == null || r.sqm == null || r.bed == null || r.floor == null) continue
+    if (r.price == null || r.sqm == null || r.bed == null) continue
+    if (r.floor == null && !r.refCode) continue    // ไม่รู้ทั้งชั้นทั้งห้อง = จับคู่ไม่ได้จริง
     const fix = reconcile(r, r.building)
     if (!bedOk(fix.bed)) { BED_JUNK.push(`${r.building} · bed=${r.bed} · ${r.url ?? ''}`); continue }
-    const floor = parseInt(r.floor); if (!Number.isFinite(floor)) continue
+    if (fix.reject) { SQM_JUNK.push(fix.reject); continue }
+    const floor = Number.isFinite(parseInt(r.floor)) ? parseInt(r.floor) : null
+    if (floor == null && !r.refCode) continue
     if (r.url) { if (seenUrls.has(r.url)) continue; seenUrls.add(r.url) }
     if (!passesSanity({ bedType: BED(fix.bed), sqm: +r.sqm, priceTHB: fix.price }, r.intent)) continue
     cards.push({
+      /* รอบ re-scrape ระบุห้องมาเลย — ลายนิ้วมือ (ตึก|นอน|ตรม.|ชั้น) มีไว้สำหรับประกาศแปลกหน้า
+         การบังคับห้องเดิมไปทายลายนิ้วมือใหม่ทำ 1,440 ห้องที่ยังขายอยู่กลายเป็น expired
+         (ชั้น null โดนทิ้งทั้งแถว · bed ที่ reconcile แก้ทำลายนิ้วมือเลื่อน) */
+      refCode: r.refCode ?? null,
       building: r.building, intent: r.intent, bedType: BED(fix.bed), sqm: +r.sqm, floor,
       price: fix.price, portal: r.portal ?? 'unknown', url: r.url ?? null,
       sourceId: r.sourceId ?? (r.url ? String(r.portal ?? 'x').toLowerCase().replace(/\W/g, '').slice(0, 2) + ':' + String(r.url).split(/[/_-]/).pop().slice(0, 24) : null),
       posterType: r.posterType ?? 'unknown', posterName: r.posterName ?? null,
+      postCreatedAt: isoDate(r.postCreatedAt ?? r.createdAt), postUpdatedAt: isoDate(r.postUpdatedAt ?? r.updatedAt),
+      // ห้องเช่าที่ผู้เช่าเดิมยังอยู่ — ก่อนวันนี้ห้ามนับเป็นสต็อกว่าง (rescrape เก็บมาให้)
+      availableFrom: isoDate(r.availableFrom),
     })
   }
 }
@@ -150,6 +187,7 @@ if (!ROUND_FILE) for (const [portal, files] of Object.entries(FILES)) {
       if (r.price == null || r.sqm == null || r.bed == null || r.floor == null) continue
       const fix = reconcile(r, building)
       if (!bedOk(fix.bed)) { BED_JUNK.push(`${building} · bed=${r.bed} · ${r.url ?? ''}`); continue }
+      if (fix.reject) { SQM_JUNK.push(fix.reject); continue }
       const floor = parseInt(r.floor); if (!Number.isFinite(floor)) continue
       if (r.url) { if (seenUrls.has(r.url)) continue; seenUrls.add(r.url) }
       // กรองขยะ scraper ด้วยเกณฑ์เดียวกับ board-engine (sqm/ราคา/฿ต่อตรม.)
@@ -161,14 +199,74 @@ if (!ROUND_FILE) for (const [portal, files] of Object.entries(FILES)) {
         sourceId: r.sourceId ?? (r.url ? portal.toLowerCase().replace(/\W/g, '').slice(0, 2) + ':' + String(r.url).split(/[/_-]/).pop().slice(0, 24) : null),
         posterType: r.posterType ?? r.poster ?? 'unknown',
         posterName: r.agent ?? r.posterName ?? null,
+        postCreatedAt: isoDate(r.postCreatedAt ?? r.createdAt), postUpdatedAt: isoDate(r.postUpdatedAt ?? r.updatedAt),
       })
     }
   }
 }
+/* ── ยามชั้นสอง (audit ①): กรอบ ตร.ม. ของ "ตึกนั้นเอง" ต่อ bedType ──────────────
+   กรอบระดับประเทศ (SQM_BY_BED) จับ "2นอนแต่ได้ ตร.ม. ของ 1นอน" ไม่ได้ เพราะ 2นอน 52 ตร.ม.
+   มีจริงในตึกอื่น — ต้องเทียบกับพยานอิสระ: การ์ดของ portal อื่น ๆ ในตึก×ประเภทเดียวกัน
+   (leave-one-portal-out) ถ้า n อื่น ≥ 8 ใช้ [p10×0.9, p90×1.1] เป็นกรอบ · หลุด = ทิ้ง */
+{
+  const cohort = new Map()   // building|bedType|portal -> [sqm]
+  for (const c of cards) {
+    const k = `${c.building}|${c.bedType}`
+    ;(cohort.get(k) ?? cohort.set(k, new Map()).get(k))
+    const m = cohort.get(k)
+    ;(m.get(c.portal) ?? m.set(c.portal, []).get(c.portal)).push(c.sqm)
+  }
+  const q = (a, p) => { const s = [...a].sort((x, y) => x - y); return s[Math.min(s.length - 1, Math.floor(p * s.length))] }
+  const keep = []
+  for (const c of cards) {
+    const m = cohort.get(`${c.building}|${c.bedType}`)
+    const others = []
+    for (const [portal, arr] of m) if (portal !== c.portal) others.push(...arr)
+    if (others.length >= 8) {
+      const lo = q(others, 0.10) * 0.9, hi = q(others, 0.90) * 1.1
+      if (c.sqm < lo || c.sqm > hi) {
+        SQM_JUNK.push(`${c.building} · ${c.bedType} ${c.sqm}ตร.ม. หลุดกรอบตึก [${lo.toFixed(0)}–${hi.toFixed(0)}] จาก ${others.length} การ์ด portal อื่น · ${c.url ?? ''}`)
+        continue
+      }
+    }
+    keep.push(c)
+  }
+  if (keep.length < cards.length) {
+    const n = cards.length - keep.length
+    console.warn(`⚠ ยามกรอบตึก: ทิ้ง ${n} การ์ด sqm หลุดช่วงจริงของตึก×ประเภท`)
+    ROUND_WARNINGS.push(`ทิ้ง ${n} การ์ด sqm หลุดกรอบ ตร.ม. ของตึกเอง (เทียบ portal อื่น)`)
+  }
+  cards.length = 0; cards.push(...keep)
+}
+
+/* ── ธง stale: โพสต์ที่ portal บอกเองว่าไม่ถูกแตะเกิน STALE_DAYS วัน ─────────────
+   "อัพเดทล่าสุด" ของ portal เชื่อได้ทางเดียว: วันที่เก่ามาก = ประกาศถูกทิ้งร้าง ราคาไม่น่าเชื่อ
+   (วันที่สด ≠ ข้อมูลจริง เพราะ agent กดดันประกาศได้) → stale ไม่ให้ค้ำราคา/สถิติของห้อง
+   แต่ยังเก็บใน unitSource ให้ทีมเห็น · การ์ดไม่มีวันที่ (portal ไม่ให้/ยังไม่ scrape มา) = ไม่ตัดสิน */
+const STALE_DAYS = 90
+{
+  const cutoff = new Date(ROUND).getTime() - STALE_DAYS * 864e5
+  let n = 0
+  for (const c of cards)
+    if (c.postUpdatedAt && new Date(c.postUpdatedAt).getTime() < cutoff) { c.stale = true; n++ }
+  if (n) {
+    console.warn(`⚠ ${n} การ์ดเป็นโพสต์ค้าง (ไม่อัพเดทเกิน ${STALE_DAYS} วันตามวันที่ของ portal) — ไม่ใช้ค้ำราคา`)
+    ROUND_WARNINGS.push(`โพสต์ค้างเกิน ${STALE_DAYS} วัน ${n} ใบ — เก็บใน source แต่ไม่ใช้คำนวณราคา/สถิติ`)
+  }
+}
+
+// portal ที่ "เห็นจริง" ในรอบนี้ต่อตึก — ใช้ตัดสินว่า listing เก่าที่ไม่เจอ = ตาย หรือ scrape ล่ม
+const normPortal = p => String(p ?? '').toLowerCase().replace(/\W/g, '')
+const portalsSeenByBuilding = new Map()
+for (const c of cards) {
+  ;(portalsSeenByBuilding.get(c.building) ?? portalsSeenByBuilding.set(c.building, new Set()).get(c.building))
+    .add(normPortal(c.portal))
+}
+let PRUNED = 0
+
 console.log(`round ${ROUND} · cards ${cards.length} listings จาก ${CARDS_DIR}`)
 if (!cards.length) { console.error('ไม่พบ card files — เช็ค --dir'); process.exit(1) }
 
-const ROUND_WARNINGS = []   // เตือนที่เกิดก่อนขั้นจับคู่ห้อง — ไหลลงใบสรุปรอบ (scrapeRound)
 if (BED_JUNK.length) {
   console.warn(`⚠ ทิ้ง ${BED_JUNK.length} การ์ดที่เลขห้องนอนเกิน ${BED_MAX} (อ่านผิดแน่ ๆ):`)
   BED_JUNK.slice(0, 8).forEach(x => console.warn(`    ${x}`))
@@ -178,6 +276,15 @@ if (RECONCILED.length) {
   console.warn(`⚠ แก้ให้ตรงกับประกาศ ${RECONCILED.length} การ์ด:`)
   RECONCILED.slice(0, 8).forEach(x => console.warn(`    ${x}`))
   ROUND_WARNINGS.push(`แก้ค่าให้ตรงกับประกาศ ${RECONCILED.length} การ์ด (นอนตาม slug / ราคาตัดเลขต่อท้าย)`)
+}
+if (SQM_JUNK.length) {
+  console.warn(`⚠ ทิ้ง ${SQM_JUNK.length} การ์ด sqm ไม่เข้ากับจำนวนห้องนอน (ยามไขว้จาก audit 39BS — ค่าเพี้ยนยกชุดจากประกาศอื่น):`)
+  SQM_JUNK.slice(0, 8).forEach(x => console.warn(`    ${x}`))
+  ROUND_WARNINGS.push(`ทิ้ง ${SQM_JUNK.length} การ์ด sqm×bedType เป็นไปไม่ได้ (เช่น 1นอน 90ตร.ม.)`)
+}
+if (COIN_SNAPPED) {
+  console.warn(`⚠ snap ราคาเพี้ยนหลักหน่วยจากการแปลงค่าเงิน ${COIN_SNAPPED} การ์ด (เช่น 9,999,990 → 10,000,000)`)
+  ROUND_WARNINGS.push(`snap ราคา currency-drift ${COIN_SNAPPED} การ์ดกลับเป็นเลขพันถ้วน`)
 }
 /* ── ยามชั้นกองค่าเดียว ────────────────────────────────────────────────────
    2026-08-05: รอบเก็บของ FazWaz หยิบเลขชั้นจากบล็อกสิ่งอำนวยความสะดวก (ชั้นสระ)
@@ -213,7 +320,8 @@ const [profiles, sources] = await Promise.all([
   q(`*[_type == "unitProfile"]{ _id, refCode, intent, projectName, bedType, sqm, priceTHB, status,
       pinToBoard, hideFromBoard, internalNote, firstSeenAt, priceHistory }`),
   q(`*[_type == "unitSource"]{ _id, refCode, projectName, floorActual,
-      "sids": listings[].sourceId, listings }`, 'internal'),
+      rentListings, saleListings, bestContact, cobrokeStatus, cobrokeNote, contactLog,
+      "sids": [...coalesce(rentListings, [])[].sourceId, ...coalesce(saleListings, [])[].sourceId] }`, 'internal'),
 ])
 const srcByRef = new Map(sources.map(s => [s.refCode, s]))
 const profByKey = new Map(profiles.map(p => [`${p.refCode}·${p.intent}`, p]))
@@ -230,6 +338,7 @@ for (const s of sources) {
   }
 }
 const matchRef = u => {
+  if (u.refCode && srcByRef.has(u.refCode)) return u.refCode
   const exact = fpToRef.get(u.fp)
   if (exact) return exact
   const cands = (nearIdx.get(`${u.building}|${u.bedType}|${u.floor}`) ?? [])
@@ -247,8 +356,9 @@ for (const s of sources) {
 // ── 3. รวม cards → หน่วยห้อง (fingerprint) + คำนวณสถิติของรอบ ────────────────
 const units = new Map()
 for (const c of cards) {
-  const fp = `${c.building}|${c.bedType}|${Math.round(c.sqm)}|${c.floor}`
-  const u = units.get(fp) ?? { fp, building: c.building, bedType: c.bedType, sqm: Math.round(c.sqm), floor: c.floor, listings: [] }
+  /* การ์ดที่รู้ refCode เกาะกลุ่มด้วย refCode ตรง ๆ — ลายนิ้วมือใช้เฉพาะการ์ดแปลกหน้า */
+  const fp = c.refCode ? `R:${c.refCode}` : `${c.building}|${c.bedType}|${Math.round(c.sqm)}|${c.floor}`
+  const u = units.get(fp) ?? { fp, refCode: c.refCode ?? null, building: c.building, bedType: c.bedType, sqm: Math.round(c.sqm), floor: c.floor, listings: [] }
   u.listings.push(c); units.set(fp, u)
 }
 // โซนชั้น: แบ่งช่วงชั้นของตึกเป็น 3 ส่วนเท่า ๆ กัน
@@ -263,7 +373,7 @@ const zoneOf = (b, f) => {
 const agg = {}
 units.forEach(u => {
   for (const intent of ['rent', 'sale']) {
-    const ls = u.listings.filter(l => l.intent === intent)
+    const ls = u.listings.filter(l => l.intent === intent && !l.stale)   // stale ไม่ค้ำสถิติ
     if (!ls.length) continue
     const min = Math.min(...ls.map(l => l.price))
     const psqm = min / u.sqm
@@ -279,9 +389,19 @@ const unitRows = []
 units.forEach(u => {
   const zone = zoneOf(u.building, u.floor)
   const both = {}
+  /* นโยบาย 2026-08-10 (ตกลงกับเจ้าของงาน): โพสต์ค้าง "ไม่ฆ่าห้อง" — สเปคเดิม
+     (scrape-postdates-spec.md) ให้ stale แค่ไม่ค้ำราคา/สถิติ แต่โค้ดรุ่นก่อนปล่อยให้
+     ห้องที่เหลือแต่โพสต์ค้างไหลไป expired ด้วย พอรอบแรกที่เก็บวันอัพเดทได้จริงมาถึง
+     59% ของตลาดกลายเป็นโพสต์ค้าง → 1,340 ห้องที่ยังขายอยู่โดนประหารหมู่เงียบ ๆ
+     ตอนนี้: ฝั่งที่เหลือแต่โพสต์ค้าง = ยังมีชีวิต (ต่ออายุ lastCheckedAt) แต่ตัวเลข
+     ราคา/สถิติเดิมถูกแช่แข็งไว้ ไม่อัพเดทจากข้อมูลค้าง และไม่สร้าง profile ใหม่จากมัน */
+  const staleOnly = {}
   for (const intent of ['rent', 'sale']) {
-    const ls = u.listings.filter(l => l.intent === intent)
-    if (!ls.length) continue
+    const ls = u.listings.filter(l => l.intent === intent && !l.stale)
+    if (!ls.length) {
+      if (u.listings.some(l => l.intent === intent && l.stale)) staleOnly[intent] = true
+      continue
+    }
     const prices = ls.map(l => l.price)
     const min = Math.min(...prices), max = Math.max(...prices)
     const psqm = min / u.sqm
@@ -303,7 +423,8 @@ units.forEach(u => {
       listings: ls,
     }
   }
-  if (both.rent || both.sale) unitRows.push({ ...u, zone, ...both, dual: !!(both.rent && both.sale) })
+  if (both.rent || both.sale || staleOnly.rent || staleOnly.sale)
+    unitRows.push({ ...u, zone, ...both, staleOnly, dual: !!(both.rent && both.sale) })
 })
 // yield + goodInvest (ต้องรู้ค่าเฉลี่ย yield ตึกก่อน)
 const yieldByBld = {}
@@ -318,12 +439,14 @@ unitRows.forEach(u => {
 
 // ── 4. จับคู่ refCode + สร้าง mutations ──────────────────────────────────────
 const seenKeys = new Set()   // refCode·intent ที่พบรอบนี้
-const stats = { newUnits: 0, priceChanges: 0, unchanged: 0, expired: 0, matched: 0, newRefs: [] }
+const stats = { newUnits: 0, priceChanges: 0, unchanged: 0, expired: 0, matched: 0, staleKept: 0, newRefs: [] }
 const prodMut = [], intMut = []
 const warnings = [...ROUND_WARNINGS]
 
 for (const u of unitRows) {
   let ref = matchRef(u)
+  const freshless = !u.rent && !u.sale        // มีแต่ฝั่งโพสต์ค้าง
+  if (!ref && freshless) continue             // ห้ามออกเลขห้องใหม่จากโพสต์ค้างล้วน
   if (!ref) {
     const prefix = prefixOf[u.building]
     if (!prefix) { warnings.push(`ตึกใหม่ไม่รู้จัก prefix: ${u.building} — ข้าม`); continue }
@@ -332,6 +455,15 @@ for (const u of unitRows) {
     stats.newUnits++; if (stats.newRefs.length < 12) stats.newRefs.push(ref)
   } else stats.matched++
 
+  // ฝั่งที่เหลือแต่โพสต์ค้าง: ต่ออายุอย่างเดียว — profile เดิมอยู่ครบ ตัวเลขแช่แข็ง
+  for (const intent of ['rent', 'sale']) {
+    if (u[intent] || !u.staleOnly?.[intent]) continue
+    const old = profByKey.get(`${ref}·${intent}`)
+    if (!old) continue                        // ไม่มี profile เดิม = ไม่สร้างจากของค้าง
+    seenKeys.add(`${ref}·${intent}`)
+    stats.staleKept++
+    prodMut.push({ patch: { id: old._id, set: { lastCheckedAt: ROUND } } })
+  }
   for (const intent of ['rent', 'sale']) {
     const d = u[intent]; if (!d) continue
     seenKeys.add(`${ref}·${intent}`)
@@ -359,27 +491,55 @@ for (const u of unitRows) {
     } })
   }
   // unitSource: merge listings ตาม sourceId — สงวนงาน co-broke ของทีม
+  // schema แยก rentListings/saleListings แล้ว (2026-08-08) — merge แยกฝั่ง และ
+  // createOrReplace ต้องพกทุก field ที่ทีมกรอกมือ (contactLog/phone/lineId ติดอยู่ใน
+  // listing เดิมที่ spread ต่อมา) ไม่งั้นหายทั้งชุดตอน replace
   const oldSrc = srcByRef.get(ref)
-  const oldL = oldSrc?.listings ?? []
-  const oldSids = new Set((oldSrc?.sids ?? []).filter(Boolean))
-  const merged = [...oldL]
   let li = 0
-  for (const l of [...(u.rent?.listings ?? []), ...(u.sale?.listings ?? [])]) {
-    if (l.sourceId && oldSids.has(l.sourceId)) {
-      const ex = merged.find(m => m.sourceId === l.sourceId)
-      if (ex) { ex.price = l.price; ex.lastSeenAt = ROUND }
-    } else {
-      merged.push({ _type: 'listing', _key: `L${ROUND.replace(/-/g, '')}x${li++}`,
-        sourceId: l.sourceId, portal: l.portal, url: l.url, intent: l.intent,
-        price: l.price, posterType: l.posterType, posterName: l.posterName, lastSeenAt: ROUND })
+  const mergeSide = (side, fresh) => {
+    let merged = [...(oldSrc?.[side] ?? [])]
+    const lType = side === 'rentListings' ? 'rentListing' : 'saleListing'
+    for (const l of fresh) {
+      // เช็คใน "ฝั่งนี้" เท่านั้น — ห้ามใช้ Set รวมสองฝั่ง (audit ③: ประกาศสลับฝั่ง
+      // rent↔sale จะเข้าเงื่อนไข has() แต่ find ไม่เจอ → ตกหายเงียบ) เจอในฝั่ง = อัพเดท
+      // ไม่เจอ = ใบใหม่ของฝั่งนี้เสมอ แม้เคยอยู่อีกฝั่ง
+      /* จับคู่ด้วย URL ก่อนเสมอ — sourceId ที่เก็บไว้ใช้สูตรของ import ดั้งเดิม (ps:883235,
+         dp:28bbfbcfee) ซึ่งคำนวณกลับจาก URL ไม่ได้ · รอบ re-scrape ส่ง URL เดิมเป๊ะกลับมา
+         การจับด้วย sourceId ที่สังเคราะห์ใหม่ทำให้ 62% ของประกาศถูกมองเป็นใบแปลกหน้า
+         (prune 6,843 ใบใน dry-run แรก — เกือบทั้งหมดคือใบเดิมที่ยังอยู่ดี ๆ) */
+      const ex = merged.find(m => (l.url && m.url === l.url) || (l.sourceId && m.sourceId === l.sourceId))
+      if (ex) {   // แก้ in-place → phone/lineId เดิมอยู่ครบ
+        ex.price = l.price; ex.lastSeenAt = ROUND
+        if (l.postUpdatedAt) ex.postUpdatedAt = l.postUpdatedAt
+        if (l.postCreatedAt && !ex.postCreatedAt) ex.postCreatedAt = l.postCreatedAt
+        // วันว่างเขียนทับเสมอ (รวมทั้งลบทิ้งเมื่อประกาศเลิกระบุ = ห้องว่างแล้ว)
+        ex.availableFrom = l.availableFrom ?? undefined
+      } else merged.push({ _type: lType, _key: `L${ROUND.replace(/-/g, '')}x${li++}`,
+        sourceId: l.sourceId, portal: l.portal, url: l.url,
+        price: l.price, posterType: l.posterType, posterName: l.posterName, lastSeenAt: ROUND,
+        postCreatedAt: l.postCreatedAt ?? undefined, postUpdatedAt: l.postUpdatedAt ?? undefined,
+        availableFrom: l.availableFrom ?? undefined })
     }
+    // prune ประกาศที่หายจากตลาด — ถ้ารอบนี้ "เห็น portal นั้นของตึกนี้" แต่ไม่เห็นใบนี้ = ใบตาย/ถูกลบ
+    // (ถ้า portal ทั้งเจ้าหายจากรอบ = scrape เจ้านั้นล่ม ไม่ตัด กันข้อมูลหายเพราะเก็บไม่ครบ)
+    const seenPortals = portalsSeenByBuilding.get(u.building) ?? new Set()
+    const before = merged.length
+    merged = merged.filter(m => m.lastSeenAt === ROUND || !seenPortals.has(normPortal(m.portal)))
+    PRUNED += before - merged.length
+    return merged
   }
+  // ใช้การ์ดดิบทั้งฝั่ง (รวม stale) — โพสต์ค้างยังมีจริงบน portal ต้องคง lastSeenAt ให้
+  // ไม่งั้นโดน prune ทิ้งทั้งที่ยังไม่ตาย · ส่วนราคา/สถิติกรอง stale ไปแล้วตอนสร้าง both[intent]
+  const mergedRent = mergeSide('rentListings', u.listings.filter(l => l.intent === 'rent'))
+  const mergedSale = mergeSide('saleListings', u.listings.filter(l => l.intent === 'sale'))
   intMut.push({ createOrReplace: {
     _id: oldSrc?._id ?? `unitSource-${ref}`, _type: 'unitSource',
     refCode: ref, projectName: u.building, floorActual: u.floor,
-    listings: merged,
+    rentListings: mergedRent.length ? mergedRent : undefined,
+    saleListings: mergedSale.length ? mergedSale : undefined,
     bestContact: oldSrc?.bestContact, cobrokeStatus: oldSrc?.cobrokeStatus ?? 'not_contacted',
     cobrokeNote: oldSrc?.cobrokeNote,
+    contactLog: oldSrc?.contactLog,           // ⚠ ห้ามหาย — บันทึกการโทรของทีม
   } })
 }
 
@@ -435,6 +595,8 @@ prodMut.push({ createOrReplace: {
 console.log(`\nสรุปรอบ ${ROUND}:`)
 console.log(`  ห้องจับคู่กับของเดิม ${stats.matched} · ห้องใหม่ ${stats.newUnits}${stats.newRefs.length ? ' (' + stats.newRefs.join(',') + (stats.newUnits > 12 ? ',…' : '') + ')' : ''}`)
 console.log(`  ราคาเปลี่ยน ${stats.priceChanges} · ราคาเดิม ${stats.unchanged} · หายจากตลาด→expired ${stats.expired}`)
+console.log(`  ห้องโพสต์ค้างล้วน (คงชีวิตไว้ ตัวเลขแช่แข็ง) ${stats.staleKept}`)
+if (PRUNED) console.log(`  prune listing ตาย/หลุดตลาดออกจาก source ${PRUNED} ใบ (portal ที่เห็นในรอบแต่ไม่เห็นใบนั้นแล้ว)`)
 warnings.forEach(w => console.log(`  ⚠ ${w}`))
 console.log(`  mutations: production ${prodMut.length} · internal ${intMut.length}`)
 

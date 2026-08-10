@@ -16,31 +16,37 @@ export default defineType({
     defineField({ name: 'refCode', title: 'Ref Code', type: 'string', validation: R => R.required() }),
     defineField({ name: 'projectName', title: 'Project Name', type: 'string' }),
     defineField({ name: 'floorActual', title: 'Floor (ชั้นจริง)', type: 'number' }),
-    defineField({
-      name: 'listings', title: 'Listings ต้นทาง', type: 'array',
-      of: [{
-        type: 'object',
-        fields: [
-          defineField({ name: 'sourceId', title: 'Source ID', type: 'string', description: 'portal:nativeId — กัน import ซ้ำ' }),
-          defineField({ name: 'portal', type: 'string' }),
-          defineField({ name: 'url', type: 'url' }),
-          defineField({ name: 'intent', type: 'string', options: { list: ['rent', 'sale'] } }),
-          defineField({ name: 'price', type: 'number' }),
-          defineField({ name: 'posterType', type: 'string', options: { list: ['owner', 'agent', 'unknown'] } }),
-          defineField({ name: 'posterName', type: 'string' }),
-          defineField({ name: 'phone', type: 'string' }),
-          defineField({ name: 'lineId', type: 'string' }),
-          defineField({ name: 'lastSeenAt', type: 'date' }),
-        ],
-        preview: {
-          select: { portal: 'portal', intent: 'intent', price: 'price', posterName: 'posterName' },
-          prepare: ({ portal, intent, price, posterName }) => ({
-            title: `${portal} · ${intent} · ฿${(price ?? 0).toLocaleString()}`,
-            subtitle: posterName || '(ไม่มีชื่อผู้โพสต์)',
-          }),
-        },
-      }],
-    }),
+    ...(['rent', 'sale'] as const).map(li =>
+      defineField({
+        name: `${li}Listings`, title: li === 'rent' ? 'Listings เช่า' : 'Listings ขาย', type: 'array',
+        of: [{
+          type: 'object',
+          name: `${li}Listing`,
+          fields: [
+            defineField({ name: 'sourceId', title: 'Source ID', type: 'string', description: 'portal:nativeId — กัน import ซ้ำ' }),
+            defineField({ name: 'portal', type: 'string' }),
+            defineField({ name: 'url', type: 'url' }),
+            defineField({ name: 'price', type: 'number' }),
+            defineField({ name: 'posterType', type: 'string', options: { list: ['owner', 'agent', 'unknown'] } }),
+            defineField({ name: 'posterName', type: 'string' }),
+            defineField({ name: 'phone', type: 'string' }),
+            defineField({ name: 'lineId', type: 'string' }),
+            defineField({ name: 'lastSeenAt', type: 'date', description: 'รอบ scrape ล่าสุดที่ยังเจอประกาศนี้' }),
+            defineField({ name: 'postCreatedAt', title: 'วันที่ลงประกาศ (portal)', type: 'date' }),
+            defineField({ name: 'postUpdatedAt', title: 'อัพเดทล่าสุด (portal)', type: 'date',
+              description: 'เกิน 90 วัน = โพสต์ค้าง ระบบไม่ใช้ค้ำราคา (ระวัง: agent กดดันประกาศได้ วันที่สดไม่การันตีข้อมูลจริง)' }),
+            defineField({ name: 'availableFrom', title: 'ห้องจะว่าง · Available from', type: 'date',
+              description: 'ผู้เช่าเดิมยังอยู่ถึงวันนี้ — ก่อนวันนี้ห้ามนับเป็นสต็อกว่าง (ไม่มีค่า = ว่างแล้ว)' }),
+          ],
+          preview: {
+            select: { portal: 'portal', price: 'price', posterName: 'posterName' },
+            prepare: ({ portal, price, posterName }: { portal?: string; price?: number; posterName?: string }) => ({
+              title: `${portal} · ฿${(price ?? 0).toLocaleString()}`,
+              subtitle: posterName || '(ไม่มีชื่อผู้โพสต์)',
+            }),
+          },
+        }],
+      })),
     defineField({
       name: 'bestContact', title: 'Best Contact (ทีมสรุปว่าดีลนี้โทรใคร)', type: 'object',
       fields: [
@@ -54,6 +60,40 @@ export default defineType({
       options: { list: ['not_contacted', 'contacted', 'agreed', 'declined'] },
     }),
     defineField({ name: 'cobrokeNote', title: 'Co-broke Note', type: 'text' }),
+    defineField({
+      name: 'contactLog', title: 'Contact Log · บันทึกการติดต่อ', type: 'array',
+      description: 'โทร/ทักแล้วจดทันที — รายการใหม่สุดอยู่บนสุด (กด + Add item)',
+      of: [{
+        type: 'object',
+        name: 'contactEntry',
+        fields: [
+          defineField({ name: 'at', title: 'วัน-เวลา', type: 'datetime', initialValue: () => new Date().toISOString(), validation: R => R.required() }),
+          defineField({ name: 'by', title: 'ผู้ติดต่อ (ทีมเรา)', type: 'string' }),
+          defineField({ name: 'channel', title: 'ช่องทาง', type: 'string', initialValue: 'call',
+            options: { list: ['call', 'line', 'whatsapp', 'email', 'walk-in'] } }),
+          defineField({ name: 'outcome', title: 'ผลการติดต่อ', type: 'string',
+            options: { list: [
+              { title: 'ไม่รับสาย', value: 'no_answer' },
+              { title: 'คุยแล้ว — สนใจ', value: 'interested' },
+              { title: 'รอตามต่อ', value: 'follow_up' },
+              { title: 'นัดดูห้อง', value: 'viewing' },
+              { title: 'ปิดดีล', value: 'closed' },
+              { title: 'ปฏิเสธ', value: 'declined' },
+              { title: 'ห้องไม่ว่างแล้ว', value: 'unavailable' },
+            ] } }),
+          defineField({ name: 'note', title: 'โน้ต', type: 'text', rows: 3 }),
+          defineField({ name: 'nextFollowUp', title: 'นัดตามครั้งถัดไป', type: 'date' }),
+        ],
+        preview: {
+          select: { at: 'at', by: 'by', outcome: 'outcome', note: 'note' },
+          prepare: ({ at, by, outcome, note }) => ({
+            title: `${(at || '').slice(0, 16).replace('T', ' ')} · ${outcome || '—'}`,
+            subtitle: `${by || ''}${note ? ' — ' + note.slice(0, 60) : ''}`,
+          }),
+        },
+      }],
+      options: { sortable: true },
+    }),
   ],
 
   preview: {

@@ -1,0 +1,447 @@
+<!doctype html><html lang="th"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Building Analysis · 2026-08-10</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anuphan:wght@400;600;700&family=IBM+Plex+Sans+Thai:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#0E3361;--ink:#14213A;--bronze:#C9864C;--line:#E6E9F1;--bg:#F4F6FA;--ok:#1B7A4B;--bad:#B3402E}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 Anuphan,'IBM Plex Sans Thai',sans-serif}
+header{background:#fff;border-bottom:1px solid var(--line);padding:14px 22px}
+header h1{margin:0;font-size:19px;color:var(--navy)}header p{margin:2px 0 0;font-size:13px;color:#5A6478}
+.tabs{position:sticky;top:0;z-index:5;display:flex;gap:4px;overflow-x:auto;background:#fff;border-bottom:1px solid var(--line);padding:8px 18px}
+.tab{border:1px solid var(--line);background:#fff;border-radius:8px;padding:7px 13px;font:600 13px Anuphan,'IBM Plex Sans Thai',sans-serif;color:var(--ink);cursor:pointer;white-space:nowrap}
+.tab.on{background:var(--navy);border-color:var(--navy);color:#fff}
+main{padding:20px 22px;max-width:1200px}
+.pane{display:none}.pane.on{display:block}
+h2{font-size:17px;color:var(--navy);margin:4px 0 14px}h3{font-size:14px;margin:20px 0 8px;color:var(--navy)}
+.n{font-weight:400;font-size:12px;color:#5A6478;margin-left:6px}
+.mut{color:#7A849B;font-size:13px}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:20px}
+.tw{overflow-x:auto;background:#fff;border:1px solid var(--line);border-radius:10px}
+table.m{border-collapse:collapse;width:100%;font-size:13.5px}
+.m th,.m td{padding:8px 12px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top;white-space:nowrap}
+.m thead th{background:#FAFBFD;color:var(--navy);font-size:12.5px;position:sticky;top:0}
+.m tbody tr:last-child td,.m tbody tr:last-child th{border-bottom:0}
+.m tbody th{font-weight:600}
+.chip{display:inline-block;background:#F3E7DA;color:#8A5526;border-radius:6px;padding:1px 7px;font-size:11px;font-weight:600;margin-right:4px}
+.fpnote{margin:6px 0 18px}
+.fpnote summary{cursor:pointer;font-size:13px;color:#0f3460;font-weight:600;user-select:none}
+.fpnote pre{background:#f6f8fb;border:1px solid #e3e8ef;border-radius:6px;padding:12px 14px;
+  font-size:12.5px;line-height:1.6;overflow-x:auto;white-space:pre-wrap}
+.ok{color:var(--ok);font-weight:600}.okish{color:#3E6E2F}.bad{color:var(--bad);font-weight:600}
+</style></head><body>
+<header><h1>Building Analysis <span class="n">ข้อมูลสดจาก Sanity · สร้าง 2026-08-10</span></h1>
+<p>ตัวเลขสะท้อนการ cleansing ของทีม — expired / taken ถูกแยกออกจากตาราง active แล้ว</p></header>
+<nav class="tabs"><button class="tab on" data-t="t-over">ภาพรวม</button><button class="tab" data-t="t-39bysansiri">39 by Sansiri</button><button class="tab" data-t="t-hqbysansiri">HQ by Sansiri</button><button class="tab" data-t="t-ideomorph38">Ideo Morph 38</button><button class="tab" data-t="t-mahoganytower">Mahogany Tower</button><button class="tab" data-t="t-noblebe19">Noble BE19</button><button class="tab" data-t="t-park24">Park 24</button><button class="tab" data-t="t-rhythmsukhumvit3638">Rhythm Sukhumvit 36-38</button><button class="tab" data-t="t-thelumpini24">The Lumpini 24</button><button class="tab" data-t="t-theroomsukhumvit21">The Room Sukhumvit 21</button></nav>
+<main><section class="pane on" id="t-over">
+  <h2>ภาพรวมทุกตึก <span class="n">เฉพาะห้อง active (ทีม cleansing แล้ว — expired/taken ไม่นับ)</span></h2>
+  <div class="tw"><table class="m"><thead><tr><th>ตึก</th><th>ห้อง</th><th>เช่า</th><th>ขาย</th><th>Dual</th><th>เช่า ฿/ตรม.</th><th>ขาย ฿/ตรม.</th><th>Yield</th><th>ยืนยันแล้ว</th><th>expired</th></tr></thead><tbody><tr><th>39 by Sansiri</th><td>139</td><td>126</td><td>46</td><td>32</td><td>750</td><td>196,429</td><td>4.45%</td><td>0</td><td class="mut">8</td></tr><tr><th>HQ by Sansiri</th><td>248</td><td>229</td><td>96</td><td>76</td><td>800</td><td>212,500</td><td>4.82%</td><td>0</td><td class="mut">46</td></tr><tr><th>Ideo Morph 38</th><td>86</td><td>78</td><td>29</td><td>19</td><td>800</td><td>188,143</td><td>4.92%</td><td>0</td><td class="mut">22</td></tr><tr><th>Mahogany Tower</th><td>1</td><td>1</td><td>0</td><td>0</td><td>413</td><td>—</td><td>—</td><td>0</td><td class="mut">3</td></tr><tr><th>Noble BE19</th><td>215</td><td>174</td><td>86</td><td>43</td><td>735</td><td>231,176</td><td>4.12%</td><td>0</td><td class="mut">42</td></tr><tr><th>Park 24</th><td>772</td><td>625</td><td>381</td><td>233</td><td>755</td><td>220,690</td><td>4.23%</td><td>0</td><td class="mut">185</td></tr><tr><th>Rhythm Sukhumvit 36-38</th><td>249</td><td>198</td><td>146</td><td>104</td><td>679</td><td>176,000</td><td>4.59%</td><td>0</td><td class="mut">71</td></tr><tr><th>The Lumpini 24</th><td>244</td><td>217</td><td>122</td><td>91</td><td>789</td><td>210,938</td><td>4.79%</td><td>0</td><td class="mut">49</td></tr><tr><th>The Room Sukhumvit 21</th><td>114</td><td>81</td><td>53</td><td>18</td><td>600</td><td>163,462</td><td>4.77%</td><td>0</td><td class="mut">17</td></tr></tbody></table></div>
+  <p class="mut">รอบเก็บข้อมูลล่าสุด: <b>2026-08-10</b> · 9924 ประกาศ · ใหม่ 22 · ราคาเปลี่ยน 127 · expired 0</p>
+  <h2>Floor Premium · ค่าชั้น ทุกตึก</h2>
+  <div class="tw"><table class="m"><thead><tr><th>ตึก</th><th>คำนวณได้</th><th>ที่ใช้จริง</th><th>yield ตึก</th><th>เช่า/ชั้น (A)</th><th>เช่า/ชั้น (B)</th><th class="mut">n ขาย/เช่า</th></tr></thead><tbody><tr><th>39 by Sansiri</th><td>1,063</td><td>1,063</td><td>4.55%</td><td>4.03</td><td>4.06</td><td class="mut">46/122</td></tr><tr><th>HQ by Sansiri</th><td>155</td><td>155</td><td>4.61%</td><td>0.59</td><td>0.59</td><td class="mut">96/229</td></tr><tr><th>Ideo Morph 38</th><td>3,154</td><td>3,154</td><td>5.01%</td><td>13.17</td><td>12.04</td><td class="mut">29/78</td></tr><tr><th>Noble BE19</th><td>562</td><td>562</td><td>3.99%</td><td>1.87</td><td>2.15</td><td class="mut">84/171</td></tr><tr><th>Park 24</th><td>642</td><td>642</td><td>3.95%</td><td>2.11</td><td>2.45</td><td class="mut">378/613</td></tr><tr><th>Rhythm Sukhumvit 36-38</th><td>1,733</td><td>1,733</td><td>4.61%</td><td>6.66</td><td>6.62</td><td class="mut">140/191</td></tr><tr><th>The Lumpini 24</th><td>1,347</td><td>1,347</td><td>4.62%</td><td>5.19</td><td>5.14</td><td class="mut">116/199</td></tr><tr><th>The Room Sukhumvit 21</th><td>994</td><td>994</td><td>4.43%</td><td>3.67</td><td>3.79</td><td class="mut">51/78</td></tr>
+  <tr><th>ค่ากลางทุกตึก</th><td colspan="2"><b>1,028</b> ฿/ตร.ม./ชั้น</td><td colspan="4"><b>4.58%</b> yield กลาง</td></tr>
+  </tbody></table></div>
+  <p class="mut">ตึกที่ค่าติดลบหรือห้องขายน้อยกว่า 20 ห้อง ใช้ค่ากลางของทุกตึกแทน · วิธีคำนวณอยู่ในแท็บของแต่ละตึก</p>
+</section><section class="pane" id="t-39bysansiri">
+    <h2>39 by Sansiri <span class="n">active 139 ห้อง · หมดไป 8 · รอตรวจ 172</span></h2>
+    <h3>Floor Premium · ค่าชั้นของตึกนี้</h3>
+  <div class="tw"><table class="m"><tbody>
+    <tr><th>Floor Premium (ขาย)</th><td><b>1,063</b> ฿/ตร.ม. ต่อชั้น</td></tr>
+    <tr><th>Floor Premium (เช่า)</th><td><b>4.03</b> ฿/ตร.ม./เดือน ต่อชั้น <span class="mut">· แบบ yield กลาง 4.06</span></td></tr>
+    <tr><th>yield</th><td>ตึกนี้ <b>4.55%</b> <span class="mut">· กลางทุกตึก 4.58%</span></td></tr>
+    <tr><th>ค่าเช่าอ้างอิง</th><td>A <b>743.9</b> <span class="mut">· B 748.9</span> ฿/ตร.ม./เดือน</td></tr>
+    <tr><th>ราคาขายอ้างอิง</th><td><b>196,207</b> ฿/ตร.ม.</td></tr>
+    <tr><th>ชั้นอ้างอิง</th><td>เช่า 19.2 · ขาย 18.5</td></tr>
+  </tbody></table></div><details class="fpnote"><summary>วิธีคำนวณ</summary><pre>
+Floor Premium (ขาย)  — หน่วย ฿/ตร.ม. ต่อ 1 ชั้น
+  1. ตัดห้องผิดปกติออกด้วย IQR        เหลือ 46 ห้อง
+  2. เรียงตามชั้น แบ่ง 3 กลุ่ม         กลุ่มละ 15 ห้อง (กลุ่มกลางไม่ใช้)
+  3. กลุ่มชั้นล่าง  median ชั้น 12.0   median ฿/ตร.ม. 181,818
+     กลุ่มชั้นบน    median ชั้น 23.0   median ฿/ตร.ม. 193,506
+  4. (193,506 − 181,818) ÷ (23.0 − 12.0) = 1,063
+  5. ใช้ค่าของตึกนี้เอง = 1,063
+
+yield ของตึก
+  (ค่าเช่าอ้างอิง 743.9 × 12) ÷ ราคาขายอ้างอิง 196,207 = 4.55%
+  ตัด noise ทั้งสองฝั่งก่อนหาร — ตัดฝั่งเดียวจะทำให้ตัวหารเล็กลงข้างเดียว yield พองขึ้น
+
+Floor Premium (เช่า)
+  แบบ A ใช้ yield ตึก   1,063 × 4.55% ÷ 12 = 4.03
+  แบบ B ใช้ yield กลาง  1,063 × 4.58% ÷ 12 = 4.06
+
+ราคาอ้างอิงและชั้นอ้างอิง
+  ทั้งคู่มาจากห้องชุดเดียวกัน (หลังตัด IQR) — ราคาใช้ mean ชั้นก็ต้องใช้ mean
+  ขาย  196,207 ฿/ตร.ม. ที่ชั้น 18.5
+  เช่า  743.9 ฿/ตร.ม. ที่ชั้น 19.2
+
+ราคาที่ควรเป็นของชั้น F = ราคาอ้างอิง + Floor Premium × (F − ชั้นอ้างอิง)
+ความคุ้ม = (ราคาจริง − ราคาที่ควรเป็น) ÷ ราคาที่ควรเป็น    ติดลบ = ถูกกว่าที่ควร
+</pre></details>
+    <div class="cols">
+      <div><h3>เช่า — ราคากลางต่อตรม.</h3><div class="tw"><table class="m"><thead><tr><th>฿/ตรม./เดือน (median)</th><th>LOW</th><th>MID</th><th>HIGH</th></tr></thead><tbody><tr><th>1 Bed</th><td><b>696</b><span class="n">n=30</span></td><td><b>804</b><span class="n">n=21</span></td><td><b>789</b><span class="n">n=10</span></td></tr><tr><th>2 Bed</th><td><b>732</b><span class="n">n=30</span></td><td><b>779</b><span class="n">n=24</span></td><td><b>812</b><span class="n">n=4</span></td></tr><tr><th>3 Bed</th><td class="mut">—</td><td><b>699</b><span class="n">n=5</span></td><td><b>709</b><span class="n">n=2</span></td></tr></tbody></table></div></div>
+      <div><h3>ขาย — ราคากลางต่อตรม.</h3><div class="tw"><table class="m"><thead><tr><th>฿/ตรม. (median)</th><th>LOW</th><th>MID</th><th>HIGH</th></tr></thead><tbody><tr><th>1 Bed</th><td><b>181,818</b><span class="n">n=14</span></td><td><b>190,192</b><span class="n">n=13</span></td><td><b>267,857</b><span class="n">n=2</span></td></tr><tr><th>2 Bed</th><td><b>216,049</b><span class="n">n=7</span></td><td><b>214,286</b><span class="n">n=8</span></td><td class="mut">—</td></tr><tr><th>3 Bed</th><td class="mut">—</td><td><b>206,250</b><span class="n">n=1</span></td><td><b>189,764</b><span class="n">n=1</span></td></tr></tbody></table></div></div>
+    </div>
+    <h3>ดีลติดธง (เรียงถูกกว่าชั้นมากสุด)</h3><div class="tw"><table class="m"><thead><tr><th>Ref</th><th>Type</th><th>Fl</th><th>ราคา</th><th>vs ชั้น</th><th>ธง</th><th>สถานะ</th></tr></thead><tbody><tr><td>39BS-U061 <span class="n">sale</span></td><td>1 Bed</td><td>21</td><td><b>8.0M</b></td><td class="ok">-30%</td><td><span class="chip">SUPER</span><span class="chip">INVESTABLE</span></td><td>รอตรวจ</td></tr><tr><td>39BS-U063 <span class="n">sale</span></td><td>1 Bed</td><td>23</td><td><b>8.0M</b></td><td class="ok">-26%</td><td><span class="chip">SUPER</span></td><td>รอตรวจ</td></tr><tr><td>39BS-U089 <span class="n">sale</span></td><td>2 Bed</td><td>14</td><td><b>10.5M</b></td><td class="ok">-26%</td><td><span class="chip">SUPER</span></td><td>รอตรวจ</td></tr><tr><td>39BS-U016 <span class="n">rent</span></td><td>1 Bed</td><td>23</td><td><b>30.0K</b></td><td class="ok">-24%</td><td><span class="chip">SUPER</span></td><td>รอตรวจ</td></tr><tr><td>39BS-U010 <span class="n">sale</span></td><td>1 Bed</td><td>12</td><td><b>8.0M</b></td><td class="ok">-23%</td><td><span class="chip">SUPER</span></td><td>รอตรวจ</td></tr><tr><td>39BS-U044 <span class="n">rent</span></td><td>1 Bed</td><td>11</td><td><b>30.0K</b></td><td class="ok">-22%</td><td><span class="chip">SUPER</span><span class="chip">HOT</span></td><td>รอตรวจ</td></tr><tr><td>39BS-U160 <span class="n">rent</span></td><td>3 Bed</td><td>26</td><td><b>95.0K</b></td><td class="ok">-21%</td><td><span class="chip">SUPER</span></td><td>รอตรวจ</td></tr><tr><td>39BS-U058 <span class="n">rent</span></td><td>1 Bed</td><td>27</td><td><b>35.0K</b></td><td class="ok">-20%</td><td><span class="chip">SUPER</span></td><td>รอตรวจ</td></tr><tr><td>39BS-U125 <span class="n">rent</span></td><td>2 Bed</td><td>21</td><td><b>50.0K</b></td><td class="ok">-20%</td><td><span class="chip">SUPER</span></td><td>รอตรวจ</td></tr><tr><td>39BS-U130 <span class="n">rent</span></td><td>2 Bed</td><td>29</td><td><b>45.0K</b></td><td class="ok">-20%</td><td><span class="chip">SUPER</span></td><td>รอตรวจ</td></tr><tr><td>39BS-U037 <span class="n">rent</span></td><td>1 Bed</td><td>18</td><td><b>32.0K</b></td><td class="ok">-19%</td><td><span class="chip">SUPER</span></td><td>รอตรวจ</td></tr><tr><td>39BS-U118 <span class="n">rent</span></td><td>2 Bed</td><td>12</td><td><b>50.0K</b></td><td class="ok">-19%</td><td><span class="chip">SUPER</span><span class="chip">HOT</span><span class="chip">NEGO</span></td><td>รอตรวจ</td></tr></tbody></table></div>
+    <div class="cols">
+      <div><h3>ราคาขยับล่าสุด</h3><div class="tw"><table class="m"><thead><tr><th>Ref</th><th>เดิม</th><th>ล่าสุด</th><th>เปลี่ยน</th></tr></thead><tbody><tr><td>39BS-U049 <span class="n">sale</span></td><td>9,900,000</td><td><b>8,900,000</b></td><td class="ok">-10%</td></tr><tr><td>39BS-U105 <span class="n">rent</span></td><td>55,000</td><td><b>50,000</b></td><td class="ok">-9%</td></tr><tr><td>39BS-U047 <span class="n">sale</span></td><td>10,750,000</td><td><b>9,900,000</b></td><td class="ok">-8%</td></tr><tr><td>39BS-U005 <span class="n">rent</span></td><td>36,000</td><td><b>35,000</b></td><td class="ok">-3%</td></tr><tr><td>39BS-U035 <span class="n">rent</span></td><td>38,000</td><td><b>37,000</b></td><td class="ok">-3%</td></tr><tr><td>39BS-U042 <span class="n">rent</span></td><td>39,000</td><td><b>40,000</b></td><td class="bad">+3%</td></tr><tr><td>39BS-U132 <span class="n">rent</span></td><td>55,000</td><td><b>68,000</b></td><td class="bad">+24%</td></tr></tbody></table></div></div>
+      <div><h3>Agent ที่ลงประกาศมากสุด</h3><p class="mut">ไม่มีชื่อ agent ในข้อมูล</p></div>
+    </div>
+  </section><section class="pane" id="t-hqbysansiri">
+    <h2>HQ by Sansiri <span class="n">active 248 ห้อง · รอตรวจ 325 · หมดไป 46</span></h2>
+    <h3>Floor Premium · ค่าชั้นของตึกนี้</h3>
+  <div class="tw"><table class="m"><tbody>
+    <tr><th>Floor Premium (ขาย)</th><td><b>155</b> ฿/ตร.ม. ต่อชั้น</td></tr>
+    <tr><th>Floor Premium (เช่า)</th><td><b>0.59</b> ฿/ตร.ม./เดือน ต่อชั้น <span class="mut">· แบบ yield กลาง 0.59</span></td></tr>
+    <tr><th>yield</th><td>ตึกนี้ <b>4.61%</b> <span class="mut">· กลางทุกตึก 4.58%</span></td></tr>
+    <tr><th>ค่าเช่าอ้างอิง</th><td>A <b>820.0</b> <span class="mut">· B 814.3</span> ฿/ตร.ม./เดือน</td></tr>
+    <tr><th>ราคาขายอ้างอิง</th><td><b>213,328</b> ฿/ตร.ม.</td></tr>
+    <tr><th>ชั้นอ้างอิง</th><td>เช่า 20.6 · ขาย 19.3</td></tr>
+  </tbody></table></div><details class="fpnote"><summary>วิธีคำนวณ</summary><pre>
+Floor Premium (ขาย)  — หน่วย ฿/ตร.ม. ต่อ 1 ชั้น
+  1. ตัดห้องผิดปกติออกด้วย IQR        เหลือ 96 ห้อง
+  2. เรียงตามชั้น แบ่ง 3 กลุ่ม         กลุ่มละ 32 ห้อง (กลุ่มกลางไม่ใช้)
+  3. กลุ่มชั้นล่าง  median ชั้น 10.0   median ฿/ตร.ม. 214,546
+     กลุ่มชั้นบน    median ชั้น 29.0   median ฿/ตร.ม. 217,483
+  4. (217,483 − 214,546) ÷ (29.0 − 10.0) = 155
+  5. ใช้ค่าของตึกนี้เอง = 155
+
+yield ของตึก
+  (ค่าเช่าอ้างอิง 820.0 × 12) ÷ ราคาขายอ้างอิง 213,328 = 4.61%
+  ตัด noise ทั้งสองฝั่งก่อนหาร — ตัดฝั่งเดียวจะทำให้ตัวหารเล็กลงข้างเดียว yield พองขึ้น
+
+Floor Premium (เช่า)
+  แบบ A ใช้ yield ตึก   155 × 4.61% ÷ 12 = 0.59
+  แบบ B ใช้ yield กลาง  155 × 4.58% ÷ 12 = 0.59
+
+ราคาอ้างอิงและชั้นอ้างอิง
+  ทั้งคู่มาจากห้องชุดเดียวกัน (หลังตัด IQR) — ราคาใช้ mean ชั้นก็ต้องใช้ mean
+  ขาย  213,328 ฿/ตร.ม. ที่ชั้น 19.3
+  เช่า  820.0 ฿/ตร.ม. ที่ชั้น 20.6
+
+ราคาที่ควรเป็นของชั้น F = ราคาอ้างอิง + Floor Premium × (F − ชั้นอ้างอิง)
+ความคุ้ม = (ราคาจริง − ราคาที่ควรเป็น) ÷ ราคาที่ควรเป็น    ติดลบ = ถูกกว่าที่ควร
+</pre></details>
+    <div class="cols">
+      <div><h3>เช่า — ราคากลางต่อตรม.</h3><div class="tw"><table class="m"><thead><tr><th>฿/ตรม./เดือน (median)</th><th>LOW</th><th>MID</th><th>HIGH</th></tr></thead><tbody><tr><th>1 Bed</th><td><b>800</b><span class="n">n=116</span></td><td><b>907</b><span class="n">n=6</span></td><td><b>833</b><span class="n">n=7</span></td></tr><tr><th>2 Bed</th><td><b>769</b><span class="n">n=76</span></td><td><b>812</b><span class="n">n=12</span></td><td><b>867</b><span class="n">n=12</span></td></tr></tbody></table></div></div>
+      <div><h3>ขาย — ราคากลางต่อตรม.</h3><div class="tw"><table class="m"><thead><tr><th>฿/ตรม. (median)</th><th>LOW</th><th>MID</th><th>HIGH</th></tr></thead><tbody><tr><th>1 Bed</th><td><b>186,275</b><span class="n">n=48</span></td><td><b>191,628</b><span class="n">n=4</span></td><td><b>225,000</b><span class="n">n=4</span></td></tr><tr><th>2 Bed</th><td><b>236,250</b><span class="n">n=28</span></td><td><b>255,000</b><span class="n">n=6</span></td><td><b>260,714</b><span class="n">n=6</span></td></tr></tbody></table></div></div>
+    </div>
+    <h3>ดีลติดธง (เรียงถูกกว่าชั้นมากสุด)</h3><div class="tw"><table class="m"><thead><tr><th>Ref</th><th>Type</th><th>Fl</th><th>ราคา</th><th>vs ชั้น</th><th>ธง</th><th>สถานะ</th></tr></thead><tbody><tr><td>HQ-U036 <span class="n">sale</span></td><td>1 Bed</td><td>15</td><td><b>7.0M</b></td><td class="ok">-33%</td><td><span class="chip">SUPER</span><span class="chip">HOT</span></td><td>รอตรวจ</td></tr><tr><td>HQ-U221 <span class="n">sale</span></td><td>2 Bed</td><td>10</td><td><b>10.0M</b></td><td class="ok">-33%</td><td><span class="chip">SUPER</span><span class="chip">HOT</span><span class="chip">INVESTABLE</span></td><td>รอตรวจ</td></tr><tr><td>HQ-U210 <span class="n">sale</span></td><td>2 Bed</td><td>10</td><td><b>10.0M</b></td><td class="ok">-32%</td><td><span class="chip">SUPER</span><span class="chip">INVESTABLE</span></td><td>รอตรวจ</td></tr><tr><td>HQ-U231 <span class="n">sale</span></td><td>2 Bed</td><td>8</td><td><b>12.9M</b></td><td class="ok">-28%</td><td><span class="chip">SUPER</span><span class="chip">INVESTABLE</span></td><td>รอตรวจ</td></tr><tr><td>HQ-U267 <span class="n">rent</span></td><td>2 Bed</td><td>18</td><td><b>60.0K</b></td><td class="ok">-28%</td><td><span class="chip">SUPER</span></td><td>รอตรวจ</td></tr><tr><td>HQ-U037 <span class="n">sale</span></td><td>1 Bed</td><td>16</td><td><b>7.0M</b></td><td class="ok">-26%</td><td><span class="chip">SUPER</span><span class="chip">HOT</span><span class="chip">INVESTABLE</span></td><td>รอตรวจ</td></tr><tr><td>HQ-U011 <span class="n">rent</span></td><td>1 Bed</td><td>8</td><td><b>30.0K</b></td><td class="ok">-25%</td><td><span class="chip">SUPER</span></td><td>รอตรวจ</td></tr><tr><td>HQ-U040 <span class="n">sale</span></td><td>1 Bed</td><td>21</td><td><b>7.0M</b></td><td class="ok">-25%</td><td><span class="chip">SUPER</span></td><td>รอตรวจ</td></tr><tr><td>HQ-U047 <span class="n">rent</span></td><td>1 Bed</td><td>28</td><td><b>29.0K</b></td><td class="ok">-24%</td><td><span class="chip">SUPER</span><span class="chip">NEGO</span></td><td>รอตรวจ</td></tr><tr><td>HQ-U086 <span class="n">rent</span></td><td>1 Bed</td><td>24</td><td><b>35.0K</b></td><td class="ok">-23%</td><td><span class="chip">SUPER</span></td><td>รอตรวจ</td></tr><tr><td>HQ-U179 <span class="n">rent</span></td><td>2 Bed</td><td>15</td><td><b>50.0K</b></td><td class="ok">-23%</td><td><span class="chip">SUPER</span></td><td>รอตรวจ</td></tr><tr><td>HQ-U193 <span class="n">rent</span></td><td>2 Bed</td><td>18</td><td><b>45.0K</b></td><td class="ok">-23%</td><td><span class="chip">SUPER</span><span class="chip">HOT</span><span class="chip">NEGO</span></td><td>รอตรวจ</td></tr></tbody></table></div>
+    <div class="cols">
+      <div><h3>ราคาขยับล่าสุด</h3><div class="tw"><table class="m"><thead><tr><th>Ref</th><th>เดิม</th><th>ล่าสุด</th><th>เปลี่ยน</th></tr></thead><tbody><tr><td>HQ-U102 <span class="n">sale</span></td><td>14,300,000</td><td><b>12,900,000</b></td><td class="ok">-10%</td></tr><tr><td>HQ-U041 <span class="n">sale</span></td><td>7,900,000</td><td><b>8,500,000</b></td><td class="bad">+8%</td></tr><tr><td>HQ-U061 <span class="n">rent</span></td><td>40,000</td><td><b>45,000</b></td><td class="bad">+13%</td></tr></tbody></table></div></div>
+      <div><h3>Agent ที่ลงประกาศมากสุด</h3><p class="mut">ไม่มีชื่อ agent ในข้อมูล</p></div>
+    </div>
+  </section><section class="pane" id="t-ideomorph38">
+    <h2>Ideo Morph 38 <span class="n">active 86 ห้อง · หมดไป 22 · รอตรวจ 107</span></h2>
+    <h3>Floor Premium · ค่าชั้นของตึกนี้</h3>
+  <div class="tw"><table class="m"><tbody>
+    <tr><th>Floor Premium (ขาย)</th><td><b>3,154</b> ฿/ตร.ม. ต่อชั้น</td></tr>
+    <tr><th>Floor Premium (เช่า)</th><td><b>13.17</b> ฿/ตร.ม./เดือน ต่อชั้น <span class="mut">· แบบ yield กลาง 12.04</span></td></tr>
+    <tr><th>yield</th><td>ตึกนี้ <b>5.01%</b> <span class="mut">· กลางทุกตึก 4.58%</span></td></tr>
+    <tr><th>ค่าเช่าอ้างอิง</th><td>A <b>807.5</b> <span class="mut">· B 738.1</span> ฿/ตร.ม./เดือน</td></tr>
+    <tr><th>ราคาขายอ้างอิง</th><td><b>193,362</b> ฿/ตร.ม.</td></tr>
+    <tr><th>ชั้นอ้างอิง</th><td>เช่า 8.9 · ขาย 9.2</td></tr>
+  </tbody></table></div><details class="fpnote"><summary>วิธีคำนวณ</summary><pre>
+Floor Premium (ขาย)  — หน่วย ฿/ตร.ม. ต่อ 1 ชั้น
+  1. ตัดห้องผิดปกติออกด้วย IQR        เหลือ 29 ห้อง
+  2. เรียงตามชั้น แบ่ง 3 กลุ่ม         กลุ่มละ 9 ห้อง (กลุ่มกลางไม่ใช้)
+  3. กลุ่มชั้นล่าง  median ชั้น 4.0   median ฿/ตร.ม. 174,722
+     กลุ่มชั้นบน    median ชั้น 15.0   median ฿/ตร.ม. 209,412
+  4. (209,412 − 174,722) ÷ (15.0 − 4.0) = 3,154
+  5. ใช้ค่าของตึกนี้เอง = 3,154
+
+yield ของตึก
+  (ค่าเช่าอ้างอิง 807.5 × 12) ÷ ราคาขายอ้างอิง 193,362 = 5.01%
+  ตัด noise ทั้งสองฝั่งก่อนหาร — ตัดฝั่งเดียวจะทำให้ตัวหารเล็กลงข้างเดียว yield พองขึ้น
+
+Floor Premium (เช่า)
+  แบบ A ใช้ yield ตึก   3,154 × 5.01% ÷ 12 = 13.17
+  แบบ B ใช้ yield กลาง  3,154 × 4.58% ÷ 12 = 12.04
+
+ราคาอ้างอิงและชั้นอ้างอิง
+  ทั้งคู่มาจากห้องชุดเดียวกัน (หลังตัด IQR) — ราคาใช้ mean ชั้นก็ต้องใช้ mean
+  ขาย  193,362 ฿/ตร.ม. ที่ชั้น 9.2
+  เช่า  807.5 ฿/ตร.ม. ที่ชั้น 8.9
+
+ราคาที่ควรเป็นของชั้น F = ราคาอ้างอิง + Floor Premium × (F − ชั้นอ้างอิง)
+ความคุ้ม = (ราคาจริง − ราคาที่ควรเป็น) ÷ ราคาที่ควรเป็น    ติดลบ = ถูกกว่าที่ควร
+</pre></details>
+    <div class="cols">
+      <div><h3>เช่า — ราคากลางต่อตรม.</h3><div class="tw"><table class="m"><thead><tr><th>฿/ตรม./เดือน (median)</th><th>LOW</th><th>MID</th><th>HIGH</th></tr></thead><tbody><tr><th>1 Bed</th><td><b>758</b><span class="n">n=60</span></td><td><b>889</b><span class="n">n=3</span></td><td class="mut">—</td></tr><tr><th>2 Bed</th><td><b>867</b><span class="n">n=3</span></td><td><b>800</b><span class="n">n=5</span></td><td><b>915</b><span class="n">n=7</span></td></tr></tbody></table></div></div>
+      <div><h3>ขาย — ราคากลางต่อตรม.</h3><div class="tw"><table class="m"><thead><tr><th>฿/ตรม. (median)</th><th>LOW</th><th>MID</th><th>HIGH</th></tr></thead><tbody><tr><th>Studio</th><td><b>200,000</b><span class="n">n=2</span></td><td class="mut">—</td><td class="mut">—</td></tr><tr><th>1 Bed</th><td><b>184,848</b><span class="n">n=20</span></td><td><b>170,588</b><span class="n">n=1</span></td><td><b>233,333</b><span class="n">n=2</span></td></tr><tr><th>2 Bed</th><td class="mut">—</td><td><b>184,932</b><span class="n">n=3</span></td><td><b>246,771</b><span class="n">n=1</span></td></tr></tbody></table></div></div>
+    </div>
+    <h3>ดีลติดธง (เรียงถูกกว่าชั้นมากสุด)</h3><div class="tw"><table class="m"><thead><tr><th>Ref</th><th>Type</th><th>Fl</th><th>ราคา</th><th>vs ชั้น</th><th>ธง</th><th>สถานะ</th></tr></thead><tbody><tr><td>IDEO-U073 <span class="n">rent</span></td><td>1 Bed</td><td>4</td><td><b>21.0K</b></td><td class="ok">-33%</td><td><span class="chip">SUPER</span></td><td>รอตรวจ</td></tr><tr><td>IDEO-U057 <span class="n">rent</span></td><td>1 Bed</td><td>8</td><td><b>23.0K</b></td><td class="ok">-24%</td><td><span class="chip">SUPER</span><span class="chip">HOT</span><span class="chip">NEGO</span></td><td>รอตรวจ</td></tr><tr><td>IDEO-U026 <span class="n">sale</span></td><td>1 Bed</td><td>15</td><td><b>5.8M</b></td><td class="ok">-23%</td><td><span class="chip">SUPER</span></td><td>รอตรวจ</td></tr><tr><td>IDEO-U031 <span class="n">rent</span></td><td>1 Bed</td><td>5</td><td><b>25.0K</b></td><td class="ok">-20%</td><td><span class="chip">SUPER</span></td><td>รอตรวจ</td></tr><tr><td>IDEO-U017 <span class="n">rent</span></td><td>1 Bed</td><td>2</td><td><b>20.0K</b></td><td class="ok">-19%</td><td><span class="chip">SUPER</span><span class="chip">HOT</span></td><td>รอตรวจ</td></tr><tr><td>IDEO-U099 <span class="n">rent</span></td><td>2 Bed</td><td>16</td><td><b>50.0K</b></td><td class="ok">-19%</td><td><span class="chip">SUPER</span></td><td>รอตรวจ</td></tr><tr><td>IDEO-U025 <span class="n">rent</span></td><td>1 Bed</td><td>10</td><td><b>25.0K</b></td><td class="ok">-18%</td><td><span class="chip">SUPER</span></td><td>รอตรวจ</td></tr><tr><td>IDEO-U009 <span class="n">rent</span></td><td>1 Bed</td><td>2</td><td><b>20.0K</b></td><td class="ok">-17%</td><td><span class="chip">SUPER</span><span class="chip">NEGO</span></td><td>รอตรวจ</td></tr><tr><td>IDEO-U043 <span class="n">sale</span></td><td>1 Bed</td><td>10</td><td><b>6.0M</b></td><td class="ok">-17%</td><td><span class="chip">SUPER</span></td><td>รอตรวจ</td></tr><tr><td>IDEO-U034 <span class="n">rent</span></td><td>1 Bed</td><td>9</td><td><b>25.0K</b></td><td class="ok">-16%</td><td><span class="chip">SUPER</span></td><td>รอตรวจ</td></tr><tr><td>IDEO-U055 <span class="n">rent</span></td><td>1 Bed</td><td>6</td><td><b>28.0K</b></td><td class="ok">-16%</td><td><span class="chip">SUPER</span><span class="chip">NEGO</span></td><td>รอตรวจ</td></tr><tr><td>IDEO-U056 <span class="n">rent</span></td><td>1 Bed</td><td>7</td><td><b>27.0K</b></td><td class="ok">-16%</td><td><span class="chip">SUPER</span></td><td>รอตรวจ</td></tr></tbody></table></div>
+    <div class="cols">
+      <div><h3>ราคาขยับล่าสุด</h3><div class="tw"><table class="m"><thead><tr><th>Ref</th><th>เดิม</th><th>ล่าสุด</th><th>เปลี่ยน</th></tr></thead><tbody><tr><td>IDEO-U029 <span class="n">rent</span></td><td>28,000</td><td><b>25,000</b></td><td class="ok">-11%</td></tr><tr><td>IDEO-U089 <span class="n">sale</span></td><td>17,500,000</td><td><b>17,274,000</b></td><td class="ok">-1%</td></tr><tr><td>IDEO-U038 <span class="n">rent</span></td><td>32,000</td><td><b>33,000</b></td><td class="bad">+3%</td></tr><tr><td>IDEO-U018 <span class="n">sale</span></td><td>4,590,000</td><td><b>5,490,000</b></td><td class="bad">+20%</td></tr></tbody></table></div></div>
+      <div><h3>Agent ที่ลงประกาศมากสุด</h3><p class="mut">ไม่มีชื่อ agent ในข้อมูล</p></div>
+    </div>
+  </section><section class="pane" id="t-mahoganytower">
+    <h2>Mahogany Tower <span class="n">active 1 ห้อง · หมดไป 3 · รอตรวจ 1</span></h2>
+    <h3>Floor Premium · ค่าชั้นของตึกนี้</h3>
+  <div class="tw"><table class="m"><tbody>
+    <tr><th>Floor Premium (ขาย)</th><td><b>1,028</b> ฿/ตร.ม. ต่อชั้น <span class="mut">(ใช้ค่ากลางทุกตึก)</span></td></tr>
+    <tr><th>Floor Premium (เช่า)</th><td><b>3.92</b> ฿/ตร.ม./เดือน ต่อชั้น <span class="mut">· แบบ yield กลาง 3.92</span></td></tr>
+    <tr><th>yield</th><td>ตึกนี้ <b>0.00%</b> <span class="mut">· กลางทุกตึก 4.58%</span></td></tr>
+    <tr><th>ค่าเช่าอ้างอิง</th><td>A <b>413.0</b> <span class="mut">· B —</span> ฿/ตร.ม./เดือน</td></tr>
+    <tr><th>ราคาขายอ้างอิง</th><td><b>—</b> ฿/ตร.ม.</td></tr>
+    <tr><th>ชั้นอ้างอิง</th><td>เช่า 25.0 · ขาย —</td></tr>
+  </tbody></table></div><details class="fpnote"><summary>วิธีคำนวณ</summary><pre>
+Floor Premium (ขาย)  — หน่วย ฿/ตร.ม. ต่อ 1 ชั้น
+  1. ตัดห้องผิดปกติออกด้วย IQR        เหลือ 0 ห้อง
+  2. เรียงตามชั้น แบ่ง 3 กลุ่ม         กลุ่มละ — ห้อง (กลุ่มกลางไม่ใช้)
+  3. กลุ่มชั้นล่าง  median ชั้น —   median ฿/ตร.ม. —
+     กลุ่มชั้นบน    median ชั้น —   median ฿/ตร.ม. —
+  4. (— − —) ÷ (— − —) = —
+  5. ค่าของตึกนี้ คำนวณไม่ได้ → ใช้ค่ากลางของทุกตึกแทน = 1,028
+
+yield ของตึก
+  (ค่าเช่าอ้างอิง 413.0 × 12) ÷ ราคาขายอ้างอิง — = 4.58%
+  ตัด noise ทั้งสองฝั่งก่อนหาร — ตัดฝั่งเดียวจะทำให้ตัวหารเล็กลงข้างเดียว yield พองขึ้น
+
+Floor Premium (เช่า)
+  แบบ A ใช้ yield ตึก   1,028 × 4.58% ÷ 12 = 3.92
+  แบบ B ใช้ yield กลาง  1,028 × 4.58% ÷ 12 = 3.92
+
+ราคาอ้างอิงและชั้นอ้างอิง
+  ทั้งคู่มาจากห้องชุดเดียวกัน (หลังตัด IQR) — ราคาใช้ mean ชั้นก็ต้องใช้ mean
+  ขาย  — ฿/ตร.ม. ที่ชั้น —
+  เช่า  413.0 ฿/ตร.ม. ที่ชั้น 25.0
+
+ราคาที่ควรเป็นของชั้น F = ราคาอ้างอิง + Floor Premium × (F − ชั้นอ้างอิง)
+ความคุ้ม = (ราคาจริง − ราคาที่ควรเป็น) ÷ ราคาที่ควรเป็น    ติดลบ = ถูกกว่าที่ควร
+</pre></details>
+    <div class="cols">
+      <div><h3>เช่า — ราคากลางต่อตรม.</h3><div class="tw"><table class="m"><thead><tr><th>฿/ตรม./เดือน (median)</th><th>LOW</th><th>MID</th><th>HIGH</th></tr></thead><tbody><tr><th>3 Bed</th><td class="mut">—</td><td><b>413</b><span class="n">n=1</span></td><td class="mut">—</td></tr></tbody></table></div></div>
+      <div><h3>ขาย — ราคากลางต่อตรม.</h3><p class="mut">ไม่มีข้อมูล active</p></div>
+    </div>
+    <h3>ดีลติดธง (เรียงถูกกว่าชั้นมากสุด)</h3><div class="tw"><table class="m"><thead><tr><th>Ref</th><th>Type</th><th>Fl</th><th>ราคา</th><th>vs ชั้น</th><th>ธง</th><th>สถานะ</th></tr></thead><tbody><tr><td>MHG-U003 <span class="n">rent</span></td><td>3 Bed</td><td>25</td><td><b>130.0K</b></td><td class="okish">-2%</td><td><span class="chip">BEST</span></td><td>รอตรวจ</td></tr></tbody></table></div>
+    <div class="cols">
+      <div><h3>ราคาขยับล่าสุด</h3><p class="mut">ยังไม่มีการเปลี่ยนราคาสะสม (เริ่มเก็บจากรอบแรกของวงจรรายสัปดาห์)</p></div>
+      <div><h3>Agent ที่ลงประกาศมากสุด</h3><p class="mut">ไม่มีชื่อ agent ในข้อมูล</p></div>
+    </div>
+  </section><section class="pane" id="t-noblebe19">
+    <h2>Noble BE19 <span class="n">active 215 ห้อง · รอตรวจ 260 · หมดไป 42</span></h2>
+    <h3>Floor Premium · ค่าชั้นของตึกนี้</h3>
+  <div class="tw"><table class="m"><tbody>
+    <tr><th>Floor Premium (ขาย)</th><td><b>562</b> ฿/ตร.ม. ต่อชั้น</td></tr>
+    <tr><th>Floor Premium (เช่า)</th><td><b>1.87</b> ฿/ตร.ม./เดือน ต่อชั้น <span class="mut">· แบบ yield กลาง 2.15</span></td></tr>
+    <tr><th>yield</th><td>ตึกนี้ <b>3.99%</b> <span class="mut">· กลางทุกตึก 4.58%</span></td></tr>
+    <tr><th>ค่าเช่าอ้างอิง</th><td>A <b>745.8</b> <span class="mut">· B 855.8</span> ฿/ตร.ม./เดือน</td></tr>
+    <tr><th>ราคาขายอ้างอิง</th><td><b>224,217</b> ฿/ตร.ม.</td></tr>
+    <tr><th>ชั้นอ้างอิง</th><td>เช่า 20.2 · ขาย 17.3</td></tr>
+  </tbody></table></div><details class="fpnote"><summary>วิธีคำนวณ</summary><pre>
+Floor Premium (ขาย)  — หน่วย ฿/ตร.ม. ต่อ 1 ชั้น
+  1. ตัดห้องผิดปกติออกด้วย IQR        เหลือ 84 ห้อง
+  2. เรียงตามชั้น แบ่ง 3 กลุ่ม         กลุ่มละ 24 ห้อง (กลุ่มกลางไม่ใช้)
+  3. กลุ่มชั้นล่าง  median ชั้น 7.0   median ฿/ตร.ม. 204,370
+     กลุ่มชั้นบน    median ชั้น 28.0   median ฿/ตร.ม. 216,173
+  4. (216,173 − 204,370) ÷ (28.0 − 7.0) = 562
+  5. ใช้ค่าของตึกนี้เอง = 562
+
+yield ของตึก
+  (ค่าเช่าอ้างอิง 745.8 × 12) ÷ ราคาขายอ้างอิง 224,217 = 3.99%
+  ตัด noise ทั้งสองฝั่งก่อนหาร — ตัดฝั่งเดียวจะทำให้ตัวหารเล็กลงข้างเดียว yield พองขึ้น
+
+Floor Premium (เช่า)
+  แบบ A ใช้ yield ตึก   562 × 3.99% ÷ 12 = 1.87
+  แบบ B ใช้ yield กลาง  562 × 4.58% ÷ 12 = 2.15
+
+ราคาอ้างอิงและชั้นอ้างอิง
+  ทั้งคู่มาจากห้องชุดเดียวกัน (หลังตัด IQR) — ราคาใช้ mean ชั้นก็ต้องใช้ mean
+  ขาย  224,217 ฿/ตร.ม. ที่ชั้น 17.3
+  เช่า  745.8 ฿/ตร.ม. ที่ชั้น 20.2
+
+ราคาที่ควรเป็นของชั้น F = ราคาอ้างอิง + Floor Premium × (F − ชั้นอ้างอิง)
+ความคุ้ม = (ราคาจริง − ราคาที่ควรเป็น) ÷ ราคาที่ควรเป็น    ติดลบ = ถูกกว่าที่ควร
+</pre></details>
+    <div class="cols">
+      <div><h3>เช่า — ราคากลางต่อตรม.</h3><div class="tw"><table class="m"><thead><tr><th>฿/ตรม./เดือน (median)</th><th>LOW</th><th>MID</th><th>HIGH</th></tr></thead><tbody><tr><th>Studio</th><td class="mut">—</td><td class="mut">—</td><td><b>743</b><span class="n">n=1</span></td></tr><tr><th>1 Bed</th><td><b>711</b><span class="n">n=49</span></td><td><b>727</b><span class="n">n=37</span></td><td><b>727</b><span class="n">n=23</span></td></tr><tr><th>2 Bed</th><td><b>700</b><span class="n">n=27</span></td><td><b>818</b><span class="n">n=23</span></td><td><b>886</b><span class="n">n=11</span></td></tr><tr><th>3 Bed</th><td><b>1,364</b><span class="n">n=1</span></td><td><b>704</b><span class="n">n=1</span></td><td><b>952</b><span class="n">n=1</span></td></tr></tbody></table></div></div>
+      <div><h3>ขาย — ราคากลางต่อตรม.</h3><div class="tw"><table class="m"><thead><tr><th>฿/ตรม. (median)</th><th>LOW</th><th>MID</th><th>HIGH</th></tr></thead><tbody><tr><th>1 Bed</th><td><b>206,000</b><span class="n">n=35</span></td><td><b>232,353</b><span class="n">n=15</span></td><td><b>216,346</b><span class="n">n=9</span></td></tr><tr><th>2 Bed</th><td><b>233,784</b><span class="n">n=11</span></td><td><b>250,000</b><span class="n">n=11</span></td><td><b>249,194</b><span class="n">n=3</span></td></tr><tr><th>3 Bed</th><td><b>280,303</b><span class="n">n=1</span></td><td class="mut">—</td><td class="mut">—</td></tr><tr><th>4 Bed+</th><td><b>254,808</b><span class="n">n=1</span></td><td class="mut">—</td><td class="mut">—</td></tr></tbody></table></div></div>
+    </div>
+    <h3>ดีลติดธง (เรียงถูกกว่าชั้นมากสุด)</h3><div class="tw"><table class="m"><thead><tr><th>Ref</th><th>Type</th><th>Fl</th><th>ราคา</th><th>vs ชั้น</th><th>ธง</th><th>สถานะ</th></tr></thead><tbody><tr><td>NBL-U068 <span class="n">rent</span></td><td>1 Bed</td><td>35</td><td><b>20.0K</b></td><td class="ok">-33%</td><td><span class="chip">SUPER</span></td><td>รอตรวจ</td></tr><tr><td>NBL-U069 <span class="n">rent</span></td><td>1 Bed</td><td>41</td><td><b>20.0K</b></td><td class="ok">-31%</td><td><span class="chip">SUPER</span></td><td>รอตรวจ</td></tr><tr><td>NBL-U037 <span class="n">rent</span></td><td>1 Bed</td><td>40</td><td><b>20.0K</b></td><td class="ok">-30%</td><td><span class="chip">SUPER</span><span class="chip">HOT</span></td><td>รอตรวจ</td></tr><tr><td>NBL-U187 <span class="n">rent</span></td><td>2 Bed</td><td>8</td><td><b>40.0K</b></td><td class="ok">-30%</td><td><span class="chip">SUPER</span></td><td>รอตรวจ</td></tr><tr><td>NBL-U065 <span class="n">rent</span></td><td>1 Bed</td><td>—</td><td><b>20.0K</b></td><td class="ok">-29%</td><td><span class="chip">SUPER</span><span class="chip">HOT</span></td><td>รอตรวจ</td></tr><tr><td>NBL-U094 <span class="n">sale</span></td><td>1 Bed</td><td>—</td><td><b>7.5M</b></td><td class="ok">-28%</td><td><span class="chip">SUPER</span></td><td>รอตรวจ</td></tr><tr><td>NBL-U038 <span class="n">rent</span></td><td>1 Bed</td><td>43</td><td><b>20.0K</b></td><td class="ok">-26%</td><td><span class="chip">SUPER</span></td><td>รอตรวจ</td></tr><tr><td>NBL-U065 <span class="n">sale</span></td><td>1 Bed</td><td>—</td><td><b>6.0M</b></td><td class="ok">-26%</td><td><span class="chip">SUPER</span></td><td>รอตรวจ</td></tr><tr><td>NBL-U196 <span class="n">rent</span></td><td>2 Bed</td><td>30</td><td><b>40.0K</b></td><td class="ok">-26%</td><td><span class="chip">SUPER</span><span class="chip">HOT</span></td><td>รอตรวจ</td></tr><tr><td>NBL-U203 <span class="n">rent</span></td><td>2 Bed</td><td>—</td><td><b>42.0K</b></td><td class="ok">-24%</td><td><span class="chip">SUPER</span></td><td>รอตรวจ</td></tr><tr><td>NBL-U109 <span class="n">sale</span></td><td>1 Bed</td><td>—</td><td><b>8.5M</b></td><td class="ok">-23%</td><td><span class="chip">SUPER</span></td><td>รอตรวจ</td></tr><tr><td>NBL-U079 <span class="n">rent</span></td><td>1 Bed</td><td>11</td><td><b>32.0K</b></td><td class="ok">-22%</td><td><span class="chip">SUPER</span></td><td>รอตรวจ</td></tr></tbody></table></div>
+    <div class="cols">
+      <div><h3>ราคาขยับล่าสุด</h3><div class="tw"><table class="m"><thead><tr><th>Ref</th><th>เดิม</th><th>ล่าสุด</th><th>เปลี่ยน</th></tr></thead><tbody><tr><td>NBL-U043 <span class="n">sale</span></td><td>6,900,000</td><td><b>7,000,000</b></td><td class="bad">+1%</td></tr></tbody></table></div></div>
+      <div><h3>Agent ที่ลงประกาศมากสุด</h3><p class="mut">ไม่มีชื่อ agent ในข้อมูล</p></div>
+    </div>
+  </section><section class="pane" id="t-park24">
+    <h2>Park 24 <span class="n">active 772 ห้อง · หมดไป 185 · รอตรวจ 1006</span></h2>
+    <h3>Floor Premium · ค่าชั้นของตึกนี้</h3>
+  <div class="tw"><table class="m"><tbody>
+    <tr><th>Floor Premium (ขาย)</th><td><b>642</b> ฿/ตร.ม. ต่อชั้น</td></tr>
+    <tr><th>Floor Premium (เช่า)</th><td><b>2.11</b> ฿/ตร.ม./เดือน ต่อชั้น <span class="mut">· แบบ yield กลาง 2.45</span></td></tr>
+    <tr><th>yield</th><td>ตึกนี้ <b>3.95%</b> <span class="mut">· กลางทุกตึก 4.58%</span></td></tr>
+    <tr><th>ค่าเช่าอ้างอิง</th><td>A <b>761.3</b> <span class="mut">· B 883.1</span> ฿/ตร.ม./เดือน</td></tr>
+    <tr><th>ราคาขายอ้างอิง</th><td><b>231,368</b> ฿/ตร.ม.</td></tr>
+    <tr><th>ชั้นอ้างอิง</th><td>เช่า 22.4 · ขาย 21.6</td></tr>
+  </tbody></table></div><details class="fpnote"><summary>วิธีคำนวณ</summary><pre>
+Floor Premium (ขาย)  — หน่วย ฿/ตร.ม. ต่อ 1 ชั้น
+  1. ตัดห้องผิดปกติออกด้วย IQR        เหลือ 378 ห้อง
+  2. เรียงตามชั้น แบ่ง 3 กลุ่ม         กลุ่มละ 126 ห้อง (กลุ่มกลางไม่ใช้)
+  3. กลุ่มชั้นล่าง  median ชั้น 8.0   median ฿/ตร.ม. 207,020
+     กลุ่มชั้นบน    median ชั้น 36.0   median ฿/ตร.ม. 225,000
+  4. (225,000 − 207,020) ÷ (36.0 − 8.0) = 642
+  5. ใช้ค่าของตึกนี้เอง = 642
+
+yield ของตึก
+  (ค่าเช่าอ้างอิง 761.3 × 12) ÷ ราคาขายอ้างอิง 231,368 = 3.95%
+  ตัด noise ทั้งสองฝั่งก่อนหาร — ตัดฝั่งเดียวจะทำให้ตัวหารเล็กลงข้างเดียว yield พองขึ้น
+
+Floor Premium (เช่า)
+  แบบ A ใช้ yield ตึก   642 × 3.95% ÷ 12 = 2.11
+  แบบ B ใช้ yield กลาง  642 × 4.58% ÷ 12 = 2.45
+
+ราคาอ้างอิงและชั้นอ้างอิง
+  ทั้งคู่มาจากห้องชุดเดียวกัน (หลังตัด IQR) — ราคาใช้ mean ชั้นก็ต้องใช้ mean
+  ขาย  231,368 ฿/ตร.ม. ที่ชั้น 21.6
+  เช่า  761.3 ฿/ตร.ม. ที่ชั้น 22.4
+
+ราคาที่ควรเป็นของชั้น F = ราคาอ้างอิง + Floor Premium × (F − ชั้นอ้างอิง)
+ความคุ้ม = (ราคาจริง − ราคาที่ควรเป็น) ÷ ราคาที่ควรเป็น    ติดลบ = ถูกกว่าที่ควร
+</pre></details>
+    <div class="cols">
+      <div><h3>เช่า — ราคากลางต่อตรม.</h3><div class="tw"><table class="m"><thead><tr><th>฿/ตรม./เดือน (median)</th><th>LOW</th><th>MID</th><th>HIGH</th></tr></thead><tbody><tr><th>Studio</th><td><b>727</b><span class="n">n=56</span></td><td><b>759</b><span class="n">n=35</span></td><td><b>724</b><span class="n">n=12</span></td></tr><tr><th>1 Bed</th><td><b>741</b><span class="n">n=164</span></td><td><b>750</b><span class="n">n=90</span></td><td><b>862</b><span class="n">n=26</span></td></tr><tr><th>2 Bed</th><td><b>769</b><span class="n">n=138</span></td><td><b>793</b><span class="n">n=76</span></td><td><b>840</b><span class="n">n=21</span></td></tr><tr><th>3 Bed</th><td><b>740</b><span class="n">n=6</span></td><td><b>700</b><span class="n">n=1</span></td><td class="mut">—</td></tr></tbody></table></div></div>
+      <div><h3>ขาย — ราคากลางต่อตรม.</h3><div class="tw"><table class="m"><thead><tr><th>฿/ตรม. (median)</th><th>LOW</th><th>MID</th><th>HIGH</th></tr></thead><tbody><tr><th>Studio</th><td><b>196,429</b><span class="n">n=26</span></td><td><b>195,345</b><span class="n">n=13</span></td><td><b>251,897</b><span class="n">n=4</span></td></tr><tr><th>1 Bed</th><td><b>201,754</b><span class="n">n=95</span></td><td><b>213,793</b><span class="n">n=50</span></td><td><b>219,643</b><span class="n">n=9</span></td></tr><tr><th>2 Bed</th><td><b>254,545</b><span class="n">n=111</span></td><td><b>240,000</b><span class="n">n=45</span></td><td><b>241,345</b><span class="n">n=17</span></td></tr><tr><th>3 Bed</th><td><b>250,000</b><span class="n">n=3</span></td><td><b>272,477</b><span class="n">n=7</span></td><td><b>252,963</b><span class="n">n=1</span></td></tr></tbody></table></div></div>
+    </div>
+    <h3>ดีลติดธง (เรียงถูกกว่าชั้นมากสุด)</h3><div class="tw"><table class="m"><thead><tr><th>Ref</th><th>Type</th><th>Fl</th><th>ราคา</th><th>vs ชั้น</th><th>ธง</th><th>สถานะ</th></tr></thead><tbody><tr><td>P24-U800 <span class="n">rent</span></td><td>2 Bed</td><td>16</td><td><b>28.0K</b></td><td class="ok">-46%</td><td><span class="chip">SUPER</span><span class="chip">NEGO</span></td><td>รอตรวจ</td></tr><tr><td>P24-U329 <span class="n">sale</span></td><td>1 Bed</td><td>17</td><td><b>4.7M</b></td><td class="ok">-43%</td><td><span class="chip">SUPER</span></td><td>รอตรวจ</td></tr><tr><td>P24-U416 <span class="n">sale</span></td><td>1 Bed</td><td>13</td><td><b>9.0M</b></td><td class="ok">-42%</td><td><span class="chip">SUPER</span></td><td>รอตรวจ</td></tr><tr><td>P24-U812 <span class="n">rent</span></td><td>2 Bed</td><td>23</td><td><b>32.0K</b></td><td class="ok">-41%</td><td><span class="chip">SUPER</span></td><td>รอตรวจ</td></tr><tr><td>P24-U249 <span class="n">rent</span></td><td>1 Bed</td><td>29</td><td><b>15.5K</b></td><td class="ok">-40%</td><td><span class="chip">SUPER</span></td><td>รอตรวจ</td></tr><tr><td>P24-U121 <span class="n">sale</span></td><td>1 Bed</td><td>13</td><td><b>4.5M</b></td><td class="ok">-38%</td><td><span class="chip">SUPER</span></td><td>รอตรวจ</td></tr><tr><td>P24-U186 <span class="n">rent</span></td><td>1 Bed</td><td>8</td><td><b>15.0K</b></td><td class="ok">-38%</td><td><span class="chip">SUPER</span><span class="chip">HOT</span><span class="chip">NEGO</span></td><td>รอตรวจ</td></tr><tr><td>P24-U322 <span class="n">sale</span></td><td>1 Bed</td><td>9</td><td><b>5.0M</b></td><td class="ok">-38%</td><td><span class="chip">SUPER</span></td><td>รอตรวจ</td></tr><tr><td>P24-U420 <span class="n">rent</span></td><td>1 Bed</td><td>39</td><td><b>29.0K</b></td><td class="ok">-38%</td><td><span class="chip">SUPER</span></td><td>รอตรวจ</td></tr><tr><td>P24-U031 <span class="n">sale</span></td><td>Studio</td><td>25</td><td><b>4.1M</b></td><td class="ok">-36%</td><td><span class="chip">SUPER</span><span class="chip">INVESTABLE</span></td><td>รอตรวจ</td></tr><tr><td>P24-U165 <span class="n">sale</span></td><td>1 Bed</td><td>25</td><td><b>4.1M</b></td><td class="ok">-36%</td><td><span class="chip">SUPER</span><span class="chip">HOT</span><span class="chip">NEGO</span></td><td>รอตรวจ</td></tr><tr><td>P24-U093 <span class="n">sale</span></td><td>Studio</td><td>13</td><td><b>6.0M</b></td><td class="ok">-35%</td><td><span class="chip">SUPER</span></td><td>รอตรวจ</td></tr></tbody></table></div>
+    <div class="cols">
+      <div><h3>ราคาขยับล่าสุด</h3><div class="tw"><table class="m"><thead><tr><th>Ref</th><th>เดิม</th><th>ล่าสุด</th><th>เปลี่ยน</th></tr></thead><tbody><tr><td>P24-U593 <span class="n">sale</span></td><td>14,890,000</td><td><b>11,600,000</b></td><td class="ok">-22%</td></tr><tr><td>P24-U251 <span class="n">rent</span></td><td>25,000</td><td><b>21,000</b></td><td class="ok">-16%</td></tr><tr><td>P24-U599 <span class="n">sale</span></td><td>16,420,000</td><td><b>14,433,000</b></td><td class="ok">-12%</td></tr><tr><td>P24-U235 <span class="n">sale</span></td><td>6,300,000</td><td><b>5,700,000</b></td><td class="ok">-10%</td></tr><tr><td>P24-U242 <span class="n">sale</span></td><td>6,500,000</td><td><b>5,900,000</b></td><td class="ok">-9%</td></tr><tr><td>P24-U384 <span class="n">rent</span></td><td>40,000</td><td><b>38,000</b></td><td class="ok">-5%</td></tr><tr><td>P24-U897 <span class="n">sale</span></td><td>29,900,000</td><td><b>30,000,000</b></td><td class="bad">0%</td></tr><tr><td>P24-U250 <span class="n">sale</span></td><td>5,690,000</td><td><b>5,850,000</b></td><td class="bad">+3%</td></tr><tr><td>P24-U465 <span class="n">sale</span></td><td>12,990,000</td><td><b>14,000,000</b></td><td class="bad">+8%</td></tr><tr><td>P24-U232 <span class="n">rent</span></td><td>19,500</td><td><b>23,000</b></td><td class="bad">+18%</td></tr></tbody></table></div></div>
+      <div><h3>Agent ที่ลงประกาศมากสุด</h3><p class="mut">ไม่มีชื่อ agent ในข้อมูล</p></div>
+    </div>
+  </section><section class="pane" id="t-rhythmsukhumvit3638">
+    <h2>Rhythm Sukhumvit 36-38 <span class="n">active 249 ห้อง · รอตรวจ 344 · หมดไป 71</span></h2>
+    <h3>Floor Premium · ค่าชั้นของตึกนี้</h3>
+  <div class="tw"><table class="m"><tbody>
+    <tr><th>Floor Premium (ขาย)</th><td><b>1,733</b> ฿/ตร.ม. ต่อชั้น</td></tr>
+    <tr><th>Floor Premium (เช่า)</th><td><b>6.66</b> ฿/ตร.ม./เดือน ต่อชั้น <span class="mut">· แบบ yield กลาง 6.62</span></td></tr>
+    <tr><th>yield</th><td>ตึกนี้ <b>4.61%</b> <span class="mut">· กลางทุกตึก 4.58%</span></td></tr>
+    <tr><th>ค่าเช่าอ้างอิง</th><td>A <b>678.5</b> <span class="mut">· B 674.0</span> ฿/ตร.ม./เดือน</td></tr>
+    <tr><th>ราคาขายอ้างอิง</th><td><b>176,585</b> ฿/ตร.ม.</td></tr>
+    <tr><th>ชั้นอ้างอิง</th><td>เช่า 15.1 · ขาย 14.9</td></tr>
+  </tbody></table></div><details class="fpnote"><summary>วิธีคำนวณ</summary><pre>
+Floor Premium (ขาย)  — หน่วย ฿/ตร.ม. ต่อ 1 ชั้น
+  1. ตัดห้องผิดปกติออกด้วย IQR        เหลือ 140 ห้อง
+  2. เรียงตามชั้น แบ่ง 3 กลุ่ม         กลุ่มละ 46 ห้อง (กลุ่มกลางไม่ใช้)
+  3. กลุ่มชั้นล่าง  median ชั้น 10.0   median ฿/ตร.ม. 168,432
+     กลุ่มชั้นบน    median ชั้น 21.0   median ฿/ตร.ม. 187,500
+  4. (187,500 − 168,432) ÷ (21.0 − 10.0) = 1,733
+  5. ใช้ค่าของตึกนี้เอง = 1,733
+
+yield ของตึก
+  (ค่าเช่าอ้างอิง 678.5 × 12) ÷ ราคาขายอ้างอิง 176,585 = 4.61%
+  ตัด noise ทั้งสองฝั่งก่อนหาร — ตัดฝั่งเดียวจะทำให้ตัวหารเล็กลงข้างเดียว yield พองขึ้น
+
+Floor Premium (เช่า)
+  แบบ A ใช้ yield ตึก   1,733 × 4.61% ÷ 12 = 6.66
+  แบบ B ใช้ yield กลาง  1,733 × 4.58% ÷ 12 = 6.62
+
+ราคาอ้างอิงและชั้นอ้างอิง
+  ทั้งคู่มาจากห้องชุดเดียวกัน (หลังตัด IQR) — ราคาใช้ mean ชั้นก็ต้องใช้ mean
+  ขาย  176,585 ฿/ตร.ม. ที่ชั้น 14.9
+  เช่า  678.5 ฿/ตร.ม. ที่ชั้น 15.1
+
+ราคาที่ควรเป็นของชั้น F = ราคาอ้างอิง + Floor Premium × (F − ชั้นอ้างอิง)
+ความคุ้ม = (ราคาจริง − ราคาที่ควรเป็น) ÷ ราคาที่ควรเป็น    ติดลบ = ถูกกว่าที่ควร
+</pre></details>
+    <div class="cols">
+      <div><h3>เช่า — ราคากลางต่อตรม.</h3><div class="tw"><table class="m"><thead><tr><th>฿/ตรม./เดือน (median)</th><th>LOW</th><th>MID</th><th>HIGH</th></tr></thead><tbody><tr><th>Studio</th><td><b>667</b><span class="n">n=16</span></td><td><b>750</b><span class="n">n=2</span></td><td class="mut">—</td></tr><tr><th>1 Bed</th><td><b>647</b><span class="n">n=92</span></td><td><b>612</b><span class="n">n=7</span></td><td><b>653</b><span class="n">n=11</span></td></tr><tr><th>2 Bed</th><td><b>707</b><span class="n">n=55</span></td><td><b>680</b><span class="n">n=8</span></td><td><b>724</b><span class="n">n=7</span></td></tr></tbody></table></div></div>
+      <div><h3>ขาย — ราคากลางต่อตรม.</h3><div class="tw"><table class="m"><thead><tr><th>฿/ตรม. (median)</th><th>LOW</th><th>MID</th><th>HIGH</th></tr></thead><tbody><tr><th>Studio</th><td><b>179,167</b><span class="n">n=21</span></td><td class="mut">—</td><td class="mut">—</td></tr><tr><th>1 Bed</th><td><b>170,833</b><span class="n">n=69</span></td><td><b>172,000</b><span class="n">n=8</span></td><td><b>191,176</b><span class="n">n=7</span></td></tr><tr><th>2 Bed</th><td><b>191,026</b><span class="n">n=38</span></td><td><b>152,727</b><span class="n">n=1</span></td><td><b>196,705</b><span class="n">n=2</span></td></tr></tbody></table></div></div>
+    </div>
+    <h3>ดีลติดธง (เรียงถูกกว่าชั้นมากสุด)</h3><div class="tw"><table class="m"><thead><tr><th>Ref</th><th>Type</th><th>Fl</th><th>ราคา</th><th>vs ชั้น</th><th>ธง</th><th>สถานะ</th></tr></thead><tbody><tr><td>RTM-U269 <span class="n">sale</span></td><td>2 Bed</td><td>15</td><td><b>5.5M</b></td><td class="ok">-60%</td><td><span class="chip">SUPER</span><span class="chip">INVESTABLE</span><span class="chip">NEGO</span></td><td>รอตรวจ</td></tr><tr><td>RTM-U066 <span class="n">sale</span></td><td>1 Bed</td><td>22</td><td><b>3.3M</b></td><td class="ok">-41%</td><td><span class="chip">SUPER</span></td><td>รอตรวจ</td></tr><tr><td>RTM-U060 <span class="n">sale</span></td><td>1 Bed</td><td>10</td><td><b>3.3M</b></td><td class="ok">-38%</td><td><span class="chip">SUPER</span></td><td>รอตรวจ</td></tr><tr><td>RTM-U182 <span class="n">rent</span></td><td>1 Bed</td><td>18</td><td><b>20.0K</b></td><td class="ok">-36%</td><td><span class="chip">SUPER</span></td><td>รอตรวจ</td></tr><tr><td>RTM-U104 <span class="n">rent</span></td><td>1 Bed</td><td>15</td><td><b>18.0K</b></td><td class="ok">-34%</td><td><span class="chip">SUPER</span><span class="chip">HOT</span><span class="chip">NEGO</span></td><td>รอตรวจ</td></tr><tr><td>RTM-U098 <span class="n">rent</span></td><td>1 Bed</td><td>9</td><td><b>16.0K</b></td><td class="ok">-30%</td><td><span class="chip">SUPER</span><span class="chip">HOT</span><span class="chip">NEGO</span></td><td>รอตรวจ</td></tr><tr><td>RTM-U241 <span class="n">sale</span></td><td>2 Bed</td><td>11</td><td><b>7.9M</b></td><td class="ok">-29%</td><td><span class="chip">SUPER</span></td><td>รอตรวจ</td></tr><tr><td>RTM-U084 <span class="n">sale</span></td><td>1 Bed</td><td>15</td><td><b>4.2M</b></td><td class="ok">-28%</td><td><span class="chip">SUPER</span><span class="chip">HOT</span></td><td>รอตรวจ</td></tr><tr><td>RTM-U090 <span class="n">sale</span></td><td>1 Bed</td><td>21</td><td><b>4.7M</b></td><td class="ok">-26%</td><td><span class="chip">SUPER</span><span class="chip">HOT</span></td><td>รอตรวจ</td></tr><tr><td>RTM-U222 <span class="n">sale</span></td><td>2 Bed</td><td>11</td><td><b>7.9M</b></td><td class="ok">-26%</td><td><span class="chip">SUPER</span><span class="chip">HOT</span></td><td>รอตรวจ</td></tr><tr><td>RTM-U023 <span class="n">sale</span></td><td>Studio</td><td>22</td><td><b>3.5M</b></td><td class="ok">-25%</td><td><span class="chip">SUPER</span></td><td>รอตรวจ</td></tr><tr><td>RTM-U038 <span class="n">sale</span></td><td>1 Bed</td><td>20</td><td><b>3.8M</b></td><td class="ok">-25%</td><td><span class="chip">SUPER</span><span class="chip">HOT</span><span class="chip">NEGO</span></td><td>รอตรวจ</td></tr></tbody></table></div>
+    <div class="cols">
+      <div><h3>ราคาขยับล่าสุด</h3><div class="tw"><table class="m"><thead><tr><th>Ref</th><th>เดิม</th><th>ล่าสุด</th><th>เปลี่ยน</th></tr></thead><tbody><tr><td>RTM-U084 <span class="n">sale</span></td><td>6,200,000</td><td><b>4,150,000</b></td><td class="ok">-33%</td></tr><tr><td>RTM-U120 <span class="n">rent</span></td><td>24,000</td><td><b>20,000</b></td><td class="ok">-17%</td></tr><tr><td>RTM-U019 <span class="n">rent</span></td><td>18,900</td><td><b>17,500</b></td><td class="ok">-7%</td></tr><tr><td>RTM-U126 <span class="n">sale</span></td><td>5,300,000</td><td><b>5,000,000</b></td><td class="ok">-6%</td></tr><tr><td>RTM-U022 <span class="n">sale</span></td><td>4,514,000</td><td><b>4,400,000</b></td><td class="ok">-3%</td></tr><tr><td>RTM-U180 <span class="n">sale</span></td><td>10,000,000</td><td><b>10,300,000</b></td><td class="bad">+3%</td></tr></tbody></table></div></div>
+      <div><h3>Agent ที่ลงประกาศมากสุด</h3><p class="mut">ไม่มีชื่อ agent ในข้อมูล</p></div>
+    </div>
+  </section><section class="pane" id="t-thelumpini24">
+    <h2>The Lumpini 24 <span class="n">active 244 ห้อง · รอตรวจ 339 · หมดไป 49</span></h2>
+    <h3>Floor Premium · ค่าชั้นของตึกนี้</h3>
+  <div class="tw"><table class="m"><tbody>
+    <tr><th>Floor Premium (ขาย)</th><td><b>1,347</b> ฿/ตร.ม. ต่อชั้น</td></tr>
+    <tr><th>Floor Premium (เช่า)</th><td><b>5.19</b> ฿/ตร.ม./เดือน ต่อชั้น <span class="mut">· แบบ yield กลาง 5.14</span></td></tr>
+    <tr><th>yield</th><td>ตึกนี้ <b>4.62%</b> <span class="mut">· กลางทุกตึก 4.58%</span></td></tr>
+    <tr><th>ค่าเช่าอ้างอิง</th><td>A <b>783.5</b> <span class="mut">· B 776.1</span> ฿/ตร.ม./เดือน</td></tr>
+    <tr><th>ราคาขายอ้างอิง</th><td><b>203,326</b> ฿/ตร.ม.</td></tr>
+    <tr><th>ชั้นอ้างอิง</th><td>เช่า 35.1 · ขาย 20.0</td></tr>
+  </tbody></table></div><details class="fpnote"><summary>วิธีคำนวณ</summary><pre>
+Floor Premium (ขาย)  — หน่วย ฿/ตร.ม. ต่อ 1 ชั้น
+  1. ตัดห้องผิดปกติออกด้วย IQR        เหลือ 116 ห้อง
+  2. เรียงตามชั้น แบ่ง 3 กลุ่ม         กลุ่มละ 33 ห้อง (กลุ่มกลางไม่ใช้)
+  3. กลุ่มชั้นล่าง  median ชั้น 10.0   median ฿/ตร.ม. 184,211
+     กลุ่มชั้นบน    median ชั้น 30.0   median ฿/ตร.ม. 211,154
+  4. (211,154 − 184,211) ÷ (30.0 − 10.0) = 1,347
+  5. ใช้ค่าของตึกนี้เอง = 1,347
+
+yield ของตึก
+  (ค่าเช่าอ้างอิง 783.5 × 12) ÷ ราคาขายอ้างอิง 203,326 = 4.62%
+  ตัด noise ทั้งสองฝั่งก่อนหาร — ตัดฝั่งเดียวจะทำให้ตัวหารเล็กลงข้างเดียว yield พองขึ้น
+
+Floor Premium (เช่า)
+  แบบ A ใช้ yield ตึก   1,347 × 4.62% ÷ 12 = 5.19
+  แบบ B ใช้ yield กลาง  1,347 × 4.58% ÷ 12 = 5.14
+
+ราคาอ้างอิงและชั้นอ้างอิง
+  ทั้งคู่มาจากห้องชุดเดียวกัน (หลังตัด IQR) — ราคาใช้ mean ชั้นก็ต้องใช้ mean
+  ขาย  203,326 ฿/ตร.ม. ที่ชั้น 20.0
+  เช่า  783.5 ฿/ตร.ม. ที่ชั้น 35.1
+
+ราคาที่ควรเป็นของชั้น F = ราคาอ้างอิง + Floor Premium × (F − ชั้นอ้างอิง)
+ความคุ้ม = (ราคาจริง − ราคาที่ควรเป็น) ÷ ราคาที่ควรเป็น    ติดลบ = ถูกกว่าที่ควร
+</pre></details>
+    <div class="cols">
+      <div><h3>เช่า — ราคากลางต่อตรม.</h3><div class="tw"><table class="m"><thead><tr><th>฿/ตรม./เดือน (median)</th><th>LOW</th><th>MID</th><th>HIGH</th></tr></thead><tbody><tr><th>Studio</th><td class="mut">—</td><td class="mut">—</td><td><b>769</b><span class="n">n=1</span></td></tr><tr><th>1 Bed</th><td><b>774</b><span class="n">n=107</span></td><td><b>829</b><span class="n">n=6</span></td><td><b>800</b><span class="n">n=9</span></td></tr><tr><th>2 Bed</th><td><b>818</b><span class="n">n=74</span></td><td><b>804</b><span class="n">n=2</span></td><td><b>750</b><span class="n">n=7</span></td></tr><tr><th>3 Bed</th><td><b>1,095</b><span class="n">n=10</span></td><td class="mut">—</td><td><b>1,087</b><span class="n">n=1</span></td></tr></tbody></table></div></div>
+      <div><h3>ขาย — ราคากลางต่อตรม.</h3><div class="tw"><table class="m"><thead><tr><th>฿/ตรม. (median)</th><th>LOW</th><th>MID</th><th>HIGH</th></tr></thead><tbody><tr><th>1 Bed</th><td><b>206,862</b><span class="n">n=66</span></td><td><b>207,692</b><span class="n">n=5</span></td><td><b>214,132</b><span class="n">n=4</span></td></tr><tr><th>2 Bed</th><td><b>214,630</b><span class="n">n=39</span></td><td class="mut">—</td><td><b>243,077</b><span class="n">n=4</span></td></tr><tr><th>3 Bed</th><td><b>362,727</b><span class="n">n=4</span></td><td class="mut">—</td><td class="mut">—</td></tr></tbody></table></div></div>
+    </div>
+    <h3>ดีลติดธง (เรียงถูกกว่าชั้นมากสุด)</h3><div class="tw"><table class="m"><thead><tr><th>Ref</th><th>Type</th><th>Fl</th><th>ราคา</th><th>vs ชั้น</th><th>ธง</th><th>สถานะ</th></tr></thead><tbody><tr><td>L24-U201 <span class="n">rent</span></td><td>2 Bed</td><td>30</td><td><b>30.0K</b></td><td class="ok">-34%</td><td><span class="chip">SUPER</span><span class="chip">HOT</span><span class="chip">NEGO</span></td><td>รอตรวจ</td></tr><tr><td>L24-U049 <span class="n">sale</span></td><td>1 Bed</td><td>—</td><td><b>4.2M</b></td><td class="ok">-32%</td><td><span class="chip">SUPER</span></td><td>รอตรวจ</td></tr><tr><td>L24-U196 <span class="n">sale</span></td><td>2 Bed</td><td>24</td><td><b>7.5M</b></td><td class="ok">-32%</td><td><span class="chip">SUPER</span><span class="chip">INVESTABLE</span></td><td>รอตรวจ</td></tr><tr><td>L24-U035 <span class="n">sale</span></td><td>1 Bed</td><td>—</td><td><b>4.5M</b></td><td class="ok">-30%</td><td><span class="chip">SUPER</span></td><td>รอตรวจ</td></tr><tr><td>L24-U088 <span class="n">sale</span></td><td>1 Bed</td><td>20</td><td><b>5.4M</b></td><td class="ok">-30%</td><td><span class="chip">SUPER</span></td><td>รอตรวจ</td></tr><tr><td>L24-U068 <span class="n">rent</span></td><td>1 Bed</td><td>45</td><td><b>24.0K</b></td><td class="ok">-26%</td><td><span class="chip">SUPER</span></td><td>รอตรวจ</td></tr><tr><td>L24-U024 <span class="n">rent</span></td><td>1 Bed</td><td>46</td><td><b>16.0K</b></td><td class="ok">-25%</td><td><span class="chip">SUPER</span></td><td>รอตรวจ</td></tr><tr><td>L24-U030 <span class="n">rent</span></td><td>1 Bed</td><td>—</td><td><b>17.0K</b></td><td class="ok">-25%</td><td><span class="chip">SUPER</span></td><td>รอตรวจ</td></tr><tr><td>L24-U023 <span class="n">sale</span></td><td>1 Bed</td><td>—</td><td><b>4.2M</b></td><td class="ok">-24%</td><td><span class="chip">SUPER</span><span class="chip">HOT</span></td><td>รอตรวจ</td></tr><tr><td>L24-U058 <span class="n">rent</span></td><td>1 Bed</td><td>25</td><td><b>19.0K</b></td><td class="ok">-24%</td><td><span class="chip">SUPER</span><span class="chip">HOT</span></td><td>รอตรวจ</td></tr><tr><td>L24-U099 <span class="n">sale</span></td><td>1 Bed</td><td>—</td><td><b>5.2M</b></td><td class="ok">-24%</td><td><span class="chip">SUPER</span><span class="chip">HOT</span></td><td>รอตรวจ</td></tr><tr><td>L24-U101 <span class="n">rent</span></td><td>1 Bed</td><td>46</td><td><b>25.0K</b></td><td class="ok">-24%</td><td><span class="chip">SUPER</span></td><td>รอตรวจ</td></tr></tbody></table></div>
+    <div class="cols">
+      <div><h3>ราคาขยับล่าสุด</h3><div class="tw"><table class="m"><thead><tr><th>Ref</th><th>เดิม</th><th>ล่าสุด</th><th>เปลี่ยน</th></tr></thead><tbody><tr><td>L24-U059 <span class="n">rent</span></td><td>35,000</td><td><b>20,500</b></td><td class="ok">-41%</td></tr><tr><td>L24-U267 <span class="n">rent</span></td><td>50,000</td><td><b>30,000</b></td><td class="ok">-40%</td></tr><tr><td>L24-U177 <span class="n">rent</span></td><td>45,000</td><td><b>35,000</b></td><td class="ok">-22%</td></tr><tr><td>L24-U196 <span class="n">rent</span></td><td>45,000</td><td><b>40,000</b></td><td class="ok">-11%</td></tr><tr><td>L24-U056 <span class="n">rent</span></td><td>23,000</td><td><b>22,000</b></td><td class="ok">-4%</td></tr><tr><td>L24-U170 <span class="n">sale</span></td><td>13,500,000</td><td><b>12,900,000</b></td><td class="ok">-4%</td></tr><tr><td>L24-U266 <span class="n">rent</span></td><td>19,000</td><td><b>18,500</b></td><td class="ok">-3%</td></tr><tr><td>L24-U183 <span class="n">sale</span></td><td>7,500,000</td><td><b>12,200,000</b></td><td class="bad">+63%</td></tr></tbody></table></div></div>
+      <div><h3>Agent ที่ลงประกาศมากสุด</h3><p class="mut">ไม่มีชื่อ agent ในข้อมูล</p></div>
+    </div>
+  </section><section class="pane" id="t-theroomsukhumvit21">
+    <h2>The Room Sukhumvit 21 <span class="n">active 114 ห้อง · รอตรวจ 134 · หมดไป 17</span></h2>
+    <h3>Floor Premium · ค่าชั้นของตึกนี้</h3>
+  <div class="tw"><table class="m"><tbody>
+    <tr><th>Floor Premium (ขาย)</th><td><b>994</b> ฿/ตร.ม. ต่อชั้น</td></tr>
+    <tr><th>Floor Premium (เช่า)</th><td><b>3.67</b> ฿/ตร.ม./เดือน ต่อชั้น <span class="mut">· แบบ yield กลาง 3.79</span></td></tr>
+    <tr><th>yield</th><td>ตึกนี้ <b>4.43%</b> <span class="mut">· กลางทุกตึก 4.58%</span></td></tr>
+    <tr><th>ค่าเช่าอ้างอิง</th><td>A <b>613.5</b> <span class="mut">· B 634.6</span> ฿/ตร.ม./เดือน</td></tr>
+    <tr><th>ราคาขายอ้างอิง</th><td><b>166,262</b> ฿/ตร.ม.</td></tr>
+    <tr><th>ชั้นอ้างอิง</th><td>เช่า 41.1 · ขาย 126.7</td></tr>
+  </tbody></table></div><details class="fpnote"><summary>วิธีคำนวณ</summary><pre>
+Floor Premium (ขาย)  — หน่วย ฿/ตร.ม. ต่อ 1 ชั้น
+  1. ตัดห้องผิดปกติออกด้วย IQR        เหลือ 51 ห้อง
+  2. เรียงตามชั้น แบ่ง 3 กลุ่ม         กลุ่มละ 17 ห้อง (กลุ่มกลางไม่ใช้)
+  3. กลุ่มชั้นล่าง  median ชั้น 6.0   median ฿/ตร.ม. 158,462
+     กลุ่มชั้นบน    median ชั้น 25.0   median ฿/ตร.ม. 177,344
+  4. (177,344 − 158,462) ÷ (25.0 − 6.0) = 994
+  5. ใช้ค่าของตึกนี้เอง = 994
+
+yield ของตึก
+  (ค่าเช่าอ้างอิง 613.5 × 12) ÷ ราคาขายอ้างอิง 166,262 = 4.43%
+  ตัด noise ทั้งสองฝั่งก่อนหาร — ตัดฝั่งเดียวจะทำให้ตัวหารเล็กลงข้างเดียว yield พองขึ้น
+
+Floor Premium (เช่า)
+  แบบ A ใช้ yield ตึก   994 × 4.43% ÷ 12 = 3.67
+  แบบ B ใช้ yield กลาง  994 × 4.58% ÷ 12 = 3.79
+
+ราคาอ้างอิงและชั้นอ้างอิง
+  ทั้งคู่มาจากห้องชุดเดียวกัน (หลังตัด IQR) — ราคาใช้ mean ชั้นก็ต้องใช้ mean
+  ขาย  166,262 ฿/ตร.ม. ที่ชั้น 126.7
+  เช่า  613.5 ฿/ตร.ม. ที่ชั้น 41.1
+
+ราคาที่ควรเป็นของชั้น F = ราคาอ้างอิง + Floor Premium × (F − ชั้นอ้างอิง)
+ความคุ้ม = (ราคาจริง − ราคาที่ควรเป็น) ÷ ราคาที่ควรเป็น    ติดลบ = ถูกกว่าที่ควร
+</pre></details>
+    <div class="cols">
+      <div><h3>เช่า — ราคากลางต่อตรม.</h3><div class="tw"><table class="m"><thead><tr><th>฿/ตรม./เดือน (median)</th><th>LOW</th><th>MID</th><th>HIGH</th></tr></thead><tbody><tr><th>Studio</th><td><b>676</b><span class="n">n=5</span></td><td class="mut">—</td><td class="mut">—</td></tr><tr><th>1 Bed</th><td><b>577</b><span class="n">n=50</span></td><td><b>577</b><span class="n">n=5</span></td><td><b>632</b><span class="n">n=1</span></td></tr><tr><th>2 Bed</th><td><b>654</b><span class="n">n=18</span></td><td><b>859</b><span class="n">n=1</span></td><td><b>567</b><span class="n">n=1</span></td></tr></tbody></table></div></div>
+      <div><h3>ขาย — ราคากลางต่อตรม.</h3><div class="tw"><table class="m"><thead><tr><th>฿/ตรม. (median)</th><th>LOW</th><th>MID</th><th>HIGH</th></tr></thead><tbody><tr><th>Studio</th><td><b>175,405</b><span class="n">n=1</span></td><td class="mut">—</td><td class="mut">—</td></tr><tr><th>1 Bed</th><td><b>154,902</b><span class="n">n=31</span></td><td class="mut">—</td><td class="mut">—</td></tr><tr><th>2 Bed</th><td><b>177,344</b><span class="n">n=19</span></td><td class="mut">—</td><td><b>230,769</b><span class="n">n=2</span></td></tr></tbody></table></div></div>
+    </div>
+    <h3>ดีลติดธง (เรียงถูกกว่าชั้นมากสุด)</h3><div class="tw"><table class="m"><thead><tr><th>Ref</th><th>Type</th><th>Fl</th><th>ราคา</th><th>vs ชั้น</th><th>ธง</th><th>สถานะ</th></tr></thead><tbody><tr><td>RM21-U095 <span class="n">sale</span></td><td>2 Bed</td><td>6</td><td><b>7.5M</b></td><td class="ok">-48%</td><td><span class="chip">SUPER</span><span class="chip">HOT</span><span class="chip">INVESTABLE</span><span class="chip">NEGO</span></td><td>รอตรวจ</td></tr><tr><td>RM21-U017 <span class="n">sale</span></td><td>1 Bed</td><td>5</td><td><b>6.7M</b></td><td class="ok">-25%</td><td><span class="chip">SUPER</span></td><td>รอตรวจ</td></tr><tr><td>RM21-U091 <span class="n">sale</span></td><td>2 Bed</td><td>28</td><td><b>13.0M</b></td><td class="ok">-24%</td><td><span class="chip">SUPER</span></td><td>รอตรวจ</td></tr><tr><td>RM21-U090 <span class="n">sale</span></td><td>2 Bed</td><td>15</td><td><b>13.0M</b></td><td class="ok">-23%</td><td><span class="chip">SUPER</span></td><td>รอตรวจ</td></tr><tr><td>RM21-U061 <span class="n">rent</span></td><td>1 Bed</td><td>26</td><td><b>30.0K</b></td><td class="ok">-22%</td><td><span class="chip">SUPER</span></td><td>รอตรวจ</td></tr><tr><td>RM21-U064 <span class="n">sale</span></td><td>1 Bed</td><td>10</td><td><b>6.9M</b></td><td class="ok">-21%</td><td><span class="chip">SUPER</span></td><td>รอตรวจ</td></tr><tr><td>RM21-U115 <span class="n">sale</span></td><td>1 Bed</td><td>4</td><td><b>6.8M</b></td><td class="ok">-21%</td><td><span class="chip">SUPER</span><span class="chip">HOT</span></td><td>รอตรวจ</td></tr><tr><td>RM21-U121 <span class="n">sale</span></td><td>2 Bed</td><td>2829</td><td><b>15.0M</b></td><td class="ok">-20%</td><td><span class="chip">SUPER</span></td><td>รอตรวจ</td></tr><tr><td>RM21-U074 <span class="n">rent</span></td><td>1 Bed</td><td>8</td><td><b>29.0K</b></td><td class="ok">-19%</td><td><span class="chip">SUPER</span><span class="chip">HOT</span></td><td>รอตรวจ</td></tr><tr><td>RM21-U029 <span class="n">rent</span></td><td>1 Bed</td><td>24</td><td><b>24.9K</b></td><td class="ok">-17%</td><td><span class="chip">SUPER</span></td><td>รอตรวจ</td></tr><tr><td>RM21-U025 <span class="n">rent</span></td><td>1 Bed</td><td>15</td><td><b>27.0K</b></td><td class="ok">-15%</td><td><span class="chip">SUPER</span></td><td>รอตรวจ</td></tr><tr><td>RM21-U043 <span class="n">rent</span></td><td>1 Bed</td><td>12</td><td><b>30.0K</b></td><td class="ok">-15%</td><td><span class="chip">SUPER</span></td><td>รอตรวจ</td></tr></tbody></table></div>
+    <div class="cols">
+      <div><h3>ราคาขยับล่าสุด</h3><p class="mut">ยังไม่มีการเปลี่ยนราคาสะสม (เริ่มเก็บจากรอบแรกของวงจรรายสัปดาห์)</p></div>
+      <div><h3>Agent ที่ลงประกาศมากสุด</h3><p class="mut">ไม่มีชื่อ agent ในข้อมูล</p></div>
+    </div>
+  </section></main>
+<script>
+document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x===b))
+  document.querySelectorAll('.pane').forEach(p=>p.classList.toggle('on',p.id===b.dataset.t))
+}))
+</script></body></html>
