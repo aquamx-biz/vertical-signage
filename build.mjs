@@ -35,7 +35,7 @@ import { selectWithPolicy, profileToRow, PROFILE_PROJECTION, closedTooLong, CLOS
 import { marketModel, expectedPsqm, valueVsExpected } from './market-model.mjs'
 
 /* ชนิดห้องต้องมีอย่างน้อยเท่านี้ถึงจะได้สไลด์ของตัวเอง */
-const SEG_MIN = 3
+const SEG_MIN = 1  // เจ้าของงานสั่ง 2026-08-10: ทุกชนิดที่มีห้อง (แม้ 1) ได้สไลด์ (ไม่งั้นตึกห้องน้อยเช่น Mahogany ไม่มี media)
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 

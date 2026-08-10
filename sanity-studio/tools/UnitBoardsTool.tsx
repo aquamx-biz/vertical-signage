@@ -33,7 +33,7 @@ const PRICE_BOUNDS: Record<string, [number, number]> = { rent: [5000, 300000], s
 const PSQM_BOUNDS: Record<string, [number, number]> = { rent: [250, 3500], sale: [50000, 600000] }
 const TIER_RANK: Record<string, number> = { super: 0, best: 1, good: 2 }
 /* ชนิดห้องต้องมีอย่างน้อยเท่านี้ถึงจะได้สไลด์ของตัวเอง — ต้องตรงกับ build.mjs (SEG_MIN) */
-const SEG_MIN = 3
+const SEG_MIN = 1
 
 export interface Profile {
   refCode: string; intent: 'rent' | 'sale'; projectName: string

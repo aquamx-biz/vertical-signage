@@ -19,7 +19,7 @@ const ONLY = argOf('--project')
 const TOKEN = process.env.SANITY_WRITE_TOKEN ?? process.env.SANITY_TOKEN
 const API = 'https://awjj9g8u.api.sanity.io/v2024-01-01'
 
-const SEG_MIN = 3          // ต้องตรงกับ build.mjs
+const SEG_MIN = 1          // ต้องตรงกับ build.mjs (ทุกชนิดที่มีห้องได้ media)
 const PER_PAGE = 7         // ต้องตรงกับ board-cards.html
 const LANGS = 4, LANG_S = 7
 
