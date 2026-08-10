@@ -360,8 +360,11 @@ export function UnitBoardsTool() {
 
   /* โหมดเลือกเองล้วน: บอร์ด = เฉพาะห้องที่ติ๊ก ไม่ดึงห้องอื่นมาเติม (ตรงกับที่ build.mjs
      ใช้ lineup ตรง ๆ อยู่แล้ว) · โหมดปกติ: ตัวคัดเติมให้เต็ม quota เหมือนเดิม */
+  /* โหมดเลือกเอง: บอร์ด = ห้องที่ติ๊ก (จาก lineup) ลบด้วย hideFromBoard เหมือนโหมดปกติ —
+     ปุ่มลบเขียน published ทันที (ตรงกับ footer "กดแล้วมีผลทันที") · refresh แล้ว lineup กลับมา
+     แต่ห้องที่ hide ถูกตัดออก จึงไม่เด้งกลับ · ไม่เติมอัตโนมัติ (ต่างจากโหมดปกติ) */
   const manualPick = (m2: 'rent' | 'sale', sel: Set<string>) => ({
-    rows: pool.filter(p => p.intent === m2 && sel.has(p.refCode))
+    rows: pool.filter(p => p.intent === m2 && sel.has(p.refCode) && !p.hideFromBoard)
       .sort((a, b) => BED_ORDER.indexOf(a.bedType ?? '') - BED_ORDER.indexOf(b.bedType ?? '') || (a.priceTHB ?? 0) - (b.priceTHB ?? 0)),
     warnings: [] as string[],
   })
@@ -629,7 +632,7 @@ export function UnitBoardsTool() {
   const polRow = (label: string, P: Policy, set: (p: Policy) => void, m2: 'r' | 's') => {
     const man = m2 === 'r' ? manualR : manualS
     const setMan = m2 === 'r' ? setManualR : setManualS
-    const selCount = (m2 === 'r' ? selR : selS).size
+    const shownCount = (m2 === 'r' ? simR : simS).rows.length
     return (
       <Inline space={2}>
         <Text size={1} weight="bold" style={{ minWidth: 76 }}>{label}</Text>
@@ -647,7 +650,7 @@ export function UnitBoardsTool() {
             เหลือแค่ "จำนวนห้อง" · โหมดปกติเติมดีลดีสุดให้เต็มจำนวนนี้ · โหมดเลือกเอง = เฉพาะที่ติ๊ก
             (ห้ามใช้ fragment ใน Inline — มันจะเรียงลงแนวตั้ง ใช้ Inline ซ้อนแทน) */}
         {man
-          ? <Text size={1} style={{ color: '#0f3460' }}>บอร์ด = {selCount} ห้องที่ติ๊ก (ไม่เติมอัตโนมัติ) · ติ๊กใน Select {m2 === 'r' ? 'R' : 'S'}</Text>
+          ? <Text size={1} style={{ color: '#0f3460' }}>บอร์ด = {shownCount} ห้องที่เลือก (ไม่เติมอัตโนมัติ) · ติ๊ก Select {m2 === 'r' ? 'R' : 'S'} เพิ่ม · ✕ เอาออก = หายทันที</Text>
           : <Inline space={2}>
               <Text size={1}>จำนวนห้อง</Text>{numIn(P, set, 'quota')}
               <Text size={1} muted>เลือกดีลดีสุดให้เต็มจำนวนนี้อัตโนมัติ</Text>
@@ -700,16 +703,8 @@ export function UnitBoardsTool() {
   /* เอาออกหลายห้องรวดเดียว — พฤติกรรมเดียวกับปุ่ม ✕ เดี่ยว (hide ทั้ง rent+sale ต่อห้อง)
      เขียน published ตรง เหมือน setHidden · ล็อกเคยขึ้นบอร์ดไม่ถูกลบ (ประวัติคงอยู่) */
   const removeMany = async () => {
-    // แยกตามโหมดของแต่ละฝั่ง — เลือกเองล้วน = ถอดออกจากที่ติ๊ก (local) · ปกติ = hide (published)
-    const manualKeys = [...selRemove].filter(k => { const m = k.split('·')[1]; return m === 'rent' ? manualR : manualS })
-    if (manualKeys.length) {
-      const rr = new Set<string>(), ss = new Set<string>()
-      manualKeys.forEach(k => { const [ref, m] = k.split('·'); (m === 'rent' ? rr : ss).add(ref) })
-      if (rr.size) setSelR(x => { const n = new Set(x); rr.forEach(r => n.delete(r)); return n })
-      if (ss.size) setSelS(x => { const n = new Set(x); ss.forEach(r => n.delete(r)); return n })
-    }
-    const refs = [...new Set([...selRemove].filter(k => { const m = k.split('·')[1]; return m === 'rent' ? !manualR : !manualS })
-      .map(k => k.split('·')[0]))]
+    // ทั้งสองโหมด = hide (persist ทันที) — โหมดเลือกเองแค่ไม่เติมกลับ · ห้องที่ hide ถูกตัดจากบอร์ด
+    const refs = [...new Set([...selRemove].map(k => k.split('·')[0]))]
     setSelRemove(new Set())
     if (!refs.length) return
     setStageBusy('__bulk__')
@@ -801,11 +796,9 @@ export function UnitBoardsTool() {
           ))}
         </Flex>
         {p.dealStageAt && cur === 'closed' && <Text size={0} muted>ปิดเมื่อ {p.dealStageAt}</Text>}
-        <button onClick={() => (m2 === 'rent' ? manualR : manualS)
-            ? (m2 === 'rent' ? setSelR : setSelS)(x => { const n = new Set(x); n.delete(p.refCode); return n })
-            : setHidden(p, true)}
+        <button onClick={() => setHidden(p, true)}
           disabled={stageBusy === p.refCode}
-          title={(m2 === 'rent' ? manualR : manualS) ? 'เอาออกจากที่เลือก (มีผลเมื่อกด Save)' : 'เอาห้องนี้ออกจากบอร์ด — ตัวคัดจะดึงห้องถัดไปขึ้นมาแทน'}
+          title={(m2 === 'rent' ? manualR : manualS) ? 'เอาห้องนี้ออกจากบอร์ด — มีผลทันที (ไม่เติมกลับ) · เอากลับได้ในรายการด้านล่าง' : 'เอาห้องนี้ออกจากบอร์ด — ตัวคัดจะดึงห้องถัดไปขึ้นมาแทน'}
           style={{ marginLeft: 'auto', fontSize: 11.5, padding: '3px 10px', borderRadius: 999,
             border: '1px solid #e5b4b4', background: '#fff', color: '#b42318', cursor: 'pointer' }}>✕ เอาออก</button>
       </Flex>

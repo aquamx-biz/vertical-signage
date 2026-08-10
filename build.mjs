@@ -504,7 +504,9 @@ for (const project of projects) {
     //   3. manual rows — legacy hand-typed rows.
     /* 'taken' ไม่ถูกกรองทิ้งอีกแล้ว — ห้องที่ปิดดีลต้องขึ้นจอเพื่อบอกว่าที่นี่มีดีลเกิดจริง
        แต่เกิน CLOSED_DAYS วันแล้วต้องหลุดเอง ไม่งั้นบอร์ดกลายเป็นสุสานดีลเก่า */
-    const lineup = (b.lineup ?? []).filter(p => p && p.status !== 'expired' && !closedTooLong(p))
+    /* ตัดห้องที่ทีม hide ออกจาก lineup ด้วย — เครื่องมือ (โหมดเลือกเอง) แสดงบอร์ด = lineup ลบ
+       ห้อง hide · จอต้องตรงกัน ไม่งั้นลบในเครื่องมือแล้วยังโผล่บนจอ (พบ 2026-08-10) */
+    const lineup = (b.lineup ?? []).filter(p => p && p.status !== 'expired' && !closedTooLong(p) && !p.hideFromBoard)
     const contactable = (unitProfiles ?? []).filter(p => p.intent === mode && CONTACTABLE.has(p.refCode))
     const auto = selectWithPolicy(contactable, mode, b.policy ?? {})
     const source = lineup.length ? 'lineup' : auto.rows.length ? 'auto' : 'manual'
