@@ -57,6 +57,10 @@ async function q(query, dataset) {
 }
 
 const num = v => { const n = +String(v ?? '').replace(/[^\d.]/g, ''); return Number.isFinite(n) && n > 0 ? n : null }
+/* ชั้นจาก portal มาเป็นช่วงได้ ("21 - 25", "28+29", "9 / building 5") — num() จะเชื่อมเลข
+   ติดกันเป็น 2125/2829 (ชั้นผี) · เอาเลขจำนวนเต็มตัวแรก = ชั้นต่ำสุด ตามที่ตกลงกับเจ้าของงาน */
+const lowFloor = v => { const m = String(v ?? '').match(/\d{1,3}/); const n = m ? +m[0] : NaN
+  return Number.isFinite(n) && n > 0 && n <= 120 ? n : null }
 /* new Date(null) = 1 ม.ค. 1970 ไม่ใช่ค่าว่าง — ถ้าไม่กันไว้ ห้องที่ "ไม่มีวันที่ไม่ว่าง"
    จะกลายเป็น "ว่างตั้งแต่ปี 1970" ซึ่งดูเหมือนข้อมูลจริงจนไม่มีใครเอะใจ */
 const isoDate = v => {
@@ -102,7 +106,7 @@ const EXTRACT = {
       /* ฟิลด์นี้แปลว่า "ไม่ว่างจนถึง" ตรงตัว — แม่นกว่าการอ่านข้อความในประกาศทุกทาง */
       availableFrom: isoDate(p.ae_man_unavailable_enddate)
         ?? availableFromIn(p.availabilitySubClusterEn?.availabilityLabelText ?? ''),
-      pageSeen: { sqm: num(p.floorSize), floor: num(p.floorLevel), building: p.buildingName ?? null },
+      pageSeen: { sqm: num(p.floorSize), floor: lowFloor(p.floorLevel), building: p.buildingName ?? null },
     }
   },
   DotProperty(html) {

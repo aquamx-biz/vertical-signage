@@ -15,6 +15,10 @@ const UA = { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKi
   'Accept-Language': 'en-US,en;q=0.9,th;q=0.8',
   'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8' }
 const num = v => { const n = +String(v ?? '').replace(/[^\d.]/g, ''); return Number.isFinite(n) && n > 0 ? n : null }
+/* ชั้นจาก portal มาเป็นช่วงได้ ("21 - 25", "28+29", "9 / building 5") — num() จะเชื่อมเลข
+   ติดกันเป็น 2125/2829 (ชั้นผี) · เอาเลขจำนวนเต็มตัวแรก = ชั้นต่ำสุด ตามที่ตกลงกับเจ้าของงาน */
+const lowFloor = v => { const m = String(v ?? '').match(/\d{1,3}/); const n = m ? +m[0] : NaN
+  return Number.isFinite(n) && n > 0 && n <= 120 ? n : null }
 const iso = v => { if (v == null || v === '' || v === 0) return null
   const d = new Date(v); return isNaN(+d) || d.getUTCFullYear() < 2000 ? null : d.toISOString().slice(0, 10) }
 
@@ -62,7 +66,7 @@ for (const [ours, theirs, slug] of B) {
         if (known.has(String(x.id))) continue
         newOnes.push({ building: ours, intent, id: String(x.id),
           bed: (v => v === 'studio' ? 0 : ({ one: 1, two: 2, three: 3, four: 4 })[String(v).replace('_bedroom', '').replace('one_', 'one')] ?? num(v))(x.numberBedrooms ?? x.unitType),
-          sqm: num(x.floorSize), floor: num(x.floorLevel),
+          sqm: num(x.floorSize), floor: lowFloor(x.floorLevel),
           price: intent === 'rent' ? num(x.lowestPrice) : num(x.salePrice ?? x.lowestPrice),
           postCreatedAt: iso(x.extsourceCreatedAt ?? x.created_at), postUpdatedAt: iso(x.updated_at) })
       }
@@ -91,7 +95,7 @@ async function worker(list) {
       const price = isSale ? num(p.salePrice) : num(p.lowestPrice)
       if (!price) { stat.bad++; continue }
       out.push({ building: r.building, intent: isSale ? 'sale' : 'rent',
-        bed: p.bedroomsCount ?? r.bed, sqm: num(p.floorSize) ?? r.sqm, floor: num(p.floorLevel) ?? r.floor,
+        bed: p.bedroomsCount ?? r.bed, sqm: num(p.floorSize) ?? r.sqm, floor: lowFloor(p.floorLevel) ?? r.floor,
         price, portal: 'PropertyScout', url: res.url,
         posterType: p.postBy === 'landlord' ? 'owner' : p.postBy ? 'agent' : 'unknown', posterName: null,
         postCreatedAt: iso(p.extsourceCreatedAt ?? p.createdAt) ?? r.postCreatedAt,
