@@ -266,6 +266,7 @@ export function UnitBoardsTool() {
   const [stageBusy, setStageBusy] = useState<string | null>(null)
   const [stageOpen, setStageOpen] = useState(true)                 // กางแผงไว้ — หัวข้อกลุ่มคือสาระ
   const [segOpen, setSegOpen] = useState<Set<string>>(new Set())   // กลุ่มที่กางอยู่ · ว่าง = พับหมด
+  const [selRemove, setSelRemove] = useState<Set<string>>(new Set())  // ติ๊กไว้เพื่อเอาออกทีเดียว (คีย์ refCode·mode)
 
   useEffect(() => {
     let dead = false
@@ -674,6 +675,22 @@ export function UnitBoardsTool() {
       toast.push({ status: 'error', title: 'ไม่สำเร็จ', description: e?.message })
     } finally { setStageBusy(null) }
   }
+  /* เอาออกหลายห้องรวดเดียว — พฤติกรรมเดียวกับปุ่ม ✕ เดี่ยว (hide ทั้ง rent+sale ต่อห้อง)
+     เขียน published ตรง เหมือน setHidden · ล็อกเคยขึ้นบอร์ดไม่ถูกลบ (ประวัติคงอยู่) */
+  const removeMany = async () => {
+    const refs = [...new Set([...selRemove].map(k => k.split('·')[0]))]
+    if (!refs.length) return
+    setStageBusy('__bulk__')
+    try {
+      await Promise.all(refs.flatMap(ref => ['rent', 'sale'].map(m =>
+        client.patch(`unitProfile-${ref}-${m}`).set({ hideFromBoard: true }).commit().catch(() => null))))
+      setProfiles(ps => ps.map(x => refs.includes(x.refCode) ? { ...x, hideFromBoard: true } : x))
+      toast.push({ status: 'success', title: `เอาออก ${refs.length} ห้องแล้ว` })
+      setSelRemove(new Set())
+    } catch (e: any) {
+      toast.push({ status: 'error', title: 'ไม่สำเร็จ', description: e?.message })
+    } finally { setStageBusy(null) }
+  }
   const hiddenHere = pool.filter(p => p.hideFromBoard)
 
   /* สองช่องคู่กัน: ราคาที่ควรเป็นของชั้นนี้ + ส่วนต่างจากของจริง — ใช้ทั้งฝั่งเช่าและขาย
@@ -693,8 +710,12 @@ export function UnitBoardsTool() {
   const stageRow = (p: Profile, m2: 'rent' | 'sale') => {
     const cur = p.dealStage ?? ''
     const id = `unitProfile-${p.refCode}-${m2}`
+    const selKey = `${p.refCode}·${m2}`
     return (
       <Flex key={p.refCode + m2} align="center" gap={2} style={{ padding: '3px 0', opacity: stageBusy === id ? 0.45 : 1 }}>
+        <input type="checkbox" checked={selRemove.has(selKey)} title="ติ๊กเพื่อเอาออกทีเดียวหลายห้อง"
+          onChange={() => setSelRemove(x => { const n = new Set(x); n.has(selKey) ? n.delete(selKey) : n.add(selKey); return n })}
+          style={{ cursor: 'pointer', width: 15, height: 15 }} />
         <Text size={1} style={{ width: 92, fontFamily: 'monospace' }}>{p.refCode}</Text>
         <Text size={1} muted style={{ minWidth: 430, whiteSpace: 'nowrap' }}>
           {p.sqm} ตรม. · {sources.get(p.refCode)?.floorActual != null ? `ชั้น ${sources.get(p.refCode)!.floorActual}` : (ZONE_TH[p.floorZone ?? ''] ?? '')}
@@ -917,6 +938,18 @@ export function UnitBoardsTool() {
                   : <Text size={1} muted>ยังไม่มีห้องไหนถูกทำเครื่องหมาย</Text>
               })()}
             </Flex>
+            {stageOpen && selRemove.size > 0 && (
+              <Flex align="center" gap={3} style={{ background: '#fef2f2', border: '1px solid #f3c6c6', padding: '8px 12px', borderRadius: 8 }}>
+                <Text size={1} weight="semibold" style={{ color: '#b42318' }}>ติ๊กไว้ {selRemove.size} ห้อง</Text>
+                <button onClick={removeMany} disabled={stageBusy === '__bulk__'}
+                  style={{ fontSize: 12.5, fontWeight: 700, padding: '5px 14px', borderRadius: 999, cursor: 'pointer',
+                    border: '1px solid #b42318', background: '#b42318', color: '#fff' }}>
+                  {stageBusy === '__bulk__' ? 'กำลังเอาออก…' : `✕ เอาออกที่ติ๊กทั้งหมด (${selRemove.size})`}</button>
+                <button onClick={() => setSelRemove(new Set())} disabled={stageBusy === '__bulk__'}
+                  style={{ fontSize: 12, padding: '5px 12px', borderRadius: 999, cursor: 'pointer',
+                    border: '1px solid #d1d5db', background: '#fff', color: '#374151' }}>ยกเลิกที่ติ๊ก</button>
+              </Flex>
+            )}
             {stageOpen && ([['บอร์ดเช่า', 'rent', simR], ['บอร์ดขาย', 'sale', simS]] as const).map(([label, m2, sim]) => sim.rows.length > 0 && (
               <Stack key={m2} space={2}>
                 <Text size={1} muted weight="semibold">{label}</Text>
@@ -934,6 +967,14 @@ export function UnitBoardsTool() {
                         <Text size={0} style={{ color: ok ? '#166534' : '#9aa3b2' }}>
                           {ok ? '→ ได้สไลด์ของตัวเอง' : `→ ไม่ถึง ${SEG_MIN} ห้อง ไม่ได้สไลด์ (ยังอยู่ในป๊อปอัป)`}
                         </Text>
+                        {segOpen.has(m2 + b) && (() => {
+                          const keys = rs.map(p => `${p.refCode}·${m2}`)
+                          const allSel = keys.every(k => selRemove.has(k))
+                          return <a onClick={e => { e.stopPropagation(); setSelRemove(x => {
+                            const n = new Set(x); keys.forEach(k => allSel ? n.delete(k) : n.add(k)); return n }) }}
+                            style={{ fontSize: 11.5, color: '#0f3460', cursor: 'pointer', textDecoration: 'underline' }}>
+                            {allSel ? 'เอาติ๊กออกทั้งกลุ่ม' : 'ติ๊กทั้งกลุ่ม'}</a>
+                        })()}
                       </Inline>
                       {segOpen.has(m2 + b) && rs.map(p => stageRow(p, m2))}
                     </Stack>
