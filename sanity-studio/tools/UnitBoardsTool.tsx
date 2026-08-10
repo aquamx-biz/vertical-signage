@@ -51,7 +51,7 @@ export interface Policy {
   quota: number; superQ: number; bestQ: number; hotQ: number; negoQ: number; investQ: number
   studioMin: number; b1Min: number; b2Min: number; b3Min: number; b4Min: number
 }
-const DEFAULT_POLICY: Policy = { quota: 7, superQ: 1, bestQ: 1, hotQ: 1, negoQ: 1, investQ: 1, studioMin: 1, b1Min: 1, b2Min: 1, b3Min: 1, b4Min: 1 }
+const DEFAULT_POLICY: Policy = { quota: 7, superQ: 0, bestQ: 0, hotQ: 0, negoQ: 0, investQ: 0, studioMin: 0, b1Min: 0, b2Min: 0, b3Min: 0, b4Min: 0 }
 const BED_MIN_KEY: Record<string, keyof Policy> = { studio: 'studioMin', '1bed': 'b1Min', '2bed': 'b2Min', '3bed': 'b3Min', '4bed': 'b4Min' }
 
 function passesSanity(p: Profile, mode: string): boolean {
@@ -626,43 +626,27 @@ export function UnitBoardsTool() {
       onChange={e => set({ ...P, [k]: Math.max(0, parseInt(e.currentTarget.value) || 0) })}
       style={{ width: 46, padding: '3px 5px', border: '1px solid #d1d5db', borderRadius: 5, textAlign: 'right', background: disabled ? '#f3f4f6' : '#fff' }} />
   )
-  const bedsIn = (m2: 'r' | 's') => new Set(pool.filter(p => p.intent === (m2 === 'r' ? 'rent' : 'sale')).map(p => p.bedType))
   const polRow = (label: string, P: Policy, set: (p: Policy) => void, m2: 'r' | 's') => {
-    const present = bedsIn(m2)
-    const fSum = flagsSum(P), mSum = minsSum(P)
-    const over = fSum > P.quota || mSum > P.quota
     const man = m2 === 'r' ? manualR : manualS
     const setMan = m2 === 'r' ? setManualR : setManualS
     const selCount = (m2 === 'r' ? selR : selS).size
     return (
-      <Stack space={2}>
-        <Inline space={2}>
-          <Text size={1} weight="bold" style={{ minWidth: 76 }}>{label}</Text>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer', padding: '2px 8px', borderRadius: 6, background: man ? '#eef6ff' : 'transparent', border: `1px solid ${man ? '#0f3460' : '#d1d5db'}` }}>
-            <input type="checkbox" checked={man} onChange={() => setMan(v => !v)} style={{ cursor: 'pointer' }} />
-            <Text size={1} weight={man ? 'bold' : 'regular'} style={{ color: man ? '#0f3460' : '#6b7280' }}>เลือกเองล้วน</Text>
-          </label>
-          {man
-            ? <Text size={1} style={{ color: '#0f3460' }}>บอร์ด = {selCount} ห้องที่ติ๊ก (ไม่เติมอัตโนมัติ) · ติ๊กใน Select {m2 === 'r' ? 'R' : 'S'}</Text>
-            : <><Text size={1}>Quota</Text>{numIn(P, set, 'quota')}
-          <Text size={1}>SUPER</Text>{numIn(P, set, 'superQ')}
-          <Text size={1}>BEST</Text>{numIn(P, set, 'bestQ')}
-          <Text size={1}>HOT</Text>{numIn(P, set, 'hotQ')}
-          <Text size={1}>NEGO</Text>{numIn(P, set, 'negoQ')}
-          <Text size={1}>INVEST</Text>{numIn(P, set, 'investQ')}</>}
-        </Inline>
-        {!man && (
-        <Inline space={2}>
-          <Text size={1} muted style={{ minWidth: 76 }}>Min sizes</Text>
-          <Text size={1}>STUDIO</Text>{numIn(P, set, 'studioMin', !present.has('studio'))}
-          <Text size={1}>1BED</Text>{numIn(P, set, 'b1Min', !present.has('1bed'))}
-          <Text size={1}>2BED</Text>{numIn(P, set, 'b2Min', !present.has('2bed'))}
-          <Text size={1}>3BED</Text>{numIn(P, set, 'b3Min', !present.has('3bed'))}
-          <Text size={1}>4BED+</Text>{numIn(P, set, 'b4Min', !present.has('4bed'))}
-          <Text size={1} weight="bold" style={{ color: over ? '#c2410c' : '#0f3460' }}>flags {fSum} · min {mSum} / quota {P.quota}</Text>
-        </Inline>
-        )}
-      </Stack>
+      <Inline space={2}>
+        <Text size={1} weight="bold" style={{ minWidth: 76 }}>{label}</Text>
+        <label style={{ display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer', padding: '2px 8px', borderRadius: 6, background: man ? '#eef6ff' : 'transparent', border: `1px solid ${man ? '#0f3460' : '#d1d5db'}` }}>
+          <input type="checkbox" checked={man} onChange={() => setMan(v => !v)} style={{ cursor: 'pointer' }} />
+          <Text size={1} weight={man ? 'bold' : 'regular'} style={{ color: man ? '#0f3460' : '#6b7280' }}>เลือกเองล้วน</Text>
+        </label>
+        {/* เอาโควตาแบบธง (SUPER/BEST/HOT/NEGO/INVEST) กับ Min sizes ออกตามที่เจ้าของงานสั่ง —
+            เหลือแค่ "จำนวนห้อง" · โหมดปกติเติมดีลดีสุดให้เต็มจำนวนนี้ · โหมดเลือกเอง = เฉพาะที่ติ๊ก
+            (ห้ามใช้ fragment ใน Inline — มันจะเรียงลงแนวตั้ง ใช้ Inline ซ้อนแทน) */}
+        {man
+          ? <Text size={1} style={{ color: '#0f3460' }}>บอร์ด = {selCount} ห้องที่ติ๊ก (ไม่เติมอัตโนมัติ) · ติ๊กใน Select {m2 === 'r' ? 'R' : 'S'}</Text>
+          : <Inline space={2}>
+              <Text size={1}>จำนวนห้อง</Text>{numIn(P, set, 'quota')}
+              <Text size={1} muted>เลือกดีลดีสุดให้เต็มจำนวนนี้อัตโนมัติ</Text>
+            </Inline>}
+      </Inline>
     )
   }
 

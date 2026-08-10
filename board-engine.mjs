@@ -53,8 +53,10 @@ const byDeal   = (a, b) => tierRank(a) - tierRank(b) || (a.vsFloorPct ?? 0) - (b
  * the original hardcoded behaviour: guarantee 1 of each highlight. */
 export const DEFAULT_POLICY = {
   quota: 7,
-  superQ: 1, bestQ: 1, hotQ: 1, negoQ: 1, investQ: 1,
-  studioMin: 1, b1Min: 1, b2Min: 1, b3Min: 1, b4Min: 1,   // ขั้นต่ำรายไซซ์ (คอลัมน์ของ matrix)
+  // ธง (SUPER/BEST/HOT/NEGO/INVEST) กับขั้นต่ำรายไซซ์ = 0 ตั้งแต่ 2026-08-10 (เจ้าของงานสั่งเอาออก)
+  // เติมดีลดีสุดให้เต็ม quota ล้วน · UI ตัวเลือกพวกนี้ถูกถอดออกจาก Unit Boards แล้ว
+  superQ: 0, bestQ: 0, hotQ: 0, negoQ: 0, investQ: 0,
+  studioMin: 0, b1Min: 0, b2Min: 0, b3Min: 0, b4Min: 0,
 }
 const BED_MIN_KEY = { studio: 'studioMin', '1bed': 'b1Min', '2bed': 'b2Min', '3bed': 'b3Min', '4bed': 'b4Min' }
 
