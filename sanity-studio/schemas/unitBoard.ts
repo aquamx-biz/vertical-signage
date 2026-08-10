@@ -42,6 +42,13 @@ export default defineType({
       initialValue: true,
     }),
     defineField({
+      name: 'manualOnly',
+      title: 'เลือกเองล้วน · Manual only',
+      type: 'boolean',
+      description: 'เปิด = บอร์ดมีเฉพาะห้องที่ทีมติ๊กเลือก ไม่เติมอัตโนมัติ · ปิด = ตัวคัดเติมให้เต็ม quota',
+      initialValue: false,
+    }),
+    defineField({
       name: 'policy',
       title: 'Selection Policy · นโยบายคัดเลือก',
       type: 'object',

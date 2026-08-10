@@ -51,7 +51,7 @@ export interface Policy {
   quota: number; superQ: number; bestQ: number; hotQ: number; negoQ: number; investQ: number
   studioMin: number; b1Min: number; b2Min: number; b3Min: number; b4Min: number
 }
-const DEFAULT_POLICY: Policy = { quota: 19, superQ: 1, bestQ: 1, hotQ: 1, negoQ: 1, investQ: 1, studioMin: 1, b1Min: 1, b2Min: 1, b3Min: 1, b4Min: 1 }
+const DEFAULT_POLICY: Policy = { quota: 7, superQ: 1, bestQ: 1, hotQ: 1, negoQ: 1, investQ: 1, studioMin: 1, b1Min: 1, b2Min: 1, b3Min: 1, b4Min: 1 }
 const BED_MIN_KEY: Record<string, keyof Policy> = { studio: 'studioMin', '1bed': 'b1Min', '2bed': 'b2Min', '3bed': 'b3Min', '4bed': 'b4Min' }
 
 function passesSanity(p: Profile, mode: string): boolean {
@@ -251,6 +251,10 @@ export function UnitBoardsTool() {
   const [polS, setPolS] = useState<Policy>({ ...DEFAULT_POLICY })
   const [selR, setSelR] = useState<Set<string>>(new Set())
   const [selS, setSelS] = useState<Set<string>>(new Set())
+  const [manualR, setManualR] = useState(false)   // โหมดเลือกเองล้วน ฝั่งเช่า — บอร์ด = เฉพาะที่ติ๊ก ไม่เติมอัตโนมัติ
+  const [manualS, setManualS] = useState(false)
+  const [boardLineups, setBoardLineups] = useState<Record<string, string[]>>({})  // lineup ที่เซฟไว้ (refCode) ต่อ code·mode
+  const [boardManual, setBoardManual] = useState<Record<string, boolean>>({})
   const [mode, setMode] = useState('all')
   const [q, setQ] = useState('')
   const [sort, setSort] = useState<{ k: string; d: number }>({ k: '', d: 1 })
@@ -267,6 +271,7 @@ export function UnitBoardsTool() {
   const [stageOpen, setStageOpen] = useState(true)                 // กางแผงไว้ — หัวข้อกลุ่มคือสาระ
   const [segOpen, setSegOpen] = useState<Set<string>>(new Set())   // กลุ่มที่กางอยู่ · ว่าง = พับหมด
   const [selRemove, setSelRemove] = useState<Set<string>>(new Set())  // ติ๊กไว้เพื่อเอาออกทีเดียว (คีย์ refCode·mode)
+  const [hiddenOpen, setHiddenOpen] = useState(false)  // รายการห้องที่เอาออก — พับไว้ (ยาวได้เป็นร้อย)
 
   useEffect(() => {
     let dead = false
@@ -276,7 +281,7 @@ export function UnitBoardsTool() {
           client.fetch<Profile[]>(`*[_type == "unitProfile" && status != "expired"]{ ${PROJ} }`),
           internal.fetch<SourceDoc[]>(`*[_type == "unitSource"]{ refCode, floorActual, "listings": coalesce(rentListings[]{ portal, url, "intent": "rent", posterType, posterName }, []) + coalesce(saleListings[]{ portal, url, "intent": "sale", posterType, posterName }, []) }`).catch(() => []),
           client.fetch<Array<{ _id: string; code: string }>>(`*[_type == "project"]{ _id, "code": code.current }`),
-          client.fetch<Array<{ code: string; mode: string; policy?: Partial<Policy> }>>(`*[_type == "unitBoard"]{ "code": project->code.current, mode, policy }`),
+          client.fetch<Array<{ code: string; mode: string; policy?: Partial<Policy>; manualOnly?: boolean; lineup?: string[] }>>(`*[_type == "unitBoard"]{ "code": project->code.current, mode, policy, manualOnly, "lineup": lineup[]->refCode }`),
           // รอบข้อมูลล่าสุด — ใบ scrapeRound จากวงจรรายสัปดาห์; ยังไม่มีรอบแรกถอยไปใช้ dataDate
           // ของ marketSnapshot (audit ⑤: ห้ามใช้ max lastCheckedAt — โดน spot-verify รายห้อง
           // ปนวันที่ใหม่ แล้วหัวข้อโชว์วันตรวจแทนวันของข้อมูลทั้งชุด)
@@ -288,9 +293,10 @@ export function UnitBoardsTool() {
         setProfiles(pf ?? [])
         setSources(new Map((src ?? []).map(s => [s.refCode, s])))
         setProjDocs(pj ?? [])
-        const pol: Record<string, Partial<Policy>> = {}
-        ;(bd ?? []).forEach(b => { if (b.code && b.policy) pol[`${b.code}·${b.mode}`] = b.policy })
-        setBoardPolicies(pol)
+        const pol: Record<string, Partial<Policy>> = {}, lup: Record<string, string[]> = {}, man: Record<string, boolean> = {}
+        ;(bd ?? []).forEach(b => { if (!b.code) return; const k = `${b.code}·${b.mode}`
+          if (b.policy) pol[k] = b.policy; lup[k] = b.lineup ?? []; man[k] = !!b.manualOnly })
+        setBoardPolicies(pol); setBoardLineups(lup); setBoardManual(man)
         const names = [...new Set((pf ?? []).map(p => p.projectName))].sort()
         setProj(names[0] ?? '')
       } finally { if (!dead) setLoading(false) }
@@ -331,11 +337,16 @@ export function UnitBoardsTool() {
 
   // เปลี่ยนโครงการ → รีเซ็ต select + โหลด policy ที่ตั้งไว้ใน unitBoard (ถ้ามี)
   useEffect(() => {
-    setSelR(new Set()); setSelS(new Set()); setMode('all'); setQ('')
+    setMode('all'); setQ('')
     const code = NAME_TO_CODE[proj]
     setPolR({ ...DEFAULT_POLICY, investQ: 0, ...(code ? boardPolicies[`${code}·rent`] : {}) })
     setPolS({ ...DEFAULT_POLICY, ...(code ? boardPolicies[`${code}·sale`] : {}) })
-  }, [proj, boardPolicies])
+    // เริ่มการเลือกจาก lineup ที่เซฟไว้ (โหมดเลือกเองจะได้เห็นบอร์ดปัจจุบัน ไม่ใช่ว่างเปล่า)
+    setSelR(new Set(code ? boardLineups[`${code}·rent`] ?? [] : []))
+    setSelS(new Set(code ? boardLineups[`${code}·sale`] ?? [] : []))
+    setManualR(code ? boardManual[`${code}·rent`] ?? false : false)
+    setManualS(code ? boardManual[`${code}·sale`] ?? false : false)
+  }, [proj, boardPolicies, boardLineups, boardManual])
 
   const units = useMemo(() => {
     const m = new Map<string, Unit>()
@@ -347,8 +358,17 @@ export function UnitBoardsTool() {
     return [...m.values()]
   }, [pool])
 
-  const simR = useMemo(() => selectWithPolicy(pool.filter(p => p.intent === 'rent'), 'rent', polR, selR), [pool, polR, selR])
-  const simS = useMemo(() => selectWithPolicy(pool.filter(p => p.intent === 'sale'), 'sale', polS, selS), [pool, polS, selS])
+  /* โหมดเลือกเองล้วน: บอร์ด = เฉพาะห้องที่ติ๊ก ไม่ดึงห้องอื่นมาเติม (ตรงกับที่ build.mjs
+     ใช้ lineup ตรง ๆ อยู่แล้ว) · โหมดปกติ: ตัวคัดเติมให้เต็ม quota เหมือนเดิม */
+  const manualPick = (m2: 'rent' | 'sale', sel: Set<string>) => ({
+    rows: pool.filter(p => p.intent === m2 && sel.has(p.refCode))
+      .sort((a, b) => BED_ORDER.indexOf(a.bedType ?? '') - BED_ORDER.indexOf(b.bedType ?? '') || (a.priceTHB ?? 0) - (b.priceTHB ?? 0)),
+    warnings: [] as string[],
+  })
+  const simR = useMemo(() => manualR ? manualPick('rent', selR)
+    : selectWithPolicy(pool.filter(p => p.intent === 'rent'), 'rent', polR, selR), [pool, polR, selR, manualR])
+  const simS = useMemo(() => manualS ? manualPick('sale', selS)
+    : selectWithPolicy(pool.filter(p => p.intent === 'sale'), 'sale', polS, selS), [pool, polS, selS, manualS])
   const onR = useMemo(() => new Map(simR.rows.map(p => [p.refCode, p.__pick ?? ''])), [simR])
   const onS = useMemo(() => new Map(simS.rows.map(p => [p.refCode, p.__pick ?? ''])), [simS])
 
@@ -566,6 +586,7 @@ export function UnitBoardsTool() {
           mode: m2,
           isActive: true,
           policy: pol,
+          manualOnly: m2 === 'rent' ? manualR : manualS,
           lineup: sim.rows.map((p, i) => ({ _type: 'reference' as const, _key: `lu${i}`, _ref: `unitProfile-${p.refCode}-${m2}` })),
           lineupWarnings: [...sim.warnings, 'บันทึกจาก Studio · Unit Boards tool'],
           lineupGeneratedAt: new Date().toISOString(),
@@ -610,17 +631,27 @@ export function UnitBoardsTool() {
     const present = bedsIn(m2)
     const fSum = flagsSum(P), mSum = minsSum(P)
     const over = fSum > P.quota || mSum > P.quota
+    const man = m2 === 'r' ? manualR : manualS
+    const setMan = m2 === 'r' ? setManualR : setManualS
+    const selCount = (m2 === 'r' ? selR : selS).size
     return (
       <Stack space={2}>
         <Inline space={2}>
           <Text size={1} weight="bold" style={{ minWidth: 76 }}>{label}</Text>
-          <Text size={1}>Quota</Text>{numIn(P, set, 'quota')}
+          <label style={{ display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer', padding: '2px 8px', borderRadius: 6, background: man ? '#eef6ff' : 'transparent', border: `1px solid ${man ? '#0f3460' : '#d1d5db'}` }}>
+            <input type="checkbox" checked={man} onChange={() => setMan(v => !v)} style={{ cursor: 'pointer' }} />
+            <Text size={1} weight={man ? 'bold' : 'regular'} style={{ color: man ? '#0f3460' : '#6b7280' }}>เลือกเองล้วน</Text>
+          </label>
+          {man
+            ? <Text size={1} style={{ color: '#0f3460' }}>บอร์ด = {selCount} ห้องที่ติ๊ก (ไม่เติมอัตโนมัติ) · ติ๊กใน Select {m2 === 'r' ? 'R' : 'S'}</Text>
+            : <><Text size={1}>Quota</Text>{numIn(P, set, 'quota')}
           <Text size={1}>SUPER</Text>{numIn(P, set, 'superQ')}
           <Text size={1}>BEST</Text>{numIn(P, set, 'bestQ')}
           <Text size={1}>HOT</Text>{numIn(P, set, 'hotQ')}
           <Text size={1}>NEGO</Text>{numIn(P, set, 'negoQ')}
-          <Text size={1}>INVEST</Text>{numIn(P, set, 'investQ')}
+          <Text size={1}>INVEST</Text>{numIn(P, set, 'investQ')}</>}
         </Inline>
+        {!man && (
         <Inline space={2}>
           <Text size={1} muted style={{ minWidth: 76 }}>Min sizes</Text>
           <Text size={1}>STUDIO</Text>{numIn(P, set, 'studioMin', !present.has('studio'))}
@@ -630,6 +661,7 @@ export function UnitBoardsTool() {
           <Text size={1}>4BED+</Text>{numIn(P, set, 'b4Min', !present.has('4bed'))}
           <Text size={1} weight="bold" style={{ color: over ? '#c2410c' : '#0f3460' }}>flags {fSum} · min {mSum} / quota {P.quota}</Text>
         </Inline>
+        )}
       </Stack>
     )
   }
@@ -678,7 +710,17 @@ export function UnitBoardsTool() {
   /* เอาออกหลายห้องรวดเดียว — พฤติกรรมเดียวกับปุ่ม ✕ เดี่ยว (hide ทั้ง rent+sale ต่อห้อง)
      เขียน published ตรง เหมือน setHidden · ล็อกเคยขึ้นบอร์ดไม่ถูกลบ (ประวัติคงอยู่) */
   const removeMany = async () => {
-    const refs = [...new Set([...selRemove].map(k => k.split('·')[0]))]
+    // แยกตามโหมดของแต่ละฝั่ง — เลือกเองล้วน = ถอดออกจากที่ติ๊ก (local) · ปกติ = hide (published)
+    const manualKeys = [...selRemove].filter(k => { const m = k.split('·')[1]; return m === 'rent' ? manualR : manualS })
+    if (manualKeys.length) {
+      const rr = new Set<string>(), ss = new Set<string>()
+      manualKeys.forEach(k => { const [ref, m] = k.split('·'); (m === 'rent' ? rr : ss).add(ref) })
+      if (rr.size) setSelR(x => { const n = new Set(x); rr.forEach(r => n.delete(r)); return n })
+      if (ss.size) setSelS(x => { const n = new Set(x); ss.forEach(r => n.delete(r)); return n })
+    }
+    const refs = [...new Set([...selRemove].filter(k => { const m = k.split('·')[1]; return m === 'rent' ? !manualR : !manualS })
+      .map(k => k.split('·')[0]))]
+    setSelRemove(new Set())
     if (!refs.length) return
     setStageBusy('__bulk__')
     try {
@@ -686,12 +728,26 @@ export function UnitBoardsTool() {
         client.patch(`unitProfile-${ref}-${m}`).set({ hideFromBoard: true }).commit().catch(() => null))))
       setProfiles(ps => ps.map(x => refs.includes(x.refCode) ? { ...x, hideFromBoard: true } : x))
       toast.push({ status: 'success', title: `เอาออก ${refs.length} ห้องแล้ว` })
-      setSelRemove(new Set())
     } catch (e: any) {
       toast.push({ status: 'error', title: 'ไม่สำเร็จ', description: e?.message })
     } finally { setStageBusy(null) }
   }
-  const hiddenHere = pool.filter(p => p.hideFromBoard)
+  /* dedupe ตาม refCode — ห้องที่ hide ทั้งเช่า+ขายมี 2 profile นับซ้ำ (และ key ชนกัน) */
+  const hiddenHere = [...new Map(pool.filter(p => p.hideFromBoard).map(p => [p.refCode, p])).values()]
+    .sort((a, b) => a.refCode.localeCompare(b.refCode))
+  const unhideAll = async () => {
+    const refs = hiddenHere.map(p => p.refCode)
+    if (!refs.length) return
+    setStageBusy('__unhideall__')
+    try {
+      await Promise.all(refs.flatMap(ref => ['rent', 'sale'].map(m =>
+        client.patch(`unitProfile-${ref}-${m}`).set({ hideFromBoard: false }).commit().catch(() => null))))
+      setProfiles(ps => ps.map(x => refs.includes(x.refCode) ? { ...x, hideFromBoard: false } : x))
+      toast.push({ status: 'success', title: `เอากลับขึ้นบอร์ด ${refs.length} ห้องแล้ว` })
+    } catch (e: any) {
+      toast.push({ status: 'error', title: 'ไม่สำเร็จ', description: e?.message })
+    } finally { setStageBusy(null) }
+  }
 
   /* สองช่องคู่กัน: ราคาที่ควรเป็นของชั้นนี้ + ส่วนต่างจากของจริง — ใช้ทั้งฝั่งเช่าและขาย
      เขียวคือถูกกว่าที่ควร (ดีลดี) เพราะเป็นเลขตัวเดียวกับที่ขึ้นจอว่า "คุ้มกว่า X%" */
@@ -755,7 +811,11 @@ export function UnitBoardsTool() {
           ))}
         </Flex>
         {p.dealStageAt && cur === 'closed' && <Text size={0} muted>ปิดเมื่อ {p.dealStageAt}</Text>}
-        <button onClick={() => setHidden(p, true)} disabled={stageBusy === p.refCode} title="เอาห้องนี้ออกจากบอร์ด — ตัวคัดจะดึงห้องถัดไปขึ้นมาแทน"
+        <button onClick={() => (m2 === 'rent' ? manualR : manualS)
+            ? (m2 === 'rent' ? setSelR : setSelS)(x => { const n = new Set(x); n.delete(p.refCode); return n })
+            : setHidden(p, true)}
+          disabled={stageBusy === p.refCode}
+          title={(m2 === 'rent' ? manualR : manualS) ? 'เอาออกจากที่เลือก (มีผลเมื่อกด Save)' : 'เอาห้องนี้ออกจากบอร์ด — ตัวคัดจะดึงห้องถัดไปขึ้นมาแทน'}
           style={{ marginLeft: 'auto', fontSize: 11.5, padding: '3px 10px', borderRadius: 999,
             border: '1px solid #e5b4b4', background: '#fff', color: '#b42318', cursor: 'pointer' }}>✕ เอาออก</button>
       </Flex>
@@ -983,19 +1043,30 @@ export function UnitBoardsTool() {
               </Stack>
             ))}
             {stageOpen && hiddenHere.length > 0 && (
-              <Stack space={1} style={{ paddingTop: 6, borderTop: '1px solid #e6e9f1' }}>
-                <Text size={1} muted weight="semibold">เอาออกจากบอร์ดไว้ ({hiddenHere.length} ห้อง)</Text>
-                {hiddenHere.map(p => (
-                  <Flex key={p.refCode} align="center" gap={2}>
-                    <Text size={1} style={{ width: 92, fontFamily: 'monospace' }}>{p.refCode}</Text>
-                    <Text size={1} muted style={{ minWidth: 210 }}>
-                      {BED_LABEL[p.bedType ?? ''] ?? p.bedType} · {p.sqm} ตรม.
-                    </Text>
-                    <button onClick={() => setHidden(p, false)} disabled={stageBusy === p.refCode}
-                      style={{ fontSize: 11.5, padding: '3px 10px', borderRadius: 999,
-                        border: '1px solid #0f3460', background: '#fff', color: '#0f3460', cursor: 'pointer' }}>↩ เอากลับขึ้นบอร์ด</button>
-                  </Flex>
-                ))}
+              <Stack space={2} style={{ paddingTop: 6, borderTop: '1px solid #e6e9f1' }}>
+                <Flex align="center" gap={3}>
+                  <Text size={1} muted weight="semibold" style={{ cursor: 'pointer' }} onClick={() => setHiddenOpen(o => !o)}>
+                    {hiddenOpen ? '▾' : '▸'} เอาออกจากบอร์ดไว้ ({hiddenHere.length} ห้อง)</Text>
+                  <button onClick={unhideAll} disabled={stageBusy === '__unhideall__'}
+                    style={{ fontSize: 11.5, fontWeight: 700, padding: '3px 12px', borderRadius: 999, cursor: 'pointer',
+                      border: '1px solid #0f3460', background: '#0f3460', color: '#fff' }}>
+                    {stageBusy === '__unhideall__' ? 'กำลังเอากลับ…' : `↩ เอากลับทั้งหมด (${hiddenHere.length})`}</button>
+                </Flex>
+                {hiddenOpen && (
+                  <Stack space={1} style={{ maxHeight: 360, overflowY: 'auto', paddingRight: 6 }}>
+                    {hiddenHere.map(p => (
+                      <Flex key={p.refCode} align="center" gap={2}>
+                        <Text size={1} style={{ width: 92, fontFamily: 'monospace' }}>{p.refCode}</Text>
+                        <Text size={1} muted style={{ minWidth: 210 }}>
+                          {BED_LABEL[p.bedType ?? ''] ?? p.bedType} · {p.sqm} ตรม.
+                        </Text>
+                        <button onClick={() => setHidden(p, false)} disabled={stageBusy === p.refCode}
+                          style={{ fontSize: 11.5, padding: '3px 10px', borderRadius: 999,
+                            border: '1px solid #0f3460', background: '#fff', color: '#0f3460', cursor: 'pointer' }}>↩ เอากลับขึ้นบอร์ด</button>
+                      </Flex>
+                    ))}
+                  </Stack>
+                )}
               </Stack>
             )}
             <Text size={0} muted>กดแล้วมีผลทันที ไม่ต้อง publish · เอาห้องออกแล้วตัวคัดจะดึงห้องถัดไปขึ้นมาแทน · ห้องที่ปิดดีลโชว์บนจอ 30 วันแล้วหลุดเอง</Text>

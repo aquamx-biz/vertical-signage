@@ -52,7 +52,7 @@ const byDeal   = (a, b) => tierRank(a) - tierRank(b) || (a.vsFloorPct ?? 0) - (b
  * (per project × mode) — this is the DEFAULT when none is set, and it matches
  * the original hardcoded behaviour: guarantee 1 of each highlight. */
 export const DEFAULT_POLICY = {
-  quota: 19,
+  quota: 7,
   superQ: 1, bestQ: 1, hotQ: 1, negoQ: 1, investQ: 1,
   studioMin: 1, b1Min: 1, b2Min: 1, b3Min: 1, b4Min: 1,   // ขั้นต่ำรายไซซ์ (คอลัมน์ของ matrix)
 }
