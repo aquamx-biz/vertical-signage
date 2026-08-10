@@ -76,6 +76,11 @@ const FILES = {
 const BED_MAX = 8
 const BED = n => n === 0 ? 'studio' : n === 1 ? '1bed' : n === 2 ? '2bed' : n === 3 ? '3bed' : '4bed'
 const bedOk = n => Number.isFinite(n) && n >= 0 && n <= BED_MAX
+/* ยามชั้นชั้นสุดท้าย: ตึกสูงสุดในไทย ~80 ชั้น · เกินนั้นคือช่วงชั้นติดกันที่ scraper รุ่นเก่า
+   เชื่อมเป็นเลขเดียว (21-25 → 2125) — กู้ "21" จากเลข 2125 ไม่ได้แล้ว จึงตัดเป็น null
+   ไม่เขียน floorActual เพี้ยน (ตัวแกะ lowFloor แก้ที่ต้นทางแล้ว นี่คือกันเหนียวตอนรับ) */
+const FLOOR_MAX = 80
+const plausFloor = v => { const n = parseInt(v); return Number.isFinite(n) && n >= 1 && n <= FLOOR_MAX ? n : null }
 const BED_JUNK = [], RECONCILED = [], SQM_JUNK = []
 // วันที่จาก portal (timestamp/ISO/วันที่ไทยที่แปลงแล้ว) → YYYY-MM-DD · แปลงไม่ได้ = null
 const isoDate = v => {
@@ -157,7 +162,7 @@ if (ROUND_FILE) {
     const fix = reconcile(r, r.building)
     if (!bedOk(fix.bed)) { BED_JUNK.push(`${r.building} · bed=${r.bed} · ${r.url ?? ''}`); continue }
     if (fix.reject) { SQM_JUNK.push(fix.reject); continue }
-    const floor = Number.isFinite(parseInt(r.floor)) ? parseInt(r.floor) : null
+    const floor = plausFloor(r.floor)
     if (floor == null && !r.refCode) continue
     if (r.url) { if (seenUrls.has(r.url)) continue; seenUrls.add(r.url) }
     if (!passesSanity({ bedType: BED(fix.bed), sqm: +r.sqm, priceTHB: fix.price }, r.intent)) continue
@@ -188,7 +193,7 @@ if (!ROUND_FILE) for (const [portal, files] of Object.entries(FILES)) {
       const fix = reconcile(r, building)
       if (!bedOk(fix.bed)) { BED_JUNK.push(`${building} · bed=${r.bed} · ${r.url ?? ''}`); continue }
       if (fix.reject) { SQM_JUNK.push(fix.reject); continue }
-      const floor = parseInt(r.floor); if (!Number.isFinite(floor)) continue
+      const floor = plausFloor(r.floor); if (floor == null) continue
       if (r.url) { if (seenUrls.has(r.url)) continue; seenUrls.add(r.url) }
       // กรองขยะ scraper ด้วยเกณฑ์เดียวกับ board-engine (sqm/ราคา/฿ต่อตรม.)
       if (!passesSanity({ bedType: BED(fix.bed), sqm: +r.sqm, priceTHB: fix.price }, r.intent)) continue
