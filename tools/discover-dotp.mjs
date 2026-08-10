@@ -105,6 +105,7 @@ for (const p of projects) {
         rows.push({
           building: p.building, intent,
           bed: Number.isFinite(+u.bedrooms) ? +u.bedrooms : null,
+          bath: Number.isFinite(+u.bathrooms) && +u.bathrooms > 0 ? +u.bathrooms : null,
           sqm: num(u.indoor_area), floor: null, price,
           portal: 'DotProperty',
           /* slug ย่อใช้ไม่ได้ (พิสูจน์แล้ว 404) — ประกอบจาก title ไม่ได้เสถียร จึงเก็บ

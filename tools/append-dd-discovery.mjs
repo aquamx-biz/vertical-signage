@@ -28,7 +28,7 @@ for (const r of det) {
   if (!intent) { stat.incomplete++; continue }
   if (r.price == null || r.bed == null || r.sqm == null) { stat.incomplete++; continue }
   if (r.url && prevUrls.has(r.url)) { stat.dup++; continue }
-  add.push({ building: w.building, intent, bed: r.bed, sqm: r.sqm, floor: null,
+  add.push({ building: w.building, intent, bed: r.bed, bath: r.bath ?? null, sqm: r.sqm, floor: null,
     price: r.price, portal: 'DDproperty', url: r.url ?? null,
     posterType: r.posterName ? 'agent' : 'unknown', posterName: r.posterName ?? null,
     postCreatedAt: r.postCreatedAt ?? null, postUpdatedAt: null })

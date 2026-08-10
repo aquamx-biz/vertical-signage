@@ -66,6 +66,7 @@ for (const [ours, theirs, slug] of B) {
         if (known.has(String(x.id))) continue
         newOnes.push({ building: ours, intent, id: String(x.id),
           bed: (v => v === 'studio' ? 0 : ({ one: 1, two: 2, three: 3, four: 4 })[String(v).replace('_bedroom', '').replace('one_', 'one')] ?? num(v))(x.numberBedrooms ?? x.unitType),
+          bath: Number.isFinite(+x.numberBathrooms) && +x.numberBathrooms > 0 ? +x.numberBathrooms : null,
           sqm: num(x.floorSize), floor: lowFloor(x.floorLevel),
           price: intent === 'rent' ? num(x.lowestPrice) : num(x.salePrice ?? x.lowestPrice),
           postCreatedAt: iso(x.extsourceCreatedAt ?? x.created_at), postUpdatedAt: iso(x.updated_at) })
@@ -95,7 +96,8 @@ async function worker(list) {
       const price = isSale ? num(p.salePrice) : num(p.lowestPrice)
       if (!price) { stat.bad++; continue }
       out.push({ building: r.building, intent: isSale ? 'sale' : 'rent',
-        bed: p.bedroomsCount ?? r.bed, sqm: num(p.floorSize) ?? r.sqm, floor: lowFloor(p.floorLevel) ?? r.floor,
+        bed: p.bedroomsCount ?? r.bed, bath: p.bathroomsCount ?? r.bath ?? null,
+        sqm: num(p.floorSize) ?? r.sqm, floor: lowFloor(p.floorLevel) ?? r.floor,
         price, portal: 'PropertyScout', url: res.url,
         posterType: p.postBy === 'landlord' ? 'owner' : p.postBy ? 'agent' : 'unknown', posterName: null,
         postCreatedAt: iso(p.extsourceCreatedAt ?? p.createdAt) ?? r.postCreatedAt,

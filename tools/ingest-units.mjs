@@ -81,6 +81,10 @@ const bedOk = n => Number.isFinite(n) && n >= 0 && n <= BED_MAX
    ไม่เขียน floorActual เพี้ยน (ตัวแกะ lowFloor แก้ที่ต้นทางแล้ว นี่คือกันเหนียวตอนรับ) */
 const FLOOR_MAX = 80
 const plausFloor = v => { const n = parseInt(v); return Number.isFinite(n) && n >= 1 && n <= FLOOR_MAX ? n : null }
+/* ห้องน้ำ: 1..10 เท่านั้น — คอนโดพักอาศัยมีอย่างน้อย 1 ห้องน้ำเสมอ (แม้สตูดิโอ) เกิน 10
+   คืออ่านผิด/ค่าปน · portal ไม่ระบุ = null (เก็บได้ ไม่บังคับ ไม่อยู่ใน fingerprint) */
+const BATH_MAX = 10
+const plausBath = v => { const n = parseInt(v); return Number.isFinite(n) && n >= 1 && n <= BATH_MAX ? n : null }
 const BED_JUNK = [], RECONCILED = [], SQM_JUNK = []
 // วันที่จาก portal (timestamp/ISO/วันที่ไทยที่แปลงแล้ว) → YYYY-MM-DD · แปลงไม่ได้ = null
 const isoDate = v => {
@@ -172,6 +176,7 @@ if (ROUND_FILE) {
          (ชั้น null โดนทิ้งทั้งแถว · bed ที่ reconcile แก้ทำลายนิ้วมือเลื่อน) */
       refCode: r.refCode ?? null,
       building: r.building, intent: r.intent, bedType: BED(fix.bed), sqm: +r.sqm, floor,
+      bath: plausBath(r.bath),
       price: fix.price, portal: r.portal ?? 'unknown', url: r.url ?? null,
       sourceId: r.sourceId ?? (r.url ? String(r.portal ?? 'x').toLowerCase().replace(/\W/g, '').slice(0, 2) + ':' + String(r.url).split(/[/_-]/).pop().slice(0, 24) : null),
       posterType: r.posterType ?? 'unknown', posterName: r.posterName ?? null,
@@ -199,6 +204,7 @@ if (!ROUND_FILE) for (const [portal, files] of Object.entries(FILES)) {
       if (!passesSanity({ bedType: BED(fix.bed), sqm: +r.sqm, priceTHB: fix.price }, r.intent)) continue
       cards.push({
         building, intent: r.intent, bedType: BED(fix.bed), sqm: +r.sqm, floor,
+        bath: plausBath(r.bath),
         price: fix.price, portal: portal === 'Mahogany' ? (r.portal ?? 'FazWaz') : portal,
         url: r.url ?? null,
         sourceId: r.sourceId ?? (r.url ? portal.toLowerCase().replace(/\W/g, '').slice(0, 2) + ':' + String(r.url).split(/[/_-]/).pop().slice(0, 24) : null),
@@ -322,7 +328,7 @@ if (COIN_SNAPPED) {
 
 // ── 2. โหลดสถานะปัจจุบันจาก Sanity ──────────────────────────────────────────
 const [profiles, sources] = await Promise.all([
-  q(`*[_type == "unitProfile"]{ _id, refCode, intent, projectName, bedType, sqm, priceTHB, status,
+  q(`*[_type == "unitProfile"]{ _id, refCode, intent, projectName, bedType, sqm, bath, priceTHB, status,
       pinToBoard, hideFromBoard, internalNote, firstSeenAt, priceHistory,
       dealStage, dealStageAt, onBoardFirstAt, onBoardLastAt }`),
   q(`*[_type == "unitSource"]{ _id, refCode, projectName, floorActual,
@@ -392,8 +398,16 @@ const mean = a => a.reduce((x, y) => x + y, 0) / a.length
 const pct = (v, avg) => Math.round((v / avg - 1) * 100)
 
 const unitRows = []
+/* ห้องน้ำเป็นของ "ตัวห้องจริง" (ไม่ขึ้นกับ rent/sale) — หลาย portal ลงห้องเดียวกัน
+   ควรตรงกัน · เลือกค่าที่ถูกโหวตมากสุด กันใบเดียวพิมพ์ผิด · ไม่มีใครระบุ = null */
+const modeBath = ls => {
+  const c = new Map(); let best = null, bn = 0
+  for (const l of ls) { if (l.bath == null) continue; const n = (c.get(l.bath) ?? 0) + 1; c.set(l.bath, n); if (n > bn) { bn = n; best = l.bath } }
+  return best
+}
 units.forEach(u => {
   const zone = zoneOf(u.building, u.floor)
+  const bath = modeBath(u.listings)
   const both = {}
   /* นโยบาย 2026-08-10 (ตกลงกับเจ้าของงาน): โพสต์ค้าง "ไม่ฆ่าห้อง" — สเปคเดิม
      (scrape-postdates-spec.md) ให้ stale แค่ไม่ค้ำราคา/สถิติ แต่โค้ดรุ่นก่อนปล่อยให้
@@ -430,7 +444,7 @@ units.forEach(u => {
     }
   }
   if (both.rent || both.sale || staleOnly.rent || staleOnly.sale)
-    unitRows.push({ ...u, zone, ...both, staleOnly, dual: !!(both.rent && both.sale) })
+    unitRows.push({ ...u, zone, bath, ...both, staleOnly, dual: !!(both.rent && both.sale) })
 })
 // yield + goodInvest (ต้องรู้ค่าเฉลี่ย yield ตึกก่อน)
 const yieldByBld = {}
@@ -484,6 +498,8 @@ for (const u of unitRows) {
       _id: `unitProfile-${ref}-${intent}`, _type: 'unitProfile',
       refCode: ref, projectName: u.building, intent,
       bedType: u.bedType, sqm: u.sqm, floorZone: u.zone,
+      // ห้องน้ำ: ค่ารอบนี้ก่อน · ถ้ารอบนี้ portal ไม่ระบุ ให้คงของเดิมที่เคยเก็บได้ (ไม่ล้าง)
+      bath: u.bath ?? old?.bath ?? undefined,
       priceTHB: d.price, pricePerSqm: Math.round(d.psqm),
       vsFloorPct: d.vsF, vsZonePct: d.vsZ, vsBuildingPct: d.vsB,
       dealTier: d.deal ?? undefined, hotDeal: d.hot, goodInvest: !!d.invest,

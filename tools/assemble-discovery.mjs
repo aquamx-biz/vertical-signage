@@ -44,7 +44,7 @@ const PH_BLD = new Map(JSON.parse(readFileSync('_rounds/_ph-new-ids.json', 'utf8
 if (existsSync(DL + `aquamx-phdet-${DATE}.json`))
   for (const r of JSON.parse(readFileSync(DL + `aquamx-phdet-${DATE}.json`, 'utf8'))) {
     if (r.error || r.gone || r.noPrice) { drop.err++; continue }
-    push({ building: PH_BLD.get(String(r.id)) ?? null, intent: r.intent, bed: r.bed, sqm: r.sqm,
+    push({ building: PH_BLD.get(String(r.id)) ?? null, intent: r.intent, bed: r.bed, bath: r.bath ?? null, sqm: r.sqm,
       floor: r.floor ?? null, price: r.price, portal: 'PropertyHub', url: r.url ?? null,
       posterType: 'unknown', posterName: null,
       postCreatedAt: r.postCreatedAt ?? null, postUpdatedAt: r.postUpdatedAt ?? null, availNote: r.availNote ?? null })
@@ -54,7 +54,7 @@ if (existsSync(DL + `aquamx-phdet-${DATE}.json`))
 if (existsSync(DL + `aquamx-fzdet-${DATE}.json`))
   for (const r of JSON.parse(readFileSync(DL + `aquamx-fzdet-${DATE}.json`, 'utf8'))) {
     if (r.error || r.gone || r.noPrice) { drop.err++; continue }
-    push({ building: SLUG2BLD[r.slug] ?? r.slug, intent: r.intent, bed: r.bed, sqm: r.sqm,
+    push({ building: SLUG2BLD[r.slug] ?? r.slug, intent: r.intent, bed: r.bed, bath: r.bath ?? null, sqm: r.sqm,
       floor: null, price: r.price, portal: 'FazWaz', url: r.url ?? null,
       posterType: 'unknown', posterName: null,
       postCreatedAt: r.postCreatedAt ?? null, postUpdatedAt: r.postUpdatedAt ?? null, availableFrom: r.availableFrom ?? null })
@@ -64,7 +64,7 @@ if (existsSync(DL + `aquamx-fzdet-${DATE}.json`))
 if (existsSync(`_rounds/_lidet-${DATE}.json`))
   for (const r of JSON.parse(readFileSync(`_rounds/_lidet-${DATE}.json`, 'utf8'))) {
     if (r.error) { drop.err++; continue }
-    push({ building: r.building, intent: r.intent, bed: r.bed, sqm: r.sqm,
+    push({ building: r.building, intent: r.intent, bed: r.bed, bath: r.bath ?? null, sqm: r.sqm,
       floor: r.floor ?? null, price: r.price, portal: 'LivingInsider', url: r.url ?? null,
       posterType: 'unknown', posterName: null,
       postCreatedAt: r.postCreatedAt ?? null, postUpdatedAt: r.postUpdatedAt ?? null })

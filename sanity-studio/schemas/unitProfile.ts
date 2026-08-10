@@ -25,6 +25,8 @@ export default defineType({
       { title: '4 Bed+ / Penthouse', value: '4bed' },
     ] } }),
     defineField({ name: 'sqm', title: 'Size (sqm)', type: 'number' }),
+    defineField({ name: 'bath', title: 'Bathrooms · ห้องน้ำ', type: 'number',
+      description: 'จำนวนห้องน้ำ — เก็บจาก portal ที่ส่งมา (DotProperty/PropertyScout) · ว่าง = portal ไม่ระบุ' }),
     defineField({ name: 'floorZone', title: 'Floor Zone', type: 'string', options: { list: ['low', 'mid', 'high'] },
       description: 'public เห็นแค่ zone — ชั้นจริงอยู่ใน unitSource (workspace Internal)' }),
     defineField({ name: 'priceTHB', title: 'Price ฿ (ต่ำสุดที่พบ)', type: 'number' }),
