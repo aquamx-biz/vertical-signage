@@ -413,6 +413,9 @@ export default defineType({
             description: 'สั่งได้สูงสุดกี่ชิ้น — ห้อง = 1 (ปุ่มกลายเป็น "เลือก ✓") · โปรจำกัดสิทธิ์ = N · เว้นว่าง = ไม่จำกัด (99)',
             validation: Rule => Rule.min(1).integer(),
           }),
+          // ห้องปิดดีลแล้ว — โชว์ในลิสต์แต่กดเลือกไม่ได้ (เทา + ป้าย "ปิดดีลแล้ว")
+          // ตั้งอัตโนมัติจาก dealStage=closed (seed-board-offers / UnitBoardsTool)
+          defineField({ name: 'sold', title: 'Sold · ปิดดีลแล้ว (เลือกไม่ได้)', type: 'boolean' }),
         ],
       }],
     }),

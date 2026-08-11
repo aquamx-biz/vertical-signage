@@ -14,6 +14,7 @@
  * name_th/name_en, price เป็นสตริงจัดรูปแล้ว } — UnitBoardsTool.save() มี mirror
  * ของ formatter ชุดนี้ (KEEP IN SYNC)
  */
+import { closedTooLong } from '../board-engine.mjs'
 const args = process.argv.slice(2)
 const WRITE = args.includes('--write')
 const argOf = f => { const i = args.indexOf(f); return i >= 0 ? args[i + 1] : undefined }
@@ -57,6 +58,8 @@ export function profileToOrderItem(p, mode) {
     name_th: `${BED_TH[p.bedType] ?? p.bedType} · ${p.sqm} ตรม. · ${fl.th}`,
     name_en: `${BED_EN[p.bedType] ?? p.bedType} · ${p.sqm} sqm · ${fl.en}`,
     price: mode === 'rent' ? `${(p.priceTHB / 1e3).toFixed(1)}K ฿/ด.` : `${(p.priceTHB / 1e6).toFixed(1)}M`,
+    // ปิดดีลแล้ว → โชว์ในลิสต์แต่กดเลือกไม่ได้ (player เรนเดอร์แถว sold เป็นเทา)
+    ...(p.dealStage === 'closed' ? { sold: true } : {}),
   }
 }
 
@@ -67,7 +70,7 @@ const FLOOR_BY_REF = new Map((floorRows ?? []).map(f => [f.refCode, f.floorActua
 const [projects, boards, providers] = await Promise.all([
   q(`*[_type == "project" && !(_id in path("drafts.**"))]{ _id, "code": code.current, title }`),
   q(`*[_type == "unitBoard"]{ _id, mode, "code": project->code.current,
-      "rows": lineup[]->{ refCode, bedType, sqm, floorZone, priceTHB } }`),
+      "rows": lineup[]->{ refCode, bedType, sqm, floorZone, priceTHB, dealStage, dealStageAt } }`),
   // slug + status, NOT name_en: two provider docs carried name_en "aquamx" for
   // months (one made by hand, one auto-created by a LINE login), so [0] picked
   // whichever the index returned first and board offers landed on the wrong
@@ -133,7 +136,8 @@ for (const [k, b] of byKey) {
   if (ONLY && code !== ONLY) continue
   const proj = projects.find(p => p.code === code)
   if (!proj) { console.log(`⚠ ${k}: ไม่พบ project doc`); continue }
-  const rows = (b.rows ?? []).filter(r => r?.refCode && r.priceTHB != null)
+  // closedTooLong (ปิดเกิน CLOSED_DAYS) ตัดออกให้ตรงกับบอร์ด · ปิด recent คงไว้ (จะติดธง sold)
+  const rows = (b.rows ?? []).filter(r => r?.refCode && r.priceTHB != null && !closedTooLong(r))
   if (!rows.length) { console.log(`⚠ ${k}: unitBoard ไม่มี lineup — ข้าม (คัดใน Unit Boards แล้ว Save ก่อน)`); continue }
   const toItem = r => profileToOrderItem({ ...r, floorActual: FLOOR_BY_REF.get(r.refCode) }, mode)
   // ตัวรวมทุกชนิด — บอร์ดรวมยังใช้ (เช่น Mahogany)

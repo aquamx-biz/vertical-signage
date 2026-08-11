@@ -577,6 +577,8 @@ export function UnitBoardsTool() {
       name_th: `${BED_TH[p.bedType ?? ''] ?? p.bedType} · ${p.sqm} ตรม. · ${flTh}`,
       name_en: `${BED_EN[p.bedType ?? ''] ?? p.bedType} · ${p.sqm} sqm · ${flEn}`,
       price: m2 === 'rent' ? `${((p.priceTHB ?? 0) / 1e3).toFixed(1)}K ฿/ด.` : `${((p.priceTHB ?? 0) / 1e6).toFixed(1)}M`,
+      // ปิดดีลแล้ว → โชว์ในลิสต์แต่กดเลือกไม่ได้ (player เรนเดอร์แถว sold เป็นเทา)
+      ...(p.dealStage === 'closed' ? { sold: true } : {}),
     }
   }
 

@@ -1535,6 +1535,13 @@ body {
 .detail-mit .th { width: 3.4vh; height: 3.4vh; border-radius: 0.7vh; background: #11151c; background-size: cover; background-position: center; flex-shrink: 0; }
 .detail-mit .nm { flex: 1; font-size: 1.4vh; color: rgba(255,255,255,0.88); }
 .detail-mit .pr { font-size: 1.4vh; color: var(--bronze); font-weight: 700; white-space: nowrap; }
+/* ห้องปิดดีลแล้ว — โชว์ไว้เป็นสัญญาณ demand แต่จางลงและกดเลือกไม่ได้ */
+.detail-mit.sold .nm { color: rgba(255,255,255,0.40); text-decoration: line-through; text-decoration-color: rgba(255,255,255,0.28); }
+.detail-mit.sold .pr { color: rgba(255,255,255,0.32); font-weight: 600; }
+.detail-mit.sold .th { opacity: 0.4; }
+.detail-sold { flex-shrink: 0; margin-left: 0.8vh; font-size: 1.25vh; font-weight: 700; letter-spacing: 0.04em;
+  color: rgba(255,255,255,0.6); background: rgba(255,255,255,0.07); border: 0.1vh solid rgba(255,255,255,0.16);
+  border-radius: 0.7vh; padding: 0.3vh 0.8vh; white-space: nowrap; }
 .detail-qty { display: inline-flex; align-items: center; gap: 0.4vh; flex-shrink: 0; margin-left: 0.8vh; font-size: 1.5vh; color: #fff; background: rgba(255,255,255,0.1); border: 0.1vh solid rgba(255,255,255,0.2); border-radius: 0.7vh; padding: 0.1vh 0.3vh; }
 .detail-qty b { min-width: 2vh; text-align: center; font-weight: 700; }
 /* real tap targets — the −/＋ were decoration before the cart was wired */
@@ -4381,6 +4388,12 @@ function buildDetailDyn(ctx){
         return (store?`<div class="detail-substore">${store}</div>`:'')
              + (ful.length?`<div class="detail-tags">${ful.map(f=>`<span class="c">${esc(FUL[f]||f)}</span>`).join('')}</div>`:'')
              + (items.length ? items.map((m,i)=>{
+                   // ห้องปิดดีลแล้ว: โชว์ไว้ (สัญญาณว่าห้องกำลังปิด → เร่งคนสนใจ) แต่เลือกไม่ได้
+                   // ไม่มีปุ่ม/ตัวนับ → หลุดจากการนับ selection เอง · เทา + ป้ายชัดว่าปิดแล้ว
+                   if (m.sold) {
+                       const soldLbl = isTH ? 'ปิดดีลแล้ว' : (ctx.category === 'forSale' ? 'Sold' : 'Rented');
+                       return `<div class="detail-mit sold"><span class="th"${m.image?` style="background-image:url('${m.image}')"`:''}></span><span class="nm">${nm(m)}</span><span class="pr">${m.price?esc(m.price):''}</span><span class="detail-sold">${soldLbl}</span></div>`;
+                   }
                    // key = stable id riding the QR (unit refCode / Sanity _key);
                    // maxQty = per-item order cap (rooms = 1 → renders as a toggle)
                    const key = esc(String(m.key ?? i));

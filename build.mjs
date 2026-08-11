@@ -233,7 +233,7 @@ const PLAYLIST_PROJ_V7 = `
         "validFrom":          media->offer->validFrom,
         "validTo":            media->offer->validTo,
         "menuItems":          media->offer->menuItems[]{ name_th, name_en, price, "image": image.asset->url },
-        "orderItems":         media->offer->orderItems[]{ name_th, name_en, price, priceTHB, "key": coalesce(refCode, _key), maxQty, "image": image.asset->url },
+        "orderItems":         media->offer->orderItems[]{ name_th, name_en, price, priceTHB, "key": coalesce(refCode, _key), maxQty, sold, "image": image.asset->url },
         "fulfillment":        media->offer->fulfillment,
         "payOnline":          media->offer->payOnline,
         "booking":            media->offer->booking,
@@ -244,7 +244,8 @@ const PLAYLIST_PROJ_V7 = `
                                 description_th, description_en, defaultHandoffType, unitRef,
                                 booking, openDays, openTime, closeTime,
                                 "logo": logo.asset->url, "coverImage": coverImage.asset->url,
-                                "offers": *[_type=="offer" && provider._ref == ^._id && status == true][0...8]{
+                                "offers": *[_type=="offer" && provider._ref == ^._id && status == true
+                                    && (scope == "global" || !defined(scope) || "__PID__" in projects[]._ref)][0...8]{
                                     "slug": slug.current, title_th, title_en, price,
                                     "img": coalesce(primaryImage.asset->url, images[0].asset->url, listingImages[0].asset->url)
                                 }
@@ -271,7 +272,9 @@ for (const project of projects) {
   const { _id: projectId, code, title } = project
   const tplFile = PLAYER_BY_CODE[code] || DEFAULT_PLAYER
   const templateHtml = readFileSync(join(__dirname, tplFile), 'utf8')
-  const playlistProjection = PLAYLIST_PROJ_V7   // single player → always the rich projection
+  // __PID__ = โปรเจ็กต์ที่กำลัง build → กรอง "offers อื่นของร้านนี้" (nested provider->offers)
+  // ให้เหลือเฉพาะ scope global หรือที่ผูกกับโปรเจ็กต์นี้ (เดิมดึงทุกโครงการ → offer 39bs หลุดไป Mahogany)
+  const playlistProjection = PLAYLIST_PROJ_V7.replace(/__PID__/g, projectId)   // single player → always the rich projection
   console.log(`\nBuilding [${code}] ${title}…  (player: ${tplFile})`)
 
   // Fetch all project-scoped data in parallel
@@ -352,7 +355,7 @@ for (const project of projects) {
           // the same item lists — without these the menu/room list rendered as the
           // "เพิ่มสินค้า…" placeholder when entered from the category screen.
           menuItems[]{ name_th, name_en, price, "image": image.asset->url },
-          orderItems[]{ name_th, name_en, price, "key": coalesce(refCode, _key), maxQty, "image": image.asset->url },
+          orderItems[]{ name_th, name_en, price, "key": coalesce(refCode, _key), maxQty, sold, "image": image.asset->url },
           fulfillment,
           eventInfo
         }
