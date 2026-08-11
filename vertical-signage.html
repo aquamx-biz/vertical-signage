@@ -161,9 +161,22 @@ body {
     position: absolute; inset: 0;
     transform-style: preserve-3d;
     backface-visibility: hidden;
-    will-change: transform, opacity;
     opacity: 0; pointer-events: none;
+    /* Parked slides must not composite. opacity:0 alone keeps every slide a
+       live fullscreen GPU layer — and will-change on ALL slots forced one per
+       slide (~8MB each). 18 slides sat at the edge of the ZC boxes' GPU; the
+       per-room-type boards took the fleet to 22 and every site went over at
+       once: images rendered half-painted (bottom tiles black). Same class of
+       failure as the hidden-overlay and parked-3D ghost incidents. */
+    visibility: hidden;
     transition: opacity 0.7s var(--ease-out), transform 0.9s var(--ease-out);
+}
+/* Only the slides actually in a transition exist for the GPU: at most 2-3
+   layers instead of 22. `leaving` keeps its class until the next rotation, so
+   both sides of a crossfade/cube stay visible for the whole animation. */
+.slot.active, .slot.leaving, .slot.entering, .slot.exiting {
+    visibility: visible;
+    will-change: transform, opacity;
 }
 .slot.active { opacity: 1; pointer-events: auto; z-index: 2; }
 .slot.leaving { z-index: 1; }
