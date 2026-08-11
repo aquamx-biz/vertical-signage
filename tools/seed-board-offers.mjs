@@ -123,7 +123,7 @@ async function emitOffer(code, mode, proj, suffix, thSuffix, enSuffix, orderItem
       category: mode === 'rent' ? 'forRent' : 'forSale',
       subCategories: ['good-deal'],
       ctaType: 'order',
-      ctaLabel: 'เลือกห้องที่สนใจ',
+      ctaLabel: 'Find your unit',   // อังกฤษภาษาเดียวทุก offer (เจ้าของสั่ง 2026-08-11)
       status: true,
       orderItems,
     } })
