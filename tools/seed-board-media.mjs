@@ -73,7 +73,8 @@ for (const [k, b] of [...best].sort()) {
       kind: 'promo', type: 'web', webUrl: url,
       title: `${TH[mode]} · ${BED_TH[seg]} — ${proj.title}`,
       altText: `${EN[mode]} · ${BED_EN[seg]} — ${proj.title}`,
-      offer: { _type: 'reference', _ref: `offer-board-${code}-${mode}`, _weak: true },
+      // offer แยกต่อ bed (popup โชว์เฉพาะชนิดนี้) — seed-board-offers สร้าง offer-board-<code>-<mode>-<seg>
+      offer: { _type: 'reference', _ref: `offer-board-${code}-${mode}-${SLUG[seg]}`, _weak: true },
       provider: { _type: 'reference', _ref: providerId },
       scope: 'project',
       projects: [{ _type: 'reference', _ref: proj._id, _key: 'p0' }],

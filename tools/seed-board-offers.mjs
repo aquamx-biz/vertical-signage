@@ -90,22 +90,22 @@ for (const b of boards) {
   if (!byKey.has(k) || isDraft) byKey.set(k, b)
 }
 
-const muts = []
-for (const [k, b] of byKey) {
-  const [code, mode] = k.split('·')
-  if (ONLY && code !== ONLY) continue
-  const proj = projects.find(p => p.code === code)
-  if (!proj) { console.log(`⚠ ${k}: ไม่พบ project doc`); continue }
-  const rows = (b.rows ?? []).filter(r => r?.refCode && r.priceTHB != null)
-  if (!rows.length) { console.log(`⚠ ${k}: unitBoard ไม่มี lineup — ข้าม (คัดใน Unit Boards แล้ว Save ก่อน)`); continue }
-  const orderItems = rows.map(r => profileToOrderItem({ ...r, floorActual: FLOOR_BY_REF.get(r.refCode) }, mode))
+/* บอร์ดแยกชนิด → offer ต่อ bed (popup โชว์เฉพาะชนิดนั้น) · บอร์ดรวม (เช่น Mahogany) → ตัว mode-level
+   ต้องตรงกับ SLUG/SEG_MIN ใน seed-board-media.mjs + build.mjs */
+const SLUG = { studio: 'studio', '1bed': '1bed', '2bed': '2bed', '3bed': '3bed', '4bed': '4bedplus' }
+const SEG_TH = { studio: 'สตูดิโอ', '1bed': '1 นอน', '2bed': '2 นอน', '3bed': '3 นอน', '4bed': '4 นอน+' }
+const SEG_EN = { studio: 'Studio', '1bed': '1 Bed', '2bed': '2 Bed', '3bed': '3 Bed', '4bed': '4 Bed+' }
+const ORDER = ['studio', '1bed', '2bed', '3bed', '4bed']
+const SEG_MIN = 1
 
-  const oid = `offer-board-${code}-${mode}`
+const muts = []
+async function emitOffer(code, mode, proj, suffix, thSuffix, enSuffix, orderItems) {
+  const oid = `offer-board-${code}-${mode}${suffix}`
   const existing = (await q(`*[_id in ["drafts.${oid}", "${oid}"]] | order(_id desc)[0]`)) ?? null
-  if (existing) {
+  if (existing) {   // อัปเดตเฉพาะ orderItems — field ที่ทีมแต่งไว้ไม่ถูกแตะ
     const { _rev, _createdAt, _updatedAt, ...rest } = existing
     muts.push({ createOrReplace: { ...rest, _id: `drafts.${oid}`, orderItems } })
-    console.log(`↻ ${k}: อัปเดต orderItems ${orderItems.length} ห้อง (field อื่นคงเดิม)`)
+    console.log(`↻ ${code}·${mode}${suffix}: อัปเดต orderItems ${orderItems.length} ห้อง`)
   } else {
     muts.push({ createOrReplace: {
       _id: `drafts.${oid}`, _type: 'offer',
@@ -113,11 +113,9 @@ for (const [k, b] of byKey) {
       scope: 'project',
       projects: [{ _type: 'reference', _ref: proj._id, _key: 'p0' }],
       displayLang: 'th',
-      /* ตั้งชื่อตามที่ทีมแก้ไว้จริงกับ 39 by Sansiri ไม่ใช่ชื่อที่สคริปต์เคยเดา —
-         title_th เป็น "For Rent/For Sale" เพราะบนจอมันอยู่คู่ชิปหมวดที่เป็นอังกฤษ
-         (ของเดิมสคริปต์ตั้ง "ห้องว่างให้เช่า"/"ห้องขายราคาพิเศษ" แล้วทีมพิมพ์ทับทุกครั้ง) */
-      title_th: mode === 'rent' ? `For Rent — ${proj.title}` : `For Sale — ${proj.title}`,
-      title_en: mode === 'rent' ? `Units for rent — ${proj.title}` : `Selected units for sale — ${proj.title}`,
+      /* title_th เป็น "For Rent/For Sale" เพราะบนจอมันอยู่คู่ชิปหมวดที่เป็นอังกฤษ */
+      title_th: `${mode === 'rent' ? 'For Rent' : 'For Sale'}${thSuffix} — ${proj.title}`,
+      title_en: `${mode === 'rent' ? 'Units for rent' : 'Selected units for sale'}${enSuffix} — ${proj.title}`,
       slug: { _type: 'slug', current: oid },
       category: mode === 'rent' ? 'forRent' : 'forSale',
       subCategories: ['good-deal'],
@@ -126,7 +124,25 @@ for (const [k, b] of byKey) {
       status: true,
       orderItems,
     } })
-    console.log(`＋ ${k}: สร้างใหม่ + orderItems ${orderItems.length} ห้อง`)
+    console.log(`＋ ${code}·${mode}${suffix}: สร้างใหม่ + orderItems ${orderItems.length} ห้อง`)
+  }
+}
+
+for (const [k, b] of byKey) {
+  const [code, mode] = k.split('·')
+  if (ONLY && code !== ONLY) continue
+  const proj = projects.find(p => p.code === code)
+  if (!proj) { console.log(`⚠ ${k}: ไม่พบ project doc`); continue }
+  const rows = (b.rows ?? []).filter(r => r?.refCode && r.priceTHB != null)
+  if (!rows.length) { console.log(`⚠ ${k}: unitBoard ไม่มี lineup — ข้าม (คัดใน Unit Boards แล้ว Save ก่อน)`); continue }
+  const toItem = r => profileToOrderItem({ ...r, floorActual: FLOOR_BY_REF.get(r.refCode) }, mode)
+  // ตัวรวมทุกชนิด — บอร์ดรวมยังใช้ (เช่น Mahogany)
+  await emitOffer(code, mode, proj, '', '', '', rows.map(toItem))
+  // ตัวแยกต่อ bed — บอร์ดแยกชนิดชี้มาที่ของตัวเอง
+  const byBed = {}; rows.forEach(r => (byBed[r.bedType] ??= []).push(r))
+  for (const seg of ORDER) {
+    const br = byBed[seg]; if (!br || br.length < SEG_MIN) continue
+    await emitOffer(code, mode, proj, `-${SLUG[seg]}`, ` · ${SEG_TH[seg]}`, ` · ${SEG_EN[seg]}`, br.map(toItem))
   }
 }
 
