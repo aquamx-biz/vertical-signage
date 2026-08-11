@@ -447,6 +447,20 @@ for (const project of projects) {
     })
   })
 
+  // GPU-envelope guardrail (CLAUDE.md "Kiosk GPU envelope"): playlist size is a
+  // hardware budget, not just a content decision. The fleet broke fleet-wide at
+  // 22 slides while every slot still composited (4805dcc); the player is gated
+  // now, but each slide still costs decoded-image memory on 1080p Mali boxes.
+  // Warn loudly — don't fail: airing content beats blocking a deploy at night,
+  // and the warning names the box class so the reader knows WHY it matters.
+  const SLIDE_BUDGET = 24
+  if ((playlist?.length ?? 0) > SLIDE_BUDGET) {
+    console.warn(
+      `\n  ⚠⚠ [${code}] playlist has ${playlist.length} slides — over the ${SLIDE_BUDGET}-slide GPU budget` +
+      `\n     ZC-H358S boxes half-paint images when decoded-image memory runs out.` +
+      `\n     Trim the lineup or verify on a REAL box (beacon imgFails / up-resets) before airing.\n`)
+  }
+
   // Assemble the baked data object
   const baked = {
     projectCode:    code,

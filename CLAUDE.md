@@ -17,6 +17,33 @@ This project has impeccable design context. **Read these before designing or cha
 
 Run `/impeccable` (no args) for the next-step menu, or `/impeccable live` for in-browser iteration (already configured in `.impeccable/live/config.json`).
 
+## Kiosk GPU envelope — read before adding slides, layers, or effects
+
+The players run on weak Android boxes (ZC-H358S ≈ 1080p Mali, Chrome 109 WebView),
+not desktops. **A change that passes on your desktop proves nothing** — desktop
+GPUs have memory to spare; the boxes do not. Four incidents, one lesson each,
+all the same physics:
+
+1. **Anything invisible must be OUT of the compositor, not just transparent.**
+   `opacity: 0` still composites; `will-change` forces a permanent fullscreen
+   layer (~8 MB each). Hide with `visibility: hidden` and grant `will-change`
+   only to elements actually animating right now. (Incidents: parked-3D ghosts
+   `ed42081` · hidden popup GPU cost `09499e5` · **fleet-wide half-painted
+   images when the playlist hit 22 slides** `4805dcc`.)
+2. **`backdrop-filter` is banned globally** — rk35xx composites blur as black
+   boxes (`50003eb`).
+3. **Playlist size is a GPU budget, not a content decision alone.** The fleet
+   broke at 22 slides with all slots compositing; the gated player holds 2–3
+   live layers, but every slide still costs decoded-image memory. `build.mjs`
+   warns above 24 slides — take the warning seriously, and never raise the
+   limit without testing on a real ZC box.
+4. **A leaving slide must end at `opacity: 0`**, or its last frame parks in the
+   compositor and ghosts through later slides.
+
+Rollouts hit every condo site at once (one rebuild → all repos). If a change
+plausibly increases GPU load, check a real box (beacon: `imgFails`, `board`,
+sudden `up` resets = WebView crash loops) before calling it done.
+
 ## Surfaces
 
 - `vertical-signage.html` — the live 9:16 kiosk player (dark stage theme). `mockup-v*.html` are design explorations of it.
