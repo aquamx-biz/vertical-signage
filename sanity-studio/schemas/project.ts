@@ -167,6 +167,12 @@ export default defineType({
       description: 'นิติ/ช่างประจำตึก — ชื่อ · เบอร์ (จอดับต้องโทรหาใคร)',
     }),
     defineField({
+      name: 'lineGroupId',
+      title: 'LINE Group ID · กลุ่มไลน์นิติของโครงการ',
+      type: 'string',
+      description: 'กลุ่ม LINE ที่นิติ/หน้างานใช้ส่งรูปประกาศขึ้นจอ — เพิ่มบอท OA เข้ากลุ่มแล้วพิมพ์ "id" ในกลุ่ม บอทจะตอบรหัสกลุ่ม (ขึ้นต้นด้วย C) มาวางที่นี่ · เว้นว่าง = โครงการนี้ไม่รับประกาศทางไลน์',
+    }),
+    defineField({
       name: 'opsNotes',
       title: 'Ops Notes',
       type: 'text',

@@ -394,6 +394,66 @@ export default defineType({
       description: 'Internal notes on billing, payment history, special terms, etc.',
     }),
 
+    // ── Vendor memory — เอกสารเจ้าเดิมมา ระบบรู้เองว่าคชจ.คืออะไร ──────────────
+    // Read by the AI document extraction (payment 1.2 "Extract from Doc"):
+    // after this party is matched, these defaults pre-fill the new payment.
+    defineField({
+      group:       'financial',
+      name:        'docAliases',
+      title:       'Names on Documents · ชื่อที่พิมพ์บนเอกสาร',
+      type:        'array',
+      of:          [defineArrayMember({ type: 'string' })],
+      options:     { layout: 'tags' },
+      description: 'ชื่อสะกดแบบอื่นที่พบบนใบแจ้งหนี้/ใบเสร็จของเจ้านี้ (ตัวย่อ, ชื่ออังกฤษ, ชื่อสาขา) — ใช้จับคู่ vendor อัตโนมัติเมื่อชื่อบนเอกสารไม่ตรงกับชื่อจดทะเบียนเป๊ะ · เจอเอกสารที่จับคู่ไม่ได้ ให้เพิ่มชื่อจากเอกสารนั้นเข้ามาที่นี่ ระบบจะจำได้ตลอดไป',
+    }),
+    defineField({
+      group:       'financial',
+      name:        'defaultGlAccount',
+      title:       'Default GL Account · บัญชีค่าใช้จ่ายประจำ',
+      type:        'reference',
+      to:          [{ type: 'accountCode' }],
+      options:     { disableNew: true },
+      description: 'คชจ.ของเจ้านี้ปกติลงบัญชีไหน — ใช้เติม GL Account อัตโนมัติเมื่อสร้าง Payment จากเอกสารของ vendor นี้ (แก้รายใบได้เสมอ)',
+    }),
+    defineField({
+      group:       'financial',
+      name:        'defaultVatType',
+      title:       'Default VAT Type · VAT ปกติของเจ้านี้',
+      type:        'string',
+      options: {
+        list: [
+          { title: 'Inclusive (VAT included in price)',  value: 'inclusive' },
+          { title: 'Exclusive (VAT added on top)',       value: 'exclusive' },
+          { title: '0% VAT',                            value: 'zero'      },
+          { title: 'No VAT',                            value: 'none'      },
+        ],
+      },
+      description: 'ใช้เติม VAT Type อัตโนมัติเมื่อสร้าง Payment จากเอกสารของ vendor นี้',
+    }),
+    defineField({
+      group:       'financial',
+      name:        'defaultWhtRate',
+      title:       'Default W/H Tax Rate · หัก ณ ที่จ่ายปกติ',
+      type:        'string',
+      options: {
+        list: [
+          { title: 'None',           value: 'none'   },
+          { title: '0%',             value: '0'      },
+          { title: '3%',             value: '3'      },
+          { title: '5%',             value: '5'      },
+          { title: '10%',            value: '10'     },
+        ],
+      },
+      description: 'อัตราหัก ณ ที่จ่ายที่ใช้ประจำกับเจ้านี้ — ใช้เติมอัตโนมัติเมื่อสร้าง Payment จากเอกสารของ vendor นี้',
+    }),
+    defineField({
+      group:       'financial',
+      name:        'defaultExpenseNote',
+      title:       'Recurring Expense Description · คำอธิบายคชจ.ประจำ',
+      type:        'string',
+      description: 'เช่น "ค่าน้ำดื่มสำนักงานรายเดือน" — ใช้เป็นคำอธิบายตั้งต้นของ Payment ที่สร้างจากเอกสารเจ้านี้',
+    }),
+
     // ── Property Owner ────────────────────────────────────────────────────────
 
     defineField({

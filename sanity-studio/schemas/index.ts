@@ -41,6 +41,8 @@ import screenStatus       from './screenStatus'
 import marketSnapshot     from './marketSnapshot'
 import scrapeRound        from './scrapeRound'
 import unitProfile        from './unitProfile'
+import demandSource       from './demandSource'
+import lineInbox           from './lineInbox'
 
 export const schemaTypes = [
   project,
@@ -86,4 +88,6 @@ export const schemaTypes = [
   marketSnapshot,
   scrapeRound,
   unitProfile,
+  demandSource,
+  lineInbox,
 ]
