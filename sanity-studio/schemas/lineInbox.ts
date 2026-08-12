@@ -1,15 +1,16 @@
 import { defineField, defineType } from 'sanity'
 
 /**
- * LINE Inbox — รูปที่นิติส่งเข้ากลุ่มไลน์ รอกดยืนยันก่อนขึ้นจอ
+ * LINE Inbox — รูปที่นิติส่งเข้ากลุ่มไลน์ ผ่านสองด่านก่อนขึ้นจอ
  *
  * Written by the LINE webhook (aquamx-handoff /api/line-webhook):
- *  1. นิติส่งรูปเข้ากลุ่ม → webhook สร้าง doc นี้ (status: pending) + ตอบการ์ดยืนยันในกลุ่ม
- *  2. กด "ยืนยันขึ้นจอ" → webhook สร้าง media (kind: notice, published) + playlist slot
- *     แล้วอัพเดต doc นี้เป็น confirmed พร้อมลิงก์ไปที่ media ที่สร้าง
- *  3. กดยกเลิก / ไม่กดภายในกำหนด → dismissed / expired — ไม่มีอะไรขึ้นจอ
+ *  1. นิติส่งรูปเข้ากลุ่ม → doc นี้ (status: pending) + การ์ดเลือกระยะเวลาในกลุ่มนิติ
+ *  2. นิติกดเลือกระยะเวลา → AI อ่านรูป (title TH/EN + สรุป + หมวด) → status: requested
+ *     + การ์ดอนุมัติเด้งเข้ากลุ่มแอดมิน aquamx — นิติสั่งขึ้นจอเองตรงๆ ไม่ได้
+ *  3. แอดมินกดอนุมัติ → สร้าง media (kind: notice, published) + playlist slot
+ *     → status: confirmed · แอดมินปฏิเสธ → status: rejected — ไม่มีอะไรขึ้นจอ
  *
- * Studio ใช้ดูประวัติ/ตามงานค้าง — ไม่ใช่ที่แก้เนื้อหา (แก้ที่ media หลังยืนยันแล้ว)
+ * Studio ใช้ดูประวัติ/ตามงานค้าง — ไม่ใช่ที่แก้เนื้อหา (แก้ที่ media หลังอนุมัติแล้ว)
  */
 export default defineType({
   name:  'lineInbox',
@@ -29,11 +30,13 @@ export default defineType({
       initialValue: 'pending',
       options: {
         list: [
-          { title: '🕐 Pending — รอยืนยันในไลน์',       value: 'pending'   },
-          { title: '✅ Confirmed — ยืนยันแล้ว ขึ้นจอ',    value: 'confirmed' },
-          { title: '❌ Dismissed — ยกเลิกจากไลน์',       value: 'dismissed' },
-          { title: '⏰ Expired — ไม่ยืนยันภายในกำหนด',   value: 'expired'   },
-          { title: '⚠️ Failed — สร้างสไลด์ไม่สำเร็จ',    value: 'failed'    },
+          { title: '🕐 Pending — รอนิติเลือกระยะเวลาในไลน์',   value: 'pending'   },
+          { title: '🔎 Requested — รอทีมงานอนุมัติ',            value: 'requested' },
+          { title: '✅ Confirmed — อนุมัติแล้ว ขึ้นจอ',          value: 'confirmed' },
+          { title: '🚫 Rejected — ทีมงานปฏิเสธ',                value: 'rejected'  },
+          { title: '❌ Dismissed — นิติยกเลิกเอง',              value: 'dismissed' },
+          { title: '⏰ Expired — ไม่ยืนยันภายในกำหนด',          value: 'expired'   },
+          { title: '⚠️ Failed — สร้างสไลด์ไม่สำเร็จ',           value: 'failed'    },
         ],
       },
       validation: Rule => Rule.required(),
@@ -91,20 +94,73 @@ export default defineType({
       validation:  Rule => Rule.required(),
     }),
 
-    // ── Confirmation trail — เกิดอะไรขึ้นกับรูปนี้ ────────────────────────────
+    // ── Request step — นิติเลือกระยะเวลา + AI อ่านรูป ─────────────────────────
     defineField({
-      name:        'confirmedBy',
-      title:       'Confirmed By · ผู้กดยืนยัน (LINE User ID)',
+      name:        'requestedExpiryDays',
+      title:       'Requested Duration (days) · ระยะเวลาที่นิติขอ',
+      type:        'number',
+      readOnly:    true,
+      description: '0 = ไม่หมดอายุ',
+      hidden:      ({ document }) => (document as any)?.status === 'pending',
+    }),
+    defineField({
+      name:        'requestedBy',
+      title:       'Requested By · ผู้ขอ (LINE User ID)',
       type:        'string',
       readOnly:    true,
-      hidden:      ({ document }) => !['confirmed', 'dismissed'].includes((document as any)?.status),
+      hidden:      ({ document }) => (document as any)?.status === 'pending',
+    }),
+    defineField({
+      name:        'requestedAt',
+      title:       'Requested At · เวลาที่ขอ',
+      type:        'datetime',
+      readOnly:    true,
+      hidden:      ({ document }) => (document as any)?.status === 'pending',
+    }),
+    defineField({
+      name:        'aiTitle',
+      title:       'AI Title · พาดหัวที่ AI อ่านได้',
+      type:        'string',
+      readOnly:    true,
+      description: 'อ่านจากตัวหนังสือในรูปด้วย AI ตอนนิติกดขอ — ใช้เป็นพาดหัวประกาศเมื่ออนุมัติ',
+      hidden:      ({ document }) => (document as any)?.status === 'pending',
+    }),
+    defineField({
+      name:        'aiTitleEn',
+      title:       'AI Title (English)',
+      type:        'string',
+      readOnly:    true,
+      hidden:      ({ document }) => (document as any)?.status === 'pending',
+    }),
+    defineField({
+      name:        'aiSummary',
+      title:       'AI Summary · สรุปเนื้อหา',
+      type:        'string',
+      readOnly:    true,
+      hidden:      ({ document }) => (document as any)?.status === 'pending',
+    }),
+    defineField({
+      name:        'aiSubCategoryId',
+      title:       'AI Sub-category · หมวดประกาศ',
+      type:        'string',
+      readOnly:    true,
+      hidden:      ({ document }) => (document as any)?.status === 'pending',
+    }),
+
+    // ── Approval trail — เกิดอะไรขึ้นกับรูปนี้ ────────────────────────────────
+    defineField({
+      name:        'confirmedBy',
+      title:       'Decided By · ผู้อนุมัติ/ปฏิเสธ (LINE User ID)',
+      type:        'string',
+      readOnly:    true,
+      hidden:      ({ document }) => !['confirmed', 'rejected', 'dismissed'].includes((document as any)?.status),
     }),
     defineField({
       name:        'confirmedAt',
-      title:       'Confirmed At · เวลากดยืนยัน',
+      title:       'Decided At · เวลาตัดสิน',
       type:        'datetime',
       readOnly:    true,
-      hidden:      ({ document }) => !['confirmed', 'dismissed'].includes((document as any)?.status),
+      hidden:      ({ document }) => !['confirmed', 'rejected', 'dismissed'].includes((document as any)?.status),
     }),
     defineField({
       name:        'media',
@@ -128,18 +184,19 @@ export default defineType({
   preview: {
     select: {
       caption:     'caption',
+      aiTitle:     'aiTitle',
       status:      'status',
       projectName: 'project.title',
       receivedAt:  'receivedAt',
       media:       'image',
     },
-    prepare({ caption, status, projectName, receivedAt, media }) {
+    prepare({ caption, aiTitle, status, projectName, receivedAt, media }) {
       const statusIcon: Record<string, string> = {
-        pending: '🕐', confirmed: '✅', dismissed: '❌', expired: '⏰', failed: '⚠️',
+        pending: '🕐', requested: '🔎', confirmed: '✅', rejected: '🚫', dismissed: '❌', expired: '⏰', failed: '⚠️',
       }
       const when = receivedAt ? new Date(receivedAt).toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' }) : ''
       return {
-        title:    `${statusIcon[status ?? ''] ?? ''} ${projectName ?? '(no project)'} — ${caption ?? '(no caption)'}`,
+        title:    `${statusIcon[status ?? ''] ?? ''} ${projectName ?? '(no project)'} — ${aiTitle ?? caption ?? '(no title yet)'}`,
         subtitle: when,
         media,
       }
