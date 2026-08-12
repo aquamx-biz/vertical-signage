@@ -3,6 +3,7 @@ import { structureTool } from 'sanity/structure'
 import { visionTool } from '@sanity/vision'
 import { schemaTypes } from './schemas'
 import unitSource from './schemas/unitSource'
+import listing from './schemas/listing'
 import { initPlaylistAction }    from './actions/initPlaylistAction'
 import { ProjectPublishAction } from './actions/projectPublishAction'
 import { AddToPlaylistAction }  from './actions/addToPlaylistAction'
@@ -506,5 +507,5 @@ export default defineConfig([{
   dataset:   'internal',
 
   plugins: [structureTool(), visionTool()],
-  schema: { types: [unitSource] },
+  schema: { types: [unitSource, listing] },
 }])
