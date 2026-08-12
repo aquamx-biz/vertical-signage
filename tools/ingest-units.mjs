@@ -18,7 +18,7 @@
  * refCode: จับคู่ห้องเดิมด้วย fingerprint (ตึก·ประเภท·ตร.ม.·ชั้นจริง) ให้ตรงกับ
  * refCode ที่มีอยู่ — ห้องใหม่ได้เลขรันต่อท้าย prefix เดิมของตึก
  */
-import { readFileSync, existsSync } from 'fs'
+import { readFileSync, writeFileSync, existsSync } from 'fs'
 import { join } from 'path'
 import { passesSanity } from '../board-engine.mjs'
 
@@ -27,6 +27,11 @@ const WRITE = args.includes('--write')
 const argOf = f => { const i = args.indexOf(f); return i >= 0 ? args[i + 1] : undefined }
 const CARDS_DIR = argOf('--dir') ?? 'C:/Users/Lenovo/Downloads'
 const ROUND = argOf('--date') ?? new Date().toISOString().slice(0, 10)
+/* เฟส 2 (โมเดล 2 ชั้น): --respect-locks = บังคับการ์ดไปห้องที่ทีมล็อกไว้ (listing.unitLocked) แทน
+   fingerprint · --dump <file> = เขียน unitProfile mutations ออกไฟล์ (ไว้ทำ parity check เทียบ 2 รอบ)
+   ปิด flag = พฤติกรรมเดิมเป๊ะ (backward-compatible) */
+const RESPECT_LOCKS = args.includes('--respect-locks')
+const DUMP = argOf('--dump')
 
 // เขียนต้องใช้ token สิทธิ์ Editor (SANITY_WRITE_TOKEN) — SANITY_TOKEN ตัวเดิมอ่านได้อย่างเดียว
 const TOKEN = process.env.SANITY_WRITE_TOKEN ?? process.env.SANITY_TOKEN
@@ -327,13 +332,14 @@ if (COIN_SNAPPED) {
 }
 
 // ── 2. โหลดสถานะปัจจุบันจาก Sanity ──────────────────────────────────────────
-const [profiles, sources] = await Promise.all([
+const [profiles, sources, lockedL] = await Promise.all([
   q(`*[_type == "unitProfile"]{ _id, refCode, intent, projectName, bedType, sqm, bath, priceTHB, status,
       pinToBoard, hideFromBoard, internalNote, firstSeenAt, priceHistory,
       dealStage, dealStageAt, onBoardFirstAt, onBoardLastAt }`),
   q(`*[_type == "unitSource"]{ _id, refCode, projectName, floorActual, imgHash,
       rentListings, saleListings, bestContact, cobrokeStatus, cobrokeNote, contactLog,
       "sids": [...coalesce(rentListings, [])[].sourceId, ...coalesce(saleListings, [])[].sourceId] }`, 'internal'),
+  RESPECT_LOCKS ? q(`*[_type == "listing" && unitLocked == true && defined(unit)]{ url, "ref": unit->refCode }`, 'internal') : Promise.resolve([]),
 ])
 const srcByRef = new Map(sources.map(s => [s.refCode, s]))
 const profByKey = new Map(profiles.map(p => [`${p.refCode}·${p.intent}`, p]))
@@ -381,6 +387,15 @@ const maxNum = {}
 for (const s of sources) {
   const m = s.refCode.match(/^([A-Z0-9]+)-U(\d+)$/)
   if (m) { prefixOf[s.projectName] = m[1]; maxNum[s.projectName] = Math.max(maxNum[s.projectName] ?? 0, +m[2]) }
+}
+
+/* --respect-locks: การ์ดที่ url ตรงกับ listing ที่ทีมล็อก → บังคับ refCode = ห้องที่ล็อก
+   (override fingerprint/round → เคารพการตัดสินของคน · split/merge มือติดถาวร ไม่ยุบกลับ) */
+if (RESPECT_LOCKS) {
+  const lockMap = new Map((lockedL ?? []).filter(x => x.url && x.ref).map(x => [x.url, x.ref]))
+  let n = 0
+  for (const c of cards) { const r = lockMap.get(c.url); if (r && r !== c.refCode) { c.refCode = r; n++ } }
+  console.log(`🔒 respect-locks: บังคับ ${n} การ์ด → ห้องที่ทีมล็อก (จาก ${lockMap.size} listing ล็อก)`)
 }
 
 // ── 3. รวม cards → หน่วยห้อง (fingerprint) + คำนวณสถิติของรอบ ────────────────
@@ -668,6 +683,11 @@ if (PRUNED) console.log(`  prune listing ตาย/หลุดตลาดอ�
 warnings.forEach(w => console.log(`  ⚠ ${w}`))
 console.log(`  mutations: production ${prodMut.length} · internal ${intMut.length}`)
 
+if (DUMP) {
+  const prof = prodMut.filter(m => m.createOrReplace?._type === 'unitProfile').map(m => m.createOrReplace)
+  writeFileSync(DUMP, JSON.stringify(prof))
+  console.log(`📤 dump unitProfile ${prof.length} → ${DUMP}`)
+}
 await mutate(prodMut, 'production')
 await mutate(intMut, 'internal')
 console.log(WRITE ? '\n✓ เขียนเข้า Sanity แล้ว' : '\n(dry-run — เพิ่ม --write เพื่อเขียนจริง)')
