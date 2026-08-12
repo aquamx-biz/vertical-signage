@@ -28,7 +28,7 @@ const API_KEY = process.env.SANITY_STUDIO_API_KEY ?? ''
 let installed = false
 
 export function installApiKey(): void {
-  if (installed || typeof window === 'undefined' || !API_KEY) return
+  if (installed || typeof window === 'undefined' || typeof window.fetch !== 'function' || !API_KEY) return
   installed = true
 
   const original = window.fetch.bind(window)
