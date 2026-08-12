@@ -51,7 +51,9 @@ async function readPage(url) {
 }
 
 const [src, prof] = await Promise.all([
-  q(`*[_type=="unitSource"]{refCode,"l":listings[]{portal,url,price,intent}}`, 'internal'),
+  // schema แยก rentListings/saleListings แล้ว (2026-08-08) — ยุบกลับเป็น l เดียวพร้อมแปะ intent
+  q(`*[_type=="unitSource"]{refCode,"l": [...coalesce(rentListings, [])[]{portal,url,price,"intent":"rent"},
+      ...coalesce(saleListings, [])[]{portal,url,price,"intent":"sale"}]}`, 'internal'),
   q(`*[_type=="unitProfile" && status != "expired"]{_id,refCode,intent,bedType,sqm,priceTHB,pricePerSqm}`),
 ])
 const lOf = new Map(src.map(s => [s.refCode, s.l ?? []]))
