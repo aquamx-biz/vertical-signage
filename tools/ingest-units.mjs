@@ -176,7 +176,7 @@ if (ROUND_FILE) {
          (ชั้น null โดนทิ้งทั้งแถว · bed ที่ reconcile แก้ทำลายนิ้วมือเลื่อน) */
       refCode: r.refCode ?? null,
       building: r.building, intent: r.intent, bedType: BED(fix.bed), sqm: +r.sqm, floor,
-      bath: plausBath(r.bath),
+      bath: plausBath(r.bath), imgHash: r.imgHash ?? null,
       price: fix.price, portal: r.portal ?? 'unknown', url: r.url ?? null,
       sourceId: r.sourceId ?? (r.url ? String(r.portal ?? 'x').toLowerCase().replace(/\W/g, '').slice(0, 2) + ':' + String(r.url).split(/[/_-]/).pop().slice(0, 24) : null),
       posterType: r.posterType ?? 'unknown', posterName: r.posterName ?? null,
@@ -204,7 +204,7 @@ if (!ROUND_FILE) for (const [portal, files] of Object.entries(FILES)) {
       if (!passesSanity({ bedType: BED(fix.bed), sqm: +r.sqm, priceTHB: fix.price }, r.intent)) continue
       cards.push({
         building, intent: r.intent, bedType: BED(fix.bed), sqm: +r.sqm, floor,
-        bath: plausBath(r.bath),
+        bath: plausBath(r.bath), imgHash: r.imgHash ?? null,
         price: fix.price, portal: portal === 'Mahogany' ? (r.portal ?? 'FazWaz') : portal,
         url: r.url ?? null,
         sourceId: r.sourceId ?? (r.url ? portal.toLowerCase().replace(/\W/g, '').slice(0, 2) + ':' + String(r.url).split(/[/_-]/).pop().slice(0, 24) : null),
@@ -331,7 +331,7 @@ const [profiles, sources] = await Promise.all([
   q(`*[_type == "unitProfile"]{ _id, refCode, intent, projectName, bedType, sqm, bath, priceTHB, status,
       pinToBoard, hideFromBoard, internalNote, firstSeenAt, priceHistory,
       dealStage, dealStageAt, onBoardFirstAt, onBoardLastAt }`),
-  q(`*[_type == "unitSource"]{ _id, refCode, projectName, floorActual,
+  q(`*[_type == "unitSource"]{ _id, refCode, projectName, floorActual, imgHash,
       rentListings, saleListings, bestContact, cobrokeStatus, cobrokeNote, contactLog,
       "sids": [...coalesce(rentListings, [])[].sourceId, ...coalesce(saleListings, [])[].sourceId] }`, 'internal'),
 ])
@@ -339,24 +339,42 @@ const srcByRef = new Map(sources.map(s => [s.refCode, s]))
 const profByKey = new Map(profiles.map(p => [`${p.refCode}·${p.intent}`, p]))
 // fingerprint → refCode ที่มีอยู่ (ตึก|ประเภท|ตรม.ปัดเลข|ชั้นจริง)
 // + ดัชนีสำรอง ตึก|ประเภท|ชั้น สำหรับจับคู่แบบ ±1.5 ตรม. (portal ลงเลขเหลื่อมกันเล็กน้อย)
+/* imgHash (dHash รูปห้องจาก browser scrape) = ตัวแยกห้องที่ "เสถียร" — fingerprint ชนกันแต่รูปต่างมาก
+   = คนละห้องจริง (เช่น 45.09 corner สองห้องที่ต่างแค่ decor) · ไม่มี imgHash = พฤติกรรมเดิมทุกอย่าง */
+const IMG_SPLIT = 18   // Hamming (จาก 64) เกินนี้ = คนละห้อง · <~10 = รูป/ห้องเดียวกัน · จูนได้บนข้อมูลจริง
+const hamHex = (a, b) => { if (!a || !b) return 99; let x = BigInt('0x' + a) ^ BigInt('0x' + b), n = 0; while (x) { n += Number(x & 1n); x >>= 1n } return n }
+// fingerprint → [{ref, imgHash}] : หลายห้องต่อ fingerprint ได้ (แยกด้วย imgHash)
 const fpToRef = new Map()
 const nearIdx = new Map()
 for (const s of sources) {
   const anyProf = profiles.find(p => p.refCode === s.refCode)
   if (anyProf && s.floorActual != null) {
-    fpToRef.set(`${s.projectName}|${anyProf.bedType}|${Math.round(anyProf.sqm)}|${s.floorActual}`, s.refCode)
+    const fk = `${s.projectName}|${anyProf.bedType}|${Math.round(anyProf.sqm)}|${s.floorActual}`
+    ;(fpToRef.get(fk) ?? fpToRef.set(fk, []).get(fk)).push({ ref: s.refCode, imgHash: s.imgHash ?? null })
     const k = `${s.projectName}|${anyProf.bedType}|${s.floorActual}`
-    ;(nearIdx.get(k) ?? nearIdx.set(k, []).get(k)).push({ ref: s.refCode, sqm: anyProf.sqm })
+    ;(nearIdx.get(k) ?? nearIdx.set(k, []).get(k)).push({ ref: s.refCode, sqm: anyProf.sqm, imgHash: s.imgHash ?? null })
   }
 }
+/* เลือก candidate ที่รูปใกล้สุด · ไม่มี imgHash (ทั้งการ์ดหรือ candidate) = คืนตัวแรก (พฤติกรรมเดิม)
+   รูปต่างจากทุก candidate เกิน IMG_SPLIT = ห้องใหม่ (undefined) เว้นมี candidate ที่ยังไม่มี imgHash */
+const pickByImg = (cands, imgHash) => {
+  if (!cands || !cands.length) return undefined
+  if (!imgHash) return cands[0].ref
+  const withImg = cands.filter(c => c.imgHash)
+  if (!withImg.length) return cands[0].ref
+  const best = withImg.map(c => ({ ref: c.ref, d: hamHex(c.imgHash, imgHash) })).sort((a, b) => a.d - b.d)[0]
+  if (best.d <= IMG_SPLIT) return best.ref
+  return (cands.find(c => !c.imgHash) || {}).ref
+}
+const fpKey = u => `${u.building}|${u.bedType}|${Math.round(u.sqm)}|${u.floor}`
 const matchRef = u => {
   if (u.refCode && srcByRef.has(u.refCode)) return u.refCode
-  const exact = fpToRef.get(u.fp)
+  const exact = pickByImg(fpToRef.get(fpKey(u)), u.imgHash)
   if (exact) return exact
   const cands = (nearIdx.get(`${u.building}|${u.bedType}|${u.floor}`) ?? [])
     .filter(x => Math.abs(x.sqm - u.sqm) <= 1.5)
     .sort((a, b) => Math.abs(a.sqm - u.sqm) - Math.abs(b.sqm - u.sqm))
-  return cands[0]?.ref
+  return pickByImg(cands, u.imgHash)
 }
 const prefixOf = {}
 const maxNum = {}
@@ -366,12 +384,34 @@ for (const s of sources) {
 }
 
 // ── 3. รวม cards → หน่วยห้อง (fingerprint) + คำนวณสถิติของรอบ ────────────────
+/* จับกลุ่มด้วย fingerprint ก่อน แล้ว "แยกย่อย" การ์ดที่ fingerprint ชนแต่ imgHash รูปต่างเกิน IMG_SPLIT
+   = คนละห้องจริง · ก้อนใหญ่สุด = ตัวเดิม (คง refCode) · การ์ดไม่มีรูป = เกาะก้อนแรกที่เข้ากันได้
+   ไม่มี imgHash เลย หรือการ์ดมี refCode แล้ว = ก้อนเดียว (พฤติกรรมเดิมเป๊ะ ไม่ re-fingerprint) */
 const units = new Map()
+const groups = new Map()
 for (const c of cards) {
-  /* การ์ดที่รู้ refCode เกาะกลุ่มด้วย refCode ตรง ๆ — ลายนิ้วมือใช้เฉพาะการ์ดแปลกหน้า */
-  const fp = c.refCode ? `R:${c.refCode}` : `${c.building}|${c.bedType}|${Math.round(c.sqm)}|${c.floor}`
-  const u = units.get(fp) ?? { fp, refCode: c.refCode ?? null, building: c.building, bedType: c.bedType, sqm: Math.round(c.sqm), floor: c.floor, listings: [] }
-  u.listings.push(c); units.set(fp, u)
+  const base = c.refCode ? `R:${c.refCode}` : `${c.building}|${c.bedType}|${Math.round(c.sqm)}|${c.floor}`
+  ;(groups.get(base) ?? groups.set(base, []).get(base)).push(c)
+}
+for (const [base, cs] of groups) {
+  const canSplit = !base.startsWith('R:') && cs.filter(c => c.imgHash).length >= 2
+  let clusters
+  if (!canSplit) clusters = [cs]
+  else {
+    clusters = []
+    for (const c of cs) {
+      const j = clusters.find(cl => { const rep = cl.find(x => x.imgHash); return !rep || !c.imgHash || hamHex(rep.imgHash, c.imgHash) <= IMG_SPLIT })
+      if (j) j.push(c); else clusters.push([c])
+    }
+    clusters.sort((a, b) => b.length - a.length)
+  }
+  clusters.forEach((cl, i) => {
+    const c0 = cl[0]
+    units.set(i === 0 ? base : `${base}#${i}`, {
+      fp: i === 0 ? base : `${base}#${i}`, refCode: c0.refCode ?? null, building: c0.building, bedType: c0.bedType,
+      sqm: Math.round(c0.sqm), floor: c0.floor, imgHash: (cl.find(x => x.imgHash) || {}).imgHash ?? null, listings: cl,
+    })
+  })
 }
 // โซนชั้น: แบ่งช่วงชั้นของตึกเป็น 3 ส่วนเท่า ๆ กัน
 const floorsByBld = {}
@@ -562,6 +602,7 @@ for (const u of unitRows) {
   intMut.push({ createOrReplace: {
     _id: oldSrc?._id ?? `unitSource-${ref}`, _type: 'unitSource',
     refCode: ref, projectName: u.building, floorActual: u.floor,
+    imgHash: u.imgHash ?? oldSrc?.imgHash ?? undefined,   // dHash รูปห้อง = ตัวแยกห้องเสถียร (คงของเดิมถ้ารอบนี้ไม่มี)
     rentListings: mergedRent.length ? mergedRent : undefined,
     saleListings: mergedSale.length ? mergedSale : undefined,
     bestContact: oldSrc?.bestContact, cobrokeStatus: oldSrc?.cobrokeStatus ?? 'not_contacted',
