@@ -4,6 +4,7 @@ import { visionTool } from '@sanity/vision'
 import { schemaTypes } from './schemas'
 import unitSource from './schemas/unitSource'
 import listing from './schemas/listing'
+import { ListingSplitTool } from './tools/ListingSplitTool'
 import { initPlaylistAction }    from './actions/initPlaylistAction'
 import { ProjectPublishAction } from './actions/projectPublishAction'
 import { AddToPlaylistAction }  from './actions/addToPlaylistAction'
@@ -507,5 +508,6 @@ export default defineConfig([{
   dataset:   'internal',
 
   plugins: [structureTool(), visionTool()],
+  tools: (prev) => [{ name: 'listing-split', title: 'แยก/ล็อกห้อง', component: ListingSplitTool }, ...prev],
   schema: { types: [unitSource, listing] },
 }])
