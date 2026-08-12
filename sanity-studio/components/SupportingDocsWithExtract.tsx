@@ -8,11 +8,17 @@
  *  1. Runs a free GROQ file-level duplicate check (same Sanity asset _ref)
  *  2. Calls Claude Vision via the extract-payment API (parallel with step 1)
  *  3. Runs a free GROQ invoice-number duplicate check with the extracted vendorInvoiceRef
- *  4. Looks up the vendor by taxId / legalName_th to see if a matching Party already exists
- *  5. Shows a review dialog with any duplicate warnings + payment field checklist + vendor section
+ *  4. Looks up the vendor by taxId / legalName_th / legalName_en / docAliases to see if a
+ *     matching Party already exists (docAliases = names as printed on documents — the
+ *     vendor-memory alias list on the party's Financial tab)
+ *  5. Shows a review dialog with any duplicate warnings + payment field checklist + vendor section.
+ *     A matched vendor's stored defaults (defaultGlAccount / defaultVatType / defaultWhtRate /
+ *     defaultExpenseNote) fill any gap the AI could not read — badged 🧠 in the checklist.
  *  6. On confirm, patches the selected fields. Vendor section either links the matched party
  *     or creates a new Party doc (with role 'vendor' and identityType 'corporate') from the
  *     extracted seller details. Skips vendor if one is already set on the payment.
+ *     Linking also saves the printed document name back into the party's docAliases when it
+ *     isn't known yet — the vendor is recognised instantly next time.
  */
 
 import { useState, useCallback }   from 'react'
@@ -81,6 +87,16 @@ interface ExtractResult {
   invoiceDate?:          string | null
   expenseDescription?:   string | null
   party?:                ExtractedParty | null
+  // Not extracted — injected from the matched party's vendor memory (defaultGlAccount)
+  glAccount?:            { _ref: string; label: string } | null
+}
+
+interface VendorDefaults {
+  glAccountId?:    string | null
+  glAccountLabel?: string | null
+  vatType?:        string | null
+  whtRate?:        string | null
+  expenseNote?:    string | null
 }
 
 interface PartyMatchInfo {
@@ -88,6 +104,9 @@ interface PartyMatchInfo {
   existingId?:   string
   existingName?: string
   existingTaxId?: string
+  defaults?:      VendorDefaults
+  /** Printed document name not yet on the party — saved into docAliases on link */
+  aliasToRemember?: string
 }
 
 const BANK_NAME_MAP: { keys: string[]; value: string }[] = [
@@ -133,6 +152,7 @@ const FIELD_META = [
   { key: 'dueDate'              as const, label: '1.16 · Due Date',        sanityField: 'dueDate'                                                                                       },
   { key: 'invoiceDate'          as const, label: 'Invoice Date',           sanityField: '',                     format: (v: any) => `${v}  (reference only)`                           },
   { key: 'expenseDescription'   as const, label: '3.3 · Payment Notes',    sanityField: 'expenseDescription'                                                                            },
+  { key: 'glAccount'            as const, label: '4.1 · GL Account',       sanityField: 'accountCode',          format: (v: any) => v?.label ?? '' },
 ]
 
 export function SupportingDocsWithExtract(props: any) {
@@ -153,6 +173,8 @@ export function SupportingDocsWithExtract(props: any) {
   const [error,       setError]       = useState('')
   const [partyMatch,    setPartyMatch]    = useState<PartyMatchInfo | null>(null)
   const [includeParty,  setIncludeParty]  = useState(false)
+  // Keys whose value came from the matched vendor's memory, not the document
+  const [fromMemory,    setFromMemory]    = useState<Partial<Record<string, boolean>>>({})
 
   // ── GROQ helpers ────────────────────────────────────────────────────────────
 
@@ -172,31 +194,65 @@ export function SupportingDocsWithExtract(props: any) {
     }
   }
 
-  async function findPartyMatch(party: ExtractedParty | null | undefined): Promise<PartyMatchInfo> {
-    if (!party) return { status: 'new' }
-    const taxIdDigits = (party.taxId ?? '').replace(/\D/g, '')
+  // Projection shared by both match stages — carries the vendor-memory defaults
+  // (party Financial tab) so a match can pre-fill the payment.
+  const PARTY_MATCH_PROJ = `{
+    _id, legalName_th, legalName_en, taxId, docAliases,
+    defaultVatType, defaultWhtRate, defaultExpenseNote,
+    "glAccountId": defaultGlAccount._ref,
+    "glAccountLabel": defaultGlAccount->coalesce(nameEn, nameTh, code, _id)
+  }`
+
+  async function findPartyMatch(party: ExtractedParty | null | undefined, printedName?: string | null): Promise<PartyMatchInfo> {
+    // Candidate names, strongest first: the name as printed on the document,
+    // then the extracted legal names.
+    const candidates = [printedName, party?.legalName_th, party?.legalName_en]
+      .map(s => s?.trim())
+      .filter((s): s is string => !!s)
+    if (!party && candidates.length === 0) return { status: 'new' }
+    const taxIdDigits = (party?.taxId ?? '').replace(/\D/g, '')
+    const lowerNames  = [...new Set(candidates.map(s => s.toLowerCase()))]
     try {
       // 1. Exact match by taxId — strongest signal
+      let hit: any = null
       if (taxIdDigits) {
-        const hit = await client.fetch<any>(
-          `*[_type == "party" && taxId == $taxId && !(_id in path("drafts.**"))][0]
-            { _id, legalName_th, legalName_en, taxId }`,
+        hit = await client.fetch<any>(
+          `*[_type == "party" && taxId == $taxId && !(_id in path("drafts.**"))][0] ${PARTY_MATCH_PROJ}`,
           { taxId: taxIdDigits },
         )
-        if (hit?._id) {
-          return { status: 'matched', existingId: hit._id, existingName: hit.legalName_th ?? hit.legalName_en, existingTaxId: hit.taxId }
-        }
       }
-      // 2. Fallback: legalName_th exact match (case-insensitive)
-      const nameTh = party.legalName_th?.trim()
-      if (nameTh) {
-        const hit = await client.fetch<any>(
-          `*[_type == "party" && lower(legalName_th) == lower($name) && !(_id in path("drafts.**"))][0]
-            { _id, legalName_th, legalName_en, taxId }`,
-          { name: nameTh },
+      // 2. Fallback: any candidate name vs legal names + docAliases (vendor memory)
+      if (!hit?._id && lowerNames.length > 0) {
+        hit = await client.fetch<any>(
+          `*[_type == "party" && !(_id in path("drafts.**")) && (
+              lower(legalName_th) in $names ||
+              lower(legalName_en) in $names ||
+              count(docAliases[lower(@) in $names]) > 0
+            )][0] ${PARTY_MATCH_PROJ}`,
+          { names: lowerNames },
         )
-        if (hit?._id) {
-          return { status: 'matched', existingId: hit._id, existingName: hit.legalName_th ?? hit.legalName_en, existingTaxId: hit.taxId }
+      }
+      if (hit?._id) {
+        // A candidate name the party doesn't know yet → remember it on link,
+        // so this exact spelling matches instantly next time.
+        const known = new Set(
+          [hit.legalName_th, hit.legalName_en, ...(hit.docAliases ?? [])]
+            .filter(Boolean).map((s: string) => s.toLowerCase()),
+        )
+        const aliasToRemember = candidates.find(c => !known.has(c.toLowerCase()))
+        return {
+          status:        'matched',
+          existingId:    hit._id,
+          existingName:  hit.legalName_th ?? hit.legalName_en,
+          existingTaxId: hit.taxId,
+          aliasToRemember,
+          defaults: {
+            glAccountId:    hit.glAccountId,
+            glAccountLabel: hit.glAccountLabel,
+            vatType:        hit.defaultVatType,
+            whtRate:        hit.defaultWhtRate,
+            expenseNote:    hit.defaultExpenseNote,
+          },
         }
       }
     } catch {
@@ -233,6 +289,7 @@ export function SupportingDocsWithExtract(props: any) {
     setSelected({})
     setPartyMatch(null)
     setIncludeParty(false)
+    setFromMemory({})
 
     try {
       // Step 1 + 2: file duplicate check and AI extraction run in parallel
@@ -251,9 +308,24 @@ export function SupportingDocsWithExtract(props: any) {
       // Step 3: invoice-level duplicate check + party match (parallel)
       const [invoiceDupes, partyResult] = await Promise.all([
         data.vendorInvoiceRef ? checkInvoiceDuplicate(data.vendorInvoiceRef) : Promise.resolve([] as DuplicateHit[]),
-        findPartyMatch(data.party),
+        findPartyMatch(data.party, data.vendorName),
       ])
       setPartyMatch(partyResult)
+
+      // Vendor memory: a matched party's stored defaults fill any gap the AI
+      // could not read from the document (never overriding an extracted value).
+      const memory: Partial<Record<string, boolean>> = {}
+      if (partyResult.status === 'matched' && partyResult.defaults) {
+        const d = partyResult.defaults
+        if (data.vatType == null && d.vatType)                       { data.vatType            = d.vatType;     memory.vatType            = true }
+        if (data.withholdingTaxRate == null && d.whtRate)            { data.withholdingTaxRate = d.whtRate;     memory.withholdingTaxRate = true }
+        if (data.expenseDescription == null && d.expenseNote)        { data.expenseDescription = d.expenseNote; memory.expenseDescription = true }
+        if (d.glAccountId) {
+          data.glAccount   = { _ref: d.glAccountId, label: d.glAccountLabel ?? d.glAccountId }
+          memory.glAccount = true
+        }
+      }
+      setFromMemory(memory)
       // Default the party toggle ON when vendor is not yet set and we have something usable
       const hasPartyData = !!(data.party && (data.party.legalName_th || data.party.legalName_en || data.party.taxId))
       setIncludeParty(!existingVendor?._ref && hasPartyData)
@@ -290,7 +362,11 @@ export function SupportingDocsWithExtract(props: any) {
     for (const { key, sanityField } of FIELD_META) {
       if (!sanityField || !selected[key]) continue
       const val = result[key]
-      if (val != null) patchSet[sanityField] = val
+      if (val == null) continue
+      // glAccount carries {_ref,label} from vendor memory — patch as a reference
+      patchSet[sanityField] = key === 'glAccount'
+        ? { _type: 'reference', _ref: (val as any)._ref }
+        : val
     }
 
     // Resolve vendor: match an existing party or create a new one from extracted party data.
@@ -301,6 +377,17 @@ export function SupportingDocsWithExtract(props: any) {
         if (partyMatch?.status === 'matched' && partyMatch.existingId) {
           patchSet['vendor'] = { _type: 'reference', _ref: partyMatch.existingId }
           vendorActionLabel = ` + linked existing vendor`
+          // Vendor memory: save the printed document name the party didn't know
+          // yet, so this exact spelling matches instantly next time. Non-critical.
+          if (partyMatch.aliasToRemember) {
+            try {
+              await client.patch(partyMatch.existingId)
+                .setIfMissing({ docAliases: [] })
+                .insert('after', 'docAliases[-1]', [partyMatch.aliasToRemember])
+                .commit()
+              vendorActionLabel += ` (remembered “${partyMatch.aliasToRemember}”)`
+            } catch { /* alias memory is best-effort */ }
+          }
         } else {
           // Create new party doc from extracted data
           const p = result.party
@@ -318,6 +405,15 @@ export function SupportingDocsWithExtract(props: any) {
           if (p.phone)         newParty.phone         = p.phone
           if (p.email)         newParty.email         = p.email
           if (p.vatRegistered != null) newParty.vatRegistered = p.vatRegistered
+
+          // Seed vendor memory: if the printed name differs from the legal names,
+          // store it as a doc alias so the next document matches immediately.
+          const printed = result.vendorName?.trim()
+          if (printed && ![p.legalName_th, p.legalName_en]
+            .filter(Boolean)
+            .some(n => (n as string).toLowerCase() === printed.toLowerCase())) {
+            newParty.docAliases = [printed]
+          }
 
           const bank: Record<string, unknown> = {}
           if (bankNameEnum)        bank.bankName      = bankNameEnum
@@ -543,6 +639,9 @@ export function SupportingDocsWithExtract(props: any) {
                               {isReferenceOnly && (
                                 <Badge tone="caution" mode="outline" fontSize={0}>reference only</Badge>
                               )}
+                              {fromMemory[key] && (
+                                <Badge tone="primary" mode="outline" fontSize={0}>🧠 ค่าประจำของเจ้านี้</Badge>
+                              )}
                             </Flex>
                             <Text size={1}>{displayVal}</Text>
                           </Stack>
@@ -592,6 +691,11 @@ export function SupportingDocsWithExtract(props: any) {
                               <Text size={1}>
                                 Linking to: <strong>{partyMatch.existingName}</strong>
                                 {partyMatch.existingTaxId ? `  ·  ${partyMatch.existingTaxId}` : ''}
+                              </Text>
+                            )}
+                            {matched && partyMatch?.aliasToRemember && (
+                              <Text size={0} muted>
+                                💾 จะจำชื่อ “{partyMatch.aliasToRemember}” เข้า docAliases — ครั้งหน้าจับคู่ได้ทันที
                               </Text>
                             )}
                             {!matched && (

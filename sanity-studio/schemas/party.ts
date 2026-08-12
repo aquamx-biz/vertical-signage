@@ -21,6 +21,19 @@ export default defineType({
   title: 'Party',
   type:  'document',
 
+  // Reference pickers across finance (payment 1.5, procurement comparison items,
+  // receipt payer, funding counterparty) search these paths — docAliases makes a
+  // vendor findable by the names printed on its documents, not just legal names.
+  __experimental_search: [
+    { weight: 10, path: 'legalName_th' },
+    { weight: 10, path: 'legalName_en' },
+    { weight: 9,  path: 'docAliases'   },
+    { weight: 8,  path: 'firstName'    },
+    { weight: 8,  path: 'lastName'     },
+    { weight: 7,  path: 'taxId'        },
+    { weight: 5,  path: 'legalName'    },
+  ],
+
   groups: [
     { name: 'identity',      title: 'Identity & Contact', default: true },
     { name: 'financial',     title: '💰 Financial & Billing' },

@@ -23,6 +23,7 @@ import { LinkedServiceContractInput }     from '../components/LinkedServiceContr
 import { ReceiptsArrayInput }             from '../components/ReceiptsArrayInput'
 import { PaymentModeInput }               from '../components/PaymentModeInput'
 import { SupportingDocsWithExtract }      from '../components/SupportingDocsWithExtract'
+import { VendorDefaultsPanel }            from '../components/VendorDefaultsPanel'
 import { withTestId }                     from '../components/withTestId'
 import { VendorWithNameCacheInput }       from '../components/VendorWithNameCacheInput'
 import { accountingEntryField }           from './accountingEntryField'
@@ -688,6 +689,16 @@ export default defineType({
       components:  { input: AutoGlAccountPaymentInput },
       description: 'Procurement Payment: auto-filled from linked Procurement GL account. Direct Expense: select from expense, capitalizable asset, or liability accounts (e.g. withholding tax payable, trade creditors).',
       validation:  Rule => Rule.required(),
+    }),
+
+    defineField({
+      group:       'accounting',
+      name:        'vendorMemoryPanel',
+      title:       '4.1b · Vendor Memory · ค่าประจำของเจ้านี้',
+      type:        'string',
+      readOnly:    true,
+      components:  { input: VendorDefaultsPanel },
+      description: 'ดู/บันทึกค่าประจำ (GL · VAT · WHT · Notes) ของ vendor ที่เลือกไว้ — ตัวเดียวกับที่ Extract from Doc ใช้เติมอัตโนมัติ',
     }),
 
     defineField({
