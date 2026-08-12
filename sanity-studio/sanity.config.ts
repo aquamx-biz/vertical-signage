@@ -332,6 +332,7 @@ export default defineConfig([{
             can('unitProfile')    && S.documentTypeListItem('unitProfile').title('Unit Profiles (ห้องคัดขึ้นบอร์ด)'),
             can('marketSnapshot') && S.documentTypeListItem('marketSnapshot').title('Market Snapshots (สถิติตลาด)'),
             can('scrapeRound')    && S.documentTypeListItem('scrapeRound').title('Scrape Rounds (สรุปรอบเก็บข้อมูล)'),
+            can('demandSource')   && S.documentTypeListItem('demandSource').title('Demand Sources (แหล่งเก็บความต้องการ)'),
           ]),
 
           // ── CRM ────────────────────────────────────────────────────────────
