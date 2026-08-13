@@ -54,7 +54,7 @@ export function VendorDefaultsPanel() {
       `*[_id == $id][0]{
         legalName_th, legalName_en,
         defaultVatType, defaultWhtRate, defaultExpenseNote,
-        "glLabel": defaultGlAccount->coalesce(nameEn, nameTh, code, _id),
+        "glLabel": coalesce(defaultGlAccount->nameEn, defaultGlAccount->nameTh, defaultGlAccount->code, defaultGlAccount._ref),
         "glId":    defaultGlAccount._ref
       }`,
       { id: vendorRef },

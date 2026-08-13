@@ -200,7 +200,7 @@ export function SupportingDocsWithExtract(props: any) {
     _id, legalName_th, legalName_en, taxId, docAliases,
     defaultVatType, defaultWhtRate, defaultExpenseNote,
     "glAccountId": defaultGlAccount._ref,
-    "glAccountLabel": defaultGlAccount->coalesce(nameEn, nameTh, code, _id)
+    "glAccountLabel": coalesce(defaultGlAccount->nameEn, defaultGlAccount->nameTh, defaultGlAccount->code, defaultGlAccount._ref)
   }`
 
   async function findPartyMatch(party: ExtractedParty | null | undefined, printedName?: string | null): Promise<PartyMatchInfo> {
