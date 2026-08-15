@@ -85,7 +85,7 @@ export function sumTotals(rows: UsageRow[]) {
   return t
 }
 
-export function sumHourly(rows: UsageRow[], metric: 'tap' | 'air' = 'tap'): Record<string, number> {
+export function sumHourly(rows: UsageRow[], metric: 'tap' | 'air' | 'sess' = 'tap'): Record<string, number> {
   const h: Record<string, number> = {}
   SCREEN_HOURS.forEach(k => { h[k] = 0 })
   for (const r of rows) {
@@ -94,6 +94,28 @@ export function sumHourly(rows: UsageRow[], metric: 'tap' | 'air' = 'tap'): Reco
     }
   }
   return h
+}
+
+export interface ProjectHourly { project: string; hours: Record<string, number>; total: number }
+
+/** One hour row per SCREEN, busiest first — "when does THIS building use its
+ *  screen", where the fleet strip only answers "when does anybody". Sessions,
+ *  not taps: with single-digit hourly numbers, taps are too sparse to place in
+ *  time, and one person tapping five slides should paint one cell, not five. */
+export function hourlyByProject(rows: UsageRow[], metric: 'tap' | 'air' | 'sess' = 'sess'): ProjectHourly[] {
+  const m = new Map<string, ProjectHourly>()
+  for (const r of rows) {
+    let p = m.get(r.project)
+    if (!p) {
+      p = { project: r.project, hours: {}, total: 0 }
+      SCREEN_HOURS.forEach(k => { p!.hours[k] = 0 })
+      m.set(r.project, p)
+    }
+    for (const [hh, v] of Object.entries(r.hours || {})) {
+      if (p.hours[hh] != null) { p.hours[hh] += v[metric] || 0; p.total += v[metric] || 0 }
+    }
+  }
+  return Array.from(m.values()).sort((a, b) => b.total - a.total || a.project.localeCompare(b.project))
 }
 
 /** Days on which at least one screen actually ran — the honest sample size. */

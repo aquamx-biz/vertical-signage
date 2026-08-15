@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback, useMemo } from 'react'
 import { useClient } from 'sanity'
 import { Box, Card, Flex, Grid, Stack, Text, Badge, Spinner, Heading, Button } from '@sanity/ui'
 import {
-  aggregateByProject, aggregateByMedia, sumTotals, sumHourly, daysWithData,
+  aggregateByProject, aggregateByMedia, sumTotals, sumHourly, hourlyByProject, daysWithData,
   isDeadMedia, screenWasOff, SCREEN_HOURS, pct, num, type UsageRow,
 } from './usageMath'
 
@@ -119,6 +119,8 @@ export function UsageTool() {
   const totals = useMemo(() => sumTotals(rows), [rows])
 
   const hourly = useMemo(() => sumHourly(rows), [rows])
+
+  const perScreenHourly = useMemo(() => hourlyByProject(rows), [rows])
 
   const dataDays = useMemo(() => daysWithData(rows), [rows])
 
@@ -355,6 +357,52 @@ export function UsageTool() {
                   })}
                 </Flex>
                 <Text size={0} muted>เข้มที่สุด = {num(maxHour)} ครั้ง</Text>
+              </Stack>
+            </Card>
+
+            {/* per-screen hour heatmap — same day, building by building. One
+                shared max across every cell, so a dark cell means the same
+                thing on every row and a quiet building LOOKS quiet. */}
+            <Card padding={3} radius={2} border>
+              <Stack space={3}>
+                <Text size={1} weight="semibold">ช่วงเวลาที่มีคนใช้ · แยกตามจอ</Text>
+                <Text size={0} muted>จำนวนผู้ใช้ (แตะห่างกันเกิน 1 นาที = คนใหม่) ต่อชั่วโมง รวมทั้งช่วง — ชี้ที่ช่องเพื่อดูตัวเลข</Text>
+                {(() => {
+                  const cellMax = Math.max(1, ...perScreenHourly.flatMap(p => Object.values(p.hours)))
+                  return (
+                    <Stack space={2}>
+                      {perScreenHourly.map(p => (
+                        <Flex key={p.project} gap={1} align="center">
+                          <Box style={{ width: 130, flexShrink: 0 }}>
+                            <Text size={0} textOverflow="ellipsis" muted={p.total === 0}>{p.project}</Text>
+                          </Box>
+                          {SCREEN_HOURS.map(h => {
+                            const v = p.hours[h] || 0
+                            return (
+                              <Box key={h} flex={1} title={`${p.project} · ${h}:00–${String(Number(h) + 1).padStart(2, '0')}:00 · ${v} คน`}
+                                   style={{
+                                     height: 22, borderRadius: 3,
+                                     background: v ? 'var(--card-focus-ring-color)' : 'var(--card-border-color)',
+                                     opacity: v ? 0.25 + 0.75 * (v / cellMax) : 0.5,
+                                   }} />
+                            )
+                          })}
+                          <Box style={{ width: 34, flexShrink: 0 }}>
+                            <Text size={0} muted align="right">{num(p.total)}</Text>
+                          </Box>
+                        </Flex>
+                      ))}
+                      <Flex gap={1} align="center">
+                        <Box style={{ width: 130, flexShrink: 0 }} />
+                        {SCREEN_HOURS.map(h => (
+                          <Box key={h} flex={1}><Text size={0} muted align="center">{h}</Text></Box>
+                        ))}
+                        <Box style={{ width: 34, flexShrink: 0 }} />
+                      </Flex>
+                      <Text size={0} muted>เข้มที่สุด = {num(cellMax)} คนในชั่วโมงเดียว · จอที่ออกอากาศแต่ไม่มีแถบ = ไม่มีคนแตะเลย</Text>
+                    </Stack>
+                  )
+                })()}
               </Stack>
             </Card>
           </Stack>
