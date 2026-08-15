@@ -66,10 +66,13 @@ export function UsageTool() {
     client.fetch<MediaDoc[]>(
       `*[_id in $ids]{ _id, title, "offerTitle": offer->title_th, type }`, { ids: mediaIds },
     ).then(docs => {
-      const map: Record<string, MediaDoc> = {}
-      docs.forEach(d => { map[d._id] = d })
-      setNames(map)
-    }).catch(() => {})
+      // merge, don't replace — the API's server-side names got here first
+      setNames(prev => {
+        const map: Record<string, MediaDoc> = { ...prev }
+        docs.forEach(d => { map[d._id] = d })
+        return map
+      })
+    }).catch(err => console.error('[UsageTool] media name lookup failed:', err))
   }, [client, mediaIds])
 
   // ── aggregate ────────────────────────────────────────────────────────────
