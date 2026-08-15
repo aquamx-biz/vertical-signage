@@ -38,18 +38,54 @@ export function UsageTool() {
   const [err, setErr]         = useState('')
   const [updated, setUpdated] = useState('')
 
+  const [stale, setStale] = useState('')   // set when showing the Sanity mirror, not live data
+
+  const applyNames = (byId: Record<string, string>) => setNames(prev => {
+    const map: Record<string, MediaDoc> = { ...prev }
+    for (const [id, title] of Object.entries(byId)) map[id] = { _id: id, title }
+    return map
+  })
+
   const load = useCallback(async () => {
     setLoading(true)
     try {
+      // Live path — straight from Firestore via our API. Works when the studio
+      // runs top-level; blocked by the browser inside the sanity.io dashboard
+      // iframe (third-party context), which is why the mirror below exists.
       const res = await fetch(`${API}/api/kiosk-usage?days=${days}`, { cache: 'no-store' })
+      if (!res.ok) throw new Error(`api ${res.status}`)
       const json = await res.json()
       setRows(json.rows || [])
+      if (json.mediaNames) applyNames(json.mediaNames)
       setUpdated(new Date().toLocaleTimeString('th-TH'))
-      setErr('')
+      setErr(''); setStale('')
     } catch {
-      setErr('โหลดข้อมูลไม่สำเร็จ — ลองใหม่อีกครั้ง')
+      // Mirror path — usageDaily docs that usage-daily-sync writes every night
+      // at 22:30. Reading Sanity is the one request a Studio page can always
+      // make. Same numbers, at most a day behind.
+      try {
+        const from = new Date(Date.now() - days * 86400000).toISOString().slice(0, 10)
+        const docs = await client.fetch<Array<Record<string, any>>>(
+          `*[_type == "usageDaily" && date >= $from]{ project, date, air, tap, sess, scan, funnel, end, dwell, hoursJson, mediaJson, mediaNamesJson, syncedAt }`,
+          { from },
+        )
+        const parse = (s: unknown) => { try { return JSON.parse(String(s || '{}')) } catch { return {} } }
+        setRows((docs || []).map(d => ({
+          project: d.project, date: d.date,
+          air: d.air || 0, tap: d.tap || 0, sess: d.sess || 0, scan: d.scan || 0,
+          funnel: d.funnel, end: d.end, dwell: d.dwell,
+          hours: parse(d.hoursJson), media: parse(d.mediaJson),
+        }) as UsageRow))
+        for (const d of docs || []) applyNames(parse(d.mediaNamesJson))
+        const newest = (docs || []).map(d => String(d.syncedAt || '')).sort().pop()
+        setStale(newest ? `ข้อมูลจากสำเนาที่ซิงก์ล่าสุด ${new Date(newest).toLocaleString('th-TH')} — อ่านสดไม่ได้ในหน้าต่างนี้` : '')
+        setUpdated(new Date().toLocaleTimeString('th-TH'))
+        setErr('')
+      } catch {
+        setErr('โหลดข้อมูลไม่สำเร็จ — ลองใหม่อีกครั้ง')
+      }
     } finally { setLoading(false) }
-  }, [days])
+  }, [days, client])
 
   useEffect(() => { load() }, [load])
 
@@ -119,6 +155,9 @@ export function UsageTool() {
       </Flex>
 
       {err && <Card padding={3} radius={2} tone="critical" marginBottom={3}><Text size={1}>{err}</Text></Card>}
+      {stale && !err && (
+        <Card padding={3} radius={2} tone="caution" marginBottom={3}><Text size={1}>{stale}</Text></Card>
+      )}
 
       {/* Small-n warning. With a handful of touches a day, a week is the floor
           before any of this deserves to change a decision. */}
