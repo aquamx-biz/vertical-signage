@@ -11,7 +11,7 @@ session ที่รับช่วงต่อ: อ่านไฟล์นี�
 | GET `/api/kiosk-usage` + ชื่อสื่อแนบมา | ✅ `4942995` | `app/api/kiosk-usage/route.ts` |
 | §6 mirror รายคืนเข้า Sanity (`usageDaily`) | ✅ `638e7c5` + backfill แล้ว | `netlify/functions/usage-daily-sync.mjs` (22:30 ไทย) |
 | §7 หน้า Studio "การใช้งานจอ" + fallback อ่าน mirror | ✅ `22fcbf3` deploy แล้ว | `sanity-studio/tools/UsageTool.tsx` + `usageMath.ts` |
-| §8 บล็อกสรุปรายสัปดาห์ใน LINE รายงานเช้า | ⬜ ยังไม่ทำ | ต่อท้าย `/api/kiosk-report` เฉพาะเช้าวันจันทร์ |
+| §8 บล็อกสรุปรายสัปดาห์ใน LINE รายงานเช้า | ✅ `0efe339` (handoff) | ต่อท้าย `/api/kiosk-report` เช้าวันจันทร์ · พรีวิว `?usage=1` · ไม่มี lead (สคีมาไม่มีฟิลด์โปรเจกต์) |
 | นับ abandon บนหน้ามือถือ | ⬜ รอข้อมูลจริงก่อน | — |
 | รายงานผู้ลงโฆษณา | ⬜ ทำหลังเก็บครบ 1 เดือน | ใช้เอกสาร `usageDaily` เป็นแหล่ง |
 
