@@ -2154,6 +2154,7 @@ const newUsage = () => ({
     f:   { detail: 0, gallery: 0, cta: 0, qr: 0, phone: 0, menu: 0, cat: 0, sess: 0 },
     end: { back: 0, cta: 0, idle: 0 },
     dw:  { d0: 0, d3: 0, d10: 0, d30: 0 },
+    unit: {},   // property-popup room picks, keyed "<sale|rent>-<refCode>"
 });
 let USAGE = newUsage();
 let _lastTouchTs = 0;
@@ -2173,6 +2174,10 @@ function uTouch(id) {
 function uStep(k) { if (_seen() && USAGE.f[k] != null) USAGE.f[k]++; }
 /* How a popup ended: back (read it, left) | cta (went on) | idle (walked off) */
 function uEnd(k)  { if (_seen() && USAGE.end[k] != null) USAGE.end[k]++; }
+/* A room picked ("สนใจห้องนี้") in a property popup — the only counter that
+   knows WHICH room type people want. Counted on select only, not deselect:
+   un-picking is changing your mind, not a second signal of interest. */
+function uUnitPick(k) { if (_seen() && k) USAGE.unit[k] = (USAGE.unit[k] || 0) + 1; }
 /* How long they stayed, in buckets — a 2-second open is a mis-tap, a
    15-second one is real interest, and averaging the two hides both. */
 function uDwell(ms) {
@@ -2182,13 +2187,14 @@ function uDwell(ms) {
 }
 function usageEmpty(u) {
     return !Object.keys(u.air).length && !Object.keys(u.tap).length
+        && !Object.keys(u.unit || {}).length
         && !Object.values(u.f).some(Boolean) && !Object.values(u.end).some(Boolean)
         && !Object.values(u.dw).some(Boolean);
 }
 /* Put a failed batch back — the beacon clears counts only on HTTP 200, so a
    dead uplink costs nothing but freshness. */
 function usageMerge(from) {
-    ['air', 'tap'].forEach(m => { for (const k in from[m]) USAGE[m][k] = (USAGE[m][k] || 0) + from[m][k]; });
+    ['air', 'tap', 'unit'].forEach(m => { for (const k in from[m] || {}) USAGE[m][k] = (USAGE[m][k] || 0) + from[m][k]; });
     ['f', 'end', 'dw'].forEach(m => { for (const k in from[m]) USAGE[m][k] = (USAGE[m][k] || 0) + from[m][k]; });
 }
 
@@ -4417,8 +4423,11 @@ function buildDetailDyn(ctx){
                    // and parsing that for money reads "30.0K ฿/ด." as 30.
                    // No data-thb on a row = that row cannot be totalled.
                    const thb  = (m.priceTHB != null && isFinite(+m.priceTHB)) ? ` data-thb="${+m.priceTHB}"` : '';
+                   // data-mode feeds the room-pick counter: the unit refCode alone
+                   // can't say sale vs rent (dual-listed units share a refCode)
+                   const uMode = isProp ? ` data-mode="${ctx.category === 'forSale' ? 'sale' : 'rent'}"` : '';
                    const ctrl = max === 1
-                     ? `<span class="detail-qty pick"${thb} data-key="${key}" data-max="1" data-prop="${isProp?1:0}"><b style="display:none">0</b><span class="q-tog">${PICK_LABEL(isProp, false, isTH)}</span></span>`
+                     ? `<span class="detail-qty pick"${thb}${uMode} data-key="${key}" data-max="1" data-prop="${isProp?1:0}"><b style="display:none">0</b><span class="q-tog">${PICK_LABEL(isProp, false, isTH)}</span></span>`
                      : `<span class="detail-qty"${thb} data-key="${key}" data-max="${max}"><span class="q-dec">−</span><b>0</b><span class="q-inc">＋</span></span>`;
                    return `<div class="detail-mit"><span class="th"${m.image?` style="background-image:url('${m.image}')"`:''}></span><span class="nm">${nm(m)}</span><span class="pr">${m.price?esc(m.price):''}</span>${ctrl}</div>`;
                }).join('')
@@ -5054,6 +5063,13 @@ detailOverlay.addEventListener('click', function (e) {
     if (btn.classList.contains('q-tog')) {
         n = n ? 0 : 1;                                   // max=1 control = select toggle
         btn.textContent = PICK_LABEL(qty.dataset.prop === '1', !!n, uiLang === 'th');
+        // Room-type demand signal: a property unit just picked (0→1). The key
+        // travels raw ("sale-39BS-U005"); bedType is joined from Sanity at read
+        // time, same pattern as mediaId→offer. Count only here, in the handler
+        // that already runs — no new listeners on these boxes.
+        if (n === 1 && qty.dataset.prop === '1' && qty.dataset.mode && qty.dataset.key) {
+            uUnitPick(qty.dataset.mode + '-' + qty.dataset.key);
+        }
     } else {
         n += btn.classList.contains('q-inc') ? 1 : -1;
     }

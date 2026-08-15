@@ -12,6 +12,7 @@ session ที่รับช่วงต่อ: อ่านไฟล์นี�
 | §6 mirror รายคืนเข้า Sanity (`usageDaily`) | ✅ `638e7c5` + backfill แล้ว | `netlify/functions/usage-daily-sync.mjs` (22:30 ไทย) |
 | §7 หน้า Studio "การใช้งานจอ" + fallback อ่าน mirror | ✅ `22fcbf3` deploy แล้ว | `sanity-studio/tools/UsageTool.tsx` + `usageMath.ts` |
 | §8 บล็อกสรุปรายสัปดาห์ใน LINE รายงานเช้า | ✅ `0efe339` (handoff) | ต่อท้าย `/api/kiosk-report` เช้าวันจันทร์ · พรีวิว `?usage=1` · ไม่มี lead (สคีมาไม่มีฟิลด์โปรเจกต์) |
+| ตัวนับเลือกห้อง (`u.unit`) + ตาราง สื่อ × ตึก sort ได้ | ✅ 2026-08-15 | player: กด "สนใจห้องนี้" → `un_<mode>-<refCode>_pick` · Studio: แถว room type ข้ามตึก (บอร์ดรายชนิดห้องใช้ id `media-board-*` จากยอดแตะเดิม) · ตัดประกาศนิติฯ · เลือกสัปดาห์ |
 | นับ abandon บนหน้ามือถือ | ⬜ รอข้อมูลจริงก่อน | — |
 | รายงานผู้ลงโฆษณา | ⬜ ทำหลังเก็บครบ 1 เดือน | ใช้เอกสาร `usageDaily` เป็นแหล่ง |
 
@@ -64,7 +65,13 @@ air · tap · sess · detail · gallery · cta · qr · phone · menu · cat
 end_back · end_cta · end_idle · dw_d0 · dw_d3 · dw_d10 · dw_d30
 h14_air · h14_tap · h14_sess · h14_detail · h14_cta · h14_qr · h14_phone
 m_<mediaId>_air · m_<mediaId>_tap
+un_<sale|rent>-<refCode>_pick        ← กด "สนใจห้องนี้" ใน popup บอร์ด (เพิ่ม 2026-08-15)
 ```
+
+การแปลง refCode → ชนิดห้อง ทำตอนอ่าน (id ตายตัว `unitProfile-<refCode>-<intent>` → `bedType`)
+ส่วนบอร์ดรายชนิดห้องไม่ต้องใช้ตัวนับนี้เลย — id สื่อเป็นรหัสตายตัว `media-board-<ตึก>-<mode>-<bed>`
+ยอดแตะเดิมจึงแยกชนิดห้องได้อยู่แล้ว · **ระวัง:** `offer->category == "forSale"` มีทั้งบอร์ดห้อง
+และของมือสอง marketplace — แยกบอร์ดด้วย id pattern เท่านั้น อย่าใช้ category
 
 ทุกตัวเลขในสเปคนี้วัดจากระบบจริง ไม่ได้ประมาณ:
 โปรเจกต์ `39-by-sansiri` มี **19 สไลด์ · ลูปละ 5.1 นาที** · เปิดจอ **6:00–22:00** →

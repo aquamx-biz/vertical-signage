@@ -19,6 +19,8 @@ export interface UsageRow {
   dwell?: { d0: number; d3: number; d10: number; d30: number }
   hours?: Record<string, Record<string, number>>
   media?: Record<string, { air: number; tap: number }>
+  /** Property-popup room picks, keyed "<sale|rent>-<refCode>". */
+  units?: Record<string, number>
 }
 
 export interface ProjectRow { project: string; air: number; tap: number; sess: number; scan: number; daysRunning: number }
@@ -121,6 +123,116 @@ export function hourlyByProject(rows: UsageRow[], metric: 'tap' | 'air' | 'sess'
 /** Days on which at least one screen actually ran — the honest sample size. */
 export const daysWithData = (rows: UsageRow[]) =>
   new Set(rows.filter(r => (r.air || 0) > 0).map(r => r.date)).size
+
+// ── media × project matrix ──────────────────────────────────────────────────
+// One table that answers "which content works, where" across the fleet:
+//   · juristic notices are content-by-obligation, not content-on-trial — out
+//   · the For Sale / For Rent boards merge across buildings (one row each)
+//   · room picks ("สนใจห้องนี้") group by bed type across buildings — the rows
+//     the demand question is actually about. Picks are one funnel step deeper
+//     than taps, so they are a SEPARATE row group, never summed with taps.
+
+export interface MatrixMeta {
+  /** media _id → { kind, cat, type, name } from the media docs (client lookup) */
+  media: Record<string, { kind?: string; cat?: string; type?: string; name?: string }>
+  /** unit key "<mode>-<refCode>" → bedType, from the API / mirror */
+  unitTypes: Record<string, { bedType?: string; intent?: string }>
+}
+
+export interface MatrixRow {
+  key: string
+  label: string
+  group: 'room' | 'media'     // room = picks (deeper signal) · media = slide taps
+  per: Record<string, number> // project → count; missing project = never aired there
+  aired: Record<string, boolean>
+  total: number
+  air: number                 // media rows only — denominator context (0 for rooms)
+}
+
+const BED_LABEL: Record<string, string> = {
+  studio: 'Studio', '1bed': '1 bed', '2bed': '2 bed', '3bed': '3 bed', '4bed': '4 bed',
+}
+const bedLabel = (b: string) => BED_LABEL[b] || b
+
+export function buildMatrix(rows: UsageRow[], meta: MatrixMeta): MatrixRow[] {
+  const out = new Map<string, MatrixRow>()
+  const row = (key: string, label: string, group: MatrixRow['group']) => {
+    let r = out.get(key)
+    if (!r) { r = { key, label, group, per: {}, aired: {}, total: 0, air: 0 }; out.set(key, r) }
+    return r
+  }
+
+  for (const d of rows) {
+    for (const [id, v] of Object.entries(d.media || {})) {
+      const m = meta.media[id] || {}
+      if (m.kind === 'notice') continue
+      // A property BOARD is identified by its deterministic id
+      // (media-board-<project>-<mode>[-<bed>]) or, for the legacy aggregate
+      // docs, by web-type + property category. Category alone is NOT enough:
+      // `forSale` is also the second-hand marketplace category, and a "Rare
+      // Item! Urgent Sale!" post must not be folded into the unit boards.
+      const bm = /^media-board-.+-(sale|rent)(?:-([A-Za-z0-9]+))?$/.exec(id)
+      const legacyBoard = !bm && m.type === 'web' && (m.cat === 'forSale' || m.cat === 'forRent')
+      const mode = bm ? bm[1] : m.cat === 'forSale' ? 'sale' : 'rent'
+      const modeTxt = mode === 'sale' ? 'for sale' : 'for rent'
+      const r = bm && bm[2]
+        ? row(`__bt-${mode}-${bm[2]}`, `${bedLabel(bm[2])} · ${modeTxt} (ทุกตึก)`, 'media')
+        : (bm || legacyBoard)
+          ? row(`__board-${mode}`, `บอร์ด ${modeTxt} รวมชนิดห้อง (ทุกตึก)`, 'media')
+          : row(id, m.name || id.slice(0, 12) + '…', 'media')
+      r.per[d.project] = (r.per[d.project] || 0) + (v.tap || 0)
+      r.aired[d.project] = r.aired[d.project] || (v.air || 0) > 0
+      r.total += v.tap || 0
+      r.air   += v.air || 0
+    }
+    for (const [key, nRaw] of Object.entries(d.units || {})) {
+      const n = nRaw || 0
+      if (!n) continue
+      const t = meta.unitTypes[key] || {}
+      const mode = t.intent || (/^sale-/.test(key) ? 'sale' : 'rent')
+      const bed = t.bedType || 'ไม่ทราบชนิด'
+      const r = row(`__room-${mode}-${bed}`,
+                    `${bedLabel(bed)} · ${mode === 'sale' ? 'for sale' : 'for rent'}`, 'room')
+      r.per[d.project] = (r.per[d.project] || 0) + n
+      r.aired[d.project] = true
+      r.total += n
+    }
+  }
+  return Array.from(out.values())
+}
+
+export type MatrixSort = { col: 'total' | 'label' | string; dir: 1 | -1 }
+
+/** Room rows first (the question the table exists for), then media; within a
+ *  group, by the picked column. Sorting must never interleave the two groups —
+ *  a pick and a tap are different depths and must not rank against each other. */
+export function sortMatrix(rows: MatrixRow[], sort: MatrixSort): MatrixRow[] {
+  const val = (r: MatrixRow) =>
+    sort.col === 'total' ? r.total : sort.col === 'label' ? r.label : (r.per[sort.col] || 0)
+  return [...rows].sort((a, b) => {
+    if (a.group !== b.group) return a.group === 'room' ? -1 : 1
+    if (sort.col === 'label') return sort.dir * String(val(a)).localeCompare(String(val(b)), 'th')
+    return sort.dir * ((val(b) as number) - (val(a) as number)) || b.total - a.total || a.label.localeCompare(b.label, 'th')
+  })
+}
+
+/** Monday-first ISO weeks present in the loaded rows, newest first — the week
+ *  picker offers only ranges the data can actually answer. */
+export function weeksInRows(rows: UsageRow[]): Array<{ from: string; to: string }> {
+  const seen = new Map<string, { from: string; to: string }>()
+  for (const r of rows) {
+    // UTC math on the date STRING — new Date('…T00:00:00') is local time, and
+    // toISOString would then shift Bangkok midnight back to the previous day.
+    const [y, mo, da] = String(r.date || '').split('-').map(Number)
+    if (!y || !mo || !da) continue
+    const t = Date.UTC(y, mo - 1, da)
+    const dow = (new Date(t).getUTCDay() + 6) % 7   // Mon=0
+    const mon = t - dow * 86400000
+    const iso = (ms: number) => new Date(ms).toISOString().slice(0, 10)
+    seen.set(iso(mon), { from: iso(mon), to: iso(mon + 6 * 86400000) })
+  }
+  return Array.from(seen.values()).sort((a, b) => b.from.localeCompare(a.from))
+}
 
 export const pct = (a: number, b: number) => (b > 0 ? `${((a / b) * 100).toFixed(1)}%` : '—')
 export const num = (n: number | undefined) => (n || 0).toLocaleString('th-TH')

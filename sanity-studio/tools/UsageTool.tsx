@@ -1,9 +1,10 @@
 import { useEffect, useState, useCallback, useMemo } from 'react'
 import { useClient } from 'sanity'
-import { Box, Card, Flex, Grid, Stack, Text, Badge, Spinner, Heading, Button } from '@sanity/ui'
+import { Box, Card, Flex, Grid, Stack, Text, Badge, Spinner, Heading, Button, Select } from '@sanity/ui'
 import {
   aggregateByProject, aggregateByMedia, sumTotals, sumHourly, hourlyByProject, daysWithData,
   isDeadMedia, screenWasOff, SCREEN_HOURS, pct, num, type UsageRow,
+  buildMatrix, sortMatrix, weeksInRows, type MatrixMeta, type MatrixSort,
 } from './usageMath'
 
 // การใช้งานจอ — what people actually DO with the screens.
@@ -27,7 +28,7 @@ import {
 
 const API = 'https://app.aquamx.biz'
 
-interface MediaDoc { _id: string; title?: string; offerTitle?: string; type?: string }
+interface MediaDoc { _id: string; title?: string; offerTitle?: string; type?: string; kind?: string; cat?: string }
 
 export function UsageTool() {
   const client = useClient({ apiVersion: '2024-01-01' })
@@ -40,9 +41,16 @@ export function UsageTool() {
 
   const [stale, setStale] = useState('')   // set when showing the Sanity mirror, not live data
 
+  // room-pick key "<mode>-<refCode>" → bedType — from the API (live) or the mirror
+  const [unitTypes, setUnitTypes] = useState<Record<string, { bedType?: string; intent?: string }>>({})
+  const [mSort, setMSort] = useState<MatrixSort>({ col: 'total', dir: 1 })
+  const [week, setWeek]   = useState('')   // '' = whole loaded window, else "from|to"
+
   const applyNames = (byId: Record<string, string>) => setNames(prev => {
     const map: Record<string, MediaDoc> = { ...prev }
-    for (const [id, title] of Object.entries(byId)) map[id] = { _id: id, title }
+    // merge under the existing entry — the client-side doc lookup carries
+    // kind/cat too, and a name-only refresh must not wipe those
+    for (const [id, title] of Object.entries(byId)) map[id] = { title, ...map[id], _id: id }
     return map
   })
 
@@ -57,6 +65,7 @@ export function UsageTool() {
       const json = await res.json()
       setRows(json.rows || [])
       if (json.mediaNames) applyNames(json.mediaNames)
+      if (json.unitTypes) setUnitTypes(prev => ({ ...prev, ...json.unitTypes }))
       setUpdated(new Date().toLocaleTimeString('th-TH'))
       setErr(''); setStale('')
     } catch {
@@ -66,7 +75,7 @@ export function UsageTool() {
       try {
         const from = new Date(Date.now() - days * 86400000).toISOString().slice(0, 10)
         const docs = await client.fetch<Array<Record<string, any>>>(
-          `*[_type == "usageDaily" && date >= $from]{ project, date, air, tap, sess, scan, funnel, end, dwell, hoursJson, mediaJson, mediaNamesJson, syncedAt }`,
+          `*[_type == "usageDaily" && date >= $from]{ project, date, air, tap, sess, scan, funnel, end, dwell, hoursJson, mediaJson, mediaNamesJson, unitsJson, unitTypesJson, syncedAt }`,
           { from },
         )
         const parse = (s: unknown) => { try { return JSON.parse(String(s || '{}')) } catch { return {} } }
@@ -74,9 +83,10 @@ export function UsageTool() {
           project: d.project, date: d.date,
           air: d.air || 0, tap: d.tap || 0, sess: d.sess || 0, scan: d.scan || 0,
           funnel: d.funnel, end: d.end, dwell: d.dwell,
-          hours: parse(d.hoursJson), media: parse(d.mediaJson),
+          hours: parse(d.hoursJson), media: parse(d.mediaJson), units: parse(d.unitsJson),
         }) as UsageRow))
         for (const d of docs || []) applyNames(parse(d.mediaNamesJson))
+        setUnitTypes(prev => (docs || []).reduce((a, d) => ({ ...a, ...parse(d.unitTypesJson) }), prev))
         const newest = (docs || []).map(d => String(d.syncedAt || '')).sort().pop()
         setStale(newest ? `ข้อมูลจากสำเนาที่ซิงก์ล่าสุด ${new Date(newest).toLocaleString('th-TH')} — อ่านสดไม่ได้ในหน้าต่างนี้` : '')
         setUpdated(new Date().toLocaleTimeString('th-TH'))
@@ -100,7 +110,7 @@ export function UsageTool() {
   useEffect(() => {
     if (!mediaIds.length) return
     client.fetch<MediaDoc[]>(
-      `*[_id in $ids]{ _id, title, "offerTitle": offer->title_th, type }`, { ids: mediaIds },
+      `*[_id in $ids]{ _id, title, "offerTitle": offer->title_th, type, kind, "cat": offer->category }`, { ids: mediaIds },
     ).then(docs => {
       // merge, don't replace — the API's server-side names got here first
       setNames(prev => {
@@ -121,6 +131,19 @@ export function UsageTool() {
   const hourly = useMemo(() => sumHourly(rows), [rows])
 
   const perScreenHourly = useMemo(() => hourlyByProject(rows), [rows])
+
+  const weeks = useMemo(() => weeksInRows(rows), [rows])
+  const matrixProjects = useMemo(() => Array.from(new Set(rows.map(r => r.project))).sort(), [rows])
+  const matrixRows = useMemo(() => {
+    const range = week ? week.split('|') : null
+    const sel = range ? rows.filter(r => r.date >= range[0] && r.date <= range[1]) : rows
+    const meta: MatrixMeta = {
+      media: Object.fromEntries(Object.entries(names).map(([id, d]) =>
+        [id, { kind: d.kind, cat: d.cat, type: d.type, name: d.title || d.offerTitle }])),
+      unitTypes,
+    }
+    return sortMatrix(buildMatrix(sel, meta), mSort)
+  }, [rows, names, unitTypes, mSort, week])
 
   const dataDays = useMemo(() => daysWithData(rows), [rows])
 
@@ -281,6 +304,87 @@ export function UsageTool() {
               เรียงตามอัตราแตะ ไม่ใช่ยอดดิบ — สื่อที่อยู่บนจอมานานกว่าย่อมมียอดสูงกว่าโดยไม่เกี่ยวกับคุณภาพ
             </Text>
           </Stack>
+
+          {/* ── B2. media × building matrix — which content works, WHERE ──── */}
+          {(() => {
+            const clickSort = (col: string) =>
+              setMSort(s => (s.col === col ? { col, dir: (-s.dir) as 1 | -1 } : { col, dir: 1 }))
+            const arrow = (col: string) => (mSort.col === col ? (mSort.dir === 1 ? ' ↓' : ' ↑') : '')
+            const fmtD = (s: string) =>
+              new Date(`${s}T00:00:00Z`).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', timeZone: 'UTC' })
+            const gridCols = `minmax(150px, 1.6fr) repeat(${matrixProjects.length}, minmax(58px, 1fr)) 64px`
+            const hasRooms = matrixRows.some(r => r.group === 'room')
+            const shortProj = (p: string) => p.replace(/-by-sansiri$/, '').replace(/^the-room-/, 'room-')
+            let lastGroup = ''
+            return (
+              <Stack space={3}>
+                <Flex align="center" justify="space-between" gap={3}>
+                  <Heading size={1}>สื่อ × ตึก</Heading>
+                  <Box style={{ width: 190 }}>
+                    <Select fontSize={1} value={week} onChange={e => setWeek(e.currentTarget.value)}>
+                      <option value="">ทั้งช่วง {days} วัน</option>
+                      {weeks.map(w => (
+                        <option key={w.from} value={`${w.from}|${w.to}`}>จ. {fmtD(w.from)} – อา. {fmtD(w.to)}</option>
+                      ))}
+                    </Select>
+                  </Box>
+                </Flex>
+                <Card radius={2} border overflow="auto">
+                  <Box style={{ minWidth: 560 }}>
+                    <Box padding={3} style={{ display: 'grid', gridTemplateColumns: gridCols, gap: 8, alignItems: 'center', borderBottom: '1px solid var(--card-border-color)' }}>
+                      <Text size={0} weight="semibold" muted style={{ cursor: 'pointer' }} onClick={() => clickSort('label')}>สื่อ{arrow('label')}</Text>
+                      {matrixProjects.map(p => (
+                        <Text key={p} size={0} weight="semibold" muted align="right" textOverflow="ellipsis"
+                              style={{ cursor: 'pointer' }} onClick={() => clickSort(p)} title={p}>
+                          {shortProj(p)}{arrow(p)}
+                        </Text>
+                      ))}
+                      <Text size={0} weight="semibold" muted align="right" style={{ cursor: 'pointer' }} onClick={() => clickSort('total')}>รวม{arrow('total')}</Text>
+                    </Box>
+                    {matrixRows.map(r => {
+                      const header = r.group !== lastGroup
+                      lastGroup = r.group
+                      return (
+                        <Box key={r.key}>
+                          {header && (
+                            <Box padding={3} paddingBottom={2} style={{ borderBottom: '1px solid var(--card-border-color)' }}>
+                              <Text size={0} weight="semibold">
+                                {r.group === 'room' ? 'เลือกห้อง — กด "สนใจห้องนี้" ใน popup บอร์ด' : 'แตะสไลด์ (ตัดประกาศนิติฯ ออกแล้ว)'}
+                              </Text>
+                            </Box>
+                          )}
+                          <Box padding={3} style={{ display: 'grid', gridTemplateColumns: gridCols, gap: 8, alignItems: 'center', borderBottom: '1px solid var(--card-border-color)' }}>
+                            <Text size={1} weight="medium" textOverflow="ellipsis" title={r.label}>{r.label}</Text>
+                            {matrixProjects.map(p => {
+                              const aired = r.group === 'room' || r.aired[p]
+                              const v = r.per[p] || 0
+                              return (
+                                <Text key={p} size={1} align="right" muted={!aired || v === 0}>
+                                  {!aired ? '·' : num(v)}
+                                </Text>
+                              )
+                            })}
+                            <Text size={1} align="right" weight="semibold"
+                                  title={r.group === 'media' && r.air ? `${pct(r.total, r.air)} ของการออกอากาศ ${num(r.air)} ครั้ง` : undefined}>
+                              {num(r.total)}
+                            </Text>
+                          </Box>
+                        </Box>
+                      )
+                    })}
+                    {!matrixRows.length && (
+                      <Box padding={4}><Text size={1} muted>ไม่มีข้อมูลในช่วงที่เลือก</Text></Box>
+                    )}
+                  </Box>
+                </Card>
+                <Text size={0} muted>
+                  {hasRooms
+                    ? '“เลือกห้อง” ลึกกว่า “แตะสไลด์” หนึ่งขั้น จึงแยกกลุ่มกัน ไม่จัดอันดับปนกัน · กดหัวคอลัมน์เพื่อเรียง · “·” = สื่อไม่ได้ออกอากาศที่ตึกนั้น'
+                    : 'แถว “1 bed for sale/rent” จะเริ่มขึ้นเมื่อจอรุ่นใหม่เริ่มนับการกด “สนใจห้องนี้” ใน popup บอร์ด — นับไปข้างหน้าเท่านั้น ย้อนหลังไม่มีข้อมูล · กดหัวคอลัมน์เพื่อเรียง · “·” = สื่อไม่ได้ออกอากาศที่ตึกนั้น'}
+                </Text>
+              </Stack>
+            )
+          })()}
 
           {/* ── C. where people drop off ─────────────────────────────────── */}
           <Stack space={3}>
