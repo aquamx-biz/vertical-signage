@@ -35,8 +35,12 @@ all the same physics:
 3. **Playlist size is a GPU budget, not a content decision alone.** The fleet
    broke at 22 slides with all slots compositing; the gated player holds 2–3
    live layers, but every slide still costs decoded-image memory. `build.mjs`
-   warns above 24 slides — take the warning seriously, and never raise the
-   limit without testing on a real ZC box.
+   warns above 24 **image/video** slides, with a 30-slot absolute backstop
+   over everything — web-board slides are excluded from the 24 because a
+   2026-08-15 real-box measurement (SD2603 8GB frozen-WebView at a full
+   24-slide rotation; the-room 4GB/4K at 21 slides incl. video) showed they
+   cost little and don't accumulate. Take the warning seriously, and never
+   raise either number without re-measuring on a real ZC box.
 4. **A leaving slide must end at `opacity: 0`**, or its last frame parks in the
    compositor and ghosts through later slides.
 

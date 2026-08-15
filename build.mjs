@@ -451,12 +451,19 @@ for (const project of projects) {
   // hardware budget, not just a content decision. The fleet broke fleet-wide at
   // 22 slides while every slot still composited (4805dcc); the player is gated
   // now, but each slide still costs decoded-image memory on 1080p Mali boxes.
+  // 2026-08-15 real-box measurement (SD2603 8GB frozen-WebView109 at 24 slides;
+  // the-room 4GB/4K at 21 slides): web-board slides cost little and don't
+  // accumulate — so the budget counts IMAGE/VIDEO slides only, with a 30-slot
+  // absolute backstop covering everything (we haven't measured past ~30).
   // Warn loudly — don't fail: airing content beats blocking a deploy at night,
   // and the warning names the box class so the reader knows WHY it matters.
-  const SLIDE_BUDGET = 24
-  if ((playlist?.length ?? 0) > SLIDE_BUDGET) {
+  const SLIDE_BUDGET  = 24   // image + video slides (decoded-pixel eaters)
+  const SLIDE_ABS_MAX = 30   // every slot incl. web boards
+  const heavySlides = (playlist ?? []).filter(s => s.type !== 'web').length
+  const totalSlides = playlist?.length ?? 0
+  if (heavySlides > SLIDE_BUDGET || totalSlides > SLIDE_ABS_MAX) {
     console.warn(
-      `\n  ⚠⚠ [${code}] playlist has ${playlist.length} slides — over the ${SLIDE_BUDGET}-slide GPU budget` +
+      `\n  ⚠⚠ [${code}] playlist has ${heavySlides} image/video slides (${totalSlides} total) — over the ${SLIDE_BUDGET} image/video (or ${SLIDE_ABS_MAX} total) GPU budget` +
       `\n     ZC-H358S boxes half-paint images when decoded-image memory runs out.` +
       `\n     Trim the lineup or verify on a REAL box (beacon imgFails / up-resets) before airing.\n`)
   }
