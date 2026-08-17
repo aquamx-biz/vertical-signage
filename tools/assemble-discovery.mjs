@@ -23,9 +23,18 @@ const q = async (query, ds) => (await (await fetch(`${API}/data/query/${ds}?quer
   { headers: { Authorization: `Bearer ${TOKEN}` } })).json()).result
 
 // ประตูกันซ้ำ: URL ทุกใบที่ระบบรู้จักแล้ว
+/* --ignore-known-urls = ปิดประตูกันซ้ำชั้น URL สำหรับ "ingest รอบเดิมซ้ำ" เท่านั้น
+   ประตูนี้เป็นชั้นที่สอง — ชั้นแรกคือตัวเก็บแต่ละเจ้ากรองด้วยเลขประกาศไปแล้วตอนเก็บ
+   พอ ingest รอบแรกเขียนลง Sanity ปุ๊บ URL ของใบใหม่กลายเป็น "รู้จักแล้ว" ทันที
+   assemble รอบสองจึงคายมันทิ้ง → ห้องที่มีหลักฐานเป็นใบ discovery ใบเดียวหายจากไฟล์รอบ
+   → ingest อ่านว่า "ไม่เจอในรอบ" แล้วตั้ง expired ทั้งที่เพิ่งยืนยันไปเมื่อกี้ (เจอจริง 15 ห้อง)
+   ห้ามใช้กับรอบใหม่ — ในรอบใหม่ประตูนี้คือตัวกันประกาศเก่างอกซ้ำ */
+const IGNORE_GATE = args.includes('--ignore-known-urls')
 const src = await q(`*[_type == "unitSource"]{ "L": coalesce(rentListings[].url, []) + coalesce(saleListings[].url, []) }`, 'internal')
-const knownUrls = new Set(src.flatMap(s => s.L).filter(Boolean))
-console.log(`URL ที่รู้จักแล้ว ${knownUrls.size} ใบ (ประตูกันซ้ำ)`)
+const knownUrls = IGNORE_GATE ? new Set() : new Set(src.flatMap(s => s.L).filter(Boolean))
+console.log(IGNORE_GATE
+  ? `⚠ ปิดประตูกันซ้ำชั้น URL (--ignore-known-urls) — ใช้ได้เฉพาะตอน ingest รอบเดิมซ้ำ`
+  : `URL ที่รู้จักแล้ว ${knownUrls.size} ใบ (ประตูกันซ้ำ)`)
 
 const SLUG2BLD = {
   'hq-by-sansiri': 'HQ by Sansiri', 'ideo-morph-38': 'Ideo Morph 38', 'the-lumpini-24': 'The Lumpini 24',
