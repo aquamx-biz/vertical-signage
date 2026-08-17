@@ -2843,6 +2843,9 @@ function adaptPlaylistToSlots(pl) {
             logo: '',
             image: stillImage,
             images: imageList,
+            // Runtime expiry — the rotation drops the slide the moment this
+            // passes, without waiting for a rebuild (autoAdvance skips it).
+            expiresAt: item.expiresAt || null,
             video: isVid ? (item.url || '') : '',
             videoPoster: posterUrl,
             mediaType: isVid ? 'video' : (isWeb ? 'web' : 'image'),
@@ -3600,7 +3603,15 @@ function autoAdvance() {
     if (isMenuOpen) return;
     preExitCurrent();
     advanceTimer = setTimeout(() => {
-        const next = (cur + 1) % SLOTS.length;
+        let next = (cur + 1) % SLOTS.length;
+        // Skip slides whose expiresAt has passed since the page was baked —
+        // the screen self-heals without a rebuild. Guard: one full loop max,
+        // so a playlist of only-expired slides still shows something.
+        for (let hops = 0; hops < SLOTS.length; hops++) {
+            const cand = SLOTS[next];
+            if (!(cand && cand.expiresAt && Date.parse(cand.expiresAt) <= Date.now())) break;
+            next = (next + 1) % SLOTS.length;
+        }
         showSlot(next);
         scheduleNext();
     }, PRE_EXIT_MS);

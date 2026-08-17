@@ -168,6 +168,7 @@ const PLAYLIST_PROJ_MIN = `
                              coalesce(media->videoFile.asset->url, media->imageFiles[0].asset->url, media->imageFile.asset->url, media->posterImage.asset->url)
                            ),
         "images":          media->imageFiles[].asset->url,
+        "expiresAt":       media->expiresAt,
         "category":        coalesce(touchExploreCategory, media->offer->category),
         "defaultDuration": media->defaultImageDuration,
         "displayDuration": displayDuration,
@@ -201,6 +202,7 @@ const PLAYLIST_PROJ_V7 = `
                                 coalesce(media->videoFile.asset->url, media->imageFile.asset->url, media->imageFiles[0].asset->url, media->posterImage.asset->url)
                               ),
         "images":             media->imageFiles[].asset->url,
+        "expiresAt":          media->expiresAt,
         "poster":             media->posterImage.asset->url,
         "videoShowCta":       media->videoShowCta,
         "videoEndCard":       media->videoEndCard,
@@ -293,6 +295,7 @@ for (const project of projects) {
         (!defined(endAt)   || endAt   >  now()) &&
         media->isActive == true &&
         media->kind in ["promo", "notice"] &&
+        (media->kind != "notice" || !defined(media->expiresAt) || media->expiresAt > now()) &&
         (media->scope == "global" || "${projectId}" in media->projects[]._ref)
       ] | order(order asc){ ${playlistProjection} }
     `),

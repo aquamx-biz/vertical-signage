@@ -228,8 +228,12 @@ export default defineType({
       title: '📺 Image Files (JPG / PNG) — up to 6',
       type: 'array',
       of: [{ type: 'image', options: { accept: 'image/*', hotspot: true } }],
+      // Promos: the image-slideshow body. Notices: OPTIONAL multi-page mode —
+      // a notice with images here plays them in sequence inside its one slot
+      // (ประกาศหลายหน้า = media เดียว); empty = single posterImage as always.
       hidden: ({ document }) => {
         const doc = document as any
+        if (doc?.kind === 'notice') return false
         return doc?.kind !== 'promo' || doc?.type !== 'image'
       },
       validation: Rule =>
