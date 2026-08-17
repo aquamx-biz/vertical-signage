@@ -58,6 +58,16 @@ export default defineType({
     }),
 
     defineField({
+      name:        'extraImages',
+      title:       'Extra Images · รูปที่ 2+ ของชุดเดียวกัน',
+      type:        'array',
+      of:          [{ type: 'image' }],
+      readOnly:    true,
+      description: 'ส่งรูปเป็นชุด (album) = คำขอเดียว — ตอนอนุมัติ ทุกรูปกลายเป็นสไลด์แยกใบละรูป หัวข้อเดียวกัน',
+      hidden:      ({ document }) => !((document as any)?.extraImages?.length),
+    }),
+
+    defineField({
       name:        'project',
       title:       'Project · โครงการ',
       type:        'reference',
