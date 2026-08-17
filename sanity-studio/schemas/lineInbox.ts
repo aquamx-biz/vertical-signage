@@ -146,6 +146,14 @@ export default defineType({
       readOnly:    true,
       hidden:      ({ document }) => (document as any)?.status === 'pending',
     }),
+    defineField({
+      name:        'aiProviderId',
+      title:       'AI Provider · นิติที่ออกประกาศ',
+      type:        'string',
+      readOnly:    true,
+      description: 'ระบบอ่านจากหัวกระดาษ/ตราประทับ — ใช้ผูก provider ให้ media ตอนอนุมัติ (ถ้าอ่านไม่เจอ ระบบใช้นิติประจำโครงการแทน)',
+      hidden:      ({ document }) => (document as any)?.status === 'pending',
+    }),
 
     // ── Approval trail — เกิดอะไรขึ้นกับรูปนี้ ────────────────────────────────
     defineField({
