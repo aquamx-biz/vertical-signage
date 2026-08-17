@@ -164,6 +164,26 @@ const EXTRACT = {
  * ตัวตัดสินที่ถูกต้องคือ "เลข id ของประกาศยังอยู่ใน URL ปลายทางมั้ย" ไม่ใช่รูปทรงของ path
  */
 const idOf = u => (String(u).match(/(\d{6,})\/?(?:[?#].*)?$/) ?? [])[1] ?? null
+
+/**
+ * โดนบอทดีเทคชันกั้นหรือเปล่า — ต้องแยกจาก "ไม่เจอราคา" ให้ขาด
+ *
+ * 2026-08-17: FazWaz เปิด Cloudflare challenge กับการยิงตรง ตอบ 403 + หน้า "Just a moment..."
+ * ทั้ง 1,752 ใบ · โค้ดเดิมไม่มีสถานะนี้ เลยตกถังเดียวกับ noPrice = "ตรวจแล้วแต่อ่านราคาไม่ออก"
+ * ซึ่งอ่านเหมือนปัญหาเล็ก ๆ ทั้งที่จริงคือ "ทั้ง portal ตรวจไม่ได้เลย" · ผลคือไฟล์รอบไม่มีแถว
+ * FazWaz สักแถว และถ้า --write ต่อไป ห้องที่ประกาศอยู่เฉพาะ FazWaz จะโดน expired ยกแผง
+ * ทางแก้ที่ถูกคือเก็บซ้ำผ่านเบราว์เซอร์จริง (ห้าม bypass challenge) — ไม่ใช่เดาราคา
+ */
+function blockedReason(res, html) {
+  const head = html.slice(0, 4000)
+  if (/just a moment|cf-browser-verification|cf_chl_|attention required|enable javascript and cookies/i.test(head))
+    return 'บอทดีเทคชัน (challenge page)'
+  if (res.status === 403) return 'http 403 (ถูกกั้น)'
+  if (res.status === 429) return 'http 429 (ยิงถี่เกิน)'
+  if (res.status >= 500) return `http ${res.status} (ฝั่งเว็บล่ม)`
+  return null
+}
+
 function goneReason(res, html, origUrl) {
   if (res.status === 404 || res.status === 410) return `http ${res.status}`
   const id = idOf(origUrl)
@@ -186,11 +206,13 @@ const PROF = new Map(profs.map(p => [`${p.refCode}·${p.intent}`, p]))
 console.log(`  unitSource ${src.length} ห้อง · unitProfile ${profs.length} ใบ`)
 
 const seenUrl = new Set()
+const allPortalsInSource = new Set()     // ไว้เตือนตอนจบว่ารอบนี้ไม่ได้แตะเจ้าไหนบ้าง
 let jobs = []
 for (const s of src) for (const l of s.L ?? []) {
   if (!l.url || seenUrl.has(l.url)) continue
   seenUrl.add(l.url)
   const portal = PORTAL_ALIAS[l.portal] ?? l.portal
+  allPortalsInSource.add(portal)
   if (!FETCHABLE.has(portal)) continue
   if (ONLY && portal !== ONLY) continue
   const pr = PROF.get(`${s.refCode}·${l.intent}`)
@@ -227,12 +249,12 @@ if (REDO_FILE) {
 /* ต้องล้าง gone ที่มาจากกฎ redirect ด้วย ไม่ใช่แค่ noPrice/error — ใบพวกนั้นถูกตัดสินผิด
    ด้วยกฎเก่า และ "ถูกถอด" คือสถานะที่ทำให้ห้องหลุดจากตลาด อันตรายกว่าแกะราคาไม่ได้ */
 if (RETRY) for (const [u, r] of [...done])
-  if (r.noPrice || r.error || (r.gone && r.gone.startsWith('redirect'))) done.delete(u)
+  if (r.noPrice || r.error || r.blocked || (r.gone && r.gone.startsWith('redirect'))) done.delete(u)
 const todo = jobs.filter(j => !done.has(j.url)).slice(0, LIMIT)
 console.log(`  ลิงก์ที่ยิงตรงได้ ${jobs.length} ใบ · รอบนี้ทำ ${todo.length} ใบ (พอร์ทัล: ${ONLY ?? [...FETCHABLE].join(', ')})\n`)
 
 /* ── ไล่เปิดทีละใบ ────────────────────────────────────────────────────────── */
-const stat = { ok: 0, gone: 0, noPrice: 0, err: 0 }
+const stat = { ok: 0, gone: 0, noPrice: 0, err: 0, blocked: 0 }
 let n = 0
 async function worker(list) {
   for (const j of list) {
@@ -243,8 +265,12 @@ async function worker(list) {
       const res = await fetch(j.url, { headers: UA, redirect: 'follow', signal: c.signal })
       clearTimeout(t)
       const html = await res.text()
-      const gone = goneReason(res, html, j.url)
-      if (gone) { rec.gone = gone; stat.gone++ }
+      /* ต้องเช็ค "ถูกกั้น" ก่อน "ถูกถอด" เสมอ — หน้า challenge ตอบ 403 และ redirect ไปหน้ากลาง
+         ได้ทั้งคู่ ถ้าเรียงสลับกันประกาศที่ยังขายอยู่จะถูกตราหน้าว่าหายจากตลาด */
+      const blocked = blockedReason(res, html)
+      const gone = blocked ? null : goneReason(res, html, j.url)
+      if (blocked) { rec.blocked = blocked; stat.blocked++ }
+      else if (gone) { rec.gone = gone; stat.gone++ }
       else {
         const got = EXTRACT[j.portal]?.(html)
         if (!got || got.price == null) { rec.noPrice = true; stat.noPrice++ }
@@ -259,7 +285,7 @@ async function worker(list) {
     appendFileSync(progressPath, JSON.stringify(rec) + '\n')
     done.set(j.url, rec)
     if (++n % 50 === 0 || n === todo.length)
-      console.log(`  ${n}/${todo.length} · ยังอยู่ ${stat.ok} · ถูกถอด ${stat.gone} · ไม่เจอราคา ${stat.noPrice} · error ${stat.err}`)
+      console.log(`  ${n}/${todo.length} · ยังอยู่ ${stat.ok} · ถูกถอด ${stat.gone} · ไม่เจอราคา ${stat.noPrice} · ถูกกั้น ${stat.blocked} · error ${stat.err}`)
     await new Promise(r => setTimeout(r, GAP_MS))
   }
 }
@@ -270,7 +296,7 @@ await Promise.all(lanes.map(worker))
 const BED_N = { studio: 0, '1bed': 1, '2bed': 2, '3bed': 3, '4bed': 4 }
 const rows = []
 for (const r of done.values()) {
-  if (r.gone || r.error || r.noPrice || r.price == null) continue
+  if (r.gone || r.error || r.noPrice || r.blocked || r.price == null) continue
   if (!r.building || !['rent', 'sale'].includes(r.intent)) continue
   rows.push({
     refCode: r.refCode ?? null,     // รอบ re-scrape รู้ห้องอยู่แล้ว — ให้ ingest จับคู่ตรง ไม่ต้องทายลายนิ้วมือ
@@ -288,9 +314,39 @@ writeFileSync(roundPath, JSON.stringify(rows, null, 1), 'utf8')
 const all = [...done.values()]
 console.log(`\nรอบ ${DATE}`)
 console.log(`  ตรวจแล้ว ${all.length} ใบ`)
-console.log(`  ยังอยู่ ${all.filter(r => r.price != null && !r.gone).length} · ถูกถอด ${all.filter(r => r.gone).length} · ไม่เจอราคา ${all.filter(r => r.noPrice).length} · error ${all.filter(r => r.error).length}`)
+console.log(`  ยังอยู่ ${all.filter(r => r.price != null && !r.gone && !r.blocked).length} · ถูกถอด ${all.filter(r => r.gone).length} · ไม่เจอราคา ${all.filter(r => r.noPrice).length} · ถูกกั้น ${all.filter(r => r.blocked).length} · error ${all.filter(r => r.error).length}`)
 console.log(`  เขียน ${rows.length} แถว → ${roundPath}`)
-console.log(`\n! ยังไม่ได้ตรวจ DDproperty กับ PropertyHub (ยิงตรงไม่ได้ ต้องผ่าน Chrome)`)
-console.log(`  → อย่าเพิ่ง --write ถ้ายังไม่ครบ ห้องที่ลงไว้เฉพาะสองเจ้านี้จะถูกตั้งเป็น expired ทั้งที่ยังขายอยู่`)
+
+/* ── ใบเตือนความครบของรอบ ────────────────────────────────────────────────────
+   ingest ตัดสิน expired จาก "ห้องที่ไม่อยู่ในไฟล์รอบ" — portal ที่เก็บไม่ได้จึงไม่ใช่
+   ข้อมูลขาดเฉย ๆ แต่แปลว่า "ห้องที่ลงเฉพาะเจ้านั้นจะถูกประหาร" · เดิมบรรทัดนี้ hardcode
+   ชื่อ DDproperty/PropertyHub ไว้ พอ FazWaz ล้มยกเจ้าในรอบ 2026-08-17 จึงไม่มีใครเตือน
+   ตอนนี้นับจากผลจริงต่อ portal ทุกครั้ง */
+const perPortal = new Map()
+for (const j of jobs) {
+  const p = perPortal.get(j.portal) ?? { jobs: 0, ok: 0, blocked: 0 }
+  p.jobs++; perPortal.set(j.portal, p)
+}
+for (const r of all) {
+  const p = perPortal.get(r.portal); if (!p) continue
+  if (r.blocked) p.blocked++
+  else if (r.price != null && !r.gone) p.ok++
+}
+const dead = [], hurt = []
+for (const [portal, p] of perPortal) {
+  if (p.jobs && p.ok === 0) dead.push(`${portal} (${p.jobs} ใบ · ถูกกั้น ${p.blocked})`)
+  else if (p.blocked > p.jobs * 0.1) hurt.push(`${portal} ถูกกั้น ${p.blocked}/${p.jobs}`)
+}
+const notRun = ONLY ? [] : [...allPortalsInSource].filter(p => !perPortal.has(p))
+if (dead.length) {
+  console.log(`\n‼ portal ที่เก็บไม่ได้เลยสักใบรอบนี้: ${dead.join(' · ')}`)
+  console.log(`  → ต้องเก็บซ้ำผ่านเบราว์เซอร์จริงก่อน --write (ห้าม bypass challenge)`)
+  console.log(`  → ถ้า ingest ทั้งที่ขาด ห้องที่ลงเฉพาะเจ้านี้จะถูกตั้ง expired ทั้งที่ยังขายอยู่`)
+}
+if (hurt.length) console.log(`\n! เก็บได้ไม่ครบ: ${hurt.join(' · ')}`)
+if (notRun.length) {
+  console.log(`\n! portal ที่รอบนี้ไม่ได้แตะเลย (ยิงตรงไม่ได้ ต้องผ่าน Chrome): ${notRun.join(', ')}`)
+  console.log(`  → อย่าเพิ่ง --write ถ้ายังไม่ครบ ห้องที่ลงไว้เฉพาะเจ้าพวกนี้จะถูกตั้งเป็น expired`)
+}
 console.log(`\nขั้นต่อไป (dry-run ก่อนเสมอ):`)
 console.log(`  node --env-file=.env tools/ingest-units.mjs --round "${roundPath}" --date ${DATE}`)

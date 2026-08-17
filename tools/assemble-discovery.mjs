@@ -31,7 +31,11 @@ const SLUG2BLD = {
   'hq-by-sansiri': 'HQ by Sansiri', 'ideo-morph-38': 'Ideo Morph 38', 'the-lumpini-24': 'The Lumpini 24',
   'noble-be19': 'Noble BE19', 'park-origin-phrom-phong': 'Park 24', 'rhythm-sukhumvit-36-38': 'Rhythm Sukhumvit 36-38',
   '39-by-sansiri': '39 by Sansiri', 'the-room-sukhumvit-21': 'The Room Sukhumvit 21',
+  'mahogany-tower': 'Mahogany Tower',
 }
+/* slug ที่ไม่มีในแมพจะกลายเป็นชื่อตึกดิบ ("mahogany-tower") แล้วงอกเป็นตึกใหม่ใน Sanity
+   เงียบ ๆ — กันไว้ที่นี่ ดีกว่าไปตามลบทีหลัง */
+for (const s of Object.keys(SLUG2BLD)) if (!SLUG2BLD[s]) throw new Error(`SLUG2BLD ${s} ว่าง`)
 const rows = [], drop = { dup: 0, incomplete: 0, err: 0 }
 const push = r => {
   if (r.url && knownUrls.has(r.url)) { drop.dup++; return }
@@ -50,12 +54,22 @@ if (existsSync(DL + `aquamx-phdet-${DATE}.json`))
       postCreatedAt: r.postCreatedAt ?? null, postUpdatedAt: r.postUpdatedAt ?? null, availNote: r.availNote ?? null })
   }
 
-// FazWaz — ไม่มีชั้น (หน้าไม่บอก) · bed จาก slug ปลายทาง
+/* FazWaz — ใช้ชั้นจากหน้าประกาศได้แล้ว (เปิดใช้ 2026-08-17)
+   เดิมทิ้งเป็น null หลังเหตุ 2026-08-05 ที่ตัวเก็บไปหยิบเลขจากบล็อกสิ่งอำนวยความสะดวก
+   (ชั้นสระ) ทำให้ทั้งตึกได้ชั้นเดียวกันหมด · ตัวเก็บรอบนี้อ่านจากบล็อกสรุปหัวประกาศ
+   ("42 SqM Size 32 Floor") ซึ่งเป็นชั้นของห้องเอง — วัดจริง 2026-08-17: 71 ใบใน 8 ตึก
+   ได้ชั้นกระจาย 4-11 ค่าต่อตึก ไม่ใช่อาการค่าเดียวทั้งชุด
+   ยามชั้นกองค่าเดียวใน ingest-units ยังทำงานอยู่เป็นตาข่ายรับอีกชั้น ถ้าเว็บเปลี่ยนโครง */
+const fzFloor = v => {
+  const n = +String(v ?? '').replace(/[^\d]/g, '')
+  return Number.isFinite(n) && n > 0 && n <= 120 ? n : null
+}
 if (existsSync(DL + `aquamx-fzdet-${DATE}.json`))
   for (const r of JSON.parse(readFileSync(DL + `aquamx-fzdet-${DATE}.json`, 'utf8'))) {
     if (r.error || r.gone || r.noPrice) { drop.err++; continue }
-    push({ building: SLUG2BLD[r.slug] ?? r.slug, intent: r.intent, bed: r.bed, bath: r.bath ?? null, sqm: r.sqm,
-      floor: null, price: r.price, portal: 'FazWaz', url: r.url ?? null,
+    if (!SLUG2BLD[r.slug]) { drop.err++; console.warn(`⚠ FazWaz slug ไม่รู้จัก: ${r.slug} — ทิ้งใบนี้ (กันตึกชื่อ slug งอกใน Sanity)`); continue }
+    push({ building: SLUG2BLD[r.slug], intent: r.intent, bed: r.bed, bath: r.bath ?? null, sqm: r.sqm,
+      floor: fzFloor(r.floor), price: r.price, portal: 'FazWaz', url: r.url ?? null,
       posterType: 'unknown', posterName: null,
       postCreatedAt: r.postCreatedAt ?? null, postUpdatedAt: r.postUpdatedAt ?? null, availableFrom: r.availableFrom ?? null })
   }
