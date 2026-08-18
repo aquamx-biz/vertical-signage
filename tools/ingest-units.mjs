@@ -634,6 +634,29 @@ for (const p of profiles) {
   }
 }
 
+/* ── floor-audit: แก้ floorActual ที่ค้างไม่ตรง round ─────────────────────────
+   บั๊ก range เก่า (เช่น "5-6"→56, "21-25"→2125) ตั้ง floorActual ผิดไว้ · ตัวแกะแก้แล้ว
+   แต่ค่าที่เขียนไปแล้วไม่ self-heal เพราะ floor เป็นส่วนของ fingerprint (ห้องที่ floor เปลี่ยน
+   จะ fingerprint เป็นห้องใหม่ ตัวเก่าค้าง) → ตรวจตรงจาก url ของ listing: ถ้ารอบนี้ portal ลง
+   floor "ค่าเดียวชัด" ที่ต่างจากที่เก็บ = แก้ตามนั้น + log · ไม่แตะห้องที่เพิ่ง write รอบนี้ */
+{
+  const written = new Set(intMut.filter(m => m.createOrReplace?._type === 'unitSource').map(m => m.createOrReplace._id))
+  const cardFloor = new Map()
+  for (const c of cards) if (c.url && c.floor != null) cardFloor.set(c.url, plausFloor(c.floor))
+  let nAudit = 0
+  for (const s of sources) {
+    if (s.floorActual == null || written.has(s._id)) continue
+    const urls = [...(s.rentListings ?? []), ...(s.saleListings ?? [])].map(l => l?.url).filter(Boolean)
+    const fls = [...new Set(urls.map(u => cardFloor.get(u)).filter(x => x != null))]
+    if (fls.length === 1 && fls[0] !== s.floorActual) {
+      intMut.push({ patch: { id: s._id, set: { floorActual: fls[0] } } })
+      warnings.push(`floor-audit: ${s.refCode} ชั้น ${s.floorActual}→${fls[0]} (แก้ค้างตาม round)`)
+      nAudit++
+    }
+  }
+  if (nAudit) console.log(`🔧 floor-audit: แก้ floorActual ค้าง ${nAudit} ห้อง (ดู warnings)`)
+}
+
 // ── 5. marketSnapshot ต่อตึก + scrapeRound สรุปรอบ ───────────────────────────
 const CODE = { '39 by Sansiri': '39bs', 'The Lumpini 24': 'l24', 'The Room Sukhumvit 21': 'rm21',
   'Noble BE19': 'nbl', 'Mahogany Tower': 'mhg', 'Park 24': 'p24',
