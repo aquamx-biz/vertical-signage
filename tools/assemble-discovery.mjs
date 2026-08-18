@@ -59,7 +59,8 @@ if (existsSync(DL + `aquamx-phdet-${DATE}.json`))
     if (r.error || r.gone || r.noPrice) { drop.err++; continue }
     push({ building: PH_BLD.get(String(r.id)) ?? null, intent: r.intent, bed: r.bed, bath: r.bath ?? null, sqm: r.sqm,
       floor: r.floor ?? null, price: r.price, portal: 'PropertyHub', url: r.url ?? null,
-      posterType: 'unknown', posterName: null,
+      posterType: r.posterType ?? ((r.posterName ?? r.agent) ? 'agent' : 'unknown'),
+      posterName: r.posterName ?? r.agent ?? null,   // ส่งชื่อ agent ต่อ (ถ้า browser scrape เก็บมา) — เลิก hardcode null
       postCreatedAt: r.postCreatedAt ?? null, postUpdatedAt: r.postUpdatedAt ?? null, availNote: r.availNote ?? null })
   }
 
@@ -79,7 +80,8 @@ if (existsSync(DL + `aquamx-fzdet-${DATE}.json`))
     if (!SLUG2BLD[r.slug]) { drop.err++; console.warn(`⚠ FazWaz slug ไม่รู้จัก: ${r.slug} — ทิ้งใบนี้ (กันตึกชื่อ slug งอกใน Sanity)`); continue }
     push({ building: SLUG2BLD[r.slug], intent: r.intent, bed: r.bed, bath: r.bath ?? null, sqm: r.sqm,
       floor: fzFloor(r.floor), price: r.price, portal: 'FazWaz', url: r.url ?? null,
-      posterType: 'unknown', posterName: null,
+      posterType: r.posterType ?? ((r.posterName ?? r.agent) ? 'agent' : 'unknown'),
+      posterName: r.posterName ?? r.agent ?? null,   // ส่งชื่อ agent ต่อ (ถ้า browser scrape เก็บมา) — เลิก hardcode null
       postCreatedAt: r.postCreatedAt ?? null, postUpdatedAt: r.postUpdatedAt ?? null, availableFrom: r.availableFrom ?? null })
   }
 
@@ -89,7 +91,8 @@ if (existsSync(`_rounds/_lidet-${DATE}.json`))
     if (r.error) { drop.err++; continue }
     push({ building: r.building, intent: r.intent, bed: r.bed, bath: r.bath ?? null, sqm: r.sqm,
       floor: r.floor ?? null, price: r.price, portal: 'LivingInsider', url: r.url ?? null,
-      posterType: 'unknown', posterName: null,
+      posterType: r.posterType ?? ((r.posterName ?? r.agent) ? 'agent' : 'unknown'),
+      posterName: r.posterName ?? r.agent ?? null,   // ส่งชื่อ agent ต่อ (ถ้า browser scrape เก็บมา) — เลิก hardcode null
       postCreatedAt: r.postCreatedAt ?? null, postUpdatedAt: r.postUpdatedAt ?? null })
   }
 
