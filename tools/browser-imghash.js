@@ -51,7 +51,39 @@
     try { return await aqxImgHash(url) } catch (e) { return null }
   }
 
+  // ── ชื่อ agent/ผู้ลงประกาศ ────────────────────────────────────────────────
+  // PropertyHub/FazWaz/LI บล็อก server → ดึงชื่อในเบราว์เซอร์ · assemble-discovery ส่ง r.posterName ต่อแล้ว
+  // 3 กลยุทธ์เรียงความน่าเชื่อ: JSON-LD (มาตรฐาน) → selector ที่พบบ่อย → ข้อความข้าง "Verified"
+  const cleanName = s => { s = String(s || '').replace(/\s+/g, ' ').trim(); return (s && s.length <= 60 && !/^https?:/.test(s)) ? s : null }
+  function aqxAgentName() {
+    // 1) JSON-LD — author/agent/realEstateAgent/broker/provider/seller
+    for (const el of document.querySelectorAll('script[type="application/ld+json"]')) {
+      try {
+        const arr = [].concat(JSON.parse(el.textContent))
+        for (const o of arr) {
+          const a = o && (o.author || o.agent || o.realEstateAgent || o.broker || o.provider || o.seller)
+          const nm = cleanName(a && (a.name || (typeof a === 'string' ? a : null)))
+          if (nm) return nm
+        }
+      } catch (e) {}
+    }
+    // 2) selector ที่พบบ่อย (ปรับตามจริงต่อ portal ได้ ถ้าเจอชื่อ element)
+    for (const sel of ['[class*="agent-name"]', '[class*="AgentName"]', '[data-testid*="agent"]', '[class*="poster"] [class*="name"]', '[class*="contact"] h3', '[class*="contact"] h2']) {
+      const nm = cleanName(document.querySelector(sel)?.textContent)
+      if (nm) return nm
+    }
+    // 3) ข้อความที่อยู่ก่อน badge "Verified" (PropertyHub/FazWaz วางชื่อ agent เหนือ Verified)
+    const v = [...document.querySelectorAll('*')].find(e => e.children.length === 0 && /^\s*verified\s*$/i.test(e.textContent || ''))
+    if (v) { const prev = v.parentElement?.previousElementSibling || v.previousElementSibling; const nm = cleanName(prev?.textContent); if (nm) return nm }
+    return null
+  }
+
+  // เรียกบนหน้า listing → คืน { imgHash, agent } เก็บติด record ทีเดียว
+  async function aqxListingExtras() { return { imgHash: await aqxListingImgHash(), agent: aqxAgentName() } }
+
   g.aqxImgHash = aqxImgHash
   g.aqxRoomImageUrl = aqxRoomImageUrl
   g.aqxListingImgHash = aqxListingImgHash
+  g.aqxAgentName = aqxAgentName
+  g.aqxListingExtras = aqxListingExtras
 })(typeof window !== 'undefined' ? window : globalThis)
