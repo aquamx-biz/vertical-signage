@@ -36,11 +36,15 @@ Log "claiming ticket $tid ($($t.projectTitle)) — '$($t.message)'"
 $claim = @{ mutations = @(@{ patch = @{ id = $tid; set = @{ status = 'working'; workedAt = (Get-Date).ToUniversalTime().ToString('o') } } }) } | ConvertTo-Json -Depth 6
 Invoke-RestMethod -Uri "$base/data/mutate/production" -Method Post -ContentType 'application/json' -Headers @{ Authorization = "Bearer $tok" } -Body $claim -TimeoutSec 30 | Out-Null
 
-$ticketJson = $t | ConvertTo-Json -Compress
-$playbook   = Join-Path $RepoDir 'tools\screen-repair-playbook.md'
-$prompt = ('You are the automated kiosk screen-repair agent. Read ' + $playbook +
-  ' and execute it for this ticket EXACTLY as written, guardrails first. Ticket: ' + $ticketJson +
-  ' -- Work autonomously, finish by patching the ticket to a terminal status and POSTing the notify endpoint as the playbook says, then stop.')
+# Thai survives only through a UTF-8 file — PS 5.1 mangles non-ASCII in
+# native-command arguments (codepage), so the prompt itself stays ASCII.
+$ticketFile = Join-Path $RepoDir 'tools\health\current-ticket.json'
+[IO.File]::WriteAllText($ticketFile, ($t | ConvertTo-Json -Depth 5), [Text.UTF8Encoding]::new($false))
+$playbook = Join-Path $RepoDir 'tools\screen-repair-playbook.md'
+$prompt = ('You are the automated kiosk screen-repair agent. Read the ticket JSON at ' + $ticketFile +
+  ' and the playbook at ' + $playbook +
+  ', then execute the playbook for that ticket EXACTLY as written, guardrails first. ' +
+  'Work autonomously, finish by patching the ticket to a terminal status and POSTing the notify endpoint as the playbook says, then stop.')
 
 Log "launching repair agent for $tid"
 try {
