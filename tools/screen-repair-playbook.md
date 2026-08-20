@@ -7,7 +7,9 @@ incidents (see repo CLAUDE.md GPU envelope + kiosk memories).
 ## Ticket contract (Sanity, `_type == "screenTicket"`)
 
 Watcher hands you a ticket JSON: `_id, projectId, projectTitle, lineGroupId,
-message, status ("working")`. You finish by patching the ticket to a terminal
+message, status ("working")`, and possibly `evidenceUrl` — a photo the
+reporter took of the broken screen; fetch and LOOK at it for symptoms
+(black screen vs frozen slide vs half-painted images) before diagnosing. You finish by patching the ticket to a terminal
 status and POSTing the notify endpoint:
 
 - `status: "fixed"` + `note` (what was wrong + what you did, one line, Thai,
