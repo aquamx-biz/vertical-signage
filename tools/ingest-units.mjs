@@ -389,6 +389,25 @@ for (const s of sources) {
   if (m) { prefixOf[s.projectName] = m[1]; maxNum[s.projectName] = Math.max(maxNum[s.projectName] ?? 0, +m[2]) }
 }
 
+/* ── cap ชั้นเกินความสูงตึก ─────────────────────────────────────────────────
+   agent ใส่ range มั่ว เช่น "51-99" → lowFloor ได้ 51 · plausFloor(51) ผ่าน (≤80) แต่ตึกจริงมีแค่ ~32
+   → นิติทัก · หาชั้นสูงสุดจริงต่อตึกแบบ gap-based (จากข้อมูลสะสม: เดินจากสูงลง ถ้าเจอช่องว่าง >8 ชั้น
+   ที่ไม่มีห้อง = outlier ตัดทิ้ง) แล้ว cap การ์ดที่เกิน → ชั้นสูงสุดจริง · ตึกสูงจริง (Noble/Lumpini) ไม่โดน */
+{
+  const bf = {}
+  for (const s of sources) if (s.floorActual != null) (bf[s.projectName] ??= new Set()).add(s.floorActual)
+  const bldgMax = {}
+  for (const [b, set] of Object.entries(bf)) {
+    const u = [...set].sort((a, z) => z - a)
+    let m = u[0]
+    for (let i = 0; i < u.length - 1; i++) { if (u[i] - u[i + 1] > 8) m = u[i + 1]; else break }
+    bldgMax[b] = m
+  }
+  let nCap = 0
+  for (const c of cards) { const m = bldgMax[c.building]; if (m != null && c.floor != null && c.floor > m) { c.floor = m; nCap++ } }
+  if (nCap) { console.warn(`⚠ cap ${nCap} การ์ดที่ชั้นเกินความสูงตึก → ชั้นสูงสุดจริง (เช่น range "51-99")`); ROUND_WARNINGS.push(`cap ${nCap} การ์ด ชั้นเกินความสูงตึก`) }
+}
+
 /* --respect-locks: การ์ดที่ url ตรงกับ listing ที่ทีมล็อก → บังคับ refCode = ห้องที่ล็อก
    (override fingerprint/round → เคารพการตัดสินของคน · split/merge มือติดถาวร ไม่ยุบกลับ) */
 if (RESPECT_LOCKS) {
