@@ -2119,6 +2119,11 @@ const CONFIG = {
     IDLE_PAYMENT_BACKSTOP_MS:  600000,   // only fires if a payment flag got stuck
     HANDOFF_BASE: 'https://app.aquamx.biz/m',
     LEAD_API:     'https://app.aquamx.biz/api/lead',
+    // Property picks go CHAT-FIRST: the QR opens LINE Login (bot_prompt adds
+    // the OA in the same flow) and the server creates the leads + pushes the
+    // booking cards into the customer's 1:1 — no form on the phone at all.
+    // Empty string = fall back to the /m handoff page for everything.
+    LINE_ENTRY:   'https://app.aquamx.biz/api/line-login-start',
 
     // ── Sanity CMS ──
     SANITY_PROJECT_ID: 'awjj9g8u',
@@ -4928,12 +4933,22 @@ function showHandoff() {
     // never the QR target directly. (Changed from "vendor's real link wins".)
     let deepLink;
     const intentQ = buildIntentQuery(handoffCtx.ctaType);   // the kiosk pick rides along
+    const isPropHandoff = handoffCtx.category === 'rent' || handoffCtx.category === 'sale';
     if (handoffCtx.offerSlug)         deepLink = `${CONFIG.HANDOFF_BASE}/o/${handoffCtx.offerSlug}${intentQ}`;
     // ?p= carries the screen that produced the QR. The offer link already has it
     // (buildIntentQuery); without it here a provider scan lands with no idea which
     // building it came from, and the scan counter can't attribute it.
     else if (handoffCtx.providerSlug) deepLink = `${CONFIG.HANDOFF_BASE}/p/${handoffCtx.providerSlug}?p=${encodeURIComponent(window.__BAKED__?.projectCode || '')}`;
     else                              deepLink = `${CONFIG.HANDOFF_BASE}`;
+    // Property chat-first override (see CONFIG.LINE_ENTRY). The /m page above
+    // stays the target for offers/providers, and remains the fallback when
+    // LINE_ENTRY is emptied out.
+    if (CONFIG.LINE_ENTRY && isPropHandoff && intentQ) {
+        const intentStr = intentQ.slice(1)
+            + (handoffCtx.offerSlug ? '&o=' + encodeURIComponent(handoffCtx.offerSlug) : '')
+            + '&c=' + encodeURIComponent(handoffCtx.category || '');
+        deepLink = CONFIG.LINE_ENTRY + '?intent=' + encodeURIComponent(intentStr);
+    }
 
     const setTxt = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
     // Step 2 owns the mobile wording: "📱 จอง บนมือถือ" (verb-aware) — step 1's
@@ -4942,7 +4957,12 @@ function showHandoff() {
         ? mobileVerbLabel(handoffCtx.ctaType, handoffCtx.category)
         : (isTH ? 'ดูบนมือถือ' : 'View on mobile');
     setTxt('handoffHeading',    `📱 ${verbMobile}${offerLabel ? ` — ${offerLabel}` : ''}`);
-    setTxt('handoffSubheading', isTH ? 'สแกนคิวอาร์โค้ดด้วยโทรศัพท์ของท่านเพื่อดำเนินการต่อ' : 'Scan the QR code with your phone to continue');
+    // Property: the voucher promise is visible BEFORE the scan (incentive rule
+    // from the demo flows — never reveal it only at deal close).
+    setTxt('handoffSubheading', isPropHandoff
+        ? (isTH ? 'สแกนเพื่อนัดชม — ฟรีทุกขั้น · เช่า/ซื้อสำเร็จผ่านระบบ รับ voucher ฿200'
+                : 'Scan to book a viewing — free · close the deal via aquamx and get a ฿200 voucher')
+        : (isTH ? 'สแกนคิวอาร์โค้ดด้วยโทรศัพท์ของท่านเพื่อดำเนินการต่อ' : 'Scan the QR code with your phone to continue'));
     setTxt('handoffPhoneLabel', isTH ? 'กรอกเบอร์โทรเพื่อให้ติดต่อกลับ' : 'Enter your phone number to be contacted');
     setTxt('sendLinkBtn',       isTH ? 'ส่งเบอร์โทร' : 'Submit Number');
     setTxt('sendConfirmOk',     isTH ? 'ตกลง' : 'OK');

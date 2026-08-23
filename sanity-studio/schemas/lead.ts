@@ -21,6 +21,7 @@ export default defineType({
   groups: [
     { name: 'overview', title: 'Overview', default: true },
     { name: 'contact',  title: 'Contact Info'            },
+    { name: 'viewing',  title: 'Viewing · นัดชม'          },
     { name: 'notes',    title: 'Notes'                   },
   ],
 
@@ -162,6 +163,73 @@ export default defineType({
       name:   'budget',
       title:  'Budget (THB)',
       type:   'number',
+    }),
+
+    // ── Viewing · นัดชม (spec §12.5 — slot object on lead, no new doc type) ──
+
+    defineField({
+      group:    'viewing',
+      name:     'submissionId',
+      title:    'Submission ID',
+      type:     'string',
+      readOnly: true,
+      description: 'One kiosk scan with several rooms fans out to several leads sharing this id.',
+    }),
+
+    defineField({
+      group:       'viewing',
+      name:        'appointment',
+      title:       'Appointment · นัดชม',
+      type:        'object',
+      description: 'Written by the LINE bot — requested slot, proposed alternatives, confirmation.',
+      fields: [
+        defineField({ name: 'requestedDate', title: 'Requested Date', type: 'date' }),
+        defineField({ name: 'requestedTime', title: 'Requested Time', type: 'string' }),
+        defineField({ name: 'proposedSlots', title: 'Proposed Alternatives', type: 'array',
+          of: [{ type: 'string' }], description: '"2026-09-13 16:00" strings — offered when the requested slot is not free.' }),
+        defineField({ name: 'confirmedAt',       title: 'Confirmed At', type: 'datetime' }),
+        defineField({ name: 'contactRevealedAt', title: 'Contact Revealed At', type: 'datetime',
+          description: 'Customer contact is revealed ONLY on confirm — this is the audit stamp.' }),
+      ],
+    }),
+
+    defineField({
+      group: 'viewing',
+      name:  'viewingOutcome',
+      title: 'Viewing Outcome · ผลนัด',
+      type:  'object',
+      fields: [
+        defineField({ name: 'attended', title: 'Attended', type: 'boolean' }),
+        defineField({ name: 'result',   title: 'Result',   type: 'string',
+          options: { list: ['liked', 'thinking', 'no', 'closed'] } }),
+        defineField({ name: 'reason',   title: 'Reason (เมื่อไม่เอา)', type: 'string',
+          options: { list: ['price', 'decor', 'floor', 'size', 'other'] } }),
+        defineField({ name: 'followUpAt', title: 'Next Follow-up', type: 'date' }),
+      ],
+    }),
+
+    defineField({
+      group:       'viewing',
+      name:        'negotiation',
+      title:       'Negotiation · ต่อรอง',
+      type:        'array',
+      description: 'ทุกข้อเสนอถูกบันทึก — ฐานข้อมูลราคาปิดจริง vs ราคาประกาศ (สูงสุด 3 รอบ)',
+      of: [{
+        type: 'object',
+        name: 'negRound',
+        fields: [
+          defineField({ name: 'by',     title: 'By',     type: 'string', options: { list: ['customer', 'caretaker'] } }),
+          defineField({ name: 'amount', title: 'Amount ฿', type: 'number' }),
+          defineField({ name: 'round',  title: 'Round',  type: 'number' }),
+          defineField({ name: 'at',     title: 'At',     type: 'datetime' }),
+        ],
+        preview: {
+          select: { by: 'by', amount: 'amount', round: 'round' },
+          prepare: ({ by, amount, round }: { by?: string; amount?: number; round?: number }) => ({
+            title: `รอบ ${round ?? '?'} · ${by === 'caretaker' ? 'ผู้ดูแล' : 'ลูกค้า'} — ฿${(amount ?? 0).toLocaleString()}`,
+          }),
+        },
+      }],
     }),
 
     // ── Notes ─────────────────────────────────────────────────────────────────
