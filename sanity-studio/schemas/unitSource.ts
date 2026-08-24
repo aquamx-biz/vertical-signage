@@ -52,6 +52,18 @@ export default defineType({
       fields: [
         defineField({ name: 'name', type: 'string' }),
         defineField({ name: 'phone', type: 'string' }),
+        defineField({ name: 'role', title: 'Role · ฐานะผู้ลงประกาศ', type: 'string',
+          options: { list: [
+            { title: 'เจ้าของห้อง · Owner', value: 'owner' },
+            { title: 'นายหน้า · Agent',     value: 'agent' },
+            { title: 'นิติบุคคล · Juristic', value: 'juristic' },
+          ] },
+          description: 'ทีมสรุปเอง — posterType ในประกาศเชื่อไม่ได้ นายหน้ามักติ๊ก owner' }),
+        defineField({ name: 'lineUserId', title: 'LINE User ID · รหัสผู้ใช้ LINE', type: 'string',
+          description: 'ปลายทางสำหรับส่งคำขอนัดชมเข้า LINE ของผู้ลงประกาศโดยตรง (ขึ้นต้น U + 32 ตัว) — '
+            + 'ได้มาเมื่อเขาแอด OA แล้วเท่านั้น ว่างไว้ = ทีมโทรแจ้งเอง',
+          validation: R => R.regex(/^U[0-9a-f]{32}$/, { name: 'LINE userId' })
+            .warning('ต้องขึ้นต้น U ตามด้วยตัวอักษร/ตัวเลข 32 ตัว — LINE ID ที่พิมพ์เอง(@ชื่อร้าน) ส่งข้อความไม่ได้') }),
         defineField({ name: 'note', type: 'text', description: 'เช่น "owner ตรง ไม่มีคอมซ้อน รับสายหลัง 18:00"' }),
       ],
     }),
