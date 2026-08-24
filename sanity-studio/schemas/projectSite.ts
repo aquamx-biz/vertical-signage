@@ -76,6 +76,17 @@ export default defineType({
         + 'ชื่อที่เจ้าของพิมพ์เข้ามาเอง, คำที่สะกดผิดบ่อย · ระบบใช้จับคู่ชื่อที่พิมพ์เข้ามากับตึกนี้ '
         + '(เทียบแบบไม่สนตัวพิมพ์ วรรค หรือคำว่า The/เดอะ อยู่แล้ว — ใส่เฉพาะที่ต่างกันจริง)',
     }),
+    defineField({
+      name: 'commonName', title: 'Common Name · ชื่อที่คนเรียกจริง', type: 'string',
+      description: 'ชื่อสั้นที่ลูกบ้านและตลาดใช้ เช่น "Park 24" ขณะที่ชื่อเต็มคือ '
+        + '"Park Origin Phrom Phong: Park 24 (Phase 1)" — ใช้แสดงผลและใช้จับคู่',
+    }),
+    defineField({
+      name: 'partOf', title: 'Part of · เป็นเฟส/อาคารของ', type: 'reference',
+      to: [{ type: 'projectSite' }],
+      description: 'ตึกเดียวกันแต่แยกนิติ/แยกเฟสตอนขออนุมัติ — ชี้มาที่ใบหลัก '
+        + 'ระบบจะถือว่าเป็นตึกเดียวกันเวลาคนพิมพ์ชื่อ แต่สายขออนุมัติยังแยกกันตามจริง',
+    }),
     defineField({ name: 'googleMapUrl', title: 'Google Map URL', type: 'url', components: { input: GoogleMapInput } }),
     defineField({ name: 'totalUnits',        title: 'Total Units',    type: 'number', components: { input: TotalUnitsInput } }),
     defineField({ name: 'numberOfBuildings', title: 'No. of Buildings', type: 'number' }),
