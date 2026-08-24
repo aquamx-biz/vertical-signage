@@ -57,7 +57,25 @@ export default defineType({
     defineField({ name: 'projectTh', title: 'Project Name (TH)', type: 'string', readOnly: ({ document }) => (document?.approvalStatus as string) === 'approved', components: { input: ProjectNameTranslateInput } }),
     defineField({ name: 'address',    title: 'Address',          type: 'text',   rows: 2, readOnly: ({ document }) => (document?.approvalStatus as string) === 'approved', components: { input: AddressInput } }),
     defineField({ name: 'btsStation', title: 'BTS / MRT Station', type: 'string', components: { input: BtsInput } }),
+
+    // Building photo — the face of this project wherever it is offered outside
+    // the lobby: the LINE "หาห้อง" carousel today, the web board next. A card
+    // with a photo is picked over a card without one; text-only cards read as
+    // a list, not a place. One good exterior/lobby shot is enough.
+    defineField({
+      name: 'heroImage',
+      title: 'รูปตึก (การ์ดใน LINE / เว็บ)',
+      type: 'image',
+      options: { hotspot: true },
+      description: 'รูปด้านนอกหรือล็อบบี้ที่ดูออกว่าเป็นตึกไหน — แนวนอน กว้าง ≥1200px · ใช้เป็นรูปหน้าปกของโครงการนี้ทุกที่นอกจอ',
+    }),
     defineField({ name: 'area',       title: 'Area',              type: 'string', components: { input: AreaInput } }),
+    defineField({
+      name: 'aliases', title: 'Aliases · ชื่อเรียกอื่น', type: 'array', of: [{ type: 'string' }],
+      description: 'ทุกสะกดที่โลกใช้เรียกตึกนี้ — ชื่อบนบอร์ด, ชื่อจาก portal ทั้ง 6 เจ้า, '
+        + 'ชื่อที่เจ้าของพิมพ์เข้ามาเอง, คำที่สะกดผิดบ่อย · ระบบใช้จับคู่ชื่อที่พิมพ์เข้ามากับตึกนี้ '
+        + '(เทียบแบบไม่สนตัวพิมพ์ วรรค หรือคำว่า The/เดอะ อยู่แล้ว — ใส่เฉพาะที่ต่างกันจริง)',
+    }),
     defineField({ name: 'googleMapUrl', title: 'Google Map URL', type: 'url', components: { input: GoogleMapInput } }),
     defineField({ name: 'totalUnits',        title: 'Total Units',    type: 'number', components: { input: TotalUnitsInput } }),
     defineField({ name: 'numberOfBuildings', title: 'No. of Buildings', type: 'number' }),
