@@ -90,6 +90,12 @@ export default defineType({
     defineField({ name: 'googleMapUrl', title: 'Google Map URL', type: 'url', components: { input: GoogleMapInput } }),
     defineField({ name: 'totalUnits',        title: 'Total Units',    type: 'number', components: { input: TotalUnitsInput } }),
     defineField({ name: 'numberOfBuildings', title: 'No. of Buildings', type: 'number' }),
+    defineField({
+      name: 'buildings', title: 'ชื่ออาคาร · Building names', type: 'array', of: [{ type: 'string' }],
+      description: 'โครงการที่มีหลายอาคาร ใส่ชื่อที่ลูกบ้านใช้เรียกจริง เช่น A / B / Tower 1 · '
+        + 'ระบบจะถามเจ้าของห้องว่าอยู่อาคารไหน เฉพาะโครงการที่กรอกช่องนี้ไว้มากกว่า 1 ชื่อ '
+        + '(ปล่อยว่าง = ไม่ถาม)',
+    }),
     defineField({ name: 'numberOfParking',   title: 'No. of Parking', type: 'number', components: { input: ParkingInput } }),
     defineField({ name: 'commonFees',        title: 'Common Fees',    type: 'string', description: 'e.g. "50 baht/sqm/month"', components: { input: CommonFeesInput } }),
     defineField({ name: 'totalProjectArea',          title: 'Total Project Area',          type: 'string', description: 'e.g. "2,400 sqm"' }),
