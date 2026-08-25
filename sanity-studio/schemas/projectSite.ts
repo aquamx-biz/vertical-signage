@@ -57,6 +57,11 @@ export default defineType({
     defineField({ name: 'projectTh', title: 'Project Name (TH)', type: 'string', readOnly: ({ document }) => (document?.approvalStatus as string) === 'approved', components: { input: ProjectNameTranslateInput } }),
     defineField({ name: 'address',    title: 'Address',          type: 'text',   rows: 2, readOnly: ({ document }) => (document?.approvalStatus as string) === 'approved', components: { input: AddressInput } }),
     defineField({ name: 'btsStation', title: 'BTS / MRT Station', type: 'string', components: { input: BtsInput } }),
+    defineField({
+      name: 'meetingPoint', title: 'Meeting Point · จุดนัดพบ', type: 'string',
+      description: 'ที่ที่ผู้ชมห้องกับผู้พาชมนัดเจอกัน — เขียนอย่างที่คนหน้าตึกจะเข้าใจ เช่น "ล็อบบี้ชั้น G ฝั่ง Tower A" หรือ "เคาน์เตอร์นิติ ชั้น 2". ปล่อยว่างได้ ระบบจะใช้ "ล็อบบี้" แทน',
+      placeholder: 'ล็อบบี้ชั้น G',
+    }),
 
     // Building photo — the face of this project wherever it is offered outside
     // the lobby: the LINE "หาห้อง" carousel today, the web board next. A card
