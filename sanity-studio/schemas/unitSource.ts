@@ -64,6 +64,12 @@ export default defineType({
             + 'ได้มาเมื่อเขาแอด OA แล้วเท่านั้น ว่างไว้ = ทีมโทรแจ้งเอง',
           validation: R => R.regex(/^U[0-9a-f]{32}$/, { name: 'LINE userId' })
             .warning('ต้องขึ้นต้น U ตามด้วยตัวอักษร/ตัวเลข 32 ตัว — LINE ID ที่พิมพ์เอง(@ชื่อร้าน) ส่งข้อความไม่ได้') }),
+    defineField({
+      name: 'selfManaged', title: 'เจ้าของรับ lead เอง · Owner handles leads', type: 'boolean',
+      initialValue: false,
+      description: 'เปิด = คำขอนัดชมห้องนี้เด้งตรงถึงเจ้าของ ทีมได้แค่สำเนา (เจ้าของลงประกาศเอง) · '
+        + 'ปิด = คำขอเข้าทีมตามปกติ แม้จะรู้ว่าใครเป็นเจ้าของ (เจ้าของฝากทีมขาย)',
+    }),
         defineField({ name: 'note', type: 'text', description: 'เช่น "owner ตรง ไม่มีคอมซ้อน รับสายหลัง 18:00"' }),
       ],
     }),
