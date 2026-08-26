@@ -169,6 +169,15 @@ export default defineType({
 
     defineField({
       group:    'viewing',
+      name:     'bookingRef',
+      title:    'Booking No. · เลขใบนัด',
+      type:     'string',
+      readOnly: true,
+      description: 'ออกตอนสร้างนัด ใช้อ้างอิงกับลูกค้าและเจ้าของห้อง — เอเจนต์คนเดียวนัดห้องเดียวกันได้หลายรอบ รหัสห้องจึงแยกนัดไม่ได้',
+    }),
+
+    defineField({
+      group:    'viewing',
       name:     'submissionId',
       title:    'Submission ID',
       type:     'string',
