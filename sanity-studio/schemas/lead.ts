@@ -210,6 +210,15 @@ export default defineType({
 
     defineField({
       group:       'viewing',
+      name:        'voucherCode',
+      title:       'Voucher Code',
+      type:        'string',
+      readOnly:    true,
+      description: 'ออกให้อัตโนมัติเมื่อยืนยันผลตรงกันทั้งสองฝั่ง — ฿200 ใช้กับร้านในเครือของตึกนั้น',
+    }),
+
+    defineField({
+      group:       'viewing',
       name:        'negotiation',
       title:       'Negotiation · ต่อรอง',
       type:        'array',

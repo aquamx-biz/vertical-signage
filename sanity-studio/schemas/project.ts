@@ -117,6 +117,82 @@ export default defineType({
       description: 'Google Maps link for this project location.',
     }),
 
+    // ── ISP ในอาคาร — ค่ายไหนใช้ได้ และเป็น "สายอะไร" ─────────────────────────
+    // ชนิดสายเป็นตัวตัดสินว่าแพ็กเกจชุดไหนโฆษณาได้ที่ตึกนี้ ไม่ใช่ชื่อค่าย: ตึกที่
+    // AIS ยังเป็น VDSL รับ 300/300 ไม่ได้ ต่อให้ AIS ให้บริการอยู่จริง
+    // ที่มา: 39 by Sansiri (ส.ค. 2026) — AIS Fibre3 ขึ้นจอไปแล้วทั้งที่ตึกยังเป็น
+    // สายทองแดง กว่าจะรู้ก็ตอนสื่อ live แล้ว ฟิลด์นี้มีไว้ให้รู้ "ก่อน" ไม่ใช่ "หลัง"
+    defineField({
+      name: 'ispAvailability',
+      title: '🌐 อินเทอร์เน็ตในอาคาร (ISP / ชนิดสาย)',
+      type: 'array',
+      description:
+        'หนึ่งแถวต่อหนึ่งค่ายที่ให้บริการในตึกนี้ — ตึกเดียวมีได้หลายค่าย และแต่ละค่ายอาจคนละชนิดสาย · ' +
+        'ใช้ตัดสินว่าจะลงสื่อแพ็กเกจอินเทอร์เน็ตชุดไหนได้',
+      of: [{
+        type: 'object',
+        name: 'ispLine',
+        fields: [
+          defineField({
+            name: 'isp',
+            title: 'ผู้ให้บริการ',
+            type: 'string',
+            options: { list: [
+              { title: 'TrueOnline', value: 'true' },
+              { title: 'AIS | 3BB',  value: 'ais'  },
+              { title: 'NT',         value: 'nt'   },
+            ]},
+            validation: Rule => Rule.required(),
+          }),
+          defineField({
+            name: 'tech',
+            title: 'ชนิดสาย',
+            type: 'string',
+            description: 'ไม่รู้จริงให้เลือก "ยังไม่ตรวจสอบ" — อย่าเดาว่าเป็นไฟเบอร์ เพราะเดาผิดแล้วลูกบ้านสมัครไม่ได้',
+            options: { list: [
+              { title: '🟢 Fiber (FTTx) — ลงแพ็กเกจไฟเบอร์ได้',          value: 'fiber'   },
+              { title: '🟡 VDSL / สายทองแดง — ลงแพ็กเกจไฟเบอร์ไม่ได้',   value: 'vdsl'    },
+              { title: '🔴 ยังไม่ให้บริการในตึกนี้',                      value: 'none'    },
+              { title: '⚪ ยังไม่ตรวจสอบ',                               value: 'unknown' },
+            ]},
+            initialValue: 'unknown',
+            validation: Rule => Rule.required(),
+          }),
+          // เพดานจริงของสาย — กันเคสลงแพ็กเกจที่เร็วเกินกว่าสายจะไหว แม้ชนิดสายจะถูก
+          defineField({ name: 'maxDown', title: 'ดาวน์โหลดสูงสุด (Mbps)', type: 'number', validation: Rule => Rule.min(0) }),
+          defineField({ name: 'maxUp',   title: 'อัปโหลดสูงสุด (Mbps)',   type: 'number', validation: Rule => Rule.min(0) }),
+          defineField({
+            name: 'verifiedAt',
+            title: 'ตรวจสอบเมื่อ',
+            type: 'date',
+            description: 'ค่ายอัปเกรดสายเงียบ ๆ ได้ — ข้อมูลเก่าเกิน 6 เดือนควรเช็คซ้ำก่อนลงสื่อ',
+          }),
+          defineField({ name: 'note', title: 'หมายเหตุ', type: 'string' }),
+        ],
+        preview: {
+          select: { isp: 'isp', tech: 'tech', d: 'maxDown', u: 'maxUp', at: 'verifiedAt' },
+          prepare({ isp, tech, d, u, at }) {
+            const ISP:  Record<string, string> = { true: 'TrueOnline', ais: 'AIS | 3BB', nt: 'NT' }
+            const TECH: Record<string, string> = {
+              fiber: '🟢 Fiber', vdsl: '🟡 VDSL', none: '🔴 ไม่ให้บริการ', unknown: '⚪ ยังไม่ตรวจสอบ',
+            }
+            const speed = (d || u) ? `สูงสุด ${d ?? '?'}/${u ?? '?'} Mbps` : ''
+            const when  = at ? `ตรวจ ${at}` : '⚠️ ยังไม่ระบุวันตรวจ'
+            return {
+              title:    `${ISP[isp] ?? isp ?? '(ยังไม่เลือกค่าย)'}  ·  ${TECH[tech] ?? tech ?? ''}`,
+              subtitle: [speed, when].filter(Boolean).join('  ·  '),
+            }
+          },
+        },
+      }],
+      // ค่ายเดียวกันสองแถว = ข้อมูลขัดกันเอง แล้ว build จะเลือกไม่ถูกว่าเชื่อแถวไหน
+      validation: Rule => Rule.custom((rows?: any[]) => {
+        if (!rows?.length) return true
+        const isps = rows.map(r => r?.isp).filter(Boolean)
+        return isps.length === new Set(isps).size ? true : 'ค่ายเดียวกันใส่ได้แถวเดียว'
+      }),
+    }),
+
     // ── URLs ──────────────────────────────────────────────────────────────────
     defineField({
       name: 'kioskBaseUrl',

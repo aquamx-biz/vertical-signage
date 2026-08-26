@@ -56,6 +56,10 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: var(--stag
 }
 .bh .m { font-size: 66px; font-weight: 800; letter-spacing: 0.02em; line-height: 1.05; }
 .bh .m .accent { color: var(--cyan); }
+/* ชนิดห้องต่อท้าย FOR RENT/SALE — 1 สไลด์ = 1 ชนิด จึงยกมาเป็นพระเอกแทนหัวคั่นเล็ก
+   ขนาดเท่า FOR RENT/SALE (เจ้าของสั่ง) อ่านเป็นพาดหัวเดียว · บรอนซ์แยกจาก RENT (ฟ้า)
+   ป้ายอังกฤษคงที่ (ไม่หมุนภาษา) จึงสั้น-กว้างพอดีบรรทัดเดียว */
+.bh .m .segt { color: var(--bronze); font-size: 1em; font-weight: 800; letter-spacing: 0.02em; white-space: nowrap; }
 .bh .p {
   font-family: 'IBM Plex Mono', monospace; font-weight: 700;
   font-size: 26px; letter-spacing: 0.18em; color: rgba(255,255,255,0.66);
@@ -83,7 +87,9 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: var(--stag
 .done::before { content: "✓"; color: var(--accent); }
 .seg i { font-style: normal; font-size: 20px; letter-spacing: 0.12em; color: rgba(255,255,255,0.38); }
 .c {
-  flex: 1; min-height: 0; max-height: 270px;
+  /* สูงคงที่เท่ากับตอนมี 7 ห้อง — ห้องน้อยกว่า 7 ก็ "ไม่ขยายกล่อง" (เจ้าของสั่ง)
+     แค่เว้นที่ว่างด้านล่าง · cap = (สูงคอนเทนเนอร์ − ช่องไฟ 6×14) ÷ 7 */
+  flex: 1; min-height: 0; max-height: calc((100% - 84px) / 7);
   display: flex; align-items: center; gap: 24px;
   background: var(--card);
   border: 1px solid var(--line);
@@ -218,6 +224,8 @@ const SALE_FLIP_MS = 3500  /* ล้านบาท ↔ ฿/ตรม. */
 const FLAG_MS = 3500       /* หลายธง → สลับทีละอัน (กติกาเดียวกับบอร์ด split-flap) */
 const rows = (DATA.rows || []).slice(0, 21)   /* เพดาน 3 หน้า */
 const SEG_ORDER = ["STUDIO", "1BED", "2BED", "3BED", "4BED+"]
+/* ป้ายชนิดห้องบนพาดหัว = อังกฤษคงที่ ไม่หมุนตามภาษา (เจ้าของสั่ง) — สั้น อ่านเป็นสัญลักษณ์ */
+const SEG_LABEL = { STUDIO: "Studio", "1BED": "1 Bed", "2BED": "2 Bed", "3BED": "3 Bed", "4BED+": "4 Bed+" }
 /* เรียงตาม segment แล้ว "เกลี่ยหน้าเท่า ๆ กันแบบเดิม" — ไม่ตัดหน้าตาม segment
    เพราะของจริงมี STUDIO/3BED อยู่ segment ละ 1 ห้องแทบทุกบอร์ด ถ้าบังคับให้ขึ้น
    หน้าใหม่ มันจะได้ทั้งหน้าไว้โชว์การ์ดใบเดียวบนจอที่วางไว้ 7 ใบ
@@ -250,7 +258,6 @@ const pages = [], pageSegs = []
 
 /* ── Render ─────────────────────────────────────────────────────────────── */
 const $ = id => document.getElementById(id)
-$("headM").innerHTML = MODE === "sale" ? 'FOR <span class="accent">SALE</span>' : 'FOR <span class="accent">RENT</span>'
 const updStr = (DATA.dataAsOf || "").slice(5).split("-").reverse().join(" ")
 const MONTH = ["", "JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]
 const upd = DATA.dataAsOf ? `${DATA.dataAsOf.slice(8, 10)} ${MONTH[+DATA.dataAsOf.slice(5, 7)]}` : ""
@@ -280,6 +287,9 @@ const why = (r, t) => {
 
 function paint() {
   const t = L[LANGS[lang]]
+  const SEG = DATA.segment
+  $("headM").innerHTML = (MODE === "sale" ? 'FOR <span class="accent">SALE</span>' : 'FOR <span class="accent">RENT</span>')
+    + (SEG ? ' <span class="segt">· ' + (SEG_LABEL[SEG] || SEG) + '</span>' : '')
   $("headP").textContent = `${DATA.project || ""}${upd ? " · UPDATED " + upd : ""} · ${page + 1}/${pages.length}`
   $("chipT").textContent = MODE === "rent" ? t.chipRent : (saleM ? t.chipSaleM : t.chipSaleQ)
   $("langInd").innerHTML = LANGS.map((x, i) => i === lang ? `<b>${L[x].ind}</b>` : L[x].ind).join(" · ")
@@ -300,7 +310,7 @@ function paint() {
     </div>`
   }
   $("cards").innerHTML = pageSegs[page].map(sg =>
-    '<div class="seg"><b>' + (t.beds[sg.seg] || sg.seg) + '</b>' + (sg.cont ? '<i>' + t.cont + '</i>' : '') + '</div>'
+    (SEG ? '' : '<div class="seg"><b>' + (t.beds[sg.seg] || sg.seg) + '</b>' + (sg.cont ? '<i>' + t.cont + '</i>' : '') + '</div>')
     + pages[page].slice(sg.start, sg.start + sg.n).map(cardHtml).join("")
   ).join("")
   document.querySelectorAll("#dots i").forEach((d, i) => d.classList.toggle("on", i === page))

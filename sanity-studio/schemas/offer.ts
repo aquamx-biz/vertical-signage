@@ -310,6 +310,38 @@ export default defineType({
       ] },
       description: 'Submission ad type (drives CTA defaults on the form).',
     }),
+
+    // ── offer อินเทอร์เน็ต — ต้องเช็ค "สาย" ในตึกก่อนลงสื่อ ────────────────────
+    // ชื่อค่ายไม่พอ ตึกที่ AIS ยังเป็น VDSL โฆษณา 300/300 ไม่ได้ ทั้งที่ AIS
+    // ให้บริการอยู่จริง สองฟิลด์นี้คู่กับ project.ispAvailability: build จะข้าม
+    // ตึกที่ค่าย+ชนิดสายไม่ตรง แทนที่จะปล่อยขึ้นจอแล้วค่อยรู้ตอนลูกบ้านสมัครไม่ได้
+    // เว้นว่าง requiresISP = offer ทั่วไป ไม่ตรวจอะไรเลย (พฤติกรรมเดิมไม่เปลี่ยน)
+    defineField({
+      name: 'requiresISP',
+      group: 'advanced',
+      title: '🌐 ต้องมีค่ายนี้ในตึก (เฉพาะ offer อินเทอร์เน็ต)',
+      type: 'string',
+      options: { list: [
+        { title: 'TrueOnline', value: 'true' },
+        { title: 'AIS | 3BB',  value: 'ais'  },
+        { title: 'NT',         value: 'nt'   },
+      ]},
+      description: 'เว้นว่าง = ไม่ใช่ offer อินเทอร์เน็ต ไม่ต้องตรวจสายในตึก',
+    }),
+    defineField({
+      name: 'requiresTech',
+      group: 'advanced',
+      title: '🌐 ต้องเป็นสายชนิดนี้',
+      type: 'string',
+      hidden: ({ document }) => !(document as any)?.requiresISP,
+      options: { list: [
+        { title: '🟢 Fiber (FTTx) เท่านั้น',   value: 'fiber' },
+        { title: '🟡 VDSL / สายทองแดง เท่านั้น', value: 'vdsl'  },
+        { title: '⚪ ค่ายมีก็พอ ไม่เจาะจงสาย',   value: 'any'   },
+      ]},
+      initialValue: 'fiber',
+      description: 'แพ็กเกจ 300/300 ขึ้นไปให้เลือก Fiber — VDSL วิ่งไม่ถึงและจะติดตั้งไม่ได้จริง',
+    }),
     defineField({
       name: 'displayMode',
       group: 'advanced',

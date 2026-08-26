@@ -11,11 +11,14 @@
 
 import { createClient } from '@sanity/client'
 
+const token = process.env.SANITY_WRITE_TOKEN
+if (!token) throw new Error('SANITY_WRITE_TOKEN is not set. Export it or add it to .env.local')
+
 const client = createClient({
   projectId:  'awjj9g8u',
   dataset:    'production',
   apiVersion: '2024-01-01',
-  token: 'skrGApr753oJXBj9vIy8wPIgBYPoDuGWz2IjlReGIfA7ynwC7uANThFSg9EiypcelIgid1FD9uQxIRJlwgsiY2n8E2MTI8umU7ACh57dHb52AtKKCmLoQLw7CAKXkzPD0olBFmeqPjROMJDcqwb95eRblbBfap3JRU03KurjvtybgipfOpho',
+  token,
   useCdn: false,
 })
 

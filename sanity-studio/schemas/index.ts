@@ -1,6 +1,7 @@
 import project            from './project'
 import accountCode        from './accountCode'
 import accountCodeGroup   from './accountCodeGroup'
+import aquamxContact     from './aquamxContact'
 import categoryConfig     from './categoryConfig'
 import provider           from './provider'
 import offer              from './offer'
@@ -48,6 +49,7 @@ export const schemaTypes = [
   project,
   accountCode,
   accountCodeGroup,
+  aquamxContact,
   categoryConfig,
   provider,
   offer,
