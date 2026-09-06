@@ -12,10 +12,19 @@ reporter took of the broken screen; fetch and LOOK at it for symptoms
 (black screen vs frozen slide vs half-painted images) before diagnosing. You finish by patching the ticket to a terminal
 status and POSTing the notify endpoint:
 
+- `status: "no_issue"` + `note` ("ตรวจสอบแล้ว จอแสดงผลปกติ ไม่พบปัญหา" + what you
+  verified, one line, Thai) + `screenshotUrl` when allowed — **use this when the
+  screen was ALREADY healthy and you changed NOTHING** (a false report / the
+  reporter tapped by mistake). The resident must be told plainly there was no
+  problem, never left hanging.
 - `status: "fixed"` + `note` (what was wrong + what you did, one line, Thai,
-  no jargon — residents read part of it) + `screenshotUrl` when allowed
+  no jargon — residents read part of it) + `screenshotUrl` when allowed —
+  **only when you actually repaired something** (woke the screen, restarted the
+  player, …). Never mark a screen that was already fine as "fixed": the notify
+  text says "กลับมาแสดงผลปกติแล้ว", which tells the resident it had been broken.
 - `status: "failed"` or `"needs_action"` + `note` (what a human must do)
 - then `POST https://app.aquamx.biz/api/screen-ticket-notify {"ticketId": "<id>"}`
+  — every terminal status notifies the reporting group; nothing is silent.
 
 Patch via Sanity mutate API with the write token from
 `aquamx-handoff/.env.local` (`SANITY_WRITE_TOKEN`); project `awjj9g8u`,
@@ -54,12 +63,20 @@ noble-be19 has TWO boxes — check both.
    `minAgo`. Beacon also silent ⇒ site power/网 outage → `needs_action`
    ("กล่องออฟไลน์ทั้งไซต์ น่าจะไฟ/เน็ตหน้างาน — ต้องให้นิติช่วยเช็คปลั๊ก/เราเตอร์").
    Beacon ALIVE but adb dead ⇒ VPN-only issue; if beacon `slide` rotates the
-   screen is actually fine → `fixed` with note ("จอแสดงผลปกติ ระบบเข้าถึงทางไกลมีปัญหาชั่วคราว").
+   screen is actually fine → `no_issue` with note ("ตรวจสอบแล้ว จอแสดงผลปกติ
+   ระบบเข้าถึงทางไกลมีปัญหาชั่วคราว") — nothing was repaired, so not `fixed`.
 3. **Reachable**: gather state:
    - `dumpsys power | grep -E "mWakefulness|Display Power"` (screen on?)
    - `dumpsys window | grep mCurrentFocus` (player foreground?)
    - beacon freshness for this project (minAgo, slide).
-4. Fixes, escalating, verify after EACH step (focus + beacon fresh within ~6 min):
+3b. **Already healthy? (false report)** If screen on + player focused + beacon
+   fresh (minAgo small) + slide rotating, AND the reporter's `evidenceUrl` (when
+   present) shows no real fault (not black / frozen / half-painted) → the screen
+   was never broken. Do NOT force-stop or restart a healthy player. Capture
+   proof on ALLOWED boxes (step 5) and finish with `no_issue`. Only continue to
+   step 4 when something is actually wrong.
+4. Fixes, escalating (ONLY after 3b found a real fault), verify after EACH step
+   (focus + beacon fresh within ~6 min):
    a. Screen off → `input keyevent KEYCODE_WAKEUP`.
    b. Wrong/blank foreground → start the player app for that box
       (`am start -n de.ozerov.fully/.MainActivity` / yodeck via
@@ -67,7 +84,9 @@ noble-be19 has TWO boxes — check both.
    c. Player foreground but beacon stale → ONE `am force-stop <player>` then
       `am start` (guardrail 3), wait 90s, re-check beacon.
 5. Healthy end-state = player focused + beacon fresh (minAgo small) + slide
-   field rotating. On ALLOWED boxes additionally capture proof:
+   field rotating. Terminal status: `fixed` if you changed something in step 4,
+   `no_issue` if it was already healthy (step 3b). On ALLOWED boxes additionally
+   capture proof:
    `adb shell screencap -p /sdcard/aq-proof.png` → `adb pull` → upload to
    Sanity image asset (curl POST assets/images with write token) → put the
    returned CDN url in `screenshotUrl`.
