@@ -21,6 +21,27 @@ $base = 'https://awjj9g8u.api.sanity.io/v2024-01-01'
 
 try { [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 } catch {}
 
+# Re-deliver results whose push to the reporting group failed TRANSIENTLY
+# (429 / 5xx / network). The notify route leaves notifiedAt unset in that case
+# and records notifyAttempts; we POST it again, at most 3 attempts, one per
+# 5-minute run. Permanent failures (bot removed from the group, bad groupId)
+# are never retried: the route closes and flags them and alerts a human itself.
+# The 3-minute age guard keeps this pass off a ticket the agent has JUST closed
+# and is about to notify on its own (its status patch and its POST are seconds
+# apart) — otherwise the resident could get the same result twice.
+$rq = [uri]::EscapeDataString('*[_type == "screenTicket" && status in ["no_issue","fixed","failed","needs_action"] && !defined(notifiedAt) && (!defined(notifyAttempts) || notifyAttempts < 3) && dateTime(_updatedAt) < dateTime(now()) - 180] | order(_updatedAt asc)[0...3]{_id, notifyAttempts}')
+try {
+  $retry = (Invoke-RestMethod -Uri "$base/data/query/production?query=$rq" -Headers @{ Authorization = "Bearer $tok" } -TimeoutSec 30).result
+  foreach ($r in @($retry)) {
+    if (-not $r) { continue }
+    Log "retrying notify for $($r._id) (attempt $([int]$r.notifyAttempts + 1))"
+    # The route answers 502 when the reporter push fails again — that throws
+    # under ErrorActionPreference=Stop, so log it and move on; it is not fatal.
+    try { Invoke-RestMethod -Uri 'https://app.aquamx.biz/api/screen-ticket-notify' -Method Post -ContentType 'application/json' -Body (@{ ticketId = $r._id } | ConvertTo-Json) -TimeoutSec 30 | Out-Null }
+    catch { Log "retry notify for $($r._id) not delivered yet: $($_.Exception.Message)" }
+  }
+} catch { Log "retry query failed: $($_.Exception.Message)" }
+
 # One ticket per run (oldest open) — keeps agent runs serialized
 # evidenceUrl = the photo the reporter sent (photo reports). The playbook tells
 # the agent to LOOK at it; it was silently missing from this projection, so the
