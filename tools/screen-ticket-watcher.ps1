@@ -22,7 +22,10 @@ $base = 'https://awjj9g8u.api.sanity.io/v2024-01-01'
 try { [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 } catch {}
 
 # One ticket per run (oldest open) — keeps agent runs serialized
-$q = [uri]::EscapeDataString('*[_type == "screenTicket" && status == "open"] | order(createdAt asc)[0]{_id, projectId, projectTitle, lineGroupId, message, createdAt}')
+# evidenceUrl = the photo the reporter sent (photo reports). The playbook tells
+# the agent to LOOK at it; it was silently missing from this projection, so the
+# agent never received it (ticket #2419, 2026-09-06).
+$q = [uri]::EscapeDataString('*[_type == "screenTicket" && status == "open"] | order(createdAt asc)[0]{_id, projectId, projectTitle, lineGroupId, message, createdAt, evidenceUrl, reporterName}')
 try {
   $res = Invoke-RestMethod -Uri "$base/data/query/production?query=$q" -Headers @{ Authorization = "Bearer $tok" } -TimeoutSec 30
 } catch { Log "queue query failed: $($_.Exception.Message)"; exit 0 }

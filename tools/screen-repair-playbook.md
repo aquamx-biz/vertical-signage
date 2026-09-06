@@ -69,12 +69,20 @@ noble-be19 has TWO boxes — check both.
    - `dumpsys power | grep -E "mWakefulness|Display Power"` (screen on?)
    - `dumpsys window | grep mCurrentFocus` (player foreground?)
    - beacon freshness for this project (minAgo, slide).
-3b. **Already healthy? (false report)** If screen on + player focused + beacon
-   fresh (minAgo small) + slide rotating, AND the reporter's `evidenceUrl` (when
-   present) shows no real fault (not black / frozen / half-painted) → the screen
-   was never broken. Do NOT force-stop or restart a healthy player. Capture
-   proof on ALLOWED boxes (step 5) and finish with `no_issue`. Only continue to
-   step 4 when something is actually wrong.
+3b. **Read the reporter's photo, then decide.** If the ticket has `evidenceUrl`
+   (a photo report), FETCH it and LOOK at it first — that is what the resident
+   saw. Classify it: black / frozen slide / half-painted / wrong app / or simply
+   a normal-looking screen. Then compare with the live state you gathered in
+   step 3 (and your own screencap on ALLOWED boxes). Your `note` MUST say what
+   the photo showed and how it compares, e.g. "รูปที่แจ้งมา: จอแสดงสไลด์ปกติ ·
+   ตรวจจริง: ปกติ" or "รูปที่แจ้งมา: จอดำ · ตรวจจริง 22:16: กลับมาปกติแล้ว".
+   **Already healthy? (false report)** If screen on + player focused + beacon
+   fresh (minAgo small) + slide rotating, AND the photo shows no real fault →
+   the screen was never broken. Do NOT force-stop or restart a healthy player.
+   Capture proof (step 5) and finish with `no_issue`. If the photo DOES show a
+   fault but the screen is healthy now → it recovered on its own; still
+   `no_issue` (you changed nothing) but say so in the note. Only continue to
+   step 4 when something is actually wrong right now.
 4. Fixes, escalating (ONLY after 3b found a real fault), verify after EACH step
    (focus + beacon fresh within ~6 min):
    a. Screen off → `input keyevent KEYCODE_WAKEUP`.
