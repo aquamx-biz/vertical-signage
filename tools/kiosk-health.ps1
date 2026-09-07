@@ -75,10 +75,14 @@ foreach ($Box in $Boxes) {
         $fRun = ((& $Adb -s $Serial shell "pidof de.ozerov.fully com.fullykiosk.emm") -join "").Trim()
         $yApp = ((& $Adb -s $Serial shell "pidof com.yodeck.android") -join "").Trim()
         $sWrap = ((& $Adb -s $Serial shell "pidof com.fullykiosk.singleapp") -join "").Trim()
+        # biz.aquamx.homeapp = our own launcher (39-by-sansiri since 2026-09-07; the
+        # home box before that). It is the player on those boxes, so it counts as
+        # the right app; Fully parked (pm disable-user) next to it is not a fight.
+        $hApp = ((& $Adb -s $Serial shell "pidof biz.aquamx.homeapp") -join "").Trim()
         # "multi" only when Fully fights the REAL Yodeck app. singleapp idling next to
         # Fully EMM (39-by-sansiri leftover provisioning) is not a fight — Fully wins.
-        $Focus = if ($fRun -and $yApp) { "multi" } elseif ($fRun) { "de.ozerov.fully" } elseif ($yApp -or $sWrap) { "com.yodeck.android" } else { "none" }
-        $IsFully = ($Focus -eq "de.ozerov.fully")
+        $Focus = if ($hApp) { "biz.aquamx.homeapp" } elseif ($fRun -and $yApp) { "multi" } elseif ($fRun) { "de.ozerov.fully" } elseif ($yApp -or $sWrap) { "com.yodeck.android" } else { "none" }
+        $IsFully = ($Focus -eq "de.ozerov.fully" -or $Focus -eq "biz.aquamx.homeapp")
 
         # 4. screen state
         $Pw = (& $Adb -s $Serial shell "dumpsys power | grep mWakefulness=" 2>$null) -join ""
