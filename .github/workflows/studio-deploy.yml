@@ -1,0 +1,38 @@
+# Deploy Sanity Studio + schema
+#
+# Runs whenever sanity-studio/ changes on master, so a schema edit is live in
+# Studio (and visible to MCP tools via `schema deploy`) without anyone opening a
+# terminal. Same shape as rebuild.yml: Actions has the network the laptops and
+# remote sessions do not.
+#
+# Secret: SANITY_DEPLOY_TOKEN — a Sanity token with Editor (write) rights.
+# Falls back to SANITY_TOKEN if that one already has write scope.
+
+name: Deploy Sanity Studio
+
+on:
+  push:
+    branches: [master]
+    paths: ['sanity-studio/**']
+  workflow_dispatch:
+
+concurrency:
+  group: studio-deploy
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run: { working-directory: sanity-studio }
+    env:
+      SANITY_AUTH_TOKEN: ${{ secrets.SANITY_DEPLOY_TOKEN || secrets.SANITY_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20', cache: 'npm', cache-dependency-path: sanity-studio/package-lock.json }
+      - run: npm ci --no-audit --no-fund
+      - name: Schema deploy
+        run: npx sanity schema deploy
+      - name: Studio deploy
+        run: npx sanity deploy
