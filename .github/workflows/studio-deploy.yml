@@ -4,7 +4,8 @@
 # edit is live in Studio without anyone opening a terminal. Mirrors rebuild.yml:
 # Actions has the network the laptops and remote sessions do not.
 #
-# Secret: SANITY_DEPLOY_TOKEN — a Sanity token with Editor (write) rights.
+# Secret: SANITY_DEPLOY_TOKEN — a Sanity token with the Developer role
+# (Editor cannot: deploySchema/deployStudio grants are missing).
 # Falls back to SANITY_TOKEN if that one already has write scope.
 #
 # Errors are re-emitted as ::error:: annotations because the raw log lives on a
