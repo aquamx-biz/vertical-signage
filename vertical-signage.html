@@ -1767,6 +1767,9 @@ body {
 }
 .handoff-amount .lab { font-size: 1.3vh; color: rgba(255,255,255,0.7); }
 .handoff-amount .amt { margin-left: auto; font-size: 2.8vh; font-weight: 800; color: #fff; letter-spacing: 0.02em; }
+/* no-payment note — full width under the figure, never competing with it */
+.handoff-amount { flex-wrap: wrap; }
+.handoff-amount .nopay { flex-basis: 100%; margin-top: 0.4vh; font-size: 1.2vh; color: rgba(255,255,255,0.55); }
 /* payOnline → the amount is money leaving their account, not a running tally */
 .handoff-amount.is-pay { background: rgba(109,213,232,0.10); border-color: rgba(109,213,232,0.45); }
 .handoff-amount.is-pay .amt { color: var(--dot-cyan); }
@@ -4265,10 +4268,16 @@ const MOBILE_VERB = {
     contact:     { th: 'ดูข้อเสนอ',  en: 'View offer' },
     event:       { th: 'ดูอีเวนต์',  en: 'View' }
 };
-function mobileVerbLabel(ctaType, category) {
+function mobileVerbLabel(ctaType, category, payOnline) {
     // property: "สั่ง บนมือถือ" would promise a purchase — it's a viewing request
     if (ctaType === 'order' && PROP_CTA(category))
         return uiLang === 'th' ? 'นัดชมห้อง บนมือถือ' : 'Request a viewing on mobile';
+    // Same rule one step further out: an offer that takes NO money uses the order
+    // mechanic only to pick a line item (an internet plan, a service tier). "สั่ง"
+    // there promises a purchase that never happens — the customer is applying, and
+    // the money question is settled later by the provider, not on this screen.
+    if (ctaType === 'order' && payOnline !== true && category === 'services')
+        return uiLang === 'th' ? 'สมัคร บนมือถือ' : 'Apply on mobile';
     const v = MOBILE_VERB[ctaType];
     const verb = v ? (uiLang === 'th' ? v.th : v.en) : (uiLang === 'th' ? 'ดู' : 'View');
     return verb + (uiLang === 'th' ? ' บนมือถือ' : ' on mobile');
@@ -4452,7 +4461,7 @@ function buildDetailDyn(ctx){
              // Only shown once something is picked AND every picked line has a
              // real number — a wrong sum is worse than no sum, and this screen
              // is now the last place a customer sees the amount before paying.
-             + (items.length ? `<div class="detail-total" id="detailTotal" data-pay="${ctx.payOnline?1:0}" style="display:none"></div>` : '');
+             + (items.length ? `<div class="detail-total" id="detailTotal" data-pay="${ctx.payOnline?1:0}" data-svc="${ctx.category==='services'?1:0}" style="display:none"></div>` : '');
     }
     if (t==='book'){
         const g = genBookSlots(ctx.booking);
@@ -4585,6 +4594,10 @@ function openDetail(ctx) {
         // the generic /o/{slug} page. A3: provider's preferred handoff channel.
         ctaURL: ctx.deepLink || ctx.ctaURL || '',
         ctaType: ctx.ctaType || null,   // step-2 heading verb ("📱 จอง บนมือถือ")
+        // Step 2 must know whether money changes hands here — the same figure is
+        // "ยอดที่ต้องชำระ" for a doughnut order and a monthly rate for an internet
+        // plan, and only one of those is payable at this screen.
+        payOnline: ctx.payOnline === true,
         // Unset provider setting defaults to BOTH — the phone field is the lead
         // channel, and most vendors never touch this setting (a real ad aired
         // QR-only for weeks because a form-created provider doc had it blank).
@@ -4954,7 +4967,7 @@ function showHandoff() {
     // Step 2 owns the mobile wording: "📱 จอง บนมือถือ" (verb-aware) — step 1's
     // button is verb-only so nobody expects an instant jump to their phone.
     const verbMobile = handoffCtx.ctaType
-        ? mobileVerbLabel(handoffCtx.ctaType, handoffCtx.category)
+        ? mobileVerbLabel(handoffCtx.ctaType, handoffCtx.category, handoffCtx.payOnline)
         : (isTH ? 'ดูบนมือถือ' : 'View on mobile');
     setTxt('handoffHeading',    `📱 ${verbMobile}${offerLabel ? ` — ${offerLabel}` : ''}`);
     // Property: the voucher promise is visible BEFORE the scan (incentive rule
@@ -5144,10 +5157,19 @@ function updateCartTotal() {
     if (!t.ok) { box.style.display = 'none'; return; }
     const isTH = uiLang === 'th';
     const pay  = box.dataset.pay === '1';
+    const svc  = box.dataset.svc === '1';
+    // A plan is picked, not bought: "รวม" reads as a bill being tallied, and the
+    // figure is a MONTHLY rate, not a sum owed. Say which of the two this is, and
+    // when no money moves here, say so outright — the fear of being committed to a
+    // charge is what stops a passer-by tapping at all.
+    const lab  = pay ? (isTH ? 'ยอดที่ต้องชำระ' : 'Amount to pay')
+               : svc ? (isTH ? 'แพ็กเกจที่เลือก' : 'Selected plan')
+                     : (isTH ? 'รวม' : 'Total');
     box.innerHTML =
-        `<span class="lab">${isTH ? 'รวม' : 'Total'}</span>` +
+        `<span class="lab">${lab}</span>` +
         `<span class="amt">฿${t.sum.toLocaleString()}</span>` +
-        (pay ? `<span class="hint">${isTH ? 'สแกนเพื่อชำระเงิน' : 'Scan to pay'}</span>` : '');
+        `<span class="hint">${pay ? (isTH ? 'สแกนเพื่อชำระเงิน' : 'Scan to pay')
+                                  : (isTH ? 'ยังไม่ต้องชำระตอนนี้' : 'No payment now')}</span>`;
     box.style.display = '';
 }
 
@@ -5162,9 +5184,16 @@ function updateHandoffAmount() {
     if (!t.ok) { box.style.display = 'none'; return; }
     const isTH = uiLang === 'th';
     const pay  = document.getElementById('detailTotal')?.dataset.pay === '1';
+    const svc = document.getElementById('detailTotal')?.dataset.svc === '1';
+    // `pay` was already computed here but only tinted the box — the words stayed
+    // "ยอดที่ต้องชำระ" for everything, so an application read as a bill.
+    const lab = pay ? (isTH ? 'ยอดที่ต้องชำระ' : 'Amount to pay')
+              : svc ? (isTH ? 'แพ็กเกจที่เลือก' : 'Selected plan')
+                    : (isTH ? 'รวม' : 'Total');
     box.innerHTML =
-        `<span class="lab">${isTH ? 'ยอดที่ต้องชำระ' : 'Amount to pay'}</span>` +
-        `<span class="amt">฿${t.sum.toLocaleString()}</span>`;
+        `<span class="lab">${lab}</span>` +
+        `<span class="amt">฿${t.sum.toLocaleString()}</span>` +
+        (pay ? '' : `<span class="nopay">${isTH ? 'ยังไม่ต้องชำระตอนนี้' : 'No payment now'}</span>`);
     box.classList.toggle('is-pay', pay);
     box.style.display = '';
 }
