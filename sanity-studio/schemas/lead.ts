@@ -143,6 +143,41 @@ export default defineType({
       type:   'string',
     }),
 
+    // ── เอกสารประกอบการสมัคร — ส่งจากมือถือหลัง lead เข้า ───────────────────
+    // ไฟล์ถูกเตรียมจากฝั่งมือถือแล้ว (บัตร ปชช. ปิดศาสนา/กรุ๊ปเลือด + ประทับข้อความ
+    // กำกับลงในภาพ) เจ้าหน้าที่ตรวจตรงนี้แล้วส่งค่าย · ลบทิ้งหลังติดตั้งเสร็จ (PDPA)
+    defineField({
+      group:  'contact',
+      name:   'documents',
+      title:  '📎 เอกสารประกอบการสมัคร',
+      type:   'array',
+      of: [{
+        type: 'object',
+        name: 'leadDocument',
+        fields: [
+          defineField({
+            name: 'kind', title: 'ประเภท', type: 'string',
+            options: { list: [
+              { title: 'บัตรประชาชน / พาสปอร์ต', value: 'id_card' },
+              { title: 'หนังสือรับรองบริษัท',     value: 'company_affidavit' },
+              { title: 'บัตร ปชช. กรรมการ',       value: 'director_id' },
+              { title: 'ภ.พ.20',                  value: 'vat_cert' },
+            ]},
+          }),
+          defineField({ name: 'image', title: 'รูป', type: 'image' }),
+          defineField({ name: 'file',  title: 'ไฟล์', type: 'file' }),
+          defineField({ name: 'uploadedAt', title: 'ส่งเมื่อ', type: 'datetime', readOnly: true }),
+        ],
+        preview: {
+          select: { kind: 'kind', at: 'uploadedAt', media: 'image' },
+          prepare({ kind, at, media }) {
+            const K: Record<string, string> = { id_card: 'บัตรประชาชน', company_affidavit: 'หนังสือรับรอง', director_id: 'บัตรกรรมการ', vat_cert: 'ภ.พ.20' }
+            return { title: K[kind] ?? kind ?? '(ไม่ระบุ)', subtitle: at ? String(at).slice(0, 16).replace('T', ' ') : '', media }
+          },
+        },
+      }],
+    }),
+
     defineField({
       group:       'contact',
       name:        'unitInterest',
