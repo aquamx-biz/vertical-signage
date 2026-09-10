@@ -1,19 +1,21 @@
 # Deploy Sanity Studio + schema
 #
-# Runs whenever sanity-studio/ changes on master, so a schema edit is live in
-# Studio (and visible to MCP tools via `schema deploy`) without anyone opening a
-# terminal. Same shape as rebuild.yml: Actions has the network the laptops and
-# remote sessions do not.
+# Runs whenever sanity-studio/ (or this file) changes on master, so a schema
+# edit is live in Studio without anyone opening a terminal. Mirrors rebuild.yml:
+# Actions has the network the laptops and remote sessions do not.
 #
 # Secret: SANITY_DEPLOY_TOKEN — a Sanity token with Editor (write) rights.
 # Falls back to SANITY_TOKEN if that one already has write scope.
+#
+# Errors are re-emitted as ::error:: annotations because the raw log lives on a
+# blob host some networks cannot reach; the annotation is readable via the API.
 
 name: Deploy Sanity Studio
 
 on:
   push:
     branches: [master]
-    paths: ['sanity-studio/**']
+    paths: ['sanity-studio/**', '.github/workflows/studio-deploy.yml']
   workflow_dispatch:
 
 concurrency:
@@ -32,7 +34,17 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: '20', cache: 'npm', cache-dependency-path: sanity-studio/package-lock.json }
       - run: npm ci --no-audit --no-fund
+      - name: Token present?
+        run: |
+          if [ -z "$SANITY_AUTH_TOKEN" ]; then echo "::error::SANITY_AUTH_TOKEN is empty — add repo secret SANITY_DEPLOY_TOKEN"; exit 1; fi
+          echo "token length ${#SANITY_AUTH_TOKEN}"
       - name: Schema deploy
-        run: npx sanity schema deploy
+        run: |
+          set +e; out=$(npx sanity schema deploy 2>&1); rc=$?
+          echo "$out"
+          if [ $rc -ne 0 ]; then echo "::error title=schema deploy::$(echo "$out" | tail -c 900 | tr '\n' ' ')"; exit $rc; fi
       - name: Studio deploy
-        run: npx sanity deploy
+        run: |
+          set +e; out=$(npx sanity deploy 2>&1); rc=$?
+          echo "$out"
+          if [ $rc -ne 0 ]; then echo "::error title=studio deploy::$(echo "$out" | tail -c 900 | tr '\n' ' ')"; exit $rc; fi
