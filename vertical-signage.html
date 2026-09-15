@@ -1578,6 +1578,10 @@ body {
 .qty-hint::after { content: ''; position: absolute; right: 2.6vh; top: -0.7vh; border: 0.7vh solid transparent; border-top: 0; border-bottom-color: #F5A64B; }
 @keyframes qtyHintNudge { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-0.5vh) } }
 .detail-body.picked .qty-hint { display: none; }
+/* empty-cart nudge: the ＋ control and the cart button flash for a second */
+.detail-qty.nudge { animation: qtyNudge 0.5s ease-in-out 2; border-color: var(--dot-cyan); }
+@keyframes qtyNudge { 0%,100% { transform: scale(1) } 50% { transform: scale(1.12) } }
+.detail-vm.nudge { animation: qtyNudge 0.5s ease-in-out 2; }
 .detail-mit.hinted { margin-bottom: 2.4vh; }
 .detail-qty.has b { color: var(--dot-cyan); }
 /* maxQty=1 (rooms, one-per-customer promos) → single select toggle */
@@ -4750,7 +4754,26 @@ detailOverlay.addEventListener('click', function (e) {
 
 /* "View on mobile" → reveal QR + phone handoff (vertical-signage flow) */
 const detailVm = document.getElementById('detailVm');
-if (detailVm) detailVm.addEventListener('click', showHandoff);
+if (detailVm) detailVm.addEventListener('click', function () {
+    // An empty cart has nothing to hand off — the QR would carry no items and
+    // the phone would open a blank order. Nudge the person to the ＋ instead.
+    if (handoffCtx.ctaType === 'order' && !PROP_CTA(handoffCtx.category)) {
+        const qtys  = Array.from(document.querySelectorAll('#detailDyn .detail-qty'));
+        const total = qtys.reduce((n, q) => n + (parseInt(q.querySelector('b')?.textContent, 10) || 0), 0);
+        if (qtys.length && total === 0) {
+            const isTH = uiLang === 'th';
+            document.getElementById('detailDyn')?.closest('.detail-body')?.classList.remove('picked');   // 👆 hint back
+            qtys[0].classList.add('nudge'); setTimeout(() => qtys[0].classList.remove('nudge'), 1000);
+            const was = detailVm.textContent;
+            detailVm.textContent = isTH ? '👆 กด ＋ เลือกจำนวนก่อน' : '👆 Tap ＋ to choose a quantity first';
+            detailVm.classList.add('nudge');
+            setTimeout(() => { detailVm.textContent = was; detailVm.classList.remove('nudge'); }, 1800);
+            resetIdle();
+            return;
+        }
+    }
+    showHandoff();
+});
 
 /* ── QR encoder (byte mode, versions 1–40, ECC L/M/Q/H) ────────────────────
    The QR image used to come from api.qrserver.com. That put a third party in
