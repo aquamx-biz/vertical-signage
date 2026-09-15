@@ -219,6 +219,35 @@ export default defineType({
       description: 'ติ๊ก = ลูกค้าจ่ายเงินได้ทันทีหลังสั่งซื้อในมือถือ (พร้อมเพย์ / แอปธนาคาร / บัตร) เงินเข้าบัญชี Beam ของ aquamx แล้วเราโอนให้ร้านตามข้อตกลง · ไม่ติ๊ก = ร้านโทรยืนยันและเก็บเงินเอง · ใช้ได้กับ offer ที่มีราคาในรายการสั่งซื้อเท่านั้น',
     }),
 
+    // ── Where the customer's money lands. agency (default) = aquamx's Beam
+    // account, aquamx settles with the shop per payout round. bridge = the
+    // shop's own Beam Bridge sub-merchant, paid directly by Beam; needs the
+    // merchant id Beam issued after the shop's KYC. Read per order by
+    // aquamx-handoff /api/beam/charge — orders keep the mode they were paid in.
+    defineField({
+      name: 'paymentMode',
+      title: '🏦 เงินเข้าที่ · Payment mode',
+      type: 'string',
+      options: { list: [
+        { title: 'Agency · เข้าบัญชี Beam ของ aquamx แล้ว aquamx โอนให้ร้านตามรอบ', value: 'agency' },
+        { title: 'Bridge · เข้าบัญชี Beam ของร้านโดยตรง (ร้านผ่าน KYC กับ Beam แล้ว)',  value: 'bridge' },
+      ], layout: 'radio' },
+      initialValue: 'agency',
+      description: 'เปลี่ยนเป็น Bridge ได้เมื่อร้านได้ merchant id จาก Beam แล้วเท่านั้น · ออเดอร์ที่จ่ายไปแล้วไม่เปลี่ยนตาม',
+      hidden: ({ document }) => document?.onlinePayment !== true,
+    }),
+    defineField({
+      name: 'beamMerchantId',
+      title: 'Beam merchant id ของร้าน',
+      type: 'string',
+      description: 'จาก Beam หลังร้านผ่าน KYC (รูปแบบ xxxx-xxxxxx) · ต้องกรอกก่อนสลับเป็น Bridge',
+      hidden: ({ document }) => document?.onlinePayment !== true || document?.paymentMode !== 'bridge',
+      validation: r => r.custom((v, ctx) => {
+        const d = ctx.document as { paymentMode?: string } | undefined
+        return d?.paymentMode === 'bridge' && !v ? 'โหมด Bridge ต้องมี merchant id' : true
+      }),
+    }),
+
     // ── Delivery fee charged to the customer on top of the cart. One flat
     // figure per shop (what the shop actually pays a rider is its own business).
     // 0 / empty = no delivery line. Shown in the phone cart total and sent to
