@@ -1811,6 +1811,11 @@ body {
 }
 .qr-wrap img { width: 9vh; height: 9vh; display: block; }   /* ≈27% of popup width, like the design */
 .qr-url { font-size: 1.0vh; color: rgba(255,255,255,0.8); word-break: break-all; text-align: left; margin-top: 0.5vh; }
+/* QR flips to a check once the phone opened the link (scanWatch) */
+.qr-wrap { position: relative; }
+.qr-wrap.scanned img { filter: blur(2px) brightness(0.55); }
+.qr-wrap.scanned::after { content: '✓'; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 9vh; font-weight: 800; color: #fff; text-shadow: 0 0.3vh 1.2vh rgba(0,0,0,0.6); }
 .handoff-unit-ref {
     background: rgba(109,213,232,0.12); border: 0.15vh solid rgba(109,213,232,0.32);
     border-radius: 1.2vh; padding: 1vh 1.6vh; margin-top: 1vh;
@@ -2134,6 +2139,10 @@ const CONFIG = {
     IDLE_PAYMENT_BACKSTOP_MS:  600000,   // only fires if a payment flag got stuck
     HANDOFF_BASE: 'https://app.aquamx.biz/m',
     LEAD_API:     'https://app.aquamx.biz/api/lead',
+    SCAN_API:     'https://app.aquamx.biz/api/scan',   // "was this QR's link opened?" (see scanWatch)
+    SCAN_POLL_MS:        2500,   // while the QR is on screen
+    SCAN_WATCH_MAX_MS: 180000,   // give up polling after 3 min (idle return fires first anyway)
+    SCAN_DONE_CLOSE_MS: 10000,   // "✓ สแกนแล้ว" stays this long, then back to the attract loop
     // Property picks go CHAT-FIRST: the QR opens LINE Login (bot_prompt adds
     // the OA in the same flow) and the server creates the leads + pushes the
     // booking cards into the customer's 1:1 — no form on the phone at all.
@@ -4437,6 +4446,9 @@ function buildDetailDyn(ctx){
     }
     if (t==='order'){
         const items = ctx.orderItems||[], ful = ctx.fulfillment||[];
+        // An item without its own photo shows the offer's photo — a blank grey
+        // square next to "THB 265" reads as a broken screen, not as "no photo".
+        const fbImg = ctx.img || (Array.isArray(ctx.images) && ctx.images[0]) || '';
         // A property board is an enquiry list, not a shopping cart — "สั่ง/Order"
         // reads as "buy now" to a passer-by. The mechanic is unchanged; only the
         // words follow what the thing IS (category), so food stays food.
@@ -4448,7 +4460,7 @@ function buildDetailDyn(ctx){
                    // ไม่มีปุ่ม/ตัวนับ → หลุดจากการนับ selection เอง · เทา + ป้ายชัดว่าปิดแล้ว
                    if (m.sold) {
                        const soldLbl = isTH ? 'ปิดดีลแล้ว' : (ctx.category === 'forSale' ? 'Sold' : 'Rented');
-                       return `<div class="detail-mit sold"><span class="th"${m.image?` style="background-image:url('${m.image}')"`:''}></span><span class="nm">${nm(m)}</span><span class="pr">${m.price?esc(m.price):''}</span><span class="detail-sold">${soldLbl}</span></div>`;
+                       return `<div class="detail-mit sold"><span class="th"${(m.image||fbImg)?` style="background-image:url('${m.image||fbImg}')"`:''}></span><span class="nm">${nm(m)}</span><span class="pr">${m.price?esc(m.price):''}</span><span class="detail-sold">${soldLbl}</span></div>`;
                    }
                    // key = stable id riding the QR (unit refCode / Sanity _key);
                    // maxQty = per-item order cap (rooms = 1 → renders as a toggle)
@@ -4466,7 +4478,7 @@ function buildDetailDyn(ctx){
                    const ctrl = max === 1
                      ? `<span class="detail-qty pick"${thb}${uMode} data-key="${key}" data-max="1" data-prop="${isProp?1:0}"><b style="display:none">0</b><span class="q-tog">${PICK_LABEL(isProp, false, isTH)}</span></span>`
                      : `<span class="detail-qty"${thb} data-key="${key}" data-max="${max}"><span class="q-dec">−</span><b>0</b><span class="q-inc">＋</span></span>`;
-                   return `<div class="detail-mit"><span class="th"${m.image?` style="background-image:url('${m.image}')"`:''}></span><span class="nm">${nm(m)}</span><span class="pr">${m.price?esc(m.price):''}</span>${ctrl}</div>`;
+                   return `<div class="detail-mit"><span class="th"${(m.image||fbImg)?` style="background-image:url('${m.image||fbImg}')"`:''}></span><span class="nm">${nm(m)}</span><span class="pr">${m.price?esc(m.price):''}</span>${ctrl}</div>`;
                }).join('')
                              : `<div class="detail-mit"><span class="th"></span><span class="nm">${isTH?'เพิ่มสินค้า…':'Add a product…'}</span><span class="pr"></span></div>`)
              // Total lives here so it can be updated in place on every tap.
@@ -4683,6 +4695,7 @@ function _endDetail(reason) {
 }
 function closeDetail() {
     _endDetail();
+    scanWatch.stop();              // QR gone → stop asking whether it was scanned
     detailOverlay.classList.remove('open');
     // Belt-and-braces: force the overlay out of the compositor after the fade,
     // even if a quirky WebView mishandles the delayed CSS visibility transition.
@@ -4959,11 +4972,14 @@ function showHandoff() {
     let deepLink;
     const intentQ = buildIntentQuery(handoffCtx.ctaType);   // the kiosk pick rides along
     const isPropHandoff = handoffCtx.category === 'rent' || handoffCtx.category === 'sale';
-    if (handoffCtx.offerSlug)         deepLink = `${CONFIG.HANDOFF_BASE}/o/${handoffCtx.offerSlug}${intentQ}`;
+    // One short token per QR shown: the phone page POSTs it to SCAN_API on
+    // open, the kiosk polls it (scanWatch) and flips the QR to "✓ สแกนแล้ว".
+    const scanTok = scanWatch.token();
+    if (handoffCtx.offerSlug)         deepLink = `${CONFIG.HANDOFF_BASE}/o/${handoffCtx.offerSlug}${intentQ}${intentQ ? '&' : '?'}s=${scanTok}`;
     // ?p= carries the screen that produced the QR. The offer link already has it
     // (buildIntentQuery); without it here a provider scan lands with no idea which
     // building it came from, and the scan counter can't attribute it.
-    else if (handoffCtx.providerSlug) deepLink = `${CONFIG.HANDOFF_BASE}/p/${handoffCtx.providerSlug}?p=${encodeURIComponent(window.__BAKED__?.projectCode || '')}`;
+    else if (handoffCtx.providerSlug) deepLink = `${CONFIG.HANDOFF_BASE}/p/${handoffCtx.providerSlug}?p=${encodeURIComponent(window.__BAKED__?.projectCode || '')}&s=${scanTok}`;
     else                              deepLink = `${CONFIG.HANDOFF_BASE}`;
     // Property chat-first override (see CONFIG.LINE_ENTRY). The /m page above
     // stays the target for offers/providers, and remains the fallback when
@@ -5008,6 +5024,7 @@ function showHandoff() {
         }
     }
     setTxt('qrUrl', deepLink);
+    scanWatch.start(scanTok, isTH);
 
     // Carry the amount onto this page — step 1's total is hidden here.
     updateHandoffAmount();
@@ -5224,7 +5241,44 @@ function updateHandoffAmount() {
 /* Handoff back → return to the offer detail (step 1) */
 const detailBack = document.getElementById('detailBack');
 if (detailBack) detailBack.addEventListener('click', hideHandoff);
+/* ── "✓ สแกนแล้ว": poll SCAN_API for the token on the QR; on open, mark the
+   QR, tell the person to carry on by phone, and return to the attract loop
+   shortly after so the next person never meets this cart. Never blocks a
+   second scan — the token only says "someone opened it". */
+const scanWatch = (function () {
+    let timer = null, tok = null, startedAt = 0, closeTimer = null;
+    const stop = () => { clearInterval(timer); timer = null; clearTimeout(closeTimer); closeTimer = null; tok = null;
+                         document.querySelector('.qr-wrap')?.classList.remove('scanned'); };
+    const token = () => (Date.now().toString(36) + Math.random().toString(36).slice(2, 8)).replace(/[^a-z0-9]/gi, '').slice(0, 16);
+    const start = (t, isTH) => {
+        stop(); tok = t; startedAt = Date.now();
+        if (!CONFIG.SCAN_API) return;
+        timer = setInterval(async () => {
+            if (!tok) return;
+            if (Date.now() - startedAt > CONFIG.SCAN_WATCH_MAX_MS) { stop(); return; }
+            const hs = document.getElementById('handoffStep');
+            if (!hs || hs.style.display === 'none') { stop(); return; }   // QR no longer on screen
+            try {
+                const r = await fetch(`${CONFIG.SCAN_API}?s=${encodeURIComponent(tok)}&_=${Date.now()}`, { cache: 'no-store' });
+                const j = r.ok ? await r.json() : null;
+                if (j && j.opened) {
+                    clearInterval(timer); timer = null;
+                    document.querySelector('.qr-wrap')?.classList.add('scanned');
+                    const sub = document.getElementById('handoffSubheading');
+                    if (sub) sub.textContent = isTH
+                        ? 'สแกนแล้ว — ทำรายการต่อบนมือถือได้เลย หน้าจอจะกลับหน้าหลักใน 10 วินาที'
+                        : 'Scanned — carry on by phone. This screen returns to the start in 10 seconds';
+                    uStep('scanned');
+                    closeTimer = setTimeout(() => { stop(); returnToMain(); }, CONFIG.SCAN_DONE_CLOSE_MS);
+                }
+            } catch (e) { /* offline kiosk: just keep the QR up */ }
+        }, CONFIG.SCAN_POLL_MS);
+    };
+    return { token, start, stop };
+})();
+
 function hideHandoff() {
+    scanWatch.stop();
     const hs = document.getElementById('handoffStep'); if (hs) hs.style.display = 'none';
     const foot = document.getElementById('detailFoot'); if (foot) foot.style.display = '';
     const back = document.getElementById('detailBack'); if (back) back.style.display = 'none';
