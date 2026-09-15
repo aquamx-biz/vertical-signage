@@ -1567,6 +1567,18 @@ body {
 .detail-qty .q-dec:active, .detail-qty .q-inc:active { background: rgba(255,255,255,0.18); }
 /* item in the cart → the row's qty pill lights up */
 .detail-qty.has { border-color: var(--dot-cyan); background: rgba(109,213,232,0.12); }
+/* First-touch hint: a hand pointing at the ＋ of the first order row, with the
+   words "กด + ใส่จำนวน", until any quantity is picked. Draws the eye to the one
+   thing the person must do — without it people stared at the price and left. */
+.detail-mit { position: relative; }
+.qty-hint { position: absolute; right: 0; bottom: -2.6vh; display: inline-flex; align-items: center; gap: 0.5vh; font-size: 1.35vh; font-weight: 700;
+  color: #0b1b33; background: #F5A64B; border-radius: 1.2vh; padding: 0.35vh 1vh; pointer-events: none; white-space: nowrap; z-index: 2;
+  animation: qtyHintNudge 1.1s ease-in-out infinite; }
+.qty-hint::before { content: '👆'; font-size: 1.8vh; }
+.qty-hint::after { content: ''; position: absolute; right: 2.6vh; top: -0.7vh; border: 0.7vh solid transparent; border-top: 0; border-bottom-color: #F5A64B; }
+@keyframes qtyHintNudge { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-0.5vh) } }
+.detail-body.picked .qty-hint { display: none; }
+.detail-mit.hinted { margin-bottom: 2.4vh; }
 .detail-qty.has b { color: var(--dot-cyan); }
 /* maxQty=1 (rooms, one-per-customer promos) → single select toggle */
 .detail-qty .q-tog {
@@ -4299,6 +4311,10 @@ function mobileVerbLabel(ctaType, category, payOnline) {
     // the money question is settled later by the provider, not on this screen.
     if (ctaType === 'order' && payOnline !== true && category === 'services')
         return uiLang === 'th' ? 'สมัคร บนมือถือ' : 'Apply on mobile';
+    // A paid order was already picked on THIS screen — "สั่ง บนมือถือ" made people
+    // ask why they couldn't just order here. It continues on the phone.
+    if (ctaType === 'order')
+        return uiLang === 'th' ? 'สั่งต่อบนมือถือ' : 'Continue your order on your phone';
     const v = MOBILE_VERB[ctaType];
     const verb = v ? (uiLang === 'th' ? v.th : v.en) : (uiLang === 'th' ? 'ดู' : 'View');
     return verb + (uiLang === 'th' ? ' บนมือถือ' : ' on mobile');
@@ -4478,7 +4494,9 @@ function buildDetailDyn(ctx){
                    const ctrl = max === 1
                      ? `<span class="detail-qty pick"${thb}${uMode} data-key="${key}" data-max="1" data-prop="${isProp?1:0}"><b style="display:none">0</b><span class="q-tog">${PICK_LABEL(isProp, false, isTH)}</span></span>`
                      : `<span class="detail-qty"${thb} data-key="${key}" data-max="${max}"><span class="q-dec">−</span><b>0</b><span class="q-inc">＋</span></span>`;
-                   return `<div class="detail-mit"><span class="th"${(m.image||fbImg)?` style="background-image:url('${m.image||fbImg}')"`:''}></span><span class="nm">${nm(m)}</span><span class="pr">${m.price?esc(m.price):''}</span>${ctrl}</div>`;
+                   // the hint rides the first pickable row only (max>1 → has a ＋; toggles say "เลือก" already)
+                   const hint = (i === 0 && max > 1 && !isProp) ? `<span class="qty-hint">${isTH ? 'กด ＋ ใส่จำนวน' : 'Tap ＋ to add'}</span>` : '';
+                   return `<div class="detail-mit${hint ? ' hinted' : ''}"><span class="th"${(m.image||fbImg)?` style="background-image:url('${m.image||fbImg}')"`:''}></span><span class="nm">${nm(m)}</span><span class="pr">${m.price?esc(m.price):''}</span>${ctrl}${hint}</div>`;
                }).join('')
                              : `<div class="detail-mit"><span class="th"></span><span class="nm">${isTH?'เพิ่มสินค้า…':'Add a product…'}</span><span class="pr"></span></div>`)
              // Total lives here so it can be updated in place on every tap.
@@ -4631,6 +4649,7 @@ function openDetail(ctx) {
     // Per-CTA body (menu / order / book / event / store tags / contact + promo).
     const dyn = document.getElementById('detailDyn');
     if (dyn) dyn.innerHTML = ctx.isUpdate ? '' : buildDetailDyn(ctx);
+    dyn?.closest('.detail-body')?.classList.remove('picked');   // fresh popup → the 👆 hint shows again
     if (ctx.ctaType === 'book') updateSlotAvail();   // grey out slots the cutoff forbids
 
     const hs = document.getElementById('handoffStep');
@@ -5142,6 +5161,7 @@ detailOverlay.addEventListener('click', function (e) {
     const qty = btn.closest('.detail-qty');
     const b = qty && qty.querySelector('b');
     if (!b) return;
+    qty.closest('.detail-body')?.classList.add('picked');           // first tap → the 👆 hint goes away
     const max = Math.max(1, parseInt(qty.dataset.max, 10) || 99);   // per-item order cap
     let n = parseInt(b.textContent, 10) || 0;
     if (btn.classList.contains('q-tog')) {
