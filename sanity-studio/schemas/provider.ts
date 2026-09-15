@@ -206,6 +206,31 @@ export default defineType({
       initialValue: 'manual',
       description: 'มีผลเมื่อกรอก LINE ID ช่องบนแล้วเท่านั้น',
     }),
+    // ── Online payment (Beam Checkout) — the ONLY switch. Ticked = the order
+    // success card on the phone shows "ชำระเงินตอนนี้" and takes PromptPay /
+    // mobile banking / card via aquamx's Beam account (aquamx acts as the shop's
+    // sales agent and settles with the shop). Read by aquamx-handoff
+    // /api/beam/charge as provider->onlinePayment — no env list, no redeploy.
+    defineField({
+      name: 'onlinePayment',
+      title: '💳 รับชำระเงินออนไลน์ (Beam) · Online payment',
+      type: 'boolean',
+      initialValue: false,
+      description: 'ติ๊ก = ลูกค้าจ่ายเงินได้ทันทีหลังสั่งซื้อในมือถือ (พร้อมเพย์ / แอปธนาคาร / บัตร) เงินเข้าบัญชี Beam ของ aquamx แล้วเราโอนให้ร้านตามข้อตกลง · ไม่ติ๊ก = ร้านโทรยืนยันและเก็บเงินเอง · ใช้ได้กับ offer ที่มีราคาในรายการสั่งซื้อเท่านั้น',
+    }),
+
+    // ── Delivery fee charged to the customer on top of the cart. One flat
+    // figure per shop (what the shop actually pays a rider is its own business).
+    // 0 / empty = no delivery line. Shown in the phone cart total and sent to
+    // Beam as its own "ค่าจัดส่ง" order line; never applied to property/plans.
+    defineField({
+      name: 'deliveryFee',
+      title: '🛵 ค่าจัดส่งที่เก็บลูกค้า (บาท) · Delivery fee',
+      type: 'number',
+      validation: r => r.min(0).max(2000).precision(2),
+      description: 'เก็บเพิ่มจากยอดสินค้าทุกออเดอร์ที่สั่งผ่านจอ (เช่น 48) · เว้นว่างหรือ 0 = ไม่คิดค่าส่ง (ส่งฟรี/รวมในราคา/รับที่ล็อบบี้) · ใช้กับร้านค้าเท่านั้น ไม่มีผลกับห้องเช่า/แพ็กเกจ',
+      hidden: ({ document }) => document?.providerType !== 'shop',
+    }),
 
     defineField({ name: 'website', title: 'Website · เว็บไซต์',  type: 'url',    components: { input: createRetrieveFromPartyInput('website') },
       description: 'ไม่ขึ้นบนจอ — ลิงก์บนหน้าร้านในมือถือหลังสแกน. Not shown on the kiosk.',
