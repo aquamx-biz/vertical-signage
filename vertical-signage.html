@@ -1822,6 +1822,13 @@ body {
 }
 .or-divider::before, .or-divider::after { content: ''; flex: 1; height: 0.1vh; background: rgba(255,255,255,0.18); }
 .phone-label { font-size: 1.35vh; color: rgba(255,255,255,0.68); text-align: center; margin-bottom: 1vh; }
+.phone-reveal {
+    display: block; width: 100%; margin-top: 1.4vh; padding: 1.1vh;
+    background: transparent; border: 0.15vh solid rgba(255,255,255,0.18); border-radius: 1.2vh;
+    color: rgba(255,255,255,0.62); font-size: 1.35vh; font-weight: 500;
+    font-family: 'Prompt', 'IBM Plex Sans Thai', sans-serif; cursor: pointer; touch-action: manipulation;
+}
+.phone-reveal:active { background: rgba(255,255,255,0.06); }
 .phone-row { display: flex; gap: 0.9vh; align-items: center; }
 .phone-prefix {
     background: rgba(255,255,255,0.08); border: 0.15vh solid rgba(255,255,255,0.2);
@@ -2039,6 +2046,11 @@ html.lite .bottombar-track { transform: none !important; }
                         </div>
                     </div>
                     <div class="handoff-unit-ref" id="handoffUnitRef" style="display:none;"></div>
+                    <!-- Phone is the fallback, not a second door: collapsed behind one
+                         quiet line so the QR owns the card. Tap → the field appears.
+                         Providers set to handoff "sms" (phone-only) get the field
+                         straight away, as before. -->
+                    <button class="phone-reveal" id="phoneReveal" type="button"></button>
                     <div class="or-divider">or</div>
                     <div class="phone-label" id="handoffPhoneLabel"></div>
                     <div class="phone-row">
@@ -4976,8 +4988,9 @@ function showHandoff() {
         ? (isTH ? 'สแกนเพื่อนัดชม — ฟรีทุกขั้น · เช่า/ซื้อสำเร็จผ่านระบบ รับ voucher ฿200'
                 : 'Scan to book a viewing — free · close the deal via aquamx and get a ฿200 voucher')
         : (isTH ? 'สแกนคิวอาร์โค้ดด้วยโทรศัพท์ของท่านเพื่อดำเนินการต่อ' : 'Scan the QR code with your phone to continue'));
-    setTxt('handoffPhoneLabel', isTH ? 'กรอกเบอร์โทรเพื่อให้ติดต่อกลับ' : 'Enter your phone number to be contacted');
-    setTxt('sendLinkBtn',       isTH ? 'ส่งเบอร์โทร' : 'Submit Number');
+    setTxt('handoffPhoneLabel', isTH ? 'กรอกเบอร์โทร ร้านจะโทรกลับรับออเดอร์' : 'Enter your number — the shop will call you back');
+    setTxt('sendLinkBtn',       isTH ? 'ให้ร้านโทรกลับ' : 'Have the shop call me');
+    setTxt('phoneReveal',       isTH ? 'ไม่สะดวกสแกน? ให้ร้านโทรกลับ' : "Can't scan? Have the shop call you");
     setTxt('sendConfirmOk',     isTH ? 'ตกลง' : 'OK');
     setTxt('phoneConfirmLabel', isTH ? 'ยืนยันเบอร์โทรศัพท์ของท่าน' : 'Confirm your phone number');
     setTxt('phoneConfirmYes',   isTH ? '✓ ยืนยัน' : '✓ Confirm');
@@ -5004,15 +5017,25 @@ function showHandoff() {
     const show = (sel, on) => { const el = document.querySelector(sel); if (el) el.style.display = on ? '' : 'none'; };
     const showQR    = ht !== 'sms';
     const showPhone = ht !== 'qr';
+    // B (pilot): with a QR on the card the phone path starts collapsed — one
+    // quiet "can't scan?" line; a tap opens the field. Phone-only handoff
+    // shows the field at once.
+    const collapsed = showQR && showPhone;
+    const setPhoneOpen = (open) => {
+        show('.or-divider', showQR && showPhone && open);
+        show('#handoffPhoneLabel', showPhone && open);
+        show('.phone-row', showPhone && open);
+        show('#sendLinkBtn', showPhone && open);
+        show('#phoneReveal', showPhone && !open);
+        // QR+phone together share the card → CSS shrinks the QR; collapsed = QR full size
+        document.querySelector('.detail-card')?.classList.toggle('handoff-both', showQR && showPhone && open);
+    };
     show('.qr-wrap', showQR);
     show('#qrUrl', showQR);
     show('#handoffSubheading', showQR);
-    show('.or-divider', showQR && showPhone);
-    show('#handoffPhoneLabel', showPhone);
-    show('.phone-row', showPhone);
-    show('#sendLinkBtn', showPhone);
-    // QR+phone together share the card → CSS shrinks the QR so nothing scrolls
-    document.querySelector('.detail-card')?.classList.toggle('handoff-both', showQR && showPhone);
+    setPhoneOpen(!collapsed);
+    const reveal = document.getElementById('phoneReveal');
+    if (reveal) reveal.onclick = () => { setPhoneOpen(true); document.getElementById('phoneInput')?.focus(); resetIdle(); };
 
     const unitRefEl = document.getElementById('handoffUnitRef');
     if (unitRefEl) {
@@ -5029,7 +5052,7 @@ function showHandoff() {
     // the old unconditional '' overrode the handoffType rule above and produced
     // a "ส่งเบอร์โทร" button with no phone field on qr-only providers.
     const slb = document.getElementById('sendLinkBtn');
-    if (slb) slb.style.display = showPhone ? '' : 'none';
+    if (slb) slb.style.display = (showPhone && !collapsed) ? '' : 'none';
 
     const foot = document.getElementById('detailFoot'); if (foot) foot.style.display = 'none';
     const back = document.getElementById('detailBack'); if (back) back.style.display = 'flex';
