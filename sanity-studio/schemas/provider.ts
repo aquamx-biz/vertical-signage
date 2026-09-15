@@ -261,6 +261,27 @@ export default defineType({
       hidden: ({ document }) => document?.providerType !== 'shop',
     }),
 
+    // ── VAT status of the shop. The shop is the seller (its tax invoice, not
+    // ours), so this only decides (1) whether the kiosk cart adds a 7% line on
+    // top of the listed prices and (2) that aquamx's commission is taken on the
+    // price BEFORE the shop's VAT. Read by /api/beam/charge and the cart.
+    defineField({
+      name: 'vatRegistered',
+      title: '🧾 ร้านจดทะเบียน VAT · VAT registered',
+      type: 'boolean',
+      initialValue: false,
+      description: 'ร้านที่ไม่จด VAT (ร้านเล็ก/homemade) ปล่อยว่าง — ยอดที่ลูกค้าจ่ายไม่มี VAT และการ์ดจะระบุ "ไม่มี VAT"',
+      hidden: ({ document }) => document?.providerType !== 'shop',
+    }),
+    defineField({
+      name: 'pricesIncludeVat',
+      title: 'ราคาที่ตั้งไว้รวม VAT 7% แล้ว · Prices include VAT',
+      type: 'boolean',
+      initialValue: true,
+      description: 'ติ๊ก (ปกติร้านอาหาร/ค้าปลีก) = เก็บลูกค้าตามราคาที่ตั้ง การ์ดระบุ "รวม VAT" · ไม่ติ๊ก = ตะกร้าบวก VAT 7% เป็นบรรทัดแยกก่อนชำระ · ค่าคอม aquamx คิดจากราคาก่อน VAT เสมอ',
+      hidden: ({ document }) => document?.providerType !== 'shop' || document?.vatRegistered !== true,
+    }),
+
     // ── Which commission plan applies to this shop's paid kiosk orders in
     // agency mode (รับแทน). Plans are ratecard documents of kind=commission
     // (Studio → Digital Signage → Commission Plans). Blank = the plan ticked
