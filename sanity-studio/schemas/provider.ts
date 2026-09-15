@@ -261,17 +261,18 @@ export default defineType({
       hidden: ({ document }) => document?.providerType !== 'shop',
     }),
 
-    // ── aquamx's cut of the GOODS on agency-mode orders (รับแทน). The delivery
-    // fee above is the shop's in full and is never commissioned. 0 / empty =
-    // no deduction (pilot, until the agency agreement fixes a rate). Read by
-    // aquamx-handoff lib/order-flow payoutPlan() — the "รับเงิน" row on the
-    // shop's card and the payout button in the notify group use it.
+    // ── Which commission plan applies to this shop's paid kiosk orders in
+    // agency mode (รับแทน). Plans are ratecard documents of kind=commission
+    // (Studio → Digital Signage → Commission Plans). Blank = the plan ticked
+    // "default". The rate is stamped on each order at payment time by
+    // aquamx-handoff /api/beam/charge, so changing this never touches paid orders.
     defineField({
-      name: 'commissionPct',
-      title: '💼 ค่าบริการ aquamx (% ของยอดสินค้า) · Commission',
-      type: 'number',
-      validation: r => r.min(0).max(100).precision(2),
-      description: 'หักจากยอดสินค้า (ไม่รวมค่าจัดส่ง) ก่อนโอนให้ร้านในโหมด "รับแทน" · เว้นว่างหรือ 0 = ไม่หัก · ไม่มีผลกับโหมด "เข้าตรง" (Beam โอนให้ร้านเอง)',
+      name: 'commissionPlan',
+      title: '💼 แผนค่าคอม aquamx · Commission plan',
+      type: 'reference',
+      to: [{ type: 'ratecard' }],
+      options: { filter: '_type == "ratecard" && kind == "commission"', disableNew: true },
+      description: 'เว้นว่าง = ใช้แผนมาตรฐาน (แผนที่ติ๊ก ⭐) · ร้านที่มีดีลพิเศษ: สร้างแผนใหม่ใน Commission Plans แล้วเลือกที่นี่ · ไม่มีผลกับโหมด "เข้าตรง"',
       hidden: ({ document }) => document?.providerType !== 'shop' || document?.onlinePayment !== true,
     }),
 

@@ -337,6 +337,17 @@ export default defineConfig([{
                   .documentId('ratecard-sme')
                   .title('Rate Card — SME')
               ),
+            // Shop commission plans live in the same ratecard type (kind =
+            // commission); "+" here pre-sets that kind via the template below.
+            can('ratecard') && S.listItem()
+              .title('Commission Plans (ค่าคอมร้านค้า)')
+              .id('commission-plans')
+              .child(
+                S.documentTypeList('ratecard')
+                  .title('แผนค่าคอมร้านค้า')
+                  .filter('_type == "ratecard" && kind == "commission"')
+                  .initialValueTemplates([S.initialValueTemplateItem('ratecard-commission')])
+              ),
           ]),
 
           // ── Market Intelligence ────────────────────────────────────────────
@@ -448,6 +459,15 @@ export default defineConfig([{
   // pre-fills the project reference on the new playlist item.
   templates: (prev: any[]) => [
     ...prev,
+    {
+      id:         'ratecard-commission',
+      title:      'แผนค่าคอมร้านค้า',
+      schemaType: 'ratecard',
+      value: () => ({
+        kind: 'commission', basis: 'monthly', feeExcluded: true, vatIncluded: true, isDefault: false,
+        commissionTiers: [{ _type: 'commissionTier', _key: 'base', from: 0, pct: 0 }],
+      }),
+    },
     {
       id:         'playlistItem-by-project',
       title:      'Playlist Item',

@@ -1,8 +1,18 @@
 import { defineField, defineType } from 'sanity'
 import { RatecardLiveNote } from '../components/RatecardLiveNote'
 
-// Singleton — _id is always "ratecard-sme".
-// Drives the public pricing table at aquamx.biz/ratecard-sme.
+// TWO kinds of document share this type (kind field):
+//   • website    — the singleton "ratecard-sme": the public SME pricing table
+//                  at aquamx.biz/ratecard-sme (rows/tiers below).
+//   • commission — a shop commission plan (ค่าคอมร้านค้า): what aquamx keeps
+//                  from each paid kiosk order in agency mode (รับแทน). Several
+//                  plans may exist; one is ticked "default" and applies to
+//                  every shop that doesn't point at a plan of its own
+//                  (provider.commissionPlan). Read by aquamx-handoff
+//                  /api/beam/charge, which stamps the rate on the order at
+//                  payment time — editing a plan never changes paid orders.
+//
+// Website kind — drives the public pricing table at aquamx.biz/ratecard-sme.
 // The landing site does NOT read this at runtime; a Netlify build step
 // (aquamx-landing/scripts/build-ratecard.js) bakes these values into the
 // static HTML on deploy. Publish here → (webhook) → Netlify rebuild → live.
@@ -33,6 +43,20 @@ export default defineType({
   title: 'Rate Card',
   type: 'document',
   fields: [
+    defineField({
+      name: 'kind',
+      title: 'ชนิด · Kind',
+      type: 'string',
+      options: { list: [
+        { title: '🌐 Website rate card (ตารางราคาแพ็กเกจบนเว็บ)', value: 'website' },
+        { title: '💼 แผนค่าคอมร้านค้า (Commission plan)',        value: 'commission' },
+      ], layout: 'radio' },
+      initialValue: 'website',
+      readOnly: ({ document }) => !!(document as any)?._createdAt,   // pick once when creating
+      description: 'ตั้งได้ตอนสร้างเท่านั้น · เอกสาร ratecard-sme เดิม = Website',
+    }),
+
+    // ── Website kind ────────────────────────────────────────────────────────
     // Read-only banner: shows which public page this drives (hardcoded URL).
     defineField({
       name: 'liveNote',
@@ -40,6 +64,7 @@ export default defineType({
       type: 'string',
       readOnly: true,
       components: { field: RatecardLiveNote },
+      hidden: ({ document }) => document?.kind === 'commission',
     }),
     defineField({
       name: 'title',
@@ -48,6 +73,93 @@ export default defineType({
       initialValue: 'Rate Card — SME',
       readOnly: true,
       description: 'Internal label only — not shown on the website.',
+      hidden: ({ document }) => document?.kind === 'commission',
+    }),
+
+    // ── Commission kind ─────────────────────────────────────────────────────
+    defineField({
+      name: 'planName',
+      title: 'ชื่อแผน · Plan name',
+      type: 'string',
+      description: 'เช่น "มาตรฐานร้านค้า 2569", "Jamm pilot" — ขึ้นบนการ์ดใน LINE notify และในออเดอร์',
+      hidden: ({ document }) => document?.kind !== 'commission',
+      validation: r => r.custom((v, ctx) => ((ctx.document as any)?.kind === 'commission' && !v ? 'ใส่ชื่อแผน' : true)),
+    }),
+    defineField({
+      name: 'isDefault',
+      title: '⭐ ใช้เป็นแผนมาตรฐาน (ร้านที่ไม่ได้เลือกแผนเอง)',
+      type: 'boolean',
+      initialValue: false,
+      description: 'ควรติ๊กแค่แผนเดียว · ร้านที่มีดีลพิเศษให้สร้างแผนของร้านนั้นแล้วเลือกที่ provider → แผนค่าคอม',
+      hidden: ({ document }) => document?.kind !== 'commission',
+    }),
+    defineField({
+      name: 'basis',
+      title: 'ฐานที่ใช้ดูขั้น · Tier basis',
+      type: 'string',
+      options: { list: [
+        { title: 'ยอดสะสมของร้านในเดือนนี้ (ก่อนออเดอร์นี้) — ขายเยอะ % ลดลง',      value: 'monthly' },
+        { title: 'ยอดของออเดอร์นั้น — ออเดอร์ใหญ่ % ลดลง',                          value: 'order' },
+      ], layout: 'radio' },
+      initialValue: 'monthly',
+      description: 'ออเดอร์ที่จ่ายหลังยอดข้ามขั้นได้อัตราใหม่ ออเดอร์ก่อนหน้าไม่ย้อน (ไม่มี true-up สิ้นเดือน)',
+      hidden: ({ document }) => document?.kind !== 'commission',
+    }),
+    defineField({
+      name: 'commissionTiers',
+      title: 'ขั้นบันได · Tiers',
+      type: 'array',
+      description: 'เรียงจากยอดน้อยไปมาก · แถวแรกควรเริ่มที่ 0 · ระบบเลือกแถวที่ "ตั้งแต่" สูงสุดที่ไม่เกินยอดฐาน · % คิดจากยอดสินค้า (ไม่รวมค่าส่ง) และบวก "บาท/ออเดอร์" ถ้าใส่',
+      hidden: ({ document }) => document?.kind !== 'commission',
+      validation: r => r.custom((v, ctx) => ((ctx.document as any)?.kind === 'commission' && !(v as any[])?.length ? 'ใส่อย่างน้อย 1 ขั้น' : true)),
+      of: [{
+        type: 'object',
+        name: 'commissionTier',
+        fields: [
+          defineField({ name: 'from', title: 'ตั้งแต่ (บาท)', type: 'number', initialValue: 0, validation: r => r.required().min(0) }),
+          defineField({ name: 'pct',  title: '% ของยอดสินค้า', type: 'number', initialValue: 0, validation: r => r.min(0).max(100).precision(2) }),
+          defineField({ name: 'flat', title: 'บาท/ออเดอร์ (เพิ่มจาก %)', type: 'number', validation: r => r.min(0).precision(2) }),
+        ],
+        preview: {
+          select: { from: 'from', pct: 'pct', flat: 'flat' },
+          prepare: ({ from, pct, flat }) => ({ title: `ตั้งแต่ ฿${(from ?? 0).toLocaleString('th-TH')}  →  ${pct ?? 0}%${flat ? ` + ฿${flat}/ออเดอร์` : ''}` }),
+        },
+      }],
+    }),
+    defineField({
+      name: 'minPerOrder',
+      title: 'ค่าคอมขั้นต่ำต่อออเดอร์ (บาท)',
+      type: 'number',
+      validation: r => r.min(0).precision(2),
+      description: 'เว้นว่าง = ไม่มีขั้นต่ำ · กันออเดอร์เล็กมากที่ % คิดแล้วได้ไม่กี่บาท',
+      hidden: ({ document }) => document?.kind !== 'commission',
+    }),
+    defineField({
+      name: 'feeExcluded',
+      title: 'ค่าจัดส่งไม่คิดคอม (เป็นของร้านเต็มจำนวน)',
+      type: 'boolean',
+      initialValue: true,
+      hidden: ({ document }) => document?.kind !== 'commission',
+    }),
+    defineField({
+      name: 'vatIncluded',
+      title: 'ตัวเลขนี้รวม VAT และค่าธรรมเนียมชำระเงิน (Beam) แล้ว',
+      type: 'boolean',
+      initialValue: true,
+      description: 'ติ๊ก = ที่หักจากร้านคือเลขนี้เลขเดียว (ใบกำกับภาษีรายเดือนแยกยอด VAT ออกจากยอดนี้) · ไม่ติ๊ก = ระบบบวก VAT 7% ทับตอนคำนวณ',
+      hidden: ({ document }) => document?.kind !== 'commission',
+    }),
+    defineField({
+      name: 'effectiveFrom',
+      title: 'มีผลตั้งแต่',
+      type: 'date',
+      hidden: ({ document }) => document?.kind !== 'commission',
+    }),
+    defineField({
+      name: 'planNote',
+      title: 'หมายเหตุ / เลขที่ข้อตกลง',
+      type: 'text', rows: 2,
+      hidden: ({ document }) => document?.kind !== 'commission',
     }),
 
     // ── Columns: the packages (headers only) ───────────────────────────────
@@ -56,7 +168,8 @@ export default defineType({
       title: 'Packages (columns)',
       type: 'array',
       description: 'Each entry is one pricing column, left to right. Usually 4. All prices/values live in the Rows below — this is just the column header.',
-      validation: Rule => Rule.required().min(1).max(6),
+      hidden: ({ document }) => document?.kind === 'commission',
+      validation: Rule => Rule.custom((v, ctx) => ((ctx.document as any)?.kind === 'commission' ? true : (!(v as any[])?.length ? 'Required' : (v as any[]).length > 6 ? 'Max 6' : true))),
       of: [{
         type: 'object',
         name: 'tier',
@@ -77,6 +190,7 @@ export default defineType({
       title: 'Rows (the table, top to bottom)',
       type: 'array',
       description: 'One entry per table row, in display order. Each row has one cell per package (same order as the columns above). Add a Value row for numbers (price, seconds…), a Mark row for ✓/—/×N, or a Section heading to group rows.',
+      hidden: ({ document }) => document?.kind === 'commission',
       of: [
         // ── Value row: big number + unit (Price, Display time, Frequency) ───
         {
@@ -184,6 +298,10 @@ export default defineType({
   ],
 
   preview: {
-    prepare: () => ({ title: 'Rate Card — SME' }),
+    select: { kind: 'kind', planName: 'planName', isDefault: 'isDefault', tiers: 'commissionTiers', basis: 'basis' },
+    prepare: ({ kind, planName, isDefault, tiers, basis }) => kind === 'commission'
+      ? { title: `${isDefault ? '⭐ ' : ''}${planName || '(แผนค่าคอมไม่มีชื่อ)'}`,
+          subtitle: `${basis === 'order' ? 'ต่อออเดอร์' : 'สะสมรายเดือน'} · ${(tiers || []).map((t: any) => `฿${t?.from ?? 0}→${t?.pct ?? 0}%`).join(' · ') || 'ยังไม่มีขั้น'}` }
+      : { title: 'Rate Card — SME' },
   },
 })
