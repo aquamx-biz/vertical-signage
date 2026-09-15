@@ -229,8 +229,8 @@ export default defineType({
       title: '🏦 เงินเข้าที่ · Payment mode',
       type: 'string',
       options: { list: [
-        { title: 'Agency · เข้าบัญชี Beam ของ aquamx แล้ว aquamx โอนให้ร้านตามรอบ', value: 'agency' },
-        { title: 'Bridge · เข้าบัญชี Beam ของร้านโดยตรง (ร้านผ่าน KYC กับ Beam แล้ว)',  value: 'bridge' },
+        { title: '🏦 รับแทน (Agency) · เข้าบัญชี Beam ของ aquamx แล้ว aquamx โอนให้ร้านทุกวันศุกร์หลังส่งถึง', value: 'agency' },
+        { title: '⚡ เข้าตรง (Bridge) · เข้าบัญชี Beam ของร้านโดยตรง (ร้านผ่าน KYC กับ Beam แล้ว)',  value: 'bridge' },
       ], layout: 'radio' },
       initialValue: 'agency',
       description: 'เปลี่ยนเป็น Bridge ได้เมื่อร้านได้ merchant id จาก Beam แล้วเท่านั้น · ออเดอร์ที่จ่ายไปแล้วไม่เปลี่ยนตาม',
@@ -259,6 +259,20 @@ export default defineType({
       validation: r => r.min(0).max(2000).precision(2),
       description: 'เก็บเพิ่มจากยอดสินค้าทุกออเดอร์ที่สั่งผ่านจอ (เช่น 48) · เว้นว่างหรือ 0 = ไม่คิดค่าส่ง (ส่งฟรี/รวมในราคา/รับที่ล็อบบี้) · ใช้กับร้านค้าเท่านั้น ไม่มีผลกับห้องเช่า/แพ็กเกจ',
       hidden: ({ document }) => document?.providerType !== 'shop',
+    }),
+
+    // ── aquamx's cut of the GOODS on agency-mode orders (รับแทน). The delivery
+    // fee above is the shop's in full and is never commissioned. 0 / empty =
+    // no deduction (pilot, until the agency agreement fixes a rate). Read by
+    // aquamx-handoff lib/order-flow payoutPlan() — the "รับเงิน" row on the
+    // shop's card and the payout button in the notify group use it.
+    defineField({
+      name: 'commissionPct',
+      title: '💼 ค่าบริการ aquamx (% ของยอดสินค้า) · Commission',
+      type: 'number',
+      validation: r => r.min(0).max(100).precision(2),
+      description: 'หักจากยอดสินค้า (ไม่รวมค่าจัดส่ง) ก่อนโอนให้ร้านในโหมด "รับแทน" · เว้นว่างหรือ 0 = ไม่หัก · ไม่มีผลกับโหมด "เข้าตรง" (Beam โอนให้ร้านเอง)',
+      hidden: ({ document }) => document?.providerType !== 'shop' || document?.onlinePayment !== true,
     }),
 
     defineField({ name: 'website', title: 'Website · เว็บไซต์',  type: 'url',    components: { input: createRetrieveFromPartyInput('website') },
