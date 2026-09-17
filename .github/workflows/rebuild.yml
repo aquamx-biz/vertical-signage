@@ -107,7 +107,7 @@ jobs:
               fi
 
               # Overlay the freshly built files onto the clone.
-              for f in index.html sw.js _headers netlify.toml; do
+              for f in index.html sw.js _headers netlify.toml 404.html; do
                 [ -f "$DIR/$f" ] && cp -f "$DIR/$f" "$WORK/$f"
               done
               # Category-screen icons. build.mjs copies icons/ into $DIR;

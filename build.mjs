@@ -471,38 +471,10 @@ for (const project of projects) {
       `\n     Trim the lineup or verify on a REAL box (beacon imgFails / up-resets) before airing.\n`)
   }
 
-  // Assemble the baked data object
-  const baked = {
-    projectCode:    code,
-    projectTitle:   title,
-    playlist:       playlist       ?? [],
-    providers,
-    notices:        notices             ?? [],   // replaces 'updates' — kiosk HTML needs update
-    categoryConfig: globalCategoryConfig ?? null,
-  }
-  // Content revision hash — deterministic. Identical resolved content → identical
-  // hash → identical index.html → no git diff → that project's Netlify site is NOT
-  // rebuilt. Replaces the old run-time `builtAt` timestamp, which made every build
-  // differ and forced ALL projects to redeploy on any single Sanity change.
-  baked.rev = createHash('sha1').update(JSON.stringify(baked)).digest('hex').slice(0, 8)
-
-  // Inject baked data as an inline <script> just before </head>.
-  // Also inject the real Sanity token (which is intentionally left blank in the template).
-  const injectedHtml = templateHtml
-    .replace(
-      "SANITY_TOKEN:      '',",
-      `SANITY_TOKEN:      '${SANITY_TOKEN}',`
-    )
-    .replace(
-      '</head>',
-      `<script>/* baked by build.mjs — rev ${baked.rev} */\nwindow.__BAKED__ = ${JSON.stringify(baked)};\n</script>\n</head>`
-    )
-
   // Write ../{code}/ — each project gets its own sibling directory (and its own GitHub repo).
   const outDir = join(__dirname, '..', code)
   mkdirSync(outDir, { recursive: true })
-  writeFileSync(join(outDir, 'index.html'), injectedHtml, 'utf8')
-  writeFileSync(join(outDir, 'sw.js'),     swSource,     'utf8')
+  const bakedBoardPaths = new Set()   // board pages this build wrote (web-board guard, below)
 
   // Category icons are referenced by the kiosk player (icons/*.svg) —
   // copy the folder for those projects so they aren't 404. Skip for others so
@@ -582,6 +554,7 @@ for (const project of projects) {
     const boardDir = join(outDir, 'board', mode)
     mkdirSync(boardDir, { recursive: true })
     writeFileSync(join(boardDir, 'index.html'), boardHtml, 'utf8')
+    if (rows.length) bakedBoardPaths.add(`/board/${mode}/`)
 
     const cardsHtml = cardsTemplate.replace(
       '</head>',
@@ -590,6 +563,7 @@ for (const project of projects) {
     const cardsDir = join(outDir, 'board-cards', mode)
     mkdirSync(cardsDir, { recursive: true })
     writeFileSync(join(cardsDir, 'index.html'), cardsHtml, 'utf8')
+    if (rows.length) bakedBoardPaths.add(`/board-cards/${mode}/`)
 
     /* หน้าแยกตามชนิดห้อง — สไลด์ละชนิด คนที่หา 1 นอนไม่ต้องรอดู 3 นอนผ่านไป
        ชนิดที่มีไม่ถึง SEG_MIN ห้องไม่ได้หน้าของตัวเอง เพราะสไลด์หนึ่งใบกินเวลา
@@ -608,10 +582,69 @@ for (const project of projects) {
       writeFileSync(join(dir, 'index.html'), cardsTemplate.replace('</head>',
         `<script>/* baked by build.mjs — rev ${segData.rev} */\nwindow.__BOARD__ = ${JSON.stringify(segData)};\n</script>\n</head>`), 'utf8')
       segsMade.push(`${slug}:${segRows.length}`)
+      bakedBoardPaths.add(`/board-cards/${mode}/${slug}/`)
     }
     console.log(`  board-cards[${mode}]: รวม ${rows.length} · แยกชนิด ${segsMade.join(' ') || '— (ไม่มีชนิดไหนถึง ' + SEG_MIN + ' ห้อง)'}`)
   }
 
+  // Web-board guard — a web slide may only air if the page it embeds was BAKED
+  // by this very build (/board/{mode}/, /board-cards/{mode}/, /board-cards/{mode}/{seg}/).
+  // Otherwise Netlify's `/* → /index.html` catch-all answers the slide's <iframe>
+  // with the FULL PLAYER: a player nested inside the player — doubled header, two
+  // clocks, two tickers. Hit the whole fleet on 2026-09-16 when purge-market-docs
+  // emptied every board (0 rows → no per-type pages) while 31 Sanity web slides
+  // kept pointing at them. A board with 0 rows counts as not baked: an empty
+  // board is not worth a 28-second slot either.
+  const BOARD_PATH_RE = /^\/(board|board-cards)(\/|$)/
+  const normPath = p => p.replace(/index\.html$/, '').replace(/\/+$/, '') + '/'
+  const droppedBoardSlides = []
+  const airablePlaylist = (playlist ?? []).filter(s => {
+    const href = s.webUrl ?? s.url
+    if ((s.mediaType ?? s.type) !== 'web' || !href) return true
+    let u; try { u = new URL(href) } catch { return true }
+    if (!BOARD_PATH_RE.test(u.pathname)) return true
+    const ours = (u.hostname.endsWith('.netlify.app') && u.hostname.split('.')[0] === code) ||
+                 u.hostname === 'player.aquamx.local'
+    if (!ours) return true
+    if (bakedBoardPaths.has(normPath(u.pathname))) return true
+    droppedBoardSlides.push(`${s.title ?? s.kind ?? 'web'} → ${u.pathname}`)
+    return false
+  })
+  if (droppedBoardSlides.length) {
+    console.warn(`  ⚠  [${code}] ${droppedBoardSlides.length} web-board slide(s) dropped — page not baked this build (board empty?):`)
+    droppedBoardSlides.forEach(d => console.warn(`       · ${d}`))
+  }
+
+  // Assemble the baked data object
+  const baked = {
+    projectCode:    code,
+    projectTitle:   title,
+    playlist:       airablePlaylist,
+    providers,
+    notices:        notices             ?? [],   // replaces 'updates' — kiosk HTML needs update
+    categoryConfig: globalCategoryConfig ?? null,
+  }
+  // Content revision hash — deterministic. Identical resolved content → identical
+  // hash → identical index.html → no git diff → that project's Netlify site is NOT
+  // rebuilt. Replaces the old run-time `builtAt` timestamp, which made every build
+  // differ and forced ALL projects to redeploy on any single Sanity change.
+  baked.rev = createHash('sha1').update(JSON.stringify(baked)).digest('hex').slice(0, 8)
+
+  // Inject baked data as an inline <script> just before </head>.
+  // Also inject the real Sanity token (which is intentionally left blank in the template).
+  const injectedHtml = templateHtml
+    .replace(
+      "SANITY_TOKEN:      '',",
+      `SANITY_TOKEN:      '${SANITY_TOKEN}',`
+    )
+    .replace(
+      '</head>',
+      `<script>/* baked by build.mjs — rev ${baked.rev} */\nwindow.__BAKED__ = ${JSON.stringify(baked)};\n</script>\n</head>`
+    )
+
+  // Write ../{code}/index.html — AFTER the boards above, so the web-board guard knows what was baked.
+  writeFileSync(join(outDir, 'index.html'), injectedHtml, 'utf8')
+  writeFileSync(join(outDir, 'sw.js'),     swSource,     'utf8')
   // _headers: Netlify reads this from the publish directory unconditionally.
   // More reliable than netlify.toml when the site uses a repo subdirectory as publish dir.
   writeFileSync(
@@ -639,13 +672,20 @@ for (const project of projects) {
     `    Cache-Control = "no-cache, no-store, must-revalidate"\n` +
     `    Pragma        = "no-cache"\n` +
     `    Expires       = "0"\n\n` +
+    // A MISSING board page must 404, not fall into the player catch-all below —
+    // a web slide embedding the player = player-inside-player (2026-09-16 fleet incident).
+    `[[redirects]]\n  from = "/board/*"\n  to   = "/404.html"\n  status = 404\n\n` +
+    `[[redirects]]\n  from = "/board-cards/*"\n  to   = "/404.html"\n  status = 404\n\n` +
     `[[redirects]]\n  from = "/*"\n  to   = "/index.html"\n  status = 200\n`,
     'utf8'
   )
 
+  writeFileSync(join(outDir, '404.html'),
+    `<!doctype html><meta charset="utf-8"><title>404</title><body style="margin:0;background:#0b1526"></body>`, 'utf8')
+
   console.log(
     `  ✓  ../${code}/index.html` +
-    `  (playlist: ${playlist?.length ?? 0}, providers: ${rawProviders?.length ?? 0}, notices: ${notices?.length ?? 0}, boards: ${[...bakedBoardModes].join('+') || 'none'})`
+    `  (playlist: ${airablePlaylist.length}, providers: ${rawProviders?.length ?? 0}, notices: ${notices?.length ?? 0}, boards: ${[...bakedBoardModes].join('+') || 'none'})`
   )
 }
 
