@@ -12,8 +12,8 @@ import {UsageTool} from './UsageTool'
  * fleet-health. Sub-tabs stay mounted so switching keeps their state.
  */
 const TABS = [
-  {key: 'fleet', title: 'สถานะ', comp: KioskHealthTool},
-  {key: 'usage', title: 'การใช้งาน', comp: UsageTool},
+  {key: 'fleet', title: 'Fleet Status', comp: KioskHealthTool},
+  {key: 'usage', title: 'Usage', comp: UsageTool},
 ] as const
 
 export function HealthTool() {

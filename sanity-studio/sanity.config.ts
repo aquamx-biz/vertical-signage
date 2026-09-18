@@ -92,7 +92,7 @@ const dashboardPlugin = definePlugin({
     },
     {
       name:      'health',   // url stays /health so old bookmarks keep working
-      title:     'จอ',
+      title:     'Screen Health',
       icon:      ActivityIcon,
       component: HealthTool,
     },
