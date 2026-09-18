@@ -42,7 +42,6 @@ import { DashboardTool }        from './tools/DashboardTool'
 import { ContentTool }          from './tools/ContentTool'
 import { MarketIntelTool }      from './tools/MarketIntelTool'
 import { HealthTool }           from './tools/HealthTool'
-import { UsageTool }            from './tools/UsageTool'
 import {
   DashboardIcon, RocketIcon, ActivityIcon, HelpCircleIcon,
   BarChartIcon,
@@ -68,8 +67,9 @@ const howToPlugin = definePlugin({
 
 const dashboardPlugin = definePlugin({
   name: 'ops-dashboard',
-  // Menu order: ops overview → content workflow → the three monitoring tools
-  // grouped together (Screen / Fleet / Content). Party Migration was a one-time
+  // Menu order: ops overview → content workflow → market → screens. "จอ" holds
+  // both screen pages (สถานะ + การใช้งาน) — they were two top-level tabs plus a
+  // dead Yodeck-e-mail page until 2026-09-18. Party Migration was a one-time
   // contract→party backfill — retired from the menu (file kept in git history).
   tools: [
     {
@@ -91,16 +91,10 @@ const dashboardPlugin = definePlugin({
       component: MarketIntelTool,
     },
     {
-      name:      'health',
-      title:     'Health',
+      name:      'health',   // url stays /health so old bookmarks keep working
+      title:     'จอ',
       icon:      ActivityIcon,
       component: HealthTool,
-    },
-    {
-      name:      'usage',
-      title:     'การใช้งานจอ',
-      icon:      BarChartIcon,
-      component: UsageTool,
     },
   ],
 })

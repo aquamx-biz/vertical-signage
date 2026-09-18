@@ -1,20 +1,23 @@
 import React, {useState} from 'react'
 import {Box, Button, Card, Flex} from '@sanity/ui'
-import {ScreenHealthTool} from './ScreenHealthTool'
 import {KioskHealthTool} from './KioskHealthTool'
+import {UsageTool} from './UsageTool'
 
 /**
- * Health — แท็บกลุ่มงานเฝ้าระบบ: Screen Health (สถานะจอ/คอนเทนต์)
- * + Fleet Health (สุขภาพกล่อง kiosk) — โครงเดียวกับ MarketIntelTool:
- * sub-tab ค้าง mount สลับไปมาไม่เสียสถานะ
+ * จอ — everything about the screens in one place, two pages:
+ *   สถานะ    — is each box up, what it runs, how healthy (beacon + adb)
+ *   การใช้งาน — what people do on the screens (taps, scans, funnel)
+ * The old "Screen Health" page (Yodeck alert e-mails) is gone: Yodeck is parked
+ * on every box since 2026-09-12 and outages are now LINE cards from
+ * fleet-health. Sub-tabs stay mounted so switching keeps their state.
  */
 const TABS = [
-  {key: 'screen', title: 'Screen Health', comp: ScreenHealthTool},
-  {key: 'fleet', title: 'Fleet Health', comp: KioskHealthTool},
+  {key: 'fleet', title: 'สถานะ', comp: KioskHealthTool},
+  {key: 'usage', title: 'การใช้งาน', comp: UsageTool},
 ] as const
 
 export function HealthTool() {
-  const [tab, setTab] = useState<string>('screen')
+  const [tab, setTab] = useState<string>('fleet')
   return (
     <Flex direction="column" style={{height: '100%'}}>
       <Card padding={2} borderBottom tone="transparent">

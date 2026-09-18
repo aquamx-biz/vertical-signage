@@ -26,7 +26,11 @@ export interface UsageRow {
 export interface ProjectRow { project: string; air: number; tap: number; sess: number; scan: number; daysRunning: number }
 export interface MediaRow   { id: string; air: number; tap: number }
 
-/** The screens run 06:00–22:00, so the day is 16 buckets, not 24. */
+/**
+ * The day is 16 buckets, not 24: 06:00–22:00 is the widest screen schedule in
+ * the fleet (Noble). Buildings on 08:00–21:00, or with no schedule at all,
+ * still fit — a condo lobby sees nobody at 03:00 either way.
+ */
 export const SCREEN_HOURS = ['06','07','08','09','10','11','12','13','14','15','16','17','18','19','20','21']
 
 /** Aired plenty, never once touched. Below this the slide simply hasn't had

@@ -38,7 +38,6 @@ import serviceContract    from './serviceContract'
 import ratecard           from './ratecard'
 import unitBoard          from './unitBoard'
 import siteStats          from './siteStats'
-import screenStatus       from './screenStatus'
 import marketSnapshot     from './marketSnapshot'
 import scrapeRound        from './scrapeRound'
 import unitProfile        from './unitProfile'
@@ -86,7 +85,6 @@ export const schemaTypes = [
   ratecard,
   unitBoard,
   siteStats,
-  screenStatus,
   marketSnapshot,
   scrapeRound,
   unitProfile,

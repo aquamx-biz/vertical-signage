@@ -13,14 +13,18 @@ $OutDir = Join-Path $PSScriptRoot "health"
 # ANR (confirmed on be19a AND be19b — matches the documented "no screenshots on
 # 4K" rule). Render status comes from the beacon (app.aquamx.biz/api/kiosk-beacon)
 # instead. Flip Screencap = $true only for a box proven to tolerate it.
+# HomeAppId = the box's HomeApp device id (AX-…) — the join key between this
+# adb snapshot and the box's own beacon (slide "homeapp@<id>") on the Studio
+# Fleet Health page. Read live off the box each run; this value is the fallback
+# when adb can't reach it. Re-pairing a box changes the id: update here too.
 $Boxes  = @(
-    @{ Name = "noble-be19a";    Ip = "100.100.123.43"; Screencap = $false },
-    @{ Name = "noble-be19b";    Ip = "100.87.197.15";  Screencap = $false },
-    @{ Name = "SD2603-001";     Ip = "100.71.132.15";  Screencap = $false },  # Ushida (บ้าน) ZC-H358S — asset id ชั่วคราว ยังไม่วางโครงการ; beacon ยัง=mahogany-tower จนกว่าจะ deploy จริง
-    @{ Name = "lumpini-24";     Ip = "100.103.74.106"; Screencap = $false },  # RK3566 rk30sdk — ยังรัน Yodeck (Fully Single App); persist.adb.tcp.port=5555 ตั้งแล้ว
-    @{ Name = "the-room-skv21"; Ip = "100.109.31.88";  Screencap = $false },  # YF_020E rk30sdk (yf-020e-2) — persist.adb.tcp.port=5555 ตั้งแล้ว
-    @{ Name = "mahogany-tower"; Ip = "100.123.35.91";  Screencap = $false },  # ZC-H358S RK3588 Android 13, 1080x1920 — Fully Single App ครอบ Yodeck; เข้าถึงได้ 20 ก.ค. 69 (Safe Mode → wireless debugging); Tailscale + always-on VPN ตั้งแล้ว
-    @{ Name = "39-by-sansiri";  Ip = "100.102.67.15";  Screencap = $false }   # ZC-H358S RK3588 Android 13, 1080x1920 — Fully Kiosk EMM (com.fullykiosk.emm); Tailscale + always-on VPN + persist.adb.tcp.port=5555 ตั้ง 22 ก.ค. 69 (screencap ทนได้ตอนติดตั้ง แต่คงค่า false ตาม fleet default)
+    @{ Name = "noble-be19a";    Ip = "100.100.123.43"; HomeAppId = "AX-4RADKY";  Screencap = $false },  # HomeApp since 2026-09-12, render override 1080x1920@160; Fully parked
+    @{ Name = "noble-be19b";    Ip = "100.87.197.15";  HomeAppId = "AX-TJTX8G";  Screencap = $false },  # HomeApp since 2026-09-14, render override 1080x1920@160; Fully + Yodeck parked
+    @{ Name = "SD2603-001";     Ip = "100.71.132.15";  HomeAppId = "SD2603-001"; Screencap = $false },  # Ushida (home pilot) ZC-H358S; its page still beacons as mahogany-tower
+    @{ Name = "lumpini-24";     Ip = "100.103.74.106"; HomeAppId = "AX-EKTYC4";  Screencap = $false },  # RK3566 rk30sdk 1080p — HomeApp since 2026-09-12; Fully SingleApp + Fully + Yodeck parked
+    @{ Name = "the-room-skv21"; Ip = "100.109.31.88";  HomeAppId = "AX-8DW84X";  Screencap = $false },  # YF_020E rk30sdk (yf-020e-2) — HomeApp since 2026-09-12, render override 1080x1920@160; Fully + Yodeck parked
+    @{ Name = "mahogany-tower"; Ip = "100.123.35.91";  HomeAppId = "AX-RXWDNM";  Screencap = $false },  # ZC-H358S RK3588 Android 13, 1080x1920 — HomeApp since 2026-09-12; Fully SingleApp + Yodeck parked (pm disable-user); Tailscale + always-on VPN
+    @{ Name = "39-by-sansiri";  Ip = "100.102.67.15";  HomeAppId = "AX-AA5KNK";  Screencap = $false }   # ZC-H358S RK3588 Android 13, 1080x1920 — HomeApp since 2026-09-07; Fully EMM parked; Tailscale + always-on VPN + persist.adb.tcp.port=5555
 )
 
 # Per-screen ANR root-cause analysis, shown on the dashboard so the report
@@ -57,6 +61,7 @@ foreach ($Box in $Boxes) {
     $NetType = ""  # "wifi" | "eth" (wired) — a box on ethernet has no WiFi metrics
     $Chip = ""     # real SoC (RK3588/RK3568/RK3566) — beacon 'board' is the model name
     $HomeApp = ""  # default HOME package — launcher3 = no kiosk home (drift risk)
+    $HomeAppId = [string]$Box.HomeAppId  # HomeApp device id (AX-…); overwritten by the live read below when adb is up
 
     # 1. tailscale reachability
     $null = tailscale ping --c 2 --timeout 5s $Ip 2>$null
@@ -83,6 +88,12 @@ foreach ($Box in $Boxes) {
         # Fully EMM (39-by-sansiri leftover provisioning) is not a fight — Fully wins.
         $Focus = if ($hApp) { "biz.aquamx.homeapp" } elseif ($fRun -and $yApp) { "multi" } elseif ($fRun) { "de.ozerov.fully" } elseif ($yApp -or $sWrap) { "com.yodeck.android" } else { "none" }
         $IsFully = ($Focus -eq "de.ozerov.fully" -or $Focus -eq "biz.aquamx.homeapp")
+        # HomeApp device id from the app's own prefs (root) — the join key to its
+        # beacon on the Studio page. Falls back to the table value when unreadable.
+        if ($hApp) {
+            $idLine = ((& $Adb -s $Serial shell "su 0 cat /data/data/biz.aquamx.homeapp/shared_prefs/homeapp.xml 2>/dev/null | grep -o 'name=.device.>[^<]*'") -join "").Trim()
+            if ($idLine -match '>([A-Za-z0-9_-]+)$') { $HomeAppId = $Matches[1] }
+        }
 
         # 4. screen state
         $Pw = (& $Adb -s $Serial shell "dumpsys power | grep mWakefulness=" 2>$null) -join ""
@@ -227,7 +238,7 @@ foreach ($Box in $Boxes) {
         $dxFixed = if ($dx) { $dx.fixed -join '|' } else { "" }     # ASCII '|' — page renders as bullets (no non-ASCII in this .ps1)
         $dxPending = if ($dx) { $dx.pending -join '|' } else { "" }
         $dxAssessed = if ($dx) { [string]$dx.assessed } else { "" }  # date the human diagnosis was last made (YYYY-MM-DD)
-        $payload = @{ device=$Name; anrToday=$AnrToday; anrYesterday=$AnrYest; anr7d=$Anr7d; anr7dPrev=$Anr7dPrev; topCpu=$TopCpu; cores=$Cores; ramUsedPct=$ramUsedPct; ramFreeMB=$MemFree; ramTotalMB=$MemTotal; storagePct=$StoragePct; storageTotalMB=$StorageTotalMB; storageFreeMB=$StorageFreeMB; cacheMB=$CacheMB; apps=$Apps; focus=$Focus; screenRes=$ScreenRes; wifiRssi=$WifiRssi; wifiLink=$WifiLink; wifiFreq=$WifiFreq; wifiReachLost=$WifiReachLost; netType=$NetType; chip=$Chip; homeApp=$HomeApp; screenAwake=$Awake; load1="$Load1";
+        $payload = @{ device=$Name; anrToday=$AnrToday; anrYesterday=$AnrYest; anr7d=$Anr7d; anr7dPrev=$Anr7dPrev; topCpu=$TopCpu; cores=$Cores; ramUsedPct=$ramUsedPct; ramFreeMB=$MemFree; ramTotalMB=$MemTotal; storagePct=$StoragePct; storageTotalMB=$StorageTotalMB; storageFreeMB=$StorageFreeMB; cacheMB=$CacheMB; apps=$Apps; focus=$Focus; screenRes=$ScreenRes; wifiRssi=$WifiRssi; wifiLink=$WifiLink; wifiFreq=$WifiFreq; wifiReachLost=$WifiReachLost; netType=$NetType; chip=$Chip; homeApp=$HomeApp; homeappId=$HomeAppId; screenAwake=$Awake; load1="$Load1";
             anrCause=$dxCause; anrFixed=$dxFixed; anrPending=$dxPending; anrAssessed=$dxAssessed } | ConvertTo-Json -Compress
         # PS 5.1 Invoke-RestMethod sends a string body as Latin-1 (mangles Thai) —
         # hand it UTF-8 bytes so the payload stays intact end to end.
