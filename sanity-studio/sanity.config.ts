@@ -446,34 +446,41 @@ export default defineConfig([{
     visionTool(),
   ],
 
-  schema: { types: schemaTypes },
+  schema: {
+    types: schemaTypes,
 
-  // ── Initial value templates ───────────────────────────────────────────────
-  // Used by the Playlist list-item in the structure above so that clicking "+"
-  // pre-fills the project reference on the new playlist item.
-  templates: (prev: any[]) => [
-    ...prev,
-    {
-      id:         'ratecard-commission',
-      title:      'แผนค่าคอมร้านค้า',
-      schemaType: 'ratecard',
-      value: () => ({
-        kind: 'commission', basis: 'monthly', feeExcluded: true, vatIncluded: true, isDefault: false,
-        commissionTiers: [{ _type: 'commissionTier', _key: 'base', from: 0, pct: 0 }],
-      }),
-    },
-    {
-      id:         'playlistItem-by-project',
-      title:      'Playlist Item',
-      schemaType: 'playlistItem',
-      parameters: [{ name: 'projectId', type: 'string', title: 'Project ID' }],
-      value: ({ projectId }: { projectId: string }) => ({
-        project: { _type: 'reference', _ref: projectId },
-        order:   1,
-        enabled: true,
-      }),
-    },
-  ],
+    // ── Initial value templates ─────────────────────────────────────────────
+    // Sanity reads templates HERE (schema.templates), not at the workspace
+    // top level — up there they were silently ignored (tsc flagged it as an
+    // unknown option). It went unnoticed until the Commission Plans list
+    // referenced 'ratecard-commission' via S.initialValueTemplateItem, which
+    // then failed the whole Structure with "template id is required".
+    templates: (prev: any[]) => [
+      ...prev,
+      {
+        id:         'ratecard-commission',
+        title:      'แผนค่าคอมร้านค้า',
+        schemaType: 'ratecard',
+        value: () => ({
+          kind: 'commission', basis: 'monthly', feeExcluded: true, vatIncluded: true, isDefault: false,
+          commissionTiers: [{ _type: 'commissionTier', _key: 'base', from: 0, pct: 0 }],
+        }),
+      },
+      // Used by the Playlist list-item in the structure above so that clicking
+      // "+" pre-fills the project reference on the new playlist item.
+      {
+        id:         'playlistItem-by-project',
+        title:      'Playlist Item',
+        schemaType: 'playlistItem',
+        parameters: [{ name: 'projectId', type: 'string', title: 'Project ID' }],
+        value: ({ projectId }: { projectId: string }) => ({
+          project: { _type: 'reference', _ref: projectId },
+          order:   1,
+          enabled: true,
+        }),
+      },
+    ],
+  },
 
   // ── Document actions ──────────────────────────────────────────────────────
   document: {
