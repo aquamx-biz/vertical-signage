@@ -245,6 +245,24 @@ export default defineConfig([{
             .title(`${icon}  ${title}`)
             .child(S.list().title(title).items(children.filter(Boolean)))
 
+        // Rent Space — one sub-list per lifecycle stage so quotations, contracts,
+        // signed leases and terminated leases are easy to tell apart at a glance.
+        const NOT_TERMINATED = 'terminationStatus != "terminated"'
+        const rentSpaceList = (id: string, title: string, where: string) =>
+          S.listItem()
+            .id(id)
+            .title(title)
+            .child(
+              S.documentList()
+                .id(`${id}-list`)
+                .title(title)
+                .schemaType('contract')
+                .filter(`_type == "contract" && (${where})`)
+                .defaultOrdering([{ field: 'quotationNumber', direction: 'desc' }])
+                .initialValueTemplates([S.initialValueTemplateItem('contract')])
+                .canHandleIntent((name, params) => name === 'edit' && params.type === 'contract')
+            )
+
         // Build each section conditionally; filter out falsy entries
         const items = [
 
@@ -366,16 +384,26 @@ export default defineConfig([{
           (can('projectSite') || can('contract') || can('serviceContract') || can('installation')) &&
           group('projects', 'Projects', '🏗', [
             can('projectSite')        && S.documentTypeListItem('projectSite').title('Project Sites'),
-            can('contract')           && S.documentTypeListItem('contract').title('Rent Space').child(
-              S.documentTypeList('contract').title('Rent Space').defaultOrdering([{ field: 'quotationNumber', direction: 'desc' }])
-            ),
+            can('contract')           && S.listItem()
+              .id('rent-space')
+              .title('Rent Space')
+              .child(
+                S.list().title('Rent Space').items([
+                  rentSpaceList('rs-quotation',  '📝  Quotation (ใบเสนอราคา)',
+                    `!defined(contractNumber) && ${NOT_TERMINATED}`),
+                  rentSpaceList('rs-contract',   '📄  Contract (สัญญา)',
+                    `defined(contractNumber) && ${NOT_TERMINATED}`),
+                  rentSpaceList('rs-terminated', '🔴  Terminated (ยกเลิกแล้ว)',
+                    'terminationStatus == "terminated"'),
+                ])
+              ),
             can('serviceContract')    && S.documentTypeListItem('serviceContract').title('Service Contracts'),
             S.divider(),
             can('installation')       && S.documentTypeListItem('installation').title('Install & Activate'),
           ]),
 
           // ── Finance ────────────────────────────────────────────────────────
-          (can('payment') || can('procurement') || can('order') || can('customerOrder') || can('receipt') || can('funding') || can('journalEntry') || can('asset') || can('assetRegister') || can('ledger') || can('financialStatement')) &&
+          (can('payment') || can('procurement') || can('order') || can('customerOrder') || can('receipt') || can('funding') || can('bankAccount') || can('subscription') || can('journalEntry') || can('asset') || can('assetRegister') || can('ledger') || can('financialStatement')) &&
           group('finance', 'Finance', '💰', [
             can('payment')           && S.documentTypeListItem('payment').title('Payments'),
             can('procurement')       && S.documentTypeListItem('procurement').title('Procurements'),
@@ -383,6 +411,9 @@ export default defineConfig([{
             can('customerOrder')     && S.documentTypeListItem('customerOrder').title('Customer Orders — ลูกค้าซื้อจากร้าน'),
             can('receipt')           && S.documentTypeListItem('receipt').title('Receipts'),
             can('funding')           && S.documentTypeListItem('funding').title('Funding'),
+            S.divider(),
+            can('bankAccount')       && S.documentTypeListItem('bankAccount').title('Bank Accounts · บัญชีบริษัท'),
+            can('subscription')      && S.documentTypeListItem('subscription').title('Subscriptions · บริการรายเดือน'),
             S.divider(),
             can('journalEntry')       && S.documentTypeListItem('journalEntry').title('Journal Entries'),
             can('asset')              && S.documentTypeListItem('asset').title('Assets'),
