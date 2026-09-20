@@ -246,7 +246,11 @@ export function KioskHealthTool() {
     } catch { setErr('โหลดข้อมูลไม่สำเร็จ — ลองใหม่อีกครั้ง') } finally { setLoading(false) }
   }, [])
 
-  useEffect(() => { load(); const t = setInterval(load, 60000); return () => clearInterval(t) }, [load])
+  // Every poll costs the beacon feed a Firestore round; boxes report every
+  // 5 min and adb every 4 h, so a 60 s poll bought nothing and (with the
+  // console's own poll) burned the free read quota on 2026-09-20. 10 min +
+  // the Refresh button.
+  useEffect(() => { load(); const t = setInterval(load, 10 * 60_000); return () => clearInterval(t) }, [load])
 
   if (loading && rows.length === 0) return <Flex align="center" justify="center" padding={5}><Spinner /></Flex>
 
