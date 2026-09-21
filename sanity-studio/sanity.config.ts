@@ -349,6 +349,27 @@ export default defineConfig([{
                   .documentId('ratecard-sme')
                   .title('Rate Card — SME')
               ),
+            can('ratecard') && S.listItem()
+              .title('Rate Card — Corporate (แพ็กเกจองค์กร)')
+              .id('ratecard-corporate')
+              .child(
+                S.document()
+                  .schemaType('ratecard')
+                  .documentId('ratecard-corporate')
+                  .title('Rate Card — Corporate')
+              ),
+            // Property listing rates (Full Service / Self-Listing) — read live
+            // by the LINE owner flow. Kept apart from the shop GP commission
+            // plan below; the two once shared a doc and it caused a mix-up.
+            can('ratecard') && S.listItem()
+              .title('Rate Card — Property (ค่าลงประกาศห้อง)')
+              .id('ratecard-property')
+              .child(
+                S.document()
+                  .schemaType('ratecard')
+                  .documentId('ratecard-property')
+                  .title('Rate Card — Property Listing')
+              ),
             // Shop commission plans live in the same ratecard type (kind =
             // commission); "+" here pre-sets that kind via the template below.
             can('ratecard') && S.listItem()
