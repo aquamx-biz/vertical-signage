@@ -295,6 +295,89 @@ export default defineType({
         },
       ],
     }),
+
+    // ── Cumulative discount grid ───────────────────────────────────────────
+    // TWO ladders, never nine hand-typed cells: screens run across, prepaid
+    // months run down, and the page prints each cell as the SUM of the two
+    // steps. Edit a step and the whole grid rewrites itself, so the numbers
+    // can never disagree with each other. Leave the labels blank to take the
+    // built-in Thai/English wording.
+    defineField({
+      name: 'discountGrid',
+      title: 'ตารางส่วนลดสะสม · Cumulative discounts',
+      type: 'object',
+      description: 'ช่องในตารางคือผลบวกของสองบันได — ไม่ต้องกรอกทีละช่อง',
+      options: { collapsible: true, collapsed: false },
+      hidden: ({ document }) => document?.kind === 'commission',
+      fields: [
+        defineField({ name: 'enabled', title: 'แสดงตารางนี้บนเว็บ', type: 'boolean', initialValue: true }),
+        localeString('title',      'หัวข้อ'),
+        localeString('note',       'คำอธิบายข้างหัวข้อ'),
+        localeString('colLabel',   'ป้ายแกนนอน (คอลัมน์)'),
+        localeString('rowLabel',   'ป้ายแกนตั้ง (แถว)'),
+        localeString('unitScreen', 'หน่วยของคอลัมน์ (เช่น จอ)'),
+        localeString('unitMonth',  'หน่วยของแถว (เช่น เดือน)'),
+        localeString('maxLabel',   'ป้ายกำกับช่องสูงสุด'),
+        defineField({
+          name: 'screens',
+          title: 'บันไดจำนวนจอ — คอลัมน์ ซ้าย → ขวา',
+          type: 'array',
+          validation: Rule => Rule.max(5),
+          of: [{
+            type: 'object',
+            name: 'screenStep',
+            fields: [
+              defineField({ name: 'n',   title: 'จำนวนจอ',  type: 'number', validation: r => r.required().min(1) }),
+              defineField({ name: 'pct', title: 'ส่วนลด %', type: 'number', initialValue: 0, validation: r => r.min(0).max(100) }),
+            ],
+            preview: {
+              select: { n: 'n', pct: 'pct' },
+              prepare: ({ n, pct }) => ({ title: `${n ?? '?'} จอ  →  ${pct ?? 0}%` }),
+            },
+          }],
+        }),
+        defineField({
+          name: 'months',
+          title: 'บันไดจ่ายล่วงหน้า — แถว บน → ล่าง',
+          type: 'array',
+          validation: Rule => Rule.max(5),
+          of: [{
+            type: 'object',
+            name: 'monthStep',
+            fields: [
+              defineField({ name: 'n',   title: 'จำนวนเดือน', type: 'number', validation: r => r.required().min(1) }),
+              defineField({ name: 'pct', title: 'ส่วนลด %',   type: 'number', initialValue: 0, validation: r => r.min(0).max(100) }),
+            ],
+            preview: {
+              select: { n: 'n', pct: 'pct' },
+              prepare: ({ n, pct }) => ({ title: `${n ?? '?'} เดือน  →  ${pct ?? 0}%` }),
+            },
+          }],
+        }),
+      ],
+    }),
+
+    // ── The same card as a picture ─────────────────────────────────────────
+    // For LINE, e-mail, and anywhere a link will not do. It does NOT follow
+    // the rows above: change a number there and this image still shows the old
+    // one, which is worse than having no image at all. Whoever edits the table
+    // re-exports and re-uploads here in the same sitting.
+    defineField({
+      name: 'infographic',
+      title: 'อินโฟกราฟิก · Infographic (ไทย)',
+      type: 'image',
+      options: { hotspot: false },
+      description: '⚠️ ไม่อัปเดตตามตารางข้างบนอัตโนมัติ — แก้ตัวเลขในตารางแล้วต้อง export รูปใหม่มาอัปทับที่นี่ด้วย ไม่งั้นเลขในรูปกับในระบบจะไม่ตรงกัน',
+      hidden: ({ document }) => document?.kind === 'commission',
+    }),
+    defineField({
+      name: 'infographicEn',
+      title: 'อินโฟกราฟิก · Infographic (English)',
+      type: 'image',
+      options: { hotspot: false },
+      description: 'ฉบับภาษาอังกฤษ · เว้นว่างได้ถ้ายังไม่มี',
+      hidden: ({ document }) => document?.kind === 'commission',
+    }),
   ],
 
   preview: {
