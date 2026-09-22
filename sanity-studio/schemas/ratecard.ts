@@ -336,6 +336,8 @@ export default defineType({
         localeString('unitScreen', 'หน่วยของคอลัมน์ (เช่น จอ)'),
         localeString('unitMonth',  'หน่วยของแถว (เช่น เดือน)'),
         localeString('maxLabel',   'ป้ายกำกับช่องสูงสุด'),
+        localeString('prefix',     'คำนำหน้าหัวคอลัมน์/แถว (เช่น Pro)', 'ขึ้นก่อนตัวเลข: "Pro 1 จอ", "Pro 3 เดือน" · เว้นว่าง = ไม่ใส่'),
+        localeString('footnote',   'เชิงอรรถ * ใต้ตาราง', 'ใส่แล้วหัวคอลัมน์จำนวนจอจะมี * และข้อความนี้ขึ้นใต้ตาราง'),
         defineField({
           name: 'screens',
           title: 'บันไดจำนวนจอ — คอลัมน์ ซ้าย → ขวา',
