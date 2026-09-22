@@ -444,11 +444,18 @@ const PKGS=[
 /* ── ราคาแพ็กเกจดึงสดจาก ratecard-sme ใน Sanity (แหล่งเดียวกับหน้า Ratecard บนเว็บ — ห้าม hardcode เพิ่ม)
    ค่าใน PKGS ด้านบนเป็นแค่ fallback ตอนออฟไลน์ · dataset เปิดอ่าน public จึง fetch ตรงได้ ไม่มี key ── */
 (function loadRatecard(){
-  const q=encodeURIComponent('*[_id=="ratecard-sme"][0]{rows}');
+  const q=encodeURIComponent('*[_id=="ratecard-sme"][0]{rows, tiers[]{name, popular}}');
   fetch('https://awjj9g8u.apicdn.sanity.io/v2024-01-01/data/query/production?query='+q)
     .then(r=>r.json())
     .then(({result})=>{
       if(!result||!result.rows)return;
+      /* ชื่อ+จำนวนแพ็กเกจตามใบจริง — กันแพ็กเกจผี (fallback เคยมี 4 tier) และ
+         ตามการเปลี่ยนชื่อ (เช่น Pro→Premium) โดยไม่ต้องแตะไฟล์นี้ */
+      if(Array.isArray(result.tiers)&&result.tiers.length){
+        PKGS.length=Math.min(PKGS.length,result.tiers.length);
+        result.tiers.forEach((t,i)=>{if(PKGS[i]&&t.name){PKGS[i].name=t.name;PKGS[i].pop=!!t.popular;}});
+        if(!PKGS.some(p=>p.id===S.pkg))S.pkg=PKGS[PKGS.length-1].id;
+      }
       const row=k=>result.rows.find(r=>r._key===k);
       const price=row('row_price'),disp=row('row_display'),poster=row('row_still')||row('row_poster'),video=row('row_video');
       PKGS.forEach((p,i)=>{
