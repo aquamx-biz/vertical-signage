@@ -161,6 +161,24 @@ export default defineType({
       type: 'text', rows: 2,
       hidden: ({ document }) => document?.kind !== 'commission',
     }),
+    defineField({
+      name: 'webTerms',
+      title: 'เงื่อนไข GP ที่แสดงบนเว็บ · Terms shown on the website',
+      type: 'array',
+      description: 'ขึ้นเป็นข้อ 1, 2, 3 … ใต้การ์ด GP บนหน้า ratecard-sme (เฉพาะแผนที่ติ๊ก ⭐ มาตรฐาน) · เขียนสั้น ๆ ข้อละบรรทัด · ใส่ **ข้อความ** เพื่อทำตัวหนา',
+      hidden: ({ document }) => document?.kind !== 'commission',
+      validation: r => r.max(10),
+      of: [{
+        type: 'object',
+        name: 'webTerm',
+        options: { columns: 2 },
+        fields: [
+          defineField({ name: 'th', title: 'Thai',    type: 'text', rows: 2 }),
+          defineField({ name: 'en', title: 'English', type: 'text', rows: 2 }),
+        ],
+        preview: { select: { th: 'th' }, prepare: ({ th }) => ({ title: (th || '').replace(/\*\*/g, '') }) },
+      }],
+    }),
 
     // ── Columns: the packages (headers only) ───────────────────────────────
     defineField({
