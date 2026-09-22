@@ -450,7 +450,7 @@ const PKGS=[
     .then(({result})=>{
       if(!result||!result.rows)return;
       const row=k=>result.rows.find(r=>r._key===k);
-      const price=row('row_price'),disp=row('row_display'),poster=row('row_poster'),video=row('row_video');
+      const price=row('row_price'),disp=row('row_display'),poster=row('row_still')||row('row_poster'),video=row('row_video');
       PKGS.forEach((p,i)=>{
         const pc=price&&price.cells&&price.cells[i];
         if(pc){p.price=parseInt(String(pc.big).replace(/[^\d]/g,''),10)||p.price;p.priceMonth=pc.sub||null;}
