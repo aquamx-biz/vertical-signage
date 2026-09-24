@@ -358,6 +358,36 @@ export default defineType({
     defineField({ group: 'followup', name: 'decidedAt', title: '4.3 · Accepted / Declined On',  type: 'datetime' }),
     defineField({
       group:       'followup',
+      name:        'correspondence',
+      title:       '4.3a · Correspondence Log',
+      type:        'array',
+      description: 'Every send to the customer, written automatically by the Send tab. Read-only in practice.',
+      readOnly:    true,
+      of: [{
+        type: 'object',
+        name: 'quotationCorrespondence',
+        fields: [
+          defineField({ name: 'sentAt',    title: 'Sent At',     type: 'datetime' }),
+          defineField({ name: 'channel',   title: 'Channel',     type: 'string', options: { list: ['line', 'email'] } }),
+          defineField({ name: 'lang',      title: 'Language',    type: 'string', options: { list: ['th', 'en'] } }),
+          defineField({ name: 'to',        title: 'To',          type: 'string' }),
+          defineField({ name: 'cc',        title: 'Cc',          type: 'array', of: [{ type: 'string' }] }),
+          defineField({ name: 'subject',   title: 'Subject',     type: 'string' }),
+          defineField({ name: 'message',   title: 'Message',     type: 'text', rows: 4 }),
+          defineField({ name: 'sentBy',    title: 'Sent By',     type: 'string' }),
+          defineField({ name: 'messageId', title: 'Message ID',  type: 'string' }),
+        ],
+        preview: {
+          select: { sentAt: 'sentAt', channel: 'channel', lang: 'lang', to: 'to', sentBy: 'sentBy' },
+          prepare: ({ sentAt, channel, lang, to, sentBy }: any) => ({
+            title:    `${channel === 'email' ? '✉️' : '💬'} ${String(channel ?? '').toUpperCase()} · ${String(lang ?? '').toUpperCase()} → ${to ?? '-'}`,
+            subtitle: [sentAt ? new Date(sentAt).toLocaleString() : null, sentBy ? `by ${sentBy}` : null].filter(Boolean).join(' · '),
+          }),
+        },
+      }],
+    }),
+    defineField({
+      group:       'followup',
       name:        'order',
       title:       '4.4 · Order Raised',
       type:        'reference',

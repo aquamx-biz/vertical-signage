@@ -15,6 +15,7 @@ import { OfferOverview }        from './views/OfferOverview'
 import { ProviderOverview }     from './views/ProviderOverview'
 import { OfferWebPreview }      from './views/WebPreview'
 import { QuotationPreview }     from './views/QuotationPreview'
+import { QuotationSendView }    from './views/QuotationSendView'
 import { AILookupAction }      from './actions/AILookupAction'
 import { AIPartyLookupAction } from './actions/AIPartyLookupAction'
 import { MarkAsSignedAction }             from './actions/MarkAsSignedAction'
@@ -180,6 +181,7 @@ export default defineConfig([{
           return S.document().views([
             S.view.form().id('edit').title('Edit'),
             S.view.component(QuotationPreview).id('preview').title('Customer view / PDF'),
+            S.view.component(QuotationSendView).id('send').title('Send'),
           ])
         }
         if (schemaType === 'procurement') {
