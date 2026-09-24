@@ -8,23 +8,28 @@
 
 ## ทะเบียนกล่อง (device registry)
 
+> ✅ **2026-09-17: ทุกกล่อง (7/7) รัน AquaMX HomeApp 0.9.32 เป็น HOME + player แล้ว** (ยืนยันด้วย adb `resolve-activity HOME` + focus ทุกตัว)
+> **Yodeck และ Fully ถอนออกจากทุกกล่องแล้ว 2026-09-24** (yodeck.* ทุกตัว · de.ozerov.fully · fullykiosk.singleapp · fullykiosk.emm · เทคนิค: แอปที่เป็น device admin ถอนไม่ได้ → `pm disable-user` ก่อน สิทธิ์ admin จะหลุดเอง แล้วค่อย `pm uninstall`) — หัวข้อ Fully/Yodeck ด้านล่างเก็บไว้เป็นประวัติ **ไม่มี Fully REST :2323 ให้ใช้อีกแล้ว** รีโมท = HomeApp console / adb เท่านั้น
+> รีโมท/กู้จอ = HomeApp: ConfigSync command (reload/restart/screenshot) จาก console หรือ adb `am start -n biz.aquamx.homeapp/.MainActivity` · โค้ดอยู่ `Visual\homeapp`
+
 ⚠️ **Tailscale ตั้ง hostname ตามรุ่นบอร์ด ไม่ใช่ชื่อโครงการ** (`zc-h358s-1`, `yf-020e-2`, `rk3566`...)
 → ดู `tailscale status` เฉย ๆ ไม่รู้ว่าตัวไหนคือโครงการอะไร **ต้องเทียบตารางนี้เสมอ**
 วิธียืนยันโครงการของกล่อง: `curl "http://<ip>:2323/?cmd=deviceInfo&type=json&password=<pwd>"` → ดู `startUrl`
 (กล่อง Fully **Single-App** จะไม่คืน `startUrl` → ยืนยันด้วย adb screenshot ดู header แทน)
 
-ยืนยันจริงทั้งฟลีตครั้งล่าสุด: **2026-08-07** (Fully REST + adb ทุกตัว)
+ยืนยันจริงทั้งฟลีตครั้งล่าสุด: **2026-09-17** (adb ทุกตัว: HOME=biz.aquamx.homeapp 0.9.32)
 
 | ชื่อ/โครงการ | Tailnet IP (hostname) | LAN IP¹ | บอร์ด/Android · จอ | wifi | Player stack | สถานะ |
 |---|---|---|---|---|---|---|
-| **lumpini-24** | 100.103.74.106 (rk3566) | 192.168.1.100 | RK3566 / 11 · 1080p | Aquamx001_2.4G | 🟡 **Fully SingleApp → Yodeck** (Yodeck เปิด netlify เป็น web content) | ✅ กู้แล้ว 2026-08-07 (restart Yodeck) |
-| **mahogany-tower** | 100.123.35.91 (zc-h358s-1) | 192.168.1.100 | ZC-H358S rk3588s / 13 · 1080p | 4G Pocket WIFI_203400 | 🟡 **Fully SingleApp → Yodeck** (Yodeck เปิด netlify) | ✅ เล่นปกติ |
-| **39-by-sansiri** | 100.102.67.15 (zc-h358s-2) | 192.168.1.37 | ZC-H358S rk3588s / 13 · 1080p | aquamx006_5GHz | Fully → netlify ตรง | ✅ เล่นปกติ |
-| **noble-be19a** | 100.100.123.43 (yf-020e) | 192.168.1.2 | YF_020E rk3566 / 11 · **จอ 4K** · override render 1080p (`wm size 1080x1920` `wm density 160`) | Aquamx004-5G | Fully Play (`de.ozerov.fully`) home · ลบ Yodeck แล้ว | ⚠️ 4K panel = เสี่ยง ANR |
-| **noble-be19b** | 100.87.197.15 (yf-020e-1) | 192.168.1.46 | YF_020E rk3566 / 11 · **4K 3840×2160** | Noble B19_LobbyB_5G | Fully | ⚠️ 4K + wifi client isolation |
-| **the-room-skv21** | 100.109.31.88 (yf-020e-2) | 192.168.1.43 | YF_020E rk3566 / 11 · **จอ 4K** | Aquamx003_5G | Fully | ⚠️ 4K panel = เสี่ยง ANR |
+| **lumpini-24** | 100.103.74.106 (rk3566) | 192.168.1.100 | RK3566 / 11 · 1080p | **LAN (eth0)** (SSID wifi ไม่ใช่เส้นทางจริง) | **HomeApp 0.9.32** (เดิม Fully SingleApp→Yodeck · Yodeck ถอนแล้ว) | ✅ เล่นปกติ 17/09 |
+| **mahogany-tower** | 100.123.35.91 (zc-h358s-1) | 192.168.1.100 | ZC-H358S rk3588s / 13 · 1080p | **LAN (eth0 · gw 192.168.1.1)** — เคยจดผิดว่า pocket wifi; SSID wifi ไม่ใช่เส้นทางจริง เช็ค `ip route get 8.8.8.8` | **HomeApp 0.9.32** (เดิม Fully SingleApp→Yodeck · Yodeck ถอนแล้ว) | ✅ เล่นปกติ 17/09 |
+| **39-by-sansiri** | 100.102.67.15 (zc-h358s-2) | 192.168.1.37 | ZC-H358S rk3588s / 13 · 1080p | aquamx006_5GHz | **HomeApp 0.9.32** (เดิม Fully→netlify) | ✅ เล่นปกติ 17/09 |
+| **noble-be19a** | 100.100.123.43 (yf-020e) | 192.168.1.2 | YF_020E rk3566 / 11 · **จอ 4K** · override render 1080p (`wm size 1080x1920` `wm density 160`) | Aquamx004-5G | **HomeApp 0.9.32** (เดิม Fully) | ✅ เล่นปกติ 17/09 · 4K panel |
+| **noble-be19b** | 100.87.197.15 (yf-020e-1) | 192.168.1.46 | YF_020E rk3566 / 11 · **4K 3840×2160** | Noble B19_LobbyB_5G | **HomeApp 0.9.32** (เดิม Fully) · screen schedule ปิด 21:00 | ✅ เล่นปกติ 17/09 · wifi client isolation |
+| **the-room-skv21** | 100.109.31.88 (yf-020e-2) | 192.168.1.43 | YF_020E rk3566 / 11 · **จอ 4K** | Aquamx003_5G | **HomeApp 0.9.32** (เดิม Fully) | ✅ เล่นปกติ 17/09 · 4K panel |
+| **SD2603-001** (กล่องที่ 2 ของ 39-by-sansiri · HomeApp pilot) | 100.71.132.15 (zc-h358s) | 192.168.1.100 | ZC-H358S rk3588s / 13 · 1080p | wifi ตึก | **HomeApp 0.9.32** · content_url=39-by-sansiri · screen 08:30–21:00 | ✅ เล่นปกติ 17/09 |
 
-**กล่องสำรอง (ที่บ้าน · ปิดอยู่):** Gygar43 · เดิม 100.71.132.15 (zc-h358s) · ZC-H358S rk3588s/13 · wifi Theake_2.4G · MAC B8:41:D9:F1:8F:A8 — ตอนนี้ offline ไม่อยู่ในฟลีต
+⚠️ **มี zc-h358s 3 ตัว** (100.71.132.15 = SD2603-001 · 100.123.35.91 = mahogany · 100.102.67.15 = 39-by-sansiri) — ยืนยันจาก header บนจอ/`proj:` footer ก่อนสรุปว่ากล่องไหน
 
 ¹ LAN IP เป็น DHCP เปลี่ยนได้ · แต่ละไซต์เป็นวง 192.168.1.x แยกกัน (ซ้ำได้ข้ามไซต์) → **รีโมทให้ใช้ tailnet IP เสมอ**
 บอร์ด **YF_020E = จอ 4K** (noble×2, the-room) คือกลุ่มเสี่ยง ANR · **ZC-H358S rk3588s = 1080p ตัวแรง** (mahogany, 39-by-sansiri) นิ่งสุด
@@ -33,7 +38,7 @@
 ⚠️ **wifi Noble B19_LobbyB มี client isolation** — คอมกับกล่องอยู่ SSID เดียวกันก็คุยกันตรง ๆ ไม่ได้
 (LAN adb/2323 ใช้ไม่ได้แม้อยู่หน้างาน) → ใช้ tailnet IP เสมอ · mDNS discovery ทะลุได้แต่ unicast โดนบล็อก
 
-### 🟡 กล่อง Yodeck-wrap: **lumpini-24, mahogany-tower** — ห้าม disable Yodeck!
+### 🗄️ (ประวัติ — เลิกใช้ 2026-09-17) กล่อง Yodeck-wrap: lumpini-24, mahogany-tower
 
 สองกล่องนี้ **Yodeck คือ player** (Fully SingleApp แค่ล็อก kiosk แล้วสั่งเปิด Yodeck · Yodeck เปิดหน้า
 netlify เป็น web content ข้างใน → เลยเห็น `foreground=com.yodeck.android` **และ** beacon=netlify พร้อมกัน)
