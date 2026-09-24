@@ -205,9 +205,9 @@ export default defineType({
     defineField({
       group:       'scope',
       name:        'terms',
-      title:       '2.6 · Terms & Details table (เงื่อนไข / รายละเอียด)',
+      title:       '2.6 · Terms & Details table',
       type:        'array',
-      description: 'One row per line of the terms table, printed in this order.',
+      description: 'One row per line of the terms table, printed in this order. Keep it to ~7 rows so the PDF stays on one A4 page.',
       of: [defineArrayMember({
         type: 'object',
         name: 'termRow',
@@ -224,15 +224,13 @@ export default defineType({
         },
       })],
       initialValue: [
-        { _type: 'termRow', label_th: 'ประเภทแพ็กเกจ',            label_en: 'Package',        value_th: 'แบบระบุจอ (Specific Site) ไม่ผูกขาด (Non-Exclusive)', value_en: 'Specific site, non-exclusive' },
-        { _type: 'termRow', label_th: 'จำนวนจอ',                  label_en: 'Screens',        value_th: '-', value_en: '-' },
-        { _type: 'termRow', label_th: 'ระยะเวลา',                  label_en: 'Duration',       value_th: '-', value_en: '-' },
-        { _type: 'termRow', label_th: 'การชำระเงิน',               label_en: 'Payment',        value_th: 'ชำระทั้งหมดเมื่อทำสัญญา', value_en: 'Paid in full on signing' },
-        { _type: 'termRow', label_th: 'ประเภทสื่อ',                 label_en: 'Media type',     value_th: 'อินโฟกราฟิก (Infographic)', value_en: 'Infographic' },
-        { _type: 'termRow', label_th: 'จำนวนสื่อ',                  label_en: 'Media count',    value_th: '-', value_en: '-' },
-        { _type: 'termRow', label_th: 'ระยะเวลาแสดงต่อรอบ (Loop)',   label_en: 'Slot per loop',  value_th: 'ไม่เกิน 10 วินาที', value_en: 'Up to 10 seconds' },
-        { _type: 'termRow', label_th: 'จำนวนรอบแสดงต่อวัน',         label_en: 'Plays per day',  value_th: '-', value_en: '-' },
-        { _type: 'termRow', label_th: 'Call to Action (CTA)',       label_en: 'Call to action', value_th: 'Touch for Detail และ Scan to Connect', value_en: 'Touch for Detail and Scan to Connect' },
+        { _type: 'termRow', label_th: 'ประเภทแพ็กเกจ',   label_en: 'Package',     value_th: 'แบบระบุจอ (Specific Site) ไม่ผูกขาด (Non-Exclusive)', value_en: 'Specific site, non-exclusive' },
+        { _type: 'termRow', label_th: 'จำนวนจอ',         label_en: 'Screens',     value_th: '-', value_en: '-' },
+        { _type: 'termRow', label_th: 'ระยะเวลา',         label_en: 'Period',      value_th: '-', value_en: '-' },
+        { _type: 'termRow', label_th: 'ค่าบริการรายเดือน', label_en: 'Monthly fee', value_th: '-', value_en: '-', emphasis: true },
+        { _type: 'termRow', label_th: 'ส่วนลด',           label_en: 'Discount',    value_th: '-', value_en: '-', emphasis: true },
+        { _type: 'termRow', label_th: 'การชำระเงิน',      label_en: 'Payment',     value_th: 'ชำระทั้งหมดเมื่อทำสัญญา', value_en: 'Paid in full on signing' },
+        { _type: 'termRow', label_th: 'สื่อบนจอ',          label_en: 'Media',       value_th: 'ภาพนิ่ง 4 ภาพ หรือวิดีโอ 1 คลิป · แสดงรอบละ 20 วินาที', value_en: '4 still images, or 1 video · 20 seconds per loop' },
       ],
     }),
 
@@ -352,14 +350,6 @@ export default defineType({
     defineField({ group: 'amounts', name: 'vatAmount',   title: '3.4 · VAT Amount (THB)', type: 'number', validation: Rule => Rule.min(0) }),
     defineField({ group: 'amounts', name: 'totalAmount', title: '3.5 · Total (THB)',      type: 'number', validation: Rule => Rule.min(0), description: 'Amount + VAT. The figure printed as ยอดรวมสุทธิ.' }),
 
-    defineField({
-      group:        'amounts',
-      name:         'withholdingNote',
-      title:        '3.6 · Print WHT note',
-      type:         'boolean',
-      initialValue: true,
-      description:  'Prints the 2% advertising withholding-tax paragraph (juristic customers).',
-    }),
 
     // ── Group 4: Follow-up ───────────────────────────────────────────────────
 

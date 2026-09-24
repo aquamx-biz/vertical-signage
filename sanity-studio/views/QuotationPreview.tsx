@@ -34,10 +34,11 @@ export function QuotationPreview(props: { document: { displayed: { _id?: string;
             📄 Customer view — {doc?.quoteNumber ?? '(no number)'}
           </Text>
           <Text size={1}>
-            <a href={url} target="_blank" rel="noreferrer">Thai ↗</a>
+            <a href={`${url}/pdf`} target="_blank" rel="noreferrer">PDF Thai ↗</a>
             {'  ·  '}
-            <a href={`${url}?lang=en`} target="_blank" rel="noreferrer">English ↗</a>
-            {'  — open, then save as PDF'}
+            <a href={`${url}/pdf?lang=en`} target="_blank" rel="noreferrer">PDF English ↗</a>
+            {'  ·  '}
+            <a href={url} target="_blank" rel="noreferrer">web page ↗</a>
           </Text>
         </Flex>
         <Box style={{ height: 'calc(100vh - 160px)', minHeight: 640, border: '1px solid #e3e6ea', borderRadius: 8, overflow: 'hidden', background: '#F4F1EA' }}>
