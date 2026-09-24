@@ -30,10 +30,13 @@ type Correspondence = {
 }
 
 export function QuotationSendView(props: {
-  document: { displayed: { _id?: string; quoteNumber?: string; status?: string; correspondence?: Correspondence[] } }
+  document: { displayed: { _id?: string; _type?: string; quoteNumber?: string; adContractNumber?: string; status?: string; correspondence?: Correspondence[] } }
 }) {
   const doc   = props.document?.displayed
   const id    = doc?._id?.replace(/^drafts\./, '')
+  const docType: 'quotation' | 'adContract' = doc?._type === 'adContract' ? 'adContract' : 'quotation'
+  const docWord = docType === 'adContract' ? 'contract' : 'quotation'
+  const number  = docType === 'adContract' ? doc?.adContractNumber : doc?.quoteNumber
   const toast = useToast()
   const user  = useCurrentUser()
 
@@ -56,7 +59,7 @@ export function QuotationSendView(props: {
     try {
       const res  = await fetch(API_URL, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ quotationId: id, channel, lang }),
+        body: JSON.stringify({ quotationId: id, docType, channel, lang }),
       })
       const json = await res.json()
       if (!res.ok) throw new Error(json?.error ?? `HTTP ${res.status}`)
@@ -67,7 +70,7 @@ export function QuotationSendView(props: {
     } finally {
       setLoading(false)
     }
-  }, [id, channel, lang])
+  }, [id, docType, channel, lang])
 
   useEffect(() => { loadPreview() }, [loadPreview])
 
@@ -80,7 +83,7 @@ export function QuotationSendView(props: {
       const res  = await fetch(API_URL, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          quotationId: id, channel, lang, to, subject, message, confirm: true,
+          quotationId: id, docType, channel, lang, to, subject, message, confirm: true,
           cc: cc.split(/[,\s]+/).map(s => s.trim()).filter(Boolean),
           sentBy: user?.name ?? user?.email ?? undefined,
         }),
@@ -88,7 +91,7 @@ export function QuotationSendView(props: {
       const json = await res.json()
       if (!res.ok) throw new Error(json?.error ?? `HTTP ${res.status}`)
       setDone(`Sent to ${label} at ${new Date(json.sentAt).toLocaleString()}`)
-      toast.push({ status: 'success', title: `Quotation ${preview.quoteNumber} sent`, description: label })
+      toast.push({ status: 'success', title: `${docWord === 'contract' ? 'Contract' : 'Quotation'} ${preview.quoteNumber} sent`, description: label })
     } catch (e: any) {
       setError(e?.message ?? 'Send failed')
       toast.push({ status: 'error', title: 'Send failed', description: e?.message })
@@ -109,7 +112,7 @@ export function QuotationSendView(props: {
       <Stack space={4}>
         <Flex align="center" justify="space-between">
           <Text size={1} weight="semibold" style={{ textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            📤 Send quotation — {doc?.quoteNumber ?? '(no number)'}
+            📤 Send {docWord} — {number ?? '(no number)'}
           </Text>
           <Badge tone={doc?.status === 'sent' ? 'positive' : 'default'} mode="outline">status: {doc?.status ?? 'draft'}</Badge>
         </Flex>
@@ -128,7 +131,7 @@ export function QuotationSendView(props: {
                 <Text size={1} weight="semibold">Language</Text>
                 <Inline space={3}>
                   <Flex align="center" gap={2}><Radio checked={lang === 'th'} onChange={() => setLang('th')} name="lg" value="th" /><Text size={1}>Thai</Text></Flex>
-                  <Flex align="center" gap={2}><Radio checked={lang === 'en'} onChange={() => setLang('en')} name="lg" value="en" /><Text size={1}>English</Text></Flex>
+                  {docType === 'quotation' && <Flex align="center" gap={2}><Radio checked={lang === 'en'} onChange={() => setLang('en')} name="lg" value="en" /><Text size={1}>English</Text></Flex>}
                 </Inline>
               </Stack>
             </Flex>
@@ -167,7 +170,7 @@ export function QuotationSendView(props: {
                   <Text size={1} weight="semibold">{channel === 'line' ? 'Message on the LINE card' : 'Email body'}</Text>
                   <TextArea rows={channel === 'line' ? 4 : 10} value={message} onChange={e => setMessage(e.currentTarget.value)} />
                   {channel === 'line' && (
-                    <Text size={1} muted>The card also shows customer, total, valid-until and two buttons: “{lang === 'th' ? 'เปิดใบเสนอราคา (PDF)' : 'Open quotation (PDF)'}” and “{lang === 'th' ? 'ดูบนเว็บ' : 'View on web'}”.</Text>
+                    <Text size={1} muted>The card also shows customer, total{docType === 'quotation' ? ', valid-until' : ', term'} and two buttons: “{docType === 'adContract' ? 'เปิดสัญญา (PDF)' : lang === 'th' ? 'เปิดใบเสนอราคา (PDF)' : 'Open quotation (PDF)'}” and “{lang === 'th' ? 'ดูบนเว็บ' : 'View on web'}”.</Text>
                   )}
                 </Stack>
 
@@ -180,7 +183,7 @@ export function QuotationSendView(props: {
                   <Card padding={3} radius={2} tone="caution">
                     <Stack space={3}>
                       <Text size={1} weight="semibold">
-                        Send quotation {preview.quoteNumber} ({lang.toUpperCase()}) to {channel === 'line' ? `LINE user ${to}` : to}? This reaches the customer immediately.
+                        Send {docWord} {preview.quoteNumber} ({lang.toUpperCase()}) to {channel === 'line' ? `LINE user ${to}` : to}? This reaches the customer immediately.
                       </Text>
                       <Flex gap={2}>
                         <Button tone="critical" text={sending ? 'Sending…' : 'Confirm send'} disabled={sending} onClick={send} />
@@ -190,7 +193,7 @@ export function QuotationSendView(props: {
                   </Card>
                 )}
                 {done && <Card padding={3} radius={2} tone="positive"><Text size={1}>{done}. Status set to Sent — refresh the Edit tab to see the log.</Text></Card>}
-                <Text size={0} muted>Sends the PUBLISHED version of this quotation. Publish first if you changed anything.</Text>
+                <Text size={0} muted>Sends the PUBLISHED version of this {docWord}. Publish first if you changed anything.</Text>
               </Stack>
             )}
           </Stack>

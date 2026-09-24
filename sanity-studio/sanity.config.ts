@@ -177,7 +177,7 @@ export default defineConfig([{
             S.view.form().id('edit').title('Edit'),
           ])
         }
-        if (schemaType === 'quotation') {
+        if (schemaType === 'quotation' || schemaType === 'adContract') {
           return S.document().views([
             S.view.form().id('edit').title('Edit'),
             S.view.component(QuotationPreview).id('preview').title('Customer view / PDF'),
@@ -402,12 +402,13 @@ export default defineConfig([{
           ]),
 
           // ── CRM ────────────────────────────────────────────────────────────
-          (can('party') || can('lead') || can('saleOpportunity') || can('quotation') || can('emailCampaign')) &&
+          (can('party') || can('lead') || can('saleOpportunity') || can('quotation') || can('adContract') || can('emailCampaign')) &&
           group('crm', 'CRM', '👥', [
             can('party')           && S.documentTypeListItem('party').title('Parties'),
             can('lead')            && S.documentTypeListItem('lead').title('Leads'),
             can('saleOpportunity') && S.documentTypeListItem('saleOpportunity').title('Sale Opportunities'),
             can('quotation')       && S.documentTypeListItem('quotation').title('Quotations — ใบเสนอราคา'),
+            can('adContract')      && S.documentTypeListItem('adContract').title('Ad Contracts — สัญญารับโฆษณา'),
             can('emailCampaign')   && S.documentTypeListItem('emailCampaign').title('Email Campaigns'),
           ]),
 

@@ -12,13 +12,18 @@ import { Badge, Box, Card, Flex, Stack, Text } from '@sanity/ui'
 
 const HANDOFF_BASE = 'https://app.aquamx.co.th'
 
-export function quotationUrl(id?: string | null) {
-  return id ? `${HANDOFF_BASE}/quotation/${id.replace(/^drafts\./, '')}` : null
+export function quotationUrl(id?: string | null, base: 'quotation' | 'contract' = 'quotation') {
+  return id ? `${HANDOFF_BASE}/${base}/${id.replace(/^drafts\./, '')}` : null
 }
 
-export function QuotationPreview(props: { document: { displayed: { _id?: string; quoteNumber?: string } } }) {
+type Doc = { _id?: string; _type?: string; quoteNumber?: string; adContractNumber?: string }
+
+/** Same view for the quotation and the ad contract — the page path differs. */
+export function QuotationPreview(props: { document: { displayed: Doc } }) {
   const doc = props.document?.displayed
-  const url = quotationUrl(doc?._id)
+  const isContract = doc?._type === 'adContract'
+  const url = quotationUrl(doc?._id, isContract ? 'contract' : 'quotation')
+  const number = isContract ? doc?.adContractNumber : doc?.quoteNumber
   if (!url) {
     return (
       <Card padding={3} radius={3} tone="caution">
@@ -31,12 +36,11 @@ export function QuotationPreview(props: { document: { displayed: { _id?: string;
       <Stack space={3}>
         <Flex align="center" justify="space-between">
           <Text size={1} weight="semibold" style={{ textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            📄 Customer view — {doc?.quoteNumber ?? '(no number)'}
+            📄 Customer view — {number ?? '(no number)'}
           </Text>
           <Text size={1}>
-            <a href={`${url}/pdf`} target="_blank" rel="noreferrer">PDF Thai ↗</a>
-            {'  ·  '}
-            <a href={`${url}/pdf?lang=en`} target="_blank" rel="noreferrer">PDF English ↗</a>
+            <a href={`${url}/pdf`} target="_blank" rel="noreferrer">{isContract ? 'PDF ↗' : 'PDF Thai ↗'}</a>
+            {isContract ? null : <>{'  ·  '}<a href={`${url}/pdf?lang=en`} target="_blank" rel="noreferrer">PDF English ↗</a></>}
             {'  ·  '}
             <a href={url} target="_blank" rel="noreferrer">web page ↗</a>
           </Text>

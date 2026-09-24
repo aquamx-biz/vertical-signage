@@ -361,16 +361,15 @@ export default defineType({
       name:        'correspondence',
       title:       '4.3a · Correspondence Log',
       type:        'array',
-      description: 'Every send to the customer, written automatically by the Send tab. Read-only in practice.',
-      readOnly:    true,
+      description: 'Every send to the customer, written automatically by the Send tab; add a "received" row when the signed copy comes back.',
       of: [{
         type: 'object',
         name: 'quotationCorrespondence',
         fields: [
           defineField({ name: 'sentAt',    title: 'Sent At',     type: 'datetime' }),
-          defineField({ name: 'channel',   title: 'Channel',     type: 'string', options: { list: ['line', 'email'] } }),
+          defineField({ name: 'channel',   title: 'Channel',     type: 'string', options: { list: ['line', 'email', 'received'] }, description: '"received" = a reply / signed copy that came back from the customer — add that row yourself.' }),
           defineField({ name: 'lang',      title: 'Language',    type: 'string', options: { list: ['th', 'en'] } }),
-          defineField({ name: 'to',        title: 'To',          type: 'string' }),
+          defineField({ name: 'to',        title: 'To / From',   type: 'string' }),
           defineField({ name: 'cc',        title: 'Cc',          type: 'array', of: [{ type: 'string' }] }),
           defineField({ name: 'subject',   title: 'Subject',     type: 'string' }),
           defineField({ name: 'message',   title: 'Message',     type: 'text', rows: 4 }),
@@ -380,7 +379,7 @@ export default defineType({
         preview: {
           select: { sentAt: 'sentAt', channel: 'channel', lang: 'lang', to: 'to', sentBy: 'sentBy' },
           prepare: ({ sentAt, channel, lang, to, sentBy }: any) => ({
-            title:    `${channel === 'email' ? '✉️' : '💬'} ${String(channel ?? '').toUpperCase()} · ${String(lang ?? '').toUpperCase()} → ${to ?? '-'}`,
+            title:    `${channel === 'email' ? '✉️' : channel === 'received' ? '📥' : '💬'} ${String(channel ?? '').toUpperCase()} · ${String(lang ?? '').toUpperCase()} → ${to ?? '-'}`,
             subtitle: [sentAt ? new Date(sentAt).toLocaleString() : null, sentBy ? `by ${sentBy}` : null].filter(Boolean).join(' · '),
           }),
         },
@@ -394,6 +393,23 @@ export default defineType({
       to:          [{ type: 'order' }],
       options:     { disableNew: true },
       description: 'The Order created when this quotation was accepted.',
+    }),
+    defineField({
+      group:       'followup',
+      name:        'signedFiles',
+      title:       '4.4a · Signed Copy (PDF / photos)',
+      type:        'array',
+      of:          [{ type: 'file', options: { accept: '.pdf,image/*' } }],
+      description: 'The quotation as the customer signed / stamped it — the evidence of acceptance. Several files are fine when it comes back as page photos. Set status to Accepted and fill 4.3.',
+    }),
+    defineField({
+      group:       'followup',
+      name:        'adContract',
+      title:       '4.4b · Ad Contract Raised',
+      type:        'reference',
+      to:          [{ type: 'adContract' }],
+      options:     { disableNew: true },
+      description: 'Only when the customer wants a formal contract — small deals stop at the signed quotation.',
     }),
     defineField({
       group:        'followup',
