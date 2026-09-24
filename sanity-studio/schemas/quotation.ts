@@ -216,6 +216,7 @@ export default defineType({
           defineField({ name: 'label_en', title: 'Label (English)',  type: 'string' }),
           defineField({ name: 'value_th', title: 'Value (Thai)',     type: 'string', validation: Rule => Rule.required() }),
           defineField({ name: 'value_en', title: 'Value (English)',  type: 'string' }),
+          defineField({ name: 'emphasis', title: 'Bold value',        type: 'boolean', initialValue: false, description: 'Print the value in bold (price, discount).' }),
         ],
         preview: {
           select: { t: 'label_th', v: 'value_th' },
@@ -305,12 +306,29 @@ export default defineType({
       name:        'amountDue',
       title:       '3.2 · Amount (THB, before VAT)',
       type:        'number',
-      description: 'Sum of the lines. Required before the quotation can be marked Sent.',
+      description: 'Sum of the lines minus the discount (3.2d). Required before the quotation can be marked Sent.',
       validation:  Rule => Rule.min(0).custom((value, context) => {
         const status = context.document?.status as string | undefined
         if (value != null || status === 'draft') return true
         return 'Amount is required before a quotation can leave draft.'
       }),
+    }),
+
+    defineField({
+      group:       'amounts',
+      name:        'discountLabel_th',
+      title:       '3.2b · Discount Label (Thai)',
+      type:        'string',
+      description: 'Printed as its own line under the items, e.g. "ส่วนลดจ่ายล่วงหน้า 3 เดือน 5%". Leave blank when there is no discount.',
+    }),
+    defineField({ group: 'amounts', name: 'discountLabel_en', title: '3.2c · Discount Label (English)', type: 'string' }),
+    defineField({
+      group:       'amounts',
+      name:        'discountAmount',
+      title:       '3.2d · Discount Amount (THB)',
+      type:        'number',
+      description: 'Positive number; printed as a deduction. Amount (3.2) should already be net of it.',
+      validation:  Rule => Rule.min(0),
     }),
 
     defineField({
