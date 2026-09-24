@@ -33,7 +33,12 @@ export function QuotationPreview(props: { document: { displayed: { _id?: string;
           <Text size={1} weight="semibold" style={{ textTransform: 'uppercase', letterSpacing: '0.05em' }}>
             📄 Customer view — {doc?.quoteNumber ?? '(no number)'}
           </Text>
-          <Text size={1}><a href={url} target="_blank" rel="noreferrer">Open in new tab / save PDF ↗</a></Text>
+          <Text size={1}>
+            <a href={url} target="_blank" rel="noreferrer">Thai ↗</a>
+            {'  ·  '}
+            <a href={`${url}?lang=en`} target="_blank" rel="noreferrer">English ↗</a>
+            {'  — open, then save as PDF'}
+          </Text>
         </Flex>
         <Box style={{ height: 'calc(100vh - 160px)', minHeight: 640, border: '1px solid #e3e6ea', borderRadius: 8, overflow: 'hidden', background: '#F4F1EA' }}>
           <iframe key={url} src={url} title="Quotation preview" style={{ width: '100%', height: '100%', border: 0, display: 'block' }} />

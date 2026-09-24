@@ -194,11 +194,12 @@ export default defineType({
     }),
 
     defineField({
-      group: 'scope',
-      name:  'intro_en',
-      title: '2.5 · Opening Paragraph (English)',
-      type:  'text',
-      rows:  4,
+      group:        'scope',
+      name:         'intro_en',
+      title:        '2.5 · Opening Paragraph (English)',
+      type:         'text',
+      rows:         4,
+      initialValue: 'This quotation sets out the details and terms for advertising on the aquamx digital screen network. We are pleased to offer digital advertising space designed to engage residents and visitors inside the building. Every aquamx screen carries an Interactive Call-to-Action (CTA): viewers can touch the screen to see product details and more images, or order, book or contact the product owner directly from the screen.',
     }),
 
     defineField({
@@ -244,11 +245,12 @@ export default defineType({
     }),
 
     defineField({
-      group: 'scope',
-      name:  'closing_en',
-      title: '2.8 · Closing Paragraph (English)',
-      type:  'text',
-      rows:  4,
+      group:        'scope',
+      name:         'closing_en',
+      title:        '2.8 · Closing Paragraph (English)',
+      type:         'text',
+      rows:         4,
+      initialValue: 'The advertisement plays in a video loop throughout the day. When a viewer touches the screen, a Product Detail Page opens so they can get in touch directly. aquamx reserves the right to review and approve every creative before it goes on screen, so that all content meets the quality and suitability standards of the building. Thank you for your interest in this offer — we look forward to working with you soon.',
     }),
 
     // ── Group 3: Lines & Amounts ─────────────────────────────────────────────
@@ -362,6 +364,14 @@ export default defineType({
       type:         'string',
       initialValue: 'นายศักดิ์ชัย สุทธิพิพัฒน์',
       description:  'Name printed under the signature block.',
+    }),
+    defineField({
+      group:        'followup',
+      name:         'signedBy_en',
+      title:        '4.5b · Signed By (English)',
+      type:         'string',
+      initialValue: 'Sakchai Suthipipat',
+      description:  'Name printed under the signature block on the English version (?lang=en).',
     }),
     defineField({ group: 'followup', name: 'internalNotes', title: '4.6 · Internal Notes', type: 'text', rows: 3 }),
   ],
