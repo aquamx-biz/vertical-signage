@@ -14,6 +14,7 @@ import { MediaOverview }        from './views/MediaOverview'
 import { OfferOverview }        from './views/OfferOverview'
 import { ProviderOverview }     from './views/ProviderOverview'
 import { OfferWebPreview }      from './views/WebPreview'
+import { QuotationPreview }     from './views/QuotationPreview'
 import { AILookupAction }      from './actions/AILookupAction'
 import { AIPartyLookupAction } from './actions/AIPartyLookupAction'
 import { MarkAsSignedAction }             from './actions/MarkAsSignedAction'
@@ -173,6 +174,12 @@ export default defineConfig([{
           return S.document().views([
             S.view.component(SaleOpportunityOverview).id('overview').title('Overview'),
             S.view.form().id('edit').title('Edit'),
+          ])
+        }
+        if (schemaType === 'quotation') {
+          return S.document().views([
+            S.view.form().id('edit').title('Edit'),
+            S.view.component(QuotationPreview).id('preview').title('Customer view / PDF'),
           ])
         }
         if (schemaType === 'procurement') {
@@ -393,11 +400,12 @@ export default defineConfig([{
           ]),
 
           // ── CRM ────────────────────────────────────────────────────────────
-          (can('party') || can('lead') || can('saleOpportunity') || can('emailCampaign')) &&
+          (can('party') || can('lead') || can('saleOpportunity') || can('quotation') || can('emailCampaign')) &&
           group('crm', 'CRM', '👥', [
             can('party')           && S.documentTypeListItem('party').title('Parties'),
             can('lead')            && S.documentTypeListItem('lead').title('Leads'),
             can('saleOpportunity') && S.documentTypeListItem('saleOpportunity').title('Sale Opportunities'),
+            can('quotation')       && S.documentTypeListItem('quotation').title('Quotations — ใบเสนอราคา'),
             can('emailCampaign')   && S.documentTypeListItem('emailCampaign').title('Email Campaigns'),
           ]),
 
