@@ -9,7 +9,8 @@ const AdContractNumberInput = createAutoNumberInput('adContract', { fixedPrefix:
  * or large deal, exclusive terms). Small deals stop at the signed quotation.
  *
  * The contract REFERENCES the quotation and pulls the counterparty, package,
- * price and period from it at render time — nothing commercial is retyped.
+ * period, monthly fee, total and sites from it at render time — the 2.x fields
+ * here are overrides, left blank unless the contract differs from the quote.
  * The standard clauses (scope, term, payment, content, distribution,
  * cancellation, general) live in the customer-facing page as one fixed
  * template; only the bracketed numbers ([7] days, [3] business days …) are
@@ -109,19 +110,19 @@ export default defineType({
 
     // ── Group 2: Terms & Sites ───────────────────────────────────────────────
 
-    defineField({ group: 'terms', name: 'startDate', title: '2.1 · Start Date', type: 'date', validation: Rule => Rule.required() }),
-    defineField({ group: 'terms', name: 'endDate',   title: '2.2 · End Date',   type: 'date', validation: Rule => Rule.required().min(Rule.valueOfField('startDate')) }),
-    defineField({ group: 'terms', name: 'months',    title: '2.3 · Term (months)', type: 'number', validation: Rule => Rule.required().integer().min(1) }),
+    defineField({ group: 'terms', name: 'startDate', title: '2.1 · Start Date', type: 'date', description: "Leave blank to use the quotation's Campaign Start (2.3a). Fill in only when the contract differs." }),
+    defineField({ group: 'terms', name: 'endDate',   title: '2.2 · End Date',   type: 'date', description: "Leave blank to use the quotation's Campaign End (2.3b).", validation: Rule => Rule.min(Rule.valueOfField('startDate')) }),
+    defineField({ group: 'terms', name: 'months',    title: '2.3 · Term (months)', type: 'number', description: "Leave blank to use the quotation's period (or the quantity on its first price line).", validation: Rule => Rule.integer().min(1) }),
 
-    defineField({ group: 'terms', name: 'monthlyFee', title: '2.4 · Monthly Fee (THB)',         type: 'number', validation: Rule => Rule.required().min(0), description: 'Clause 3.1 — per month, before withholding tax.' }),
-    defineField({ group: 'terms', name: 'totalFee',   title: '2.5 · Total for the Term (THB)',  type: 'number', validation: Rule => Rule.required().min(0), description: 'Clause 3.1 — the whole term, after any discount. Usually the quotation total.' }),
+    defineField({ group: 'terms', name: 'monthlyFee', title: '2.4 · Monthly Fee (THB)',         type: 'number', validation: Rule => Rule.min(0), description: "Clause 3.1. Leave blank to use the quotation's unit price on its first price line." }),
+    defineField({ group: 'terms', name: 'totalFee',   title: '2.5 · Total for the Term (THB)',  type: 'number', validation: Rule => Rule.min(0), description: "Clause 3.1 — after any discount. Leave blank to use the quotation's total." }),
 
     defineField({
       group:       'terms',
       name:        'sites',
       title:       '2.6 · Installation Sites (attachment)',
       type:        'array',
-      description: 'Printed as the attachment "รายชื่อสถานที่ติดตั้ง". One row per site.',
+      description: 'Printed as the attachment "รายชื่อสถานที่ติดตั้ง". Leave empty to list the quotation\'s Project Sites (1 screen each); fill in only to change sites, screen counts or the printed address.',
       of: [defineArrayMember({
         type: 'object',
         name: 'contractSite',
@@ -220,12 +221,16 @@ export default defineType({
       customerEn: 'quotation.customer.legalName_en',
       quote:      'quotation.quoteNumber',
       total:      'totalFee',
+      qTotal:     'quotation.totalAmount',
       start:      'startDate',
       end:        'endDate',
+      qStart:     'quotation.periodStart',
+      qEnd:       'quotation.periodEnd',
     },
-    prepare({ number, status, customer, customerEn, quote, total, start, end }: {
-      number?: string; status?: string; customer?: string; customerEn?: string; quote?: string; total?: number; start?: string; end?: string
+    prepare({ number, status, customer, customerEn, quote, total: t0, qTotal, start: s0, end: e0, qStart, qEnd }: {
+      number?: string; status?: string; customer?: string; customerEn?: string; quote?: string; total?: number; qTotal?: number; start?: string; end?: string; qStart?: string; qEnd?: string
     }) {
+      const total = t0 ?? qTotal, start = s0 ?? qStart, end = e0 ?? qEnd
       const icon = { draft: '📝', sent: '📤', signed: '✍️', active: '▶️', ended: '🏁', cancelled: '❌' }[status ?? ''] ?? '📄'
       return {
         title:    `${icon} ${number ?? '(no number)'} · ${customer || customerEn || '-'}`,

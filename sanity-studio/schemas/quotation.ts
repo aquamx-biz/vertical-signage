@@ -185,6 +185,22 @@ export default defineType({
     }),
 
     defineField({
+      group:       'scope',
+      name:        'periodStart',
+      title:       '2.3a · Campaign Start',
+      type:        'date',
+      description: 'First day the ad runs. The Ad Contract raised from this quotation uses it — enter it once here.',
+    }),
+    defineField({
+      group:       'scope',
+      name:        'periodEnd',
+      title:       '2.3b · Campaign End',
+      type:        'date',
+      description: 'Last day the ad runs.',
+      validation:  Rule => Rule.min(Rule.valueOfField('periodStart')),
+    }),
+
+    defineField({
       group:        'scope',
       name:         'intro_th',
       title:        '2.4 · Opening Paragraph (Thai)',
