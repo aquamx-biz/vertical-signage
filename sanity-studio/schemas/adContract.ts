@@ -172,6 +172,30 @@ export default defineType({
 
     defineField({ group: 'followup', name: 'sentAt', title: '4.1 · Sent On',                type: 'datetime' }),
     defineField({ group: 'followup', name: 'sentTo', title: '4.2 · Sent To (email / LINE)', type: 'string'   }),
+    defineField({ group: 'followup', name: 'viewCount',     title: '4.2a · Customer Opens',        type: 'number',   readOnly: true, description: 'How many times the customer opened the link (web page or PDF). Written automatically — our own previews, drafts and link-preview bots are not counted.' }),
+    defineField({ group: 'followup', name: 'firstViewedAt', title: '4.2b · First Opened',          type: 'datetime', readOnly: true }),
+    defineField({ group: 'followup', name: 'lastViewedAt',  title: '4.2c · Last Opened',           type: 'datetime', readOnly: true }),
+    defineField({
+      group: 'followup', name: 'views', title: '4.2d · Open Log', type: 'array', readOnly: true,
+      description: 'The most recent 50 opens.',
+      of: [{
+        type: 'object', name: 'docView',
+        fields: [
+          defineField({ name: 'at',     title: 'When',   type: 'datetime' }),
+          defineField({ name: 'kind',   title: 'Opened', type: 'string' }),
+          defineField({ name: 'lang',   title: 'Language', type: 'string' }),
+          defineField({ name: 'device', title: 'Device', type: 'string' }),
+          defineField({ name: 'app',    title: 'App',    type: 'string' }),
+        ],
+        preview: {
+          select: { at: 'at', kind: 'kind', device: 'device', app: 'app' },
+          prepare: ({ at, kind, device, app }: any) => ({
+            title:    `${kind === 'pdf' ? '📄 PDF' : '🌐 Web page'} · ${device ?? '-'} · ${app ?? '-'}`,
+            subtitle: at ? new Date(at).toLocaleString() : '-',
+          }),
+        },
+      }],
+    }),
     defineField({
       group:       'followup',
       name:        'signedFiles',

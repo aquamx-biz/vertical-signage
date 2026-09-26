@@ -30,7 +30,8 @@ type Correspondence = {
 }
 
 export function QuotationSendView(props: {
-  document: { displayed: { _id?: string; _type?: string; quoteNumber?: string; adContractNumber?: string; status?: string; correspondence?: Correspondence[] } }
+  document: { displayed: { _id?: string; _type?: string; quoteNumber?: string; adContractNumber?: string; status?: string; correspondence?: Correspondence[]
+    viewCount?: number; firstViewedAt?: string; lastViewedAt?: string; views?: { _key: string; at?: string; kind?: string; device?: string; app?: string }[] } }
 }) {
   const doc   = props.document?.displayed
   const id    = doc?._id?.replace(/^drafts\./, '')
@@ -141,7 +142,7 @@ export function QuotationSendView(props: {
 
             {preview && !loading && (
               <Stack space={3}>
-                <Text size={1} muted>Customer: <b>{preview.customer}</b> · PDF: <a href={preview.pdfUrl} target="_blank" rel="noreferrer">{preview.pdfUrl}</a></Text>
+                <Text size={1} muted>Customer: <b>{preview.customer}</b> · PDF: <a href={`${preview.pdfUrl}${preview.pdfUrl.includes('?') ? '&' : '?'}staff=1`} target="_blank" rel="noreferrer">{preview.pdfUrl}</a></Text>
 
                 <Stack space={2}>
                   <Text size={1} weight="semibold">{channel === 'line' ? 'LINE user ID' : 'To (email)'}</Text>
@@ -200,6 +201,24 @@ export function QuotationSendView(props: {
         </Card>
 
         <Stack space={2}>
+          <Card padding={3} radius={2} tone={doc?.viewCount ? 'positive' : 'transparent'} border>
+            <Stack space={2}>
+              <Text size={1} weight="semibold">
+                {doc?.viewCount ? `👀 Customer opened it ${doc.viewCount} time${doc.viewCount > 1 ? 's' : ''}` : '👀 Not opened by the customer yet'}
+              </Text>
+              {doc?.viewCount ? (
+                <Text size={1} muted>
+                  First {doc.firstViewedAt ? new Date(doc.firstViewedAt).toLocaleString() : '-'} · Last {doc.lastViewedAt ? new Date(doc.lastViewedAt).toLocaleString() : '-'}
+                </Text>
+              ) : null}
+              {(doc?.views ?? []).slice(-5).reverse().map(v => (
+                <Text key={v._key} size={0} muted>
+                  {v.at ? new Date(v.at).toLocaleString() : '-'} · {v.kind === 'pdf' ? 'PDF' : 'web page'} · {v.device ?? '-'} · {v.app ?? '-'}
+                </Text>
+              ))}
+              <Text size={0} muted>Counts the customer only — our own previews (Studio, team LINE card), drafts and link-preview bots are left out.</Text>
+            </Stack>
+          </Card>
           <Text size={1} weight="semibold">Correspondence log</Text>
           {log.length === 0 && <Text size={1} muted>Nothing sent yet.</Text>}
           {log.map(c => (

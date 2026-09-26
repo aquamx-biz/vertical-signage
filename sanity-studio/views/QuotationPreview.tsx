@@ -39,14 +39,14 @@ export function QuotationPreview(props: { document: { displayed: Doc } }) {
             📄 Customer view — {number ?? '(no number)'}
           </Text>
           <Text size={1}>
-            <a href={`${url}/pdf`} target="_blank" rel="noreferrer">{isContract ? 'PDF ↗' : 'PDF Thai ↗'}</a>
-            {isContract ? null : <>{'  ·  '}<a href={`${url}/pdf?lang=en`} target="_blank" rel="noreferrer">PDF English ↗</a></>}
+            <a href={`${url}/pdf?staff=1`} target="_blank" rel="noreferrer">{isContract ? 'PDF ↗' : 'PDF Thai ↗'}</a>
+            {isContract ? null : <>{'  ·  '}<a href={`${url}/pdf?lang=en&staff=1`} target="_blank" rel="noreferrer">PDF English ↗</a></>}
             {'  ·  '}
-            <a href={url} target="_blank" rel="noreferrer">web page ↗</a>
+            <a href={`${url}?staff=1`} target="_blank" rel="noreferrer">web page ↗</a>
           </Text>
         </Flex>
         <Box style={{ height: 'calc(100vh - 160px)', minHeight: 640, border: '1px solid #e3e6ea', borderRadius: 8, overflow: 'hidden', background: '#F4F1EA' }}>
-          <iframe key={url} src={url} title="Quotation preview" style={{ width: '100%', height: '100%', border: 0, display: 'block' }} />
+          <iframe key={url} src={`${url}?staff=1`} title="Quotation preview" style={{ width: '100%', height: '100%', border: 0, display: 'block' }} />
         </Box>
         <Flex justify="center">
           <Badge mode="outline" fontSize={0} padding={2}>Shows the PUBLISHED document only — publish, then refresh this tab</Badge>
