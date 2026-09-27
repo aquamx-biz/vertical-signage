@@ -23,6 +23,7 @@ import { ProtectedProjectDeleteAction }  from './actions/ProtectedProjectDeleteA
 import { SuspendProjectAction, ReactivateProjectAction, TerminateProjectAction } from './actions/ProjectStatusActions'
 import { CreatePartyFromContractAction } from './actions/CreatePartyFromContractAction'
 import { ImportFromContractAction }      from './actions/ImportFromContractAction'
+import { NewRevisionAction, LoadTemplateAction } from './actions/AdContractActions'
 import { GenerateView }         from './views/GenerateView'
 import { ApprovalView }         from './views/ApprovalView'
 import { ActivityView }         from './views/ActivityView'
@@ -409,6 +410,7 @@ export default defineConfig([{
             can('saleOpportunity') && S.documentTypeListItem('saleOpportunity').title('Sale Opportunities'),
             can('quotation')       && S.documentTypeListItem('quotation').title('Quotations — ใบเสนอราคา'),
             can('adContract')      && S.documentTypeListItem('adContract').title('Ad Contracts — สัญญารับโฆษณา'),
+            can('adContract')      && S.documentTypeListItem('adContractTemplate').title('Ad Contract Templates'),
             can('emailCampaign')   && S.documentTypeListItem('emailCampaign').title('Email Campaigns'),
           ]),
 
@@ -581,6 +583,9 @@ export default defineConfig([{
       }
       if (ctx.schemaType === 'contract') {
         return [...prev, CreatePartyFromContractAction]
+      }
+      if (ctx.schemaType === 'adContract') {
+        return [...prev, NewRevisionAction, LoadTemplateAction]
       }
       if (ctx.schemaType === 'projectSite') {
         return [...prev, AILookupAction]

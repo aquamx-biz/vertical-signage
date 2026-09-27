@@ -1,7 +1,32 @@
 import { defineField, defineType, defineArrayMember } from 'sanity'
 import { createAutoNumberInput } from '../components/AutoNumberInput'
+import { contractClause } from './adContractTemplate'
 
 const AdContractNumberInput = createAutoNumberInput('adContract', { fixedPrefix: 'AD', dateField: 'contractDate' })
+
+/** Once sent, what the customer received is locked; New Revision unlocks it (Rev.N+1). */
+const locked = ({ document }: { document?: any }) => !!document?.status && document.status !== 'draft'
+
+/** A standalone file object for Issued Versions (archived PDF per send). */
+const issuedVersion = defineArrayMember({
+  type: 'object', name: 'issuedVersion',
+  fields: [
+    defineField({ name: 'rev',             title: 'Revision',          type: 'number' }),
+    defineField({ name: 'issuedAt',        title: 'Issued At',         type: 'datetime' }),
+    defineField({ name: 'pdf',             title: 'PDF as sent',       type: 'file' }),
+    defineField({ name: 'templateVersion', title: 'Template Version',  type: 'number' }),
+    defineField({ name: 'channel',         title: 'Channel',           type: 'string' }),
+    defineField({ name: 'to',              title: 'Sent To',           type: 'string' }),
+    defineField({ name: 'sentBy',          title: 'Sent By',           type: 'string' }),
+  ],
+  preview: {
+    select: { rev: 'rev', at: 'issuedAt', tv: 'templateVersion', channel: 'channel' },
+    prepare: ({ rev, at, tv, channel }: any) => ({
+      title:    `Rev.${rev ?? 1}${tv ? ` · template v${tv}` : ''}`,
+      subtitle: [at ? new Date(at).toLocaleString() : null, channel ? String(channel).toUpperCase() : null].filter(Boolean).join(' · '),
+    }),
+  },
+})
 
 /**
  * Ad Contract (สัญญารับโฆษณา) — the formal agreement raised from an ACCEPTED
@@ -28,9 +53,23 @@ export default defineType({
   groups: [
     { name: 'header',   title: '1. Contract Setup', default: true },
     { name: 'terms',    title: '2. Terms & Sites'                 },
+    { name: 'wording',  title: '2b. Contract Wording'             },
     { name: 'signing',  title: '3. Signatories'                   },
     { name: 'followup', title: '4. Follow-up'                     },
   ],
+
+  // A new contract starts with the wording of the ACTIVE template version.
+  initialValue: async (_params: unknown, context: any) => {
+    const base = { status: 'draft', revision: 1 }
+    try {
+      const client = context.getClient({ apiVersion: '2024-01-01' })
+      const tpl = await client.fetch(
+        `*[_type == "adContractTemplate" && status == "active" && !(_id in path("drafts.**"))] | order(version desc)[0]{ _id, version, intro, clauses, closing }`,
+      )
+      if (!tpl) return base
+      return { ...base, template: { _type: 'reference', _ref: tpl._id }, templateVersion: tpl.version, intro: tpl.intro, clauses: tpl.clauses ?? [], closing: tpl.closing }
+    } catch { return base }
+  },
 
   orderings: [
     { title: 'Contract Date — Newest', name: 'dateDesc', by: [{ field: 'contractDate',     direction: 'desc' }] },
@@ -82,7 +121,18 @@ export default defineType({
 
     defineField({
       group:        'header',
+      name:         'revision',
+      title:        '1.2a · Revision',
+      type:         'number',
+      initialValue: 1,
+      readOnly:     true,
+      description:  'Printed as "Rev.N" next to the contract number and on every PDF page. Goes up by one each time you use New Revision after a send.',
+    }),
+
+    defineField({
+      group:        'header',
       name:         'contractDate',
+      readOnly:    locked,
       title:        '1.3 · Contract Date',
       type:         'date',
       initialValue: () => new Date().toISOString().slice(0, 10),
@@ -92,6 +142,7 @@ export default defineType({
     defineField({
       group:       'header',
       name:        'quotation',
+      readOnly:    locked,
       title:       '1.4 · Quotation',
       type:        'reference',
       to:          [{ type: 'quotation' }],
@@ -103,6 +154,7 @@ export default defineType({
     defineField({
       group:       'header',
       name:        'packageLabel',
+      readOnly:    locked,
       title:       '1.5 · Package (as printed in clause 1)',
       type:        'string',
       description: 'e.g. Corporate Silver, SME Booster. Leave blank to print the first line of the quotation.',
@@ -110,16 +162,17 @@ export default defineType({
 
     // ── Group 2: Terms & Sites ───────────────────────────────────────────────
 
-    defineField({ group: 'terms', name: 'startDate', title: '2.1 · Start Date', type: 'date', description: "Leave blank to use the quotation's Campaign Start (2.3a). Fill in only when the contract differs." }),
-    defineField({ group: 'terms', name: 'endDate',   title: '2.2 · End Date',   type: 'date', description: "Leave blank to use the quotation's Campaign End (2.3b).", validation: Rule => Rule.min(Rule.valueOfField('startDate')) }),
-    defineField({ group: 'terms', name: 'months',    title: '2.3 · Term (months)', type: 'number', description: "Leave blank to use the quotation's period (or the quantity on its first price line).", validation: Rule => Rule.integer().min(1) }),
+    defineField({ group: 'terms', name: 'startDate', readOnly: locked, title: '2.1 · Start Date', type: 'date', description: "Leave blank to use the quotation's Campaign Start (2.3a). Fill in only when the contract differs." }),
+    defineField({ group: 'terms', name: 'endDate', readOnly: locked,   title: '2.2 · End Date',   type: 'date', description: "Leave blank to use the quotation's Campaign End (2.3b).", validation: Rule => Rule.min(Rule.valueOfField('startDate')) }),
+    defineField({ group: 'terms', name: 'months', readOnly: locked,    title: '2.3 · Term (months)', type: 'number', description: "Leave blank to use the quotation's period (or the quantity on its first price line).", validation: Rule => Rule.integer().min(1) }),
 
-    defineField({ group: 'terms', name: 'monthlyFee', title: '2.4 · Monthly Fee (THB)',         type: 'number', validation: Rule => Rule.min(0), description: "Clause 3.1. Leave blank to use the quotation's unit price on its first price line." }),
-    defineField({ group: 'terms', name: 'totalFee',   title: '2.5 · Total for the Term (THB)',  type: 'number', validation: Rule => Rule.min(0), description: "Clause 3.1 — after any discount. Leave blank to use the quotation's total." }),
+    defineField({ group: 'terms', name: 'monthlyFee', readOnly: locked, title: '2.4 · Monthly Fee (THB)',         type: 'number', validation: Rule => Rule.min(0), description: "Clause 3.1. Leave blank to use the quotation's unit price on its first price line." }),
+    defineField({ group: 'terms', name: 'totalFee', readOnly: locked,   title: '2.5 · Total for the Term (THB)',  type: 'number', validation: Rule => Rule.min(0), description: "Clause 3.1 — after any discount. Leave blank to use the quotation's total." }),
 
     defineField({
       group:       'terms',
       name:        'sites',
+      readOnly:    locked,
       title:       '2.6 · Installation Sites (attachment)',
       type:        'array',
       description: 'Printed as the attachment "รายชื่อสถานที่ติดตั้ง". Leave empty to list the quotation\'s Project Sites (1 screen each); fill in only to change sites, screen counts or the printed address.',
@@ -143,16 +196,17 @@ export default defineType({
     }),
 
     // The bracketed numbers in the standard clauses — defaults are the draft's.
-    defineField({ group: 'terms', name: 'paymentDays',     title: '2.7 · Payment Within (days)',              type: 'number', initialValue: 7,  description: 'Clause 3.2 — days from signing.' }),
-    defineField({ group: 'terms', name: 'fileLeadDays',    title: '2.8 · Artwork Lead Time (business days)',  type: 'number', initialValue: 3,  description: 'Clause 4.1.' }),
-    defineField({ group: 'terms', name: 'changesPerMonth', title: '2.9 · Free Artwork Changes per Month',     type: 'number', initialValue: 1,  description: 'Clause 4.4.' }),
-    defineField({ group: 'terms', name: 'outageDays',      title: '2.10 · Outage Before Compensation (days)', type: 'number', initialValue: 3,  description: 'Clause 5.2.' }),
-    defineField({ group: 'terms', name: 'noticeDays',      title: '2.11 · Site-Loss Notice (days)',           type: 'number', initialValue: 7,  description: 'Clause 5.4.' }),
-    defineField({ group: 'terms', name: 'cureDays',        title: '2.12 · Cure Period (days)',                type: 'number', initialValue: 15, description: 'Clause 6.3.' }),
+    defineField({ group: 'terms', name: 'paymentDays', readOnly: locked,     title: '2.7 · Payment Within (days)',              type: 'number', initialValue: 7,  description: 'Clause 3.2 — days from signing.' }),
+    defineField({ group: 'terms', name: 'fileLeadDays', readOnly: locked,    title: '2.8 · Artwork Lead Time (business days)',  type: 'number', initialValue: 3,  description: 'Clause 4.1.' }),
+    defineField({ group: 'terms', name: 'changesPerMonth', readOnly: locked, title: '2.9 · Free Artwork Changes per Month',     type: 'number', initialValue: 1,  description: 'Clause 4.4.' }),
+    defineField({ group: 'terms', name: 'outageDays', readOnly: locked,      title: '2.10 · Outage Before Compensation (days)', type: 'number', initialValue: 3,  description: 'Clause 5.2.' }),
+    defineField({ group: 'terms', name: 'noticeDays', readOnly: locked,      title: '2.11 · Site-Loss Notice (days)',           type: 'number', initialValue: 7,  description: 'Clause 5.4.' }),
+    defineField({ group: 'terms', name: 'cureDays', readOnly: locked,        title: '2.12 · Cure Period (days)',                type: 'number', initialValue: 15, description: 'Clause 6.3.' }),
 
     defineField({
       group:       'terms',
       name:        'extraClauses',
+      readOnly:    locked,
       title:       '2.13 · Additional Clauses',
       type:        'array',
       of:          [{ type: 'text', rows: 3 }],
@@ -161,12 +215,29 @@ export default defineType({
 
     // ── Group 3: Signatories ─────────────────────────────────────────────────
 
-    defineField({ group: 'signing', name: 'providerSignatory',      title: '3.1 · Provider Signatory',        type: 'string', initialValue: 'นายศักดิ์ชัย สุทธิพิพัฒน์' }),
-    defineField({ group: 'signing', name: 'providerSignatoryTitle', title: '3.2 · Provider Signatory Title',  type: 'string', initialValue: 'กรรมการ' }),
-    defineField({ group: 'signing', name: 'advertiserSignatory',    title: '3.3 · Advertiser Signatory',      type: 'string', description: 'Name printed under the advertiser signature line. Blank prints ( ).' }),
-    defineField({ group: 'signing', name: 'advertiserSignatoryTitle', title: '3.4 · Advertiser Signatory Title', type: 'string' }),
-    defineField({ group: 'signing', name: 'witness1', title: '3.5 · Witness 1', type: 'string' }),
-    defineField({ group: 'signing', name: 'witness2', title: '3.6 · Witness 2', type: 'string' }),
+    // ── Group 2b: Wording (copied from the template, frozen once sent) ──────
+
+    defineField({
+      group:       'wording',
+      name:        'template',
+      title:       '2b.1 · Template',
+      type:        'reference',
+      to:          [{ type: 'adContractTemplate' }],
+      options:     { disableNew: true, filter: 'status == "active"' },
+      readOnly:    locked,
+      description: 'Which template version the wording below was copied from. To re-copy after changing it, use "Load Template Wording" in the ⋯ menu.',
+    }),
+    defineField({ group: 'wording', name: 'templateVersion', title: '2b.2 · Template Version', type: 'number', readOnly: true }),
+    defineField({ group: 'wording', name: 'intro',   title: '2b.3 · Opening Paragraph', type: 'text', rows: 5, readOnly: locked, description: 'Copied from the template — edit here only for a deal-specific change. Placeholders like {advertiserName} are filled in when printed.' }),
+    defineField({ group: 'wording', name: 'clauses', title: '2b.4 · Clauses',           type: 'array', of: [contractClause], readOnly: locked }),
+    defineField({ group: 'wording', name: 'closing', title: '2b.5 · Closing Line',      type: 'text', rows: 2, readOnly: locked }),
+
+    defineField({ group: 'signing', name: 'providerSignatory', readOnly: locked,      title: '3.1 · Provider Signatory',        type: 'string', initialValue: 'นายศักดิ์ชัย สุทธิพิพัฒน์' }),
+    defineField({ group: 'signing', name: 'providerSignatoryTitle', readOnly: locked, title: '3.2 · Provider Signatory Title',  type: 'string', initialValue: 'กรรมการ' }),
+    defineField({ group: 'signing', name: 'advertiserSignatory', readOnly: locked,    title: '3.3 · Advertiser Signatory',      type: 'string', description: 'Name printed under the advertiser signature line. Blank prints ( ).' }),
+    defineField({ group: 'signing', name: 'advertiserSignatoryTitle', readOnly: locked, title: '3.4 · Advertiser Signatory Title', type: 'string' }),
+    defineField({ group: 'signing', name: 'witness1', readOnly: locked, title: '3.5 · Witness 1', type: 'string' }),
+    defineField({ group: 'signing', name: 'witness2', readOnly: locked, title: '3.6 · Witness 2', type: 'string' }),
 
     // ── Group 4: Follow-up ───────────────────────────────────────────────────
 
@@ -203,6 +274,12 @@ export default defineType({
       type:        'array',
       of:          [{ type: 'file', options: { accept: '.pdf,image/*' } }],
       description: 'The contract as signed by both parties — the evidence. Several files are fine when it comes back as page photos.',
+    }),
+    defineField({ group: 'followup', name: 'signedRevision', title: '4.3a · Signed Revision', type: 'number', description: 'Which Rev. the customer signed (see Issued Versions). Usually the latest.' }),
+    defineField({
+      group: 'followup', name: 'issuedVersions', title: '4.3b · Issued Versions', type: 'array', readOnly: true,
+      description: 'The exact PDF sent each time — written by the Send tab. The record of what the customer received.',
+      of: [issuedVersion],
     }),
     defineField({ group: 'followup', name: 'signedAt', title: '4.4 · Signed On', type: 'datetime', description: 'Set status to Signed when you fill this in.' }),
     defineField({

@@ -452,6 +452,29 @@ export default defineType({
       description: 'Only when the customer wants a formal contract — small deals stop at the signed quotation.',
     }),
     defineField({
+      group: 'followup', name: 'issuedVersions', title: '4.4c · Issued Versions', type: 'array', readOnly: true,
+      description: 'The exact PDF sent each time — written by the Send tab. The record of what the customer received.',
+      of: [{
+        type: 'object', name: 'issuedVersion',
+        fields: [
+          defineField({ name: 'rev',      title: 'Send No.',    type: 'number' }),
+          defineField({ name: 'issuedAt', title: 'Issued At',   type: 'datetime' }),
+          defineField({ name: 'pdf',      title: 'PDF as sent', type: 'file' }),
+          defineField({ name: 'lang',     title: 'Language',    type: 'string' }),
+          defineField({ name: 'channel',  title: 'Channel',     type: 'string' }),
+          defineField({ name: 'to',       title: 'Sent To',     type: 'string' }),
+          defineField({ name: 'sentBy',   title: 'Sent By',     type: 'string' }),
+        ],
+        preview: {
+          select: { rev: 'rev', at: 'issuedAt', lang: 'lang', channel: 'channel' },
+          prepare: ({ rev, at, lang, channel }: any) => ({
+            title:    `Send #${rev ?? 1} · ${String(lang ?? 'th').toUpperCase()} · ${String(channel ?? '').toUpperCase()}`,
+            subtitle: at ? new Date(at).toLocaleString() : '-',
+          }),
+        },
+      }],
+    }),
+    defineField({
       group:        'followup',
       name:         'signedBy',
       title:        '4.5 · Signed By',
