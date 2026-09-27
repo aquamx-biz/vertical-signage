@@ -199,15 +199,14 @@ export default defineType({
     defineField({ group: 'terms', name: 'paymentDays', readOnly: locked,     title: '2.7 · Payment Within (days)',              type: 'number', initialValue: 7,  description: 'Clause 3.2 — days from signing.' }),
     defineField({ group: 'terms', name: 'fileLeadDays', readOnly: locked,    title: '2.8 · Artwork Lead Time (business days)',  type: 'number', initialValue: 3,  description: 'Clause 4.1.' }),
     defineField({ group: 'terms', name: 'changesPerMonth', readOnly: locked, title: '2.9 · Free Artwork Changes per Month',     type: 'number', initialValue: 1,  description: 'Clause 4.4.' }),
-    defineField({ group: 'terms', name: 'outageDays', readOnly: locked,      title: '2.10 · Outage Before Compensation (days)', type: 'number', initialValue: 3,  description: 'Clause 5.2.' }),
-    defineField({ group: 'terms', name: 'noticeDays', readOnly: locked,      title: '2.11 · Site-Loss Notice (days)',           type: 'number', initialValue: 7,  description: 'Clause 5.4.' }),
-    defineField({ group: 'terms', name: 'cureDays', readOnly: locked,        title: '2.12 · Cure Period (days)',                type: 'number', initialValue: 15, description: 'Clause 6.3.' }),
+    defineField({ group: 'terms', name: 'noticeDays', readOnly: locked,      title: '2.10 · Site-Loss Notice (days)',           type: 'number', initialValue: 7,  description: 'Clause 5.4.' }),
+    defineField({ group: 'terms', name: 'cureDays', readOnly: locked,        title: '2.11 · Cure Period (days)',                type: 'number', initialValue: 15, description: 'Clause 6.3.' }),
 
     defineField({
       group:       'terms',
       name:        'extraClauses',
       readOnly:    locked,
-      title:       '2.13 · Additional Clauses',
+      title:       '2.12 · Additional Clauses',
       type:        'array',
       of:          [{ type: 'text', rows: 3 }],
       description: 'Deal-specific clauses printed as ข้อ 8, 9 … after the standard ones. Leave empty for a standard contract.',
