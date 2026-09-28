@@ -2159,11 +2159,6 @@ const CONFIG = {
     SCAN_POLL_MS:        2500,   // while the QR is on screen
     SCAN_WATCH_MAX_MS: 180000,   // give up polling after 3 min (idle return fires first anyway)
     SCAN_DONE_CLOSE_MS: 10000,   // "✓ สแกนแล้ว" stays this long, then back to the attract loop
-    // Property picks go CHAT-FIRST: the QR opens LINE Login (bot_prompt adds
-    // the OA in the same flow) and the server creates the leads + pushes the
-    // booking cards into the customer's 1:1 — no form on the phone at all.
-    // Empty string = fall back to the /m handoff page for everything.
-    LINE_ENTRY:   'https://app.aquamx.biz/api/line-login-start',
 
     // ── Sanity CMS ──
     SANITY_PROJECT_ID: 'awjj9g8u',
@@ -5013,7 +5008,8 @@ function showHandoff() {
     // never the QR target directly. (Changed from "vendor's real link wins".)
     let deepLink;
     const intentQ = buildIntentQuery(handoffCtx.ctaType);   // the kiosk pick rides along
-    const isPropHandoff = handoffCtx.category === 'rent' || handoffCtx.category === 'sale';
+    // rent/sale from the OFFERS menu, forRent/forSale from a board slide — both are rooms
+    const isPropHandoff = PROP_CTA(handoffCtx.category);
     // One short token per QR shown: the phone page POSTs it to SCAN_API on
     // open, the kiosk polls it (scanWatch) and flips the QR to "✓ สแกนแล้ว".
     const scanTok = scanWatch.token();
@@ -5023,15 +5019,11 @@ function showHandoff() {
     // building it came from, and the scan counter can't attribute it.
     else if (handoffCtx.providerSlug) deepLink = `${CONFIG.HANDOFF_BASE}/p/${handoffCtx.providerSlug}?p=${encodeURIComponent(window.__BAKED__?.projectCode || '')}&s=${scanTok}`;
     else                              deepLink = `${CONFIG.HANDOFF_BASE}`;
-    // Property chat-first override (see CONFIG.LINE_ENTRY). The /m page above
-    // stays the target for offers/providers, and remains the fallback when
-    // LINE_ENTRY is emptied out.
-    if (CONFIG.LINE_ENTRY && isPropHandoff && intentQ) {
-        const intentStr = intentQ.slice(1)
-            + (handoffCtx.offerSlug ? '&o=' + encodeURIComponent(handoffCtx.offerSlug) : '')
-            + '&c=' + encodeURIComponent(handoffCtx.category || '');
-        deepLink = CONFIG.LINE_ENTRY + '?intent=' + encodeURIComponent(intentStr);
-    }
+    // Every room QR opens the /m/o page above — the same page from the board's
+    // "Find your unit" and from the OFFERS menu — where the day and time are
+    // picked (required) and LINE is offered after sending. The old chat-first
+    // override (straight into LINE Login, no day, no scan token) was removed
+    // 28 Sep 2026: from the menu it produced viewing requests with no time.
 
     const setTxt = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
     // Step 2 owns the mobile wording: "📱 จอง บนมือถือ" (verb-aware) — step 1's
