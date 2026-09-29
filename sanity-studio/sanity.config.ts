@@ -121,7 +121,7 @@ export default defineConfig([{
       // The user clicks the "Edit" tab to make changes.
       // Exception: the categoryConfig singleton skips Overview and shows the form directly.
       defaultDocumentNode: (S, { schemaType }) => {
-        if (schemaType === 'categoryConfig' || schemaType === 'ratecard' || schemaType === 'aquamxContact') {
+        if (schemaType === 'categoryConfig' || schemaType === 'ratecard' || schemaType === 'aquamxContact' || schemaType === 'lineKeywords') {
           return S.document().views([S.view.form().id('edit').title('Edit')])
         }
         if (schemaType === 'contract') {
@@ -339,6 +339,16 @@ export default defineConfig([{
                   .schemaType('aquamxContact')
                   .documentId('aquamxContact-global')
                   .title('aquamx Contact')
+              ),
+            // a new type id is in nobody's allowlist yet — same rule as aquamx Contact
+            (can('lineKeywords') || can('categoryConfig')) && S.listItem()
+              .title('LINE Keywords')
+              .id('line-keywords')
+              .child(
+                S.document()
+                  .schemaType('lineKeywords')
+                  .documentId('line-keywords')
+                  .title('LINE Keywords')
               ),
             can('categoryConfig') && S.listItem()
               .title('Global Category Config')
@@ -577,7 +587,7 @@ export default defineConfig([{
         const [_defaultPublish, ...rest] = prev
         return [MediaPublishAction, ...rest, AddToPlaylistAction]
       }
-      if (ctx.schemaType === 'categoryConfig' || ctx.schemaType === 'ratecard' || ctx.schemaType === 'aquamxContact') {
+      if (ctx.schemaType === 'categoryConfig' || ctx.schemaType === 'ratecard' || ctx.schemaType === 'aquamxContact' || ctx.schemaType === 'lineKeywords') {
         // Singleton — block delete and duplicate so it can't be destroyed or duplicated.
         return prev.filter(a => !['delete', 'duplicate'].includes((a as any).action))
       }

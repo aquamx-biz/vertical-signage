@@ -46,6 +46,7 @@ import scrapeRound        from './scrapeRound'
 import unitProfile        from './unitProfile'
 import demandSource       from './demandSource'
 import lineInbox           from './lineInbox'
+import lineKeywords        from './lineKeywords'
 import bankAccount        from './bankAccount'
 import subscription       from './subscription'
 
@@ -98,6 +99,7 @@ export const schemaTypes = [
   unitProfile,
   demandSource,
   lineInbox,
+  lineKeywords,
   bankAccount,
   subscription,
 ]
