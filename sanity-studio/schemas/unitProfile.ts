@@ -44,6 +44,8 @@ export default defineType({
     defineField({ name: 'nListings', title: 'N Listings', type: 'number' }),
     defineField({ name: 'nPortals', title: 'N Portals', type: 'number' }),
     defineField({ name: 'postedByOwner', title: 'Posted by Owner', type: 'boolean' }),
+    defineField({ name: 'listedWithUs', title: 'Listed with aquamx', type: 'boolean', readOnly: true,
+      description: 'Set by the system when an owner lists this room with us (LINE / Full Service). Only these rooms are opened to Google and AI search; scraped ads stay hidden.' }),
     defineField({ name: 'dualListed', title: 'Dual Listed (เช่า+ขาย)', type: 'boolean' }),
     defineField({
       name: 'status', title: 'Status', type: 'string', initialValue: 'candidate',
