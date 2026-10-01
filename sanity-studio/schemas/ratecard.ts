@@ -218,6 +218,7 @@ export default defineType({
           fields: [
             localeString('label', 'Row label'),
             localeString('unit', 'Unit / sub-line', 'Small text under each number. Type {n} to insert that cell\'s "sub number" (e.g. billed/month → "เรียกเก็บ ฿{n}/เดือน"). For a constant unit like "seconds" just type it — leave the cell sub-number blank.'),
+            localeString('note', 'Small note (optional)', 'A thin grey line under the value, e.g. "สำหรับสัญญาเช่า 1 ปี" / "for a 1-year lease". The property rate card image draws it under the commission line, and the LINE bot adds it in brackets.'),
             defineField({
               name: 'cells',
               title: 'Cells (one per package, in column order)',
