@@ -93,6 +93,11 @@ export default defineType({
         + 'ระบบจะถือว่าเป็นตึกเดียวกันเวลาคนพิมพ์ชื่อ แต่สายขออนุมัติยังแยกกันตามจริง',
     }),
     defineField({ name: 'googleMapUrl', title: 'Google Map URL', type: 'url', components: { input: GoogleMapInput } }),
+    defineField({
+      name: 'location', title: 'Map location', type: 'geopoint',
+      description: 'Pin of the building for the public building page map (with the nearest BTS/MRT stations). '
+        + 'Drop the pin on the building itself; Google Maps → right-click the building → the first line is "lat, lng".',
+    }),
     defineField({ name: 'totalUnits',        title: 'Total Units',    type: 'number', components: { input: TotalUnitsInput } }),
     defineField({ name: 'numberOfBuildings', title: 'No. of Buildings', type: 'number' }),
     defineField({
