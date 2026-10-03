@@ -69,6 +69,8 @@ export default defineType({
           { title: '📦 Vendor / Supplier',  value: 'vendor'          },
           { title: '🔧 Service Provider',   value: 'serviceProvider' },
           { title: '💻 App Vendor',         value: 'appVendor'       },
+          // someone who orders from a shop on the screens (LINE OA lead type "Order")
+          { title: '🛍️ Customer',           value: 'customer'        },
         ],
       },
       validation: Rule => Rule.required().min(1),
@@ -478,18 +480,23 @@ export default defineType({
       options: { collapsible: false },
       fields: [
         defineField({ name: 'numberOfUnitsOwned',  title: 'Number of Units Owned',  type: 'number' }),
+        // Retired 3 Oct 2026: rent/sale and the asking price belong to each
+        // listing request (lead › Request, type "List a property"), not to the
+        // person — an owner with two units has two answers. Hidden, kept so
+        // nothing ever written is lost (none had been, at the time).
         defineField({
           name:    'preferredListingType',
-          title:   'Preferred Listing Type',
+          title:   'Preferred Listing Type (retired — see the lead)',
           type:    'string',
+          hidden:  true, readOnly: true,
           options: { list: [
             { title: 'For Rent',      value: 'rent' },
             { title: 'For Sale',      value: 'sale' },
             { title: 'Rent & Sale',   value: 'both' },
           ]},
         }),
-        defineField({ name: 'expectedRentalPrice', title: 'Expected Rental Price (THB/mo)', type: 'string' }),
-        defineField({ name: 'expectedSalePrice',   title: 'Expected Sale Price (THB)',       type: 'string' }),
+        defineField({ name: 'expectedRentalPrice', title: 'Expected Rental Price (retired — see the lead)', type: 'string', hidden: true, readOnly: true }),
+        defineField({ name: 'expectedSalePrice',   title: 'Expected Sale Price (retired — see the lead)',   type: 'string', hidden: true, readOnly: true }),
         defineField({ name: 'ownerNotes',          title: 'Notes',                          type: 'text', rows: 2 }),
       ],
     }),

@@ -342,13 +342,13 @@ export default defineConfig([{
               ),
             // a new type id is in nobody's allowlist yet — same rule as aquamx Contact
             (can('lineKeywords') || can('categoryConfig')) && S.listItem()
-              .title('LINE Keywords')
+              .title('LINE Bot Rules')
               .id('line-keywords')
               .child(
                 S.document()
                   .schemaType('lineKeywords')
                   .documentId('line-keywords')
-                  .title('LINE Keywords')
+                  .title('LINE Bot Rules')
               ),
             can('categoryConfig') && S.listItem()
               .title('Global Category Config')
@@ -416,7 +416,16 @@ export default defineConfig([{
           (can('party') || can('lead') || can('saleOpportunity') || can('quotation') || can('adContract') || can('emailCampaign')) &&
           group('crm', 'CRM', '👥', [
             can('party')           && S.documentTypeListItem('party').title('Parties'),
-            can('lead')            && S.documentTypeListItem('lead').title('Leads'),
+            can('lead')            && S.listItem().title('Leads').id('leads').child(
+              S.list().title('Leads').items([
+                S.listItem().title('All leads').id('leads-all').child(S.documentTypeList('lead').title('All leads')),
+                S.divider(),
+                ...[['findCondo', '🔎 Find a condo'], ['listProperty', '🏠 List a property'], ['shop', '🏪 Shop & services'], ['order', '📦 Order']]
+                  .map(([v, t]) => S.listItem().title(t).id(`leads-${v}`).child(
+                    S.documentList().title(t).schemaType('lead')
+                      .filter('_type == "lead" && leadType == $t').params({ t: v })
+                      .defaultOrdering([{ field: '_createdAt', direction: 'desc' }]))),
+              ])),
             can('saleOpportunity') && S.documentTypeListItem('saleOpportunity').title('Sale Opportunities'),
             can('quotation')       && S.documentTypeListItem('quotation').title('Quotations — ใบเสนอราคา'),
             can('adContract')      && S.documentTypeListItem('adContract').title('Ad Contracts — สัญญารับโฆษณา'),

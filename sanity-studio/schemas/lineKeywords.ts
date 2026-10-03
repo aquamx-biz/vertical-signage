@@ -1,6 +1,8 @@
 import { defineField, defineType } from 'sanity'
 
-// Singleton — _id is always "line-keywords".
+// Singleton — _id is always "line-keywords". Shown as "LINE Bot Rules": the
+// words people type (Commands) and, below them, what the AI assistant may say
+// (AI Assistant) — one place to review the whole bot, not two schemas.
 //
 // What a person can type to the aquamx LINE bot, one row per command. The bot
 // (aquamx-handoff lib/keywords.ts) re-reads this list every five minutes, so a
@@ -27,13 +29,27 @@ const words = (name: string, title: string, description: string) => defineField(
 
 const norm = (s: string) => String(s ?? '').toLowerCase().replace(/\s+/g, ' ').trim()
 
+const TOPICS = [
+  { title: 'Unit availability',        value: 'availability' },
+  { title: 'Prices',                   value: 'price' },
+  { title: 'Distance to BTS / MRT',    value: 'transit' },
+  { title: 'How aquamx works',         value: 'howItWorks' },
+  { title: 'Fees & packages (rate card)', value: 'fees' },
+  { title: 'Building facilities',      value: 'facilities' },
+]
+
 export default defineType({
   name: 'lineKeywords',
-  title: 'LINE Keywords',
+  title: 'LINE Bot Rules',
   type: 'document',
+  groups: [
+    { name: 'commands', title: 'Commands', default: true },
+    { name: 'ai',       title: 'AI Assistant' },
+  ],
   fields: [
     defineField({
       name: 'commands',
+      group: 'commands',
       title: 'Commands',
       description: 'What people can type to the aquamx LINE bot. Case, extra spaces and a closing "." "!" "?" are ignored. Changes take effect within 5 minutes.',
       type: 'array',
@@ -91,6 +107,50 @@ export default defineType({
         return true
       }).warning(),
     }),
+    // ── AI Assistant — what the AI may answer in LINE OA chats ─────────────
+    // The code enforces the hard rules no matter what is set here: it only ever
+    // shows the AI units listed with aquamx and published, never owner
+    // contacts, and it always hands orders, viewings, price negotiation,
+    // complaints, money and contracts to the team. These fields can narrow
+    // what the AI says — never widen it.
+    defineField({
+      name: 'ai', group: 'ai', title: 'AI Assistant', type: 'object',
+      options: { collapsible: false },
+      fields: [
+        defineField({ name: 'mode', title: 'Mode', type: 'string', initialValue: 'draft',
+          description: 'Draft only: every AI reply waits for a team member to tap Send in the group. Auto-send: replies on the allowed topics go straight out (the team still sees each one).',
+          options: { layout: 'radio', list: [
+            { title: 'Draft only — the team taps Send', value: 'draft' },
+            { title: 'Auto-send on allowed topics',     value: 'auto'  },
+            { title: 'Off — no AI drafts',              value: 'off'   },
+          ] } }),
+        defineField({ name: 'allowedTopics', title: 'Topics the AI may answer', type: 'array', of: [{ type: 'string' }],
+          options: { list: TOPICS, layout: 'grid' },
+          initialValue: ['availability', 'price', 'transit', 'howItWorks', 'fees'] }),
+        defineField({ name: 'forbiddenTopics', title: 'Never answer (always hand to the team)', type: 'array', of: [{ type: 'string' }],
+          options: { layout: 'tags' },
+          description: 'Added on top of the ones the code always hands over (orders, viewings, negotiation, complaints, money, contracts). e.g. "discount", "owner name".',
+          initialValue: ['discount', 'owner name', 'legal advice'] }),
+        defineField({ name: 'unitScope', title: 'Units the AI may mention', type: 'string', initialValue: 'listed',
+          description: 'The minimum is fixed in code: only units listed with aquamx by their owner AND published. This can only make it stricter.',
+          options: { layout: 'radio', list: [
+            { title: 'Listed with aquamx & published (the minimum)',             value: 'listed' },
+            { title: '…and not already in a viewing or a negotiation',          value: 'listedFree' },
+          ] } }),
+        defineField({ name: 'maxUnits', title: 'Max units per answer', type: 'number', initialValue: 3,
+          validation: Rule => Rule.min(1).max(5) }),
+        defineField({ name: 'handoffTh', title: 'When the AI cannot answer — Thai', type: 'string',
+          initialValue: 'เดี๋ยวทีมงานติดต่อกลับในแชตนี้นะคะ' }),
+        defineField({ name: 'handoffEn', title: 'When the AI cannot answer — English', type: 'string',
+          initialValue: 'Our team will reply to you right here.' }),
+        defineField({ name: 'faq', title: 'FAQ — answer exactly like this', type: 'array',
+          of: [{ type: 'object', name: 'faqItem', fields: [
+            defineField({ name: 'question', title: 'Question', type: 'string' }),
+            defineField({ name: 'answerTh', title: 'Answer (Thai)', type: 'text', rows: 3 }),
+            defineField({ name: 'answerEn', title: 'Answer (English)', type: 'text', rows: 3 }),
+          ], preview: { select: { title: 'question', subtitle: 'answerTh' } } }] }),
+      ],
+    }),
   ],
-  preview: { prepare: () => ({ title: 'LINE Keywords' }) },
+  preview: { prepare: () => ({ title: 'LINE Bot Rules' }) },
 })
