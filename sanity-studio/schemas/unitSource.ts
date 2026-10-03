@@ -50,6 +50,10 @@ export default defineType({
     defineField({
       name: 'bestContact', title: 'Best Contact (ทีมสรุปว่าดีลนี้โทรใคร)', type: 'object',
       fields: [
+        defineField({ name: 'partyId', title: 'Party ID', type: 'string',
+          description: 'The party (production dataset) the team works with for this unit. '
+            + 'Set by the LINE log flow — when someone agrees to co-broke, otherwise the latest person contacted. '
+            + 'Stored as an id because references cannot cross datasets.' }),
         defineField({ name: 'name', type: 'string' }),
         defineField({ name: 'phone', type: 'string' }),
         defineField({ name: 'role', title: 'Role · ฐานะผู้ลงประกาศ', type: 'string',
@@ -87,8 +91,13 @@ export default defineType({
         fields: [
           defineField({ name: 'at', title: 'วัน-เวลา', type: 'datetime', initialValue: () => new Date().toISOString(), validation: R => R.required() }),
           defineField({ name: 'by', title: 'ผู้ติดต่อ (ทีมเรา)', type: 'string' }),
+          defineField({ name: 'partyId', title: 'Contacted party ID', type: 'string',
+            description: 'Who was contacted (party id in the production dataset). A unit can have several agents — '
+              + 'each entry records its own person, so per-person history and counts come from here.' }),
+          defineField({ name: 'contactName', title: 'Contacted name', type: 'string',
+            description: 'Name as shown when logged — kept so history reads correctly even without a party.' }),
           defineField({ name: 'channel', title: 'ช่องทาง', type: 'string', initialValue: 'call',
-            options: { list: ['call', 'line', 'whatsapp', 'email', 'walk-in'] } }),
+            options: { list: ['call', 'line', 'whatsapp', 'email', 'walk-in', 'portal_form'] } }),
           defineField({ name: 'outcome', title: 'ผลการติดต่อ', type: 'string',
             options: { list: [
               { title: 'ไม่รับสาย', value: 'no_answer' },
@@ -103,9 +112,9 @@ export default defineType({
           defineField({ name: 'nextFollowUp', title: 'นัดตามครั้งถัดไป', type: 'date' }),
         ],
         preview: {
-          select: { at: 'at', by: 'by', outcome: 'outcome', note: 'note' },
-          prepare: ({ at, by, outcome, note }) => ({
-            title: `${(at || '').slice(0, 16).replace('T', ' ')} · ${outcome || '—'}`,
+          select: { at: 'at', by: 'by', outcome: 'outcome', note: 'note', who: 'contactName' },
+          prepare: ({ at, by, outcome, note, who }) => ({
+            title: `${(at || '').slice(0, 16).replace('T', ' ')} · ${who ? who + ' · ' : ''}${outcome || '—'}`,
             subtitle: `${by || ''}${note ? ' — ' + note.slice(0, 60) : ''}`,
           }),
         },
