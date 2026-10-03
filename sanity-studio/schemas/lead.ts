@@ -1,17 +1,18 @@
 import { defineField, defineType } from 'sanity'
 
 /**
- * Lead — a qualified property inquiry being tracked in the CRM.
+ * Lead — someone who came to US (kiosk, web, LINE OA) wanting one thing.
  *
- * New leads are auto-created by the Firebase Function when a Firestore
- * lead document is written (kiosk/web submission). The contact fields
- * are copied from Firestore at sync time.
+ * One schema for every kind of request, told apart by `leadType`:
+ *   Find a condo · List a property · Shop & services · Order
+ * A party (WHO this is — one per person, keyed by LINE user id) can hold any
+ * number of leads over time, but at most one OPEN lead per type. The party is
+ * linked from the moment the lead is created.
  *
- * Sales team works leads through: new → contacted → qualified → won / lost
+ * Not a lead: the team calling an agent or owner from the Unit Board — that
+ * lives in unitSource.contactLog / bestContact / cobrokeStatus (internal).
  *
- * When a lead qualifies, create a Party record and link it here.
- * For rent leads → create a Contract.
- * For sale leads → create a Sale Opportunity (Phase F).
+ * Status: new → contacted → qualified → won / lost (won/lost = closed).
  */
 export default defineType({
   name:  'lead',
@@ -20,6 +21,7 @@ export default defineType({
 
   groups: [
     { name: 'overview', title: 'Overview', default: true },
+    { name: 'request',  title: 'Request'                 },
     { name: 'contact',  title: 'Contact Info'            },
     { name: 'viewing',  title: 'Viewing · นัดชม'          },
     { name: 'notes',    title: 'Notes'                   },
@@ -50,16 +52,38 @@ export default defineType({
 
     defineField({
       group:  'overview',
-      name:   'interestType',
-      title:  'Interest Type',
+      name:   'leadType',
+      title:  'Lead Type',
       type:   'string',
+      description: 'What this person came for. Set by the LINE bot / kiosk; existing leads were back-filled (with application documents → Shop & services, otherwise Find a condo).',
       options: {
         list: [
-          { title: '📺 Signage Rental (Rent)', value: 'rent' },
-          { title: '🏠 Property Purchase (Sale)', value: 'sale' },
+          { title: '🔎 Find a condo',     value: 'findCondo'    },
+          { title: '🏠 List a property',  value: 'listProperty' },
+          { title: '🏪 Shop & services',  value: 'shop'         },
+          { title: '📦 Order',            value: 'order'        },
         ],
         layout: 'radio',
       },
+      initialValue: 'findCondo',
+      validation:   Rule => Rule.required(),
+    }),
+
+    defineField({
+      group:  'overview',
+      name:   'interestType',
+      title:  'Rent or Sale',
+      type:   'string',
+      description: 'Find a condo: wants to rent or to buy. List a property: offering it for rent, for sale, or both — kept here per request (party › Property Owner Info no longer holds it).',
+      options: {
+        list: [
+          { title: 'Rent', value: 'rent' },
+          { title: 'Sale', value: 'sale' },
+          { title: 'Both', value: 'both' },
+        ],
+        layout: 'radio',
+      },
+      hidden: ({ document }: any) => !['findCondo', 'listProperty'].includes(document?.leadType ?? 'findCondo'),
     }),
 
     defineField({
@@ -71,6 +95,7 @@ export default defineType({
         list: [
           { title: '🖥️ Kiosk',      value: 'kiosk'    },
           { title: '🌐 Web',         value: 'web'      },
+          { title: '💬 LINE chat',   value: 'line'     },
           { title: '🤝 Referral',    value: 'referral' },
           { title: '👋 Direct',      value: 'direct'   },
           { title: 'Other',          value: 'other'    },
@@ -85,7 +110,7 @@ export default defineType({
       title:       'Linked Party',
       type:        'reference',
       to:          [{ type: 'party' }],
-      description: 'Link to a Party record once the contact is confirmed and qualified.',
+      description: 'Who this is. Linked when the lead is created — the bot finds or creates the party by LINE user id first (the LINE user id lives on the party, not here: Contact › LINE ID is what the person typed and cannot be messaged).',
     }),
 
     defineField({
@@ -102,6 +127,101 @@ export default defineType({
       title:  'Next Follow-up Date',
       type:   'date',
     }),
+
+    defineField({
+      group:    'overview',
+      name:     'firstMessage',
+      title:    'First Message',
+      type:     'text',
+      rows:     2,
+      readOnly: true,
+      description: 'Exactly what the person typed when this lead opened — never a summary.',
+    }),
+
+    defineField({
+      group:    'overview',
+      name:     'aiReplies',
+      title:    'Bot & Team Log',
+      type:     'array',
+      readOnly: true,
+      description: 'Every reply the AI drafted and what the team did with it, plus every "talk to a person" handoff. Read to decide when a topic is safe to auto-send.',
+      of: [{
+        type: 'object',
+        name: 'aiReply',
+        fields: [
+          defineField({ name: 'kind',     title: 'Kind',   type: 'string', options: { list: [
+            { title: 'AI draft',  value: 'draft'   },
+            { title: 'Handoff',   value: 'handoff' },
+          ] } }),
+          defineField({ name: 'at',       title: 'At',       type: 'datetime' }),
+          defineField({ name: 'topic',    title: 'Topic',    type: 'string' }),
+          defineField({ name: 'question', title: 'Customer message', type: 'text', rows: 2 }),
+          defineField({ name: 'draft',    title: 'AI draft', type: 'text', rows: 3 }),
+          defineField({ name: 'action',   title: 'Team action', type: 'string', options: { list: [
+            { title: 'Sent as drafted', value: 'sent'   },
+            { title: 'Edited, then sent', value: 'edited' },
+            { title: 'Held',            value: 'held'   },
+            { title: 'Auto-sent',       value: 'auto'   },
+            { title: 'Handed to team',  value: 'handoff' },
+          ] } }),
+          defineField({ name: 'finalText', title: 'Text sent', type: 'text', rows: 3 }),
+          defineField({ name: 'by',        title: 'By',        type: 'string' }),
+          defineField({ name: 'endedAt',   title: 'Handoff ended', type: 'datetime' }),
+        ],
+        preview: {
+          select: { kind: 'kind', at: 'at', action: 'action', topic: 'topic', by: 'by' },
+          prepare: ({ kind, at, action, topic, by }: any) => ({
+            title: `${kind === 'handoff' ? '🙋 Handoff' : '💬 AI draft'}${topic ? ` · ${topic}` : ''}${action ? ` → ${action}` : ''}`,
+            subtitle: [at ? String(at).slice(0, 16).replace('T', ' ') : '', by].filter(Boolean).join(' · '),
+          }),
+        },
+      }],
+    }),
+
+    // ── Request — the fields that belong to this lead type only ───────
+    // (budget, unit of interest and preferred time already live under
+    //  Contact Info and are reused, not repeated here)
+
+    defineField({ group: 'request', name: 'bedrooms', title: 'Bedrooms', type: 'string',
+      options: { list: ['Studio', '1', '2', '3', '4+'] },
+      hidden: ({ document }: any) => (document?.leadType ?? 'findCondo') !== 'findCondo' }),
+    defineField({ group: 'request', name: 'areaWanted', title: 'Area / Station', type: 'string',
+      description: 'As the person said it, e.g. "ทองหล่อ", "near Asok".',
+      hidden: ({ document }: any) => (document?.leadType ?? 'findCondo') !== 'findCondo' }),
+    defineField({ group: 'request', name: 'moveIn', title: 'Move-in', type: 'string',
+      description: 'As the person said it, e.g. "ต้นเดือนหน้า".',
+      hidden: ({ document }: any) => (document?.leadType ?? 'findCondo') !== 'findCondo' }),
+
+    defineField({ group: 'request', name: 'listingProject', title: 'Project', type: 'reference', to: [{ type: 'projectSite' }],
+      hidden: ({ document }: any) => document?.leadType !== 'listProperty' }),
+    defineField({ group: 'request', name: 'unitType', title: 'Unit Type', type: 'string',
+      description: 'e.g. "2 bedrooms", "Studio 28 sqm".',
+      hidden: ({ document }: any) => document?.leadType !== 'listProperty' }),
+    defineField({ group: 'request', name: 'askingRent', title: 'Asking Rent (THB / month)', type: 'number',
+      hidden: ({ document }: any) => document?.leadType !== 'listProperty' || document?.interestType === 'sale' }),
+    defineField({ group: 'request', name: 'askingPrice', title: 'Asking Price (THB)', type: 'number',
+      hidden: ({ document }: any) => document?.leadType !== 'listProperty' || document?.interestType === 'rent' }),
+
+    defineField({ group: 'request', name: 'businessType', title: 'Business Type', type: 'string',
+      description: 'e.g. "laundry", "cleaning".',
+      hidden: ({ document }: any) => document?.leadType !== 'shop' }),
+    defineField({ group: 'request', name: 'buildingsWanted', title: 'Buildings Wanted', type: 'array',
+      of: [{ type: 'reference', to: [{ type: 'projectSite' }] }],
+      hidden: ({ document }: any) => document?.leadType !== 'shop' }),
+    defineField({ group: 'request', name: 'packageInterest', title: 'Package of Interest', type: 'string',
+      hidden: ({ document }: any) => document?.leadType !== 'shop' }),
+
+    defineField({ group: 'request', name: 'orderShop', title: 'Shop', type: 'reference', to: [{ type: 'provider' }],
+      hidden: ({ document }: any) => document?.leadType !== 'order' }),
+    defineField({ group: 'request', name: 'orderItems', title: 'Items', type: 'string',
+      description: 'As the person said it, e.g. "น้ำแข็ง 2 ถุง".',
+      hidden: ({ document }: any) => document?.leadType !== 'order' }),
+    defineField({ group: 'request', name: 'deliverTo', title: 'Deliver To', type: 'string',
+      description: 'Building and unit, e.g. "Park 24 · 1204".',
+      hidden: ({ document }: any) => document?.leadType !== 'order' }),
+    defineField({ group: 'request', name: 'orderNumber', title: 'Order No.', type: 'string', readOnly: true,
+      description: 'AQ-… set by the bot when the order is placed — that also closes this lead. The order itself lives in the order system, not here.',
+      hidden: ({ document }: any) => document?.leadType !== 'order' }),
 
     defineField({
       group:    'overview',
@@ -297,21 +417,30 @@ export default defineType({
 
   ],
 
+  orderings: [
+    { title: 'Lead type', name: 'leadTypeAsc', by: [{ field: 'leadType', direction: 'asc' }, { field: '_createdAt', direction: 'desc' }] },
+    { title: 'Newest',    name: 'createdDesc', by: [{ field: '_createdAt', direction: 'desc' }] },
+  ],
+
   preview: {
     select: {
       name:         'contactName',
       status:       'status',
       interestType: 'interestType',
       source:       'source',
+      leadType:     'leadType',
     },
-    prepare({ name, status, interestType, source }) {
+    prepare({ name, status, interestType, source, leadType }) {
       const statusEmoji: Record<string, string> = {
         new: '🆕', contacted: '📞', qualified: '✅', won: '🏆', lost: '❌',
       }
-      const typeLabel: Record<string, string> = { rent: 'Rent', sale: 'Sale' }
+      const typeTag: Record<string, string> = {
+        findCondo: '[Find a condo]', listProperty: '[List a property]', shop: '[Shop & services]', order: '[Order]',
+      }
+      const rs: Record<string, string> = { rent: 'Rent', sale: 'Sale', both: 'Rent + Sale' }
       return {
-        title:    name ?? '(No name)',
-        subtitle: [statusEmoji[status] ?? '', typeLabel[interestType ?? ''] ?? '', source].filter(Boolean).join(' · '),
+        title:    `${typeTag[leadType ?? 'findCondo'] ?? ''} ${name ?? '(No name)'}`.trim(),
+        subtitle: [statusEmoji[status] ?? '', rs[interestType ?? ''] ?? '', source].filter(Boolean).join(' · '),
       }
     },
   },
