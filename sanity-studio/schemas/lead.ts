@@ -322,9 +322,88 @@ export default defineType({
 
     // ── Viewing · นัดชม (spec §12.5 — slot object on lead, no new doc type) ──
 
+    // One person = one Find-a-condo lead, however many rooms they ask to see
+    // (decided 5 Oct 2026). Each room is one row here; the old one-room fields
+    // below stay only for leads that were never moved over and hide when empty.
+    defineField({
+      group:       'viewing',
+      name:        'viewings',
+      title:       'Rooms & Viewings · ห้องที่ขอดู',
+      type:        'array',
+      description: 'One row per room this person asked to see. Written by the LINE bot / kiosk; the lead status follows the rows (any Won → Won · all Lost or Cancelled → Lost).',
+      hidden: ({ document }: any) => (document?.leadType ?? 'findCondo') !== 'findCondo',
+      of: [{
+        type: 'object',
+        name: 'leadViewing',
+        fields: [
+          defineField({ name: 'unitRef',   title: 'Unit Code', type: 'string', description: 'e.g. NBL-U185' }),
+          defineField({ name: 'unitLabel', title: 'Room',      type: 'string', description: 'As shown to the customer, e.g. "2 ห้องนอน · 66 ตรม. · ชั้น 25".' }),
+          defineField({ name: 'project',   title: 'Project',   type: 'string' }),
+          defineField({ name: 'status',    title: 'Status',    type: 'string', options: { list: [
+            { title: '🆕 Requested',          value: 'new'       },
+            { title: '📞 Contacted',          value: 'contacted' },
+            { title: '✅ Confirmed / Viewed', value: 'qualified' },
+            { title: '🏆 Won',                value: 'won'       },
+            { title: '❌ Not taken',          value: 'lost'      },
+            { title: '🚫 Cancelled',          value: 'cancelled' },
+          ] }, initialValue: 'new' }),
+          defineField({ name: 'source',    title: 'Came From', type: 'string', options: { list: [
+            { title: '🖥️ Kiosk', value: 'kiosk' }, { title: '🌐 Web', value: 'web' },
+            { title: '💬 LINE chat', value: 'line' }, { title: 'Other', value: 'other' },
+          ] } }),
+          defineField({ name: 'addedAt',   title: 'Asked At',  type: 'datetime', readOnly: true }),
+          defineField({ name: 'bookingRef', title: 'Booking No. · เลขใบนัด', type: 'string', readOnly: true }),
+          defineField({ name: 'submissionId', title: 'Submission ID', type: 'string', readOnly: true, hidden: true }),
+          defineField({ name: 'firestoreLeadIds', title: 'Firestore Viewing IDs', type: 'array', of: [{ type: 'string' }], readOnly: true,
+            description: 'The bot\'s own viewing record(s) for this room — more than one when the same room was sent twice.' }),
+          defineField({ name: 'appointment', title: 'Appointment · นัดชม', type: 'object', fields: [
+            defineField({ name: 'requestedDate', title: 'Requested Date', type: 'date' }),
+            defineField({ name: 'requestedTime', title: 'Requested Time', type: 'string' }),
+            defineField({ name: 'proposedSlots', title: 'Proposed Alternatives', type: 'array', of: [{ type: 'string' }] }),
+            defineField({ name: 'confirmedAt',       title: 'Confirmed At', type: 'datetime' }),
+            defineField({ name: 'contactRevealedAt', title: 'Contact Revealed At', type: 'datetime' }),
+          ] }),
+          defineField({ name: 'viewingOutcome', title: 'Viewing Outcome · ผลนัด', type: 'object', fields: [
+            defineField({ name: 'attended', title: 'Attended', type: 'boolean' }),
+            defineField({ name: 'result',   title: 'Result',   type: 'string', options: { list: ['take', 'liked', 'thinking', 'no', 'closed'] } }),
+            defineField({ name: 'reason',   title: 'Reason (เมื่อไม่เอา)', type: 'string', options: { list: ['price', 'decor', 'floor', 'size', 'other'] } }),
+            defineField({ name: 'followUpAt', title: 'Next Follow-up', type: 'date' }),
+          ] }),
+          defineField({ name: 'voucherCode', title: 'Voucher Code', type: 'string', readOnly: true }),
+          defineField({ name: 'negotiation', title: 'Negotiation · ต่อรอง', type: 'array', of: [{
+            type: 'object', name: 'negRound',
+            fields: [
+              defineField({ name: 'by',     title: 'By',     type: 'string', options: { list: ['customer', 'caretaker'] } }),
+              defineField({ name: 'amount', title: 'Amount ฿', type: 'number' }),
+              defineField({ name: 'round',  title: 'Round',  type: 'number' }),
+              defineField({ name: 'at',     title: 'At',     type: 'datetime' }),
+            ],
+            preview: {
+              select: { by: 'by', amount: 'amount', round: 'round' },
+              prepare: ({ by, amount, round }: { by?: string; amount?: number; round?: number }) => ({
+                title: `รอบ ${round ?? '?'} · ${by === 'caretaker' ? 'ผู้ดูแล' : 'ลูกค้า'} — ฿${(amount ?? 0).toLocaleString()}`,
+              }),
+            },
+          }] }),
+        ],
+        preview: {
+          select: { ref: 'unitRef', label: 'unitLabel', project: 'project', status: 'status', d: 'appointment.requestedDate', t: 'appointment.requestedTime', booking: 'bookingRef' },
+          prepare: ({ ref, label, project, status, d, t, booking }: any) => {
+            const S: Record<string, string> = { new: '🆕', contacted: '📞', qualified: '✅', won: '🏆', lost: '❌', cancelled: '🚫' }
+            return {
+              title:    `${S[status ?? 'new'] ?? ''} ${[ref, label].filter(Boolean).join(' · ') || project || 'Room'}`.trim(),
+              subtitle: [project, [d, t].filter(Boolean).join(' '), booking].filter(Boolean).join(' · '),
+            }
+          },
+        },
+      }],
+    }),
+
+
     defineField({
       group:    'viewing',
       name:     'bookingRef',
+      hidden: ({ value }: any) => !value,   // old one-room field — kept only for leads not moved to Rooms & Viewings
       title:    'Booking No. · เลขใบนัด',
       type:     'string',
       readOnly: true,
@@ -334,6 +413,7 @@ export default defineType({
     defineField({
       group:    'viewing',
       name:     'submissionId',
+      hidden: ({ value }: any) => !value,   // old one-room field — kept only for leads not moved to Rooms & Viewings
       title:    'Submission ID',
       type:     'string',
       readOnly: true,
@@ -343,6 +423,7 @@ export default defineType({
     defineField({
       group:       'viewing',
       name:        'appointment',
+      hidden: ({ value }: any) => !value,   // old one-room field — kept only for leads not moved to Rooms & Viewings
       title:       'Appointment · นัดชม',
       type:        'object',
       description: 'Written by the LINE bot — requested slot, proposed alternatives, confirmation.',
@@ -360,6 +441,7 @@ export default defineType({
     defineField({
       group: 'viewing',
       name:  'viewingOutcome',
+      hidden: ({ value }: any) => !value,   // old one-room field — kept only for leads not moved to Rooms & Viewings
       title: 'Viewing Outcome · ผลนัด',
       type:  'object',
       fields: [
@@ -375,6 +457,7 @@ export default defineType({
     defineField({
       group:       'viewing',
       name:        'voucherCode',
+      hidden: ({ value }: any) => !value,   // old one-room field — kept only for leads not moved to Rooms & Viewings
       title:       'Voucher Code',
       type:        'string',
       readOnly:    true,
@@ -384,6 +467,7 @@ export default defineType({
     defineField({
       group:       'viewing',
       name:        'negotiation',
+      hidden: ({ value }: any) => !(value as any[] | undefined)?.length,   // old one-room field — kept only for leads not moved to Rooms & Viewings
       title:       'Negotiation · ต่อรอง',
       type:        'array',
       description: 'ทุกข้อเสนอถูกบันทึก — ฐานข้อมูลราคาปิดจริง vs ราคาประกาศ (สูงสุด 3 รอบ)',

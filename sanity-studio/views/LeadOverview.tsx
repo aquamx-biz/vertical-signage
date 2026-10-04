@@ -17,6 +17,15 @@ const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
 
 const PIPELINE_STEPS = ['new', 'contacted', 'qualified']
 
+const VIEWING_STATUS: Record<string, { label: string; color: string }> = {
+  new:       { label: 'Requested', color: '#3B82F6' },
+  contacted: { label: 'Contacted', color: '#F97316' },
+  qualified: { label: 'Confirmed', color: '#8B5CF6' },
+  won:       { label: 'Won',       color: '#22C55E' },
+  lost:      { label: 'Not taken', color: '#EF4444' },
+  cancelled: { label: 'Cancelled', color: '#9CA3AF' },
+}
+
 function fmtDate(iso: string | null | undefined): string | null {
   if (!iso) return null
   return new Date(iso).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
@@ -157,6 +166,33 @@ export function LeadOverview({ document: { displayed: doc } }: Props) {
             </Stack>
           </Stack>
         </Card>
+
+        {/* Rooms & viewings — one row per room this person asked to see */}
+        {Array.isArray(doc.viewings) && doc.viewings.length > 0 && (
+          <Card padding={3} border radius={2}>
+            <Stack space={3}>
+              <Text size={0} weight="semibold" style={{ color: '#374151', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                Rooms & Viewings ({doc.viewings.length})
+              </Text>
+              <Stack space={2}>
+                {doc.viewings.map((v: Record<string, any>) => {
+                  const cfg = VIEWING_STATUS[v.status ?? 'new'] ?? VIEWING_STATUS.new
+                  const when = [v.appointment?.requestedDate, v.appointment?.requestedTime].filter(Boolean).join(' ')
+                  return (
+                    <Flex key={v._key} justify="space-between" align="center" gap={3}
+                          style={{ borderBottom: '1px solid #F3F4F6', paddingBottom: 6 }}>
+                      <Stack space={1}>
+                        <Text size={1} weight="semibold">{[v.unitRef, v.unitLabel].filter(Boolean).join(' · ') || v.project || 'Room'}</Text>
+                        <Text size={0} muted>{[v.project, when, v.bookingRef].filter(Boolean).join(' · ') || '—'}</Text>
+                      </Stack>
+                      <Badge style={{ background: cfg.color, color: '#fff', flexShrink: 0 }}>{cfg.label}</Badge>
+                    </Flex>
+                  )
+                })}
+              </Stack>
+            </Stack>
+          </Card>
+        )}
 
         {/* Linked party */}
         <Stack space={2}>
