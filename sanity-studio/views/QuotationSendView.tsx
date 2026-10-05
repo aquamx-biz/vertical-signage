@@ -195,9 +195,7 @@ export function QuotationSendView(props: {
                 )}
                 {done && <Card padding={3} radius={2} tone="positive"><Text size={1}>{done}. Status set to Sent — refresh the Edit tab to see the log.</Text></Card>}
                 <Text size={0} muted>Sends the PUBLISHED version of this {docWord}. Publish first if you changed anything.</Text>
-                {docType === 'adContract' && (
-                  <Text size={0} muted>Sending freezes the wording and numbers (Rev.{(doc as any)?.revision ?? 1}) and files the exact PDF under Issued Versions. To change it afterwards use ⋯ → New Revision.</Text>
-                )}
+                <Text size={0} muted>Sending freezes the wording and numbers (Rev.{(doc as any)?.revision ?? 1}) and files the exact PDF under Issued Versions. To change it afterwards use ⋯ → New Revision.</Text>
               </Stack>
             )}
           </Stack>

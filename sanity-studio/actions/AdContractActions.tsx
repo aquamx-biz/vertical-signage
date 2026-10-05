@@ -34,7 +34,7 @@ export function NewRevisionAction(props: DocumentActionProps): DocumentActionDes
     dialog:   (open && {
       type:    'confirm',
       tone:    'caution' as any,
-      message: `Unlock ${doc.adContractNumber ?? 'this contract'} for editing as Rev.${next}? Rev.${next - 1} stays on record in Issued Versions; the customer gets Rev.${next} only when you Send again.`,
+      message: `Unlock ${doc.adContractNumber ?? doc.quoteNumber ?? 'this document'} for editing as Rev.${next}? Rev.${next - 1} stays on record in Issued Versions; the customer gets Rev.${next} only when you Send again.`,
       onCancel:  () => setOpen(false),
       onConfirm: async () => {
         setBusy(true)

@@ -3,6 +3,9 @@ import { createAutoNumberInput }  from '../components/AutoNumberInput'
 import { makeGlAccountInput }     from '../components/GlAccountInput'
 import { OrderLineItemsInput }    from '../components/OrderLineItemsInput'
 
+/** Once sent, what the customer received is locked — New Revision unlocks it (Rev.N+1). */
+const locked = ({ document }: { document?: any }) => !!document?.status && document.status !== 'draft'
+
 const QuoteNumberInput      = createAutoNumberInput('quote', { fixedPrefix: 'QTC', dateField: 'quoteDate' })
 const GlAccountRevenueInput = makeGlAccountInput(['revenue'], { allowCreditBalance: true })
 
@@ -83,6 +86,16 @@ export default defineType({
     }),
 
     defineField({
+      group:        'header',
+      name:         'revision',
+      title:        '1.2a · Revision',
+      type:         'number',
+      initialValue: 1,
+      readOnly:     true,
+      description:  'Printed as "Rev.N" next to the quotation number. Goes up by one each time you use New Revision after a send.',
+    }),
+
+    defineField({ readOnly: locked,
       group:      'header',
       name:       'quoteDate',
       title:      '1.3 · Quotation Date',
@@ -90,7 +103,7 @@ export default defineType({
       validation: Rule => Rule.required(),
     }),
 
-    defineField({
+    defineField({ readOnly: locked,
       group:       'header',
       name:        'validUntil',
       title:       '1.4 · Valid Until',
@@ -103,7 +116,7 @@ export default defineType({
       }),
     }),
 
-    defineField({
+    defineField({ readOnly: locked,
       group:       'header',
       name:        'customer',
       title:       '1.5 · Customer',
@@ -114,7 +127,7 @@ export default defineType({
       validation:  Rule => Rule.required(),
     }),
 
-    defineField({
+    defineField({ readOnly: locked,
       group:       'header',
       name:        'attention',
       title:       '1.6 · Attention (ถึง)',
@@ -122,7 +135,7 @@ export default defineType({
       description: 'Person at the customer the letter is addressed to, e.g. "คุณชาญณรงค์ คุ้มภัย".',
     }),
 
-    defineField({
+    defineField({ readOnly: locked,
       group:       'header',
       name:        'processSetup',
       title:       '1.7 · Revenue Stream',
@@ -136,7 +149,7 @@ export default defineType({
       validation:  Rule => Rule.required(),
     }),
 
-    defineField({
+    defineField({ readOnly: locked,
       group:       'header',
       name:        'source',
       title:       '1.8 · Quoted Against',
@@ -158,7 +171,7 @@ export default defineType({
     // table — package type, screens, project, duration, media spec, CTA. Kept as
     // free label/value rows so each revenue stream can print whatever matters.
 
-    defineField({
+    defineField({ readOnly: locked,
       group:        'scope',
       name:         'title_th',
       title:        '2.1 · Title (Thai)',
@@ -167,7 +180,7 @@ export default defineType({
       initialValue: 'ใบเสนอราคาค่าบริการโฆษณาบนจอดิจิทัลเครือข่าย aquamx',
     }),
 
-    defineField({
+    defineField({ readOnly: locked,
       group:        'scope',
       name:         'title_en',
       title:        '2.2 · Title (English)',
@@ -175,7 +188,7 @@ export default defineType({
       initialValue: 'Quotation — Advertising on the aquamx digital screen network',
     }),
 
-    defineField({
+    defineField({ readOnly: locked,
       group:       'scope',
       name:        'projectSites',
       title:       '2.3 · Project Sites (screens)',
@@ -184,14 +197,14 @@ export default defineType({
       description: 'Which buildings the package covers. Printed as a list.',
     }),
 
-    defineField({
+    defineField({ readOnly: locked,
       group:       'scope',
       name:        'periodStart',
       title:       '2.3a · Campaign Start',
       type:        'date',
       description: 'First day the ad runs. The Ad Contract raised from this quotation uses it — enter it once here.',
     }),
-    defineField({
+    defineField({ readOnly: locked,
       group:       'scope',
       name:        'periodEnd',
       title:       '2.3b · Campaign End',
@@ -200,7 +213,7 @@ export default defineType({
       validation:  Rule => Rule.min(Rule.valueOfField('periodStart')),
     }),
 
-    defineField({
+    defineField({ readOnly: locked,
       group:        'scope',
       name:         'intro_th',
       title:        '2.4 · Opening Paragraph (Thai)',
@@ -209,7 +222,7 @@ export default defineType({
       initialValue: 'ใบเสนอราคานี้แสดงรายละเอียดและเงื่อนไขในการลงโฆษณาบนเครือข่ายจอดิจิทัลของ aquamx โดยบริษัทมีความยินดีนำเสนอพื้นที่โฆษณาดิจิทัลที่ออกแบบมาเพื่อสร้างการมีส่วนร่วมกับผู้อยู่อาศัยและผู้มาเยือนภายในโครงการ จอของ aquamx มาพร้อมระบบ Interactive Call-to-Action (CTA) ผู้ชมสามารถสัมผัสหน้าจอเพื่อดูรายละเอียดสินค้า ดูรูปภาพเพิ่มเติม หรือกดสั่งซื้อ / จองบริการ / ติดต่อเจ้าของผลิตภัณฑ์ได้โดยตรงบนหน้าจอ',
     }),
 
-    defineField({
+    defineField({ readOnly: locked,
       group:        'scope',
       name:         'intro_en',
       title:        '2.5 · Opening Paragraph (English)',
@@ -218,7 +231,7 @@ export default defineType({
       initialValue: 'This quotation sets out the details and terms for advertising on the aquamx digital screen network. We are pleased to offer digital advertising space designed to engage residents and visitors inside the building. Every aquamx screen carries an Interactive Call-to-Action (CTA): viewers can touch the screen to see product details and more images, or order, book or contact the product owner directly from the screen.',
     }),
 
-    defineField({
+    defineField({ readOnly: locked,
       group:       'scope',
       name:        'terms',
       title:       '2.6 · Terms & Details table',
@@ -250,7 +263,7 @@ export default defineType({
       ],
     }),
 
-    defineField({
+    defineField({ readOnly: locked,
       group:        'scope',
       name:         'closing_th',
       title:        '2.7 · Closing Paragraph (Thai)',
@@ -259,7 +272,7 @@ export default defineType({
       initialValue: 'โฆษณาจะแสดงในรูปแบบวิดีโอลูปตลอดทั้งวัน เมื่อผู้ชมแตะหน้าจอ ระบบจะเปิดหน้ารายละเอียดผลิตภัณฑ์ (Product Detail Page) เพื่อให้สามารถติดต่อได้โดยตรง aquamx ขอสงวนสิทธิ์ในการตรวจสอบและอนุมัติสื่อโฆษณาทุกชิ้นก่อนเผยแพร่ เพื่อให้มั่นใจว่าสื่อโฆษณามีคุณภาพและสอดคล้องกับมาตรฐานความเหมาะสมของโครงการ ขอขอบคุณที่ให้ความสนใจในข้อเสนอของเรา และหวังว่าจะได้มีโอกาสร่วมงานกับท่านในเร็ว ๆ นี้',
     }),
 
-    defineField({
+    defineField({ readOnly: locked,
       group:        'scope',
       name:         'closing_en',
       title:        '2.8 · Closing Paragraph (English)',
@@ -270,7 +283,7 @@ export default defineType({
 
     // ── Group 3: Lines & Amounts ─────────────────────────────────────────────
 
-    defineField({
+    defineField({ readOnly: locked,
       group:       'amounts',
       name:        'lines',
       title:       '3.1 · Quotation Lines',
@@ -315,7 +328,7 @@ export default defineType({
       })],
     }),
 
-    defineField({
+    defineField({ readOnly: locked,
       group:       'amounts',
       name:        'amountDue',
       title:       '3.2 · Amount (THB, before VAT)',
@@ -328,15 +341,15 @@ export default defineType({
       }),
     }),
 
-    defineField({
+    defineField({ readOnly: locked,
       group:       'amounts',
       name:        'discountLabel_th',
       title:       '3.2b · Discount Label (Thai)',
       type:        'string',
       description: 'Printed as its own line under the items, e.g. "ส่วนลดจ่ายล่วงหน้า 3 เดือน 5%". Leave blank when there is no discount.',
     }),
-    defineField({ group: 'amounts', name: 'discountLabel_en', title: '3.2c · Discount Label (English)', type: 'string' }),
-    defineField({
+    defineField({ readOnly: locked, group: 'amounts', name: 'discountLabel_en', title: '3.2c · Discount Label (English)', type: 'string' }),
+    defineField({ readOnly: locked,
       group:       'amounts',
       name:        'discountAmount',
       title:       '3.2d · Discount Amount (THB)',
@@ -345,7 +358,7 @@ export default defineType({
       validation:  Rule => Rule.min(0),
     }),
 
-    defineField({
+    defineField({ readOnly: locked,
       group:       'amounts',
       name:        'vatType',
       title:       '3.3 · VAT Type',
@@ -363,8 +376,8 @@ export default defineType({
       initialValue: 'none',
     }),
 
-    defineField({ group: 'amounts', name: 'vatAmount',   title: '3.4 · VAT Amount (THB)', type: 'number', validation: Rule => Rule.min(0) }),
-    defineField({ group: 'amounts', name: 'totalAmount', title: '3.5 · Total (THB)',      type: 'number', validation: Rule => Rule.min(0), description: 'Amount + VAT. The figure printed as ยอดรวมสุทธิ.' }),
+    defineField({ readOnly: locked, group: 'amounts', name: 'vatAmount',   title: '3.4 · VAT Amount (THB)', type: 'number', validation: Rule => Rule.min(0) }),
+    defineField({ readOnly: locked, group: 'amounts', name: 'totalAmount', title: '3.5 · Total (THB)',      type: 'number', validation: Rule => Rule.min(0), description: 'Amount + VAT. The figure printed as ยอดรวมสุทธิ.' }),
 
 
     // ── Group 4: Follow-up ───────────────────────────────────────────────────
@@ -457,7 +470,7 @@ export default defineType({
       of: [{
         type: 'object', name: 'issuedVersion',
         fields: [
-          defineField({ name: 'rev',      title: 'Send No.',    type: 'number' }),
+          defineField({ name: 'rev',      title: 'Revision',    type: 'number' }),
           defineField({ name: 'issuedAt', title: 'Issued At',   type: 'datetime' }),
           defineField({ name: 'pdf',      title: 'PDF as sent', type: 'file' }),
           defineField({ name: 'lang',     title: 'Language',    type: 'string' }),
@@ -468,7 +481,7 @@ export default defineType({
         preview: {
           select: { rev: 'rev', at: 'issuedAt', lang: 'lang', channel: 'channel' },
           prepare: ({ rev, at, lang, channel }: any) => ({
-            title:    `Send #${rev ?? 1} · ${String(lang ?? 'th').toUpperCase()} · ${String(channel ?? '').toUpperCase()}`,
+            title:    `Rev.${rev ?? 1} · ${String(lang ?? 'th').toUpperCase()} · ${String(channel ?? '').toUpperCase()}`,
             subtitle: at ? new Date(at).toLocaleString() : '-',
           }),
         },

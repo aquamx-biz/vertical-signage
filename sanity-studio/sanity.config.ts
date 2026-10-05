@@ -606,6 +606,9 @@ export default defineConfig([{
       if (ctx.schemaType === 'adContract') {
         return [...prev, NewRevisionAction, LoadTemplateAction]
       }
+      if (ctx.schemaType === 'quotation') {
+        return [...prev, NewRevisionAction]
+      }
       if (ctx.schemaType === 'projectSite') {
         return [...prev, AILookupAction]
       }
