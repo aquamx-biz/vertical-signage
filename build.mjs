@@ -32,6 +32,29 @@ import { join, dirname }                                        from 'path'
 import { fileURLToPath }                                        from 'url'
 import { createHash }                                           from 'crypto'
 import { selectWithPolicy, profileToRow, PROFILE_PROJECTION, closedTooLong, CLOSED_DAYS } from './board-engine.mjs'
+
+/* แถวบอร์ด → รายการห้องใน popup — mirror ของ profileToOrderItem ใน tools/seed-board-offers.mjs
+   และ UnitBoardsTool.unitToOrderItem (KEEP IN SYNC) · shape = ที่ player อ่าน (key, maxQty, sold) */
+const BED_SLUG = { studio: 'studio', '1bed': '1bed', '2bed': '2bed', '3bed': '3bed', '4bed': '4bedplus' }
+const OI_BED_TH = { studio: 'สตูดิโอ', '1bed': '1 ห้องนอน', '2bed': '2 ห้องนอน', '3bed': '3 ห้องนอน', '4bed': '4 ห้องนอน+' }
+const OI_BED_EN = { studio: 'Studio', '1bed': '1 Bedroom', '2bed': '2 Bedroom', '3bed': '3 Bedroom', '4bed': '4 Bed+' }
+const OI_ZONE_TH = { low: 'ชั้นล่าง', mid: 'ชั้นกลาง', high: 'ชั้นสูง' }
+const OI_ZONE_EN = { low: 'Low floor', mid: 'Mid floor', high: 'High floor' }
+function boardOrderItem(p, mode) {
+  const fl = p.floorActual != null
+    ? { th: `ชั้น ${p.floorActual}`, en: `Floor ${p.floorActual}` }
+    : { th: OI_ZONE_TH[p.floorZone] ?? '', en: OI_ZONE_EN[p.floorZone] ?? '' }
+  return {
+    key: p.refCode,
+    maxQty: 1,
+    name_th: `${OI_BED_TH[p.bedType] ?? p.bedType} · ${p.sqm} ตรม. · ${fl.th}`,
+    name_en: `${OI_BED_EN[p.bedType] ?? p.bedType} · ${p.sqm} sqm · ${fl.en}`,
+    price: mode === 'rent' ? `${(p.priceTHB / 1e3).toFixed(1)}K ฿/ด.` : `${(p.priceTHB / 1e6).toFixed(1)}M`,
+    priceTHB: p.priceTHB ?? null,
+    sold: p.dealStage === 'closed' ? true : null,
+    image: null,
+  }
+}
 import { marketModel, expectedPsqm, valueVsExpected } from './market-model.mjs'
 
 /* ชนิดห้องต้องมีอย่างน้อยเท่านี้ถึงจะได้สไลด์ของตัวเอง */
@@ -235,6 +258,7 @@ const PLAYLIST_PROJ_V7 = `
         "validFrom":          media->offer->validFrom,
         "validTo":            media->offer->validTo,
         "menuItems":          media->offer->menuItems[]{ name_th, name_en, price, "image": image.asset->url },
+        "offerId":            media->offer->_id,
         "orderItems":         media->offer->orderItems[]{ name_th, name_en, price, priceTHB, "key": coalesce(refCode, _key), maxQty, sold, "image": image.asset->url },
         "fulfillment":        media->offer->fulfillment,
         "payOnline":          media->offer->payOnline,
@@ -358,6 +382,7 @@ for (const project of projects) {
           // the same item lists — without these the menu/room list rendered as the
           // "เพิ่มสินค้า…" placeholder when entered from the category screen.
           menuItems[]{ name_th, name_en, price, "image": image.asset->url },
+          "offerId": _id,
           orderItems[]{ name_th, name_en, price, "key": coalesce(refCode, _key), maxQty, sold, "image": image.asset->url },
           fulfillment,
           eventInfo
@@ -486,6 +511,11 @@ for (const project of projects) {
   // Newest-first ordering above means: if two boards share a mode, the most
   // recently updated one wins (and we warn).
   const bakedBoardModes = new Set()
+  /* รายการห้องใน popup ของ offer บอร์ด (offer-board-<code>-<mode>[-<bed>]) สร้างจาก
+     แถวชุดเดียวกับบอร์ดตอน build — ไม่อ่าน orderItems ที่เก็บไว้ใน offer อีก เพราะไม่มีใคร
+     อัปเดตมันตามบอร์ด (ค้างที่ 11 ส.ค. ทุกตึก) ห้องที่อนุมัติจาก LINE ขึ้นบอร์ดแต่ไม่ขึ้น popup
+     (L24-U391, พบ 5 ต.ค. 2569) · ห้องเข้ามาทางไหนก็ตาม บอร์ดกับ popup เห็นชุดเดียวกันเสมอ */
+  const boardItems = new Map()
   for (const b of unitBoards ?? []) {
     const mode = b.mode === 'sale' ? 'sale' : 'rent'
     if (bakedBoardModes.has(mode)) {
@@ -534,6 +564,15 @@ for (const project of projects) {
           remarks: (r.remarks ?? []).map(m => ({ text: m.text, tone: m.tone ?? 'white' })),
         }))
     console.log(`  board[${mode}]: ${source} (${rows.length} rows)`)
+    if (source !== 'manual') {
+      const picked = (source === 'lineup' ? lineup : auto.rows).filter(p => p?.refCode && p.priceTHB != null)
+      const toItem = p => boardOrderItem({ ...p, floorActual: FLOOR_BY_REF.get(p.refCode) }, mode)
+      boardItems.set(`offer-board-${code}-${mode}`, picked.map(toItem))
+      const byBed = {}
+      for (const p of picked) (byBed[p.bedType] ??= []).push(p)
+      for (const [bed, list] of Object.entries(byBed))
+        boardItems.set(`offer-board-${code}-${mode}-${BED_SLUG[bed] ?? bed}`, list.map(toItem))
+    }
     if (source === 'auto') auto.warnings.forEach(w => console.log(`    ⚠ ${w}`))
 
     const boardData = {
@@ -598,6 +637,16 @@ for (const project of projects) {
   const BOARD_PATH_RE = /^\/(board|board-cards)(\/|$)/
   const normPath = p => p.replace(/index\.html$/, '').replace(/\/+$/, '') + '/'
   const droppedBoardSlides = []
+  // popup ของ offer บอร์ด = แถวของบอร์ด (ดู boardItems ด้านบน)
+  let boardItemSwaps = 0
+  const useBoardItems = o => {
+    const id = String(o?.offerId ?? '').replace(/^drafts\./, '')
+    if (!id.startsWith('offer-board-') || !boardItems.has(id)) return
+    o.orderItems = boardItems.get(id); boardItemSwaps++
+  }
+  ;(playlist ?? []).forEach(useBoardItems)
+  ;(rawProviders ?? []).forEach(p => (p.offers ?? []).forEach(useBoardItems))
+  if (boardItemSwaps) console.log(`  board offers: รายการห้องใน popup จากบอร์ด ${boardItemSwaps} จุด`)
   const airablePlaylist = (playlist ?? []).filter(s => {
     const href = s.webUrl ?? s.url
     if ((s.mediaType ?? s.type) !== 'web' || !href) return true
