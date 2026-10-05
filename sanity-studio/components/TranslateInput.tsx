@@ -23,6 +23,8 @@ interface TranslateInputOptions {
   targetLang?: string
   /** Button label override */
   buttonLabel?: string
+  /** Read sourceField from the same object as this field (e.g. inside an array item) */
+  sibling?: boolean
 }
 
 /**
@@ -39,6 +41,7 @@ export function createTranslateInput(options: string | TranslateInputOptions) {
     sourceLang  = 'Thai',
     targetLang  = 'English',
     buttonLabel,
+    sibling     = false,
   } = typeof options === 'string' ? { sourceField: options } : options
 
   const label      = buttonLabel ?? `✨ Translate from ${sourceLang}`
@@ -48,7 +51,8 @@ export function createTranslateInput(options: string | TranslateInputOptions) {
     const [loading, setLoading] = useState(false)
     const [error,   setError]   = useState<string | null>(null)
 
-    const sourceValue = useFormValue([sourceField]) as string | undefined
+    const sourcePath  = sibling ? [...(((props as any).path ?? []) as any[]).slice(0, -1), sourceField] : [sourceField]
+    const sourceValue = useFormValue(sourcePath) as string | undefined
     const hasSource   = !!sourceValue?.trim()
 
     const handleTranslate = async () => {

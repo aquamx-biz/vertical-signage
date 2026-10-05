@@ -397,6 +397,83 @@ export function ApprovalView({ document: doc, documentId, schemaType }: Props) {
           </Stack>
         </Card>
 
+        {/* Termination / withdrawal — outside the quotation → contract chain */}
+        {(() => {
+          const tStatus = d.terminationStatus as string | undefined
+          if (!tStatus || tStatus === 'none') return null
+
+          const isWithdrawal = tStatus === 'withdrawn'
+          const docType      = isWithdrawal ? 'withdrawal' : 'termination'
+          const status       = (isWithdrawal ? d.withdrawalApprovalStatus : d.terminationApprovalStatus) as string | undefined
+          const approvedAt   = isWithdrawal ? d.withdrawalApprovedAt      : d.terminationApprovedAt
+          const st           = status ?? 'not_requested'
+          const title        = isWithdrawal ? 'Step 3 — Withdrawal Approval'
+                                            : 'Step 3 — Termination Approval'
+          const docNo        = (isWithdrawal ? d.withdrawalNumber : d.terminationNumber) as string | undefined
+          const noOwnLetter  = !isWithdrawal && d.terminationNoticeRequired === false
+
+          return (
+            <Card padding={4} radius={2} shadow={1}>
+              <Stack space={4}>
+                <Flex align="center" gap={3}>
+                  <Text weight="semibold" size={2}>{title}</Text>
+                  <StatusBadge status={st} />
+                </Flex>
+
+                <Text size={1} muted>
+                  {noOwnLetter
+                    ? 'No letter issued from the system — upload the other party\'s letter on the Termination tab before requesting approval'
+                    : docNo
+                      ? `Letter no. ${docNo} — once approved the document is generated and e-mailed automatically`
+                      : 'Use Generate Number on the Termination tab to issue a letter number before requesting approval'}
+                </Text>
+
+                {st === 'approved' && approvedAt && (
+                  <Text size={1} muted>Approved on {fmtDate(approvedAt as string)}</Text>
+                )}
+
+                {st === 'rejected' && (
+                  <Card padding={3} radius={2} tone="critical" border>
+                    <Stack space={2}>
+                      <Text size={1} weight="semibold">Rejected</Text>
+                      <Text size={1}>Edit the details on the Termination tab and request approval again</Text>
+                    </Stack>
+                  </Card>
+                )}
+
+                {(st === 'not_requested' || st === 'reset' || st === 'rejected') && (
+                  requesting === docType ? (
+                    <Flex align="center" gap={2}><Spinner muted /><Text size={1} muted>Sending…</Text></Flex>
+                  ) : (
+                    <Stack space={2}>
+                      {!emailValid && <Text size={1} muted style={{ fontStyle: 'italic' }}>Fill in a valid notification email above to enable this button.</Text>}
+                      <Button
+                        text={isWithdrawal ? 'Request Withdrawal Approval' : 'Request Termination Approval'}
+                        tone="primary"
+                        disabled={!isPublished || requesting !== null || !emailValid}
+                        onClick={() => requestApproval(docType)}
+                      />
+                    </Stack>
+                  )
+                )}
+
+                {st === 'pending' && (
+                  <Stack space={3}>
+                    <Text size={1} muted style={{ fontStyle: 'italic' }}>Awaiting approver response.</Text>
+                    {cancelling === docType ? (
+                      <Flex align="center" gap={2}><Spinner muted /><Text size={1} muted>Cancelling…</Text></Flex>
+                    ) : (
+                      <Button text="Cancel Pending Approval" tone="critical" mode="ghost"
+                        disabled={requesting !== null || cancelling !== null}
+                        onClick={() => cancelApproval(docType)} />
+                    )}
+                  </Stack>
+                )}
+              </Stack>
+            </Card>
+          )
+        })()}
+
         <Text size={0} muted>Approval history is recorded in the Approval Requests section of the Studio.</Text>
       </Stack>
     </Card>
