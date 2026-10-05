@@ -121,7 +121,7 @@ function SingleStepApproval({
               placeholder="yourname@company.com"
               value={notifyEmail}
               onChange={e => setNotifyEmail((e.target as HTMLInputElement).value)}
-              tone={notifyEmail && !emailValid ? 'critical' : 'default'}
+              customValidity={notifyEmail && !emailValid ? 'Please enter a valid email address.' : undefined}
             />
             {d.notificationEmail && d.notificationEmail !== notifyEmail && (
               <Text size={0} muted>Previously used: {d.notificationEmail}</Text>
@@ -298,7 +298,7 @@ export function ApprovalView({ document: doc, documentId, schemaType }: Props) {
               placeholder="yourname@company.com"
               value={notifyEmail}
               onChange={e => setNotifyEmail((e.target as HTMLInputElement).value)}
-              tone={notifyEmail && !emailValid ? 'critical' : 'default'}
+              customValidity={notifyEmail && !emailValid ? 'Please enter a valid email address.' : undefined}
             />
             {notifyEmail && !emailValid && (
               <Text size={1} style={{ color: '#e05252' }}>Please enter a valid email address.</Text>
