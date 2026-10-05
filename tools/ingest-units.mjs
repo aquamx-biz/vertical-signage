@@ -6,8 +6,10 @@
  *         default: dry-run (สรุปว่าจะเกิดอะไร ไม่เขียนจริง) · dir = C:/Users/Lenovo/Downloads
  *
  * กติกาการ sync (หัวใจของระบบประวัติ):
- * - unitProfile: ทับตัวเลขล่าสุด แต่ "สงวน" งานทีมเสมอ (status, pinToBoard,
- *   hideFromBoard, internalNote, firstSeenAt) · ราคาเปลี่ยน → APPEND priceHistory
+ * - unitProfile / unitSource: เขียนด้วย patch เฉพาะช่องที่ ingest เป็นเจ้าของ (ตั้งแต่ 2026-10-05)
+ *   ช่องอื่นทั้งหมด (status ที่ทีมตั้ง, pin/hide, dealStage, onBoard*, listedWithUs, photos,
+ *   features, contactLog, …) ไม่ถูกแตะ · ห้ามกลับไปใช้ createOrReplace กับสองชนิดนี้
+ *   ห้อง listedWithUs = true ข้ามทั้งการเขียนและ expire · ราคาเปลี่ยน → APPEND priceHistory
  *   (ห้ามลบของเก่า) · ห้องพบครั้งแรก → firstSeenAt = รอบนี้
  * - ห้องที่หายจากตลาด (เคย active แต่รอบนี้ไม่พบ) → status = expired อัตโนมัติ
  * - unitSource (dataset internal): เพิ่ม/อัปเดต listing ตาม sourceId — สงวน
@@ -577,28 +579,37 @@ for (const u of unitRows) {
     const history = [...(old?.priceHistory ?? [])]
     if (!old || priceChanged)
       history.push({ _type: 'pricePoint', _key: `h${ROUND.replace(/-/g, '')}`, date: ROUND, price: d.price, nListings: d.nListings })
-    prodMut.push({ createOrReplace: {
-      _id: `unitProfile-${ref}-${intent}`, _type: 'unitProfile',
+    /* ingest เขียน "เฉพาะช่องของตัวเอง" ด้วย patch — ไม่ใช้ createOrReplace อีกแล้ว
+       เหตุ 2026-10-05: createOrReplace + รายการช่องที่ต้องพกต่อ (allowlist) ลบทุกช่องที่ระบบอื่น
+       เขียนแต่ไม่อยู่ในรายการ — listedWithUs/features (L24-U390) · photos* (NBL-U040/078/113/134)
+       ระบบไหนเพิ่มช่องใหม่ก็หายรอบถัดไปจนกว่าจะมีคนมาเติมรายการ · patch กลับด้าน: ช่องที่ ingest
+       ไม่ได้เป็นเจ้าของ (status ที่ทีมตั้ง, pin/hide, dealStage, onBoard*, internalNote, photos,
+       features, project, …) ไม่ถูกแตะเลยโดยไม่ต้องรู้จักชื่อ
+       ช่องของ ingest ที่รอบนี้ไม่มีค่า → unset (เท่ากับพฤติกรรม createOrReplace เดิม ไม่ให้ค่าเก่าค้าง)
+       ยกเว้น bath ที่ตั้งใจคงของเดิมถ้ารอบนี้ portal ไม่ระบุ */
+    const own = {
       refCode: ref, projectName: u.building, intent,
       bedType: u.bedType, sqm: u.sqm, floorZone: u.zone,
-      // ห้องน้ำ: ค่ารอบนี้ก่อน · ถ้ารอบนี้ portal ไม่ระบุ ให้คงของเดิมที่เคยเก็บได้ (ไม่ล้าง)
-      bath: u.bath ?? old?.bath ?? undefined,
       priceTHB: d.price, pricePerSqm: Math.round(d.psqm),
       vsFloorPct: d.vsF, vsZonePct: d.vsZ, vsBuildingPct: d.vsB,
-      dealTier: d.deal ?? undefined, hotDeal: d.hot, goodInvest: !!d.invest,
-      negotiable: d.nego, yieldPct: u.yield ?? undefined,
+      dealTier: d.deal, hotDeal: d.hot, goodInvest: !!d.invest,
+      negotiable: d.nego, yieldPct: u.yield,
       spreadPct: d.spread, nListings: d.nListings, nPortals: d.nPortals,
       postedByOwner: d.owner, dualListed: u.dual,
-      status: old?.status && old.status !== 'expired' ? old.status : old?.status === 'expired' ? 'candidate' : 'candidate',
-      pinToBoard: old?.pinToBoard, hideFromBoard: old?.hideFromBoard, internalNote: old?.internalNote,
-      // สถานะดีล (ว่าง/นัดชม/คุย/ปิดดีล) ทีมกรอกมือ — ต้องสงวนเท่ากับ status/pin/hide
-      // ไม่งั้น scrape ทุกรอบล้างสิ่งที่ทีมตั้งไว้ (พบ 2026-08-10: ตั้งแล้วหายหลัง ingest)
-      dealStage: old?.dealStage, dealStageAt: old?.dealStageAt,
-      // ล็อกเคยขึ้นบอร์ด = ประวัติ ต้องสงวนเท่ากับ dealStage (ไม่งั้น scrape ล้าง)
-      onBoardFirstAt: old?.onBoardFirstAt, onBoardLastAt: old?.onBoardLastAt,
-      firstSeenAt: old?.firstSeenAt ?? ROUND, lastCheckedAt: ROUND,
-      priceHistory: history,
-    } })
+      lastCheckedAt: ROUND, priceHistory: history,
+    }
+    if (u.bath != null) own.bath = u.bath      // ห้องน้ำ: รอบนี้ไม่ระบุ = คงของเดิม (ไม่ unset)
+    const set = {}, unset = []
+    for (const [k, v] of Object.entries(own)) (v == null || Number.isNaN(v)) ? unset.push(k) : (set[k] = v)
+    const id = `unitProfile-${ref}-${intent}`
+    if (!old) {
+      // ห้องใหม่: สร้างพร้อมค่าตั้งต้นของทีม — createIfNotExists ไม่ทับถ้ามีคนสร้างไว้ก่อนในจังหวะเดียวกัน
+      prodMut.push({ createIfNotExists: { _id: id, _type: 'unitProfile', ...set, status: 'candidate', firstSeenAt: ROUND } })
+    } else {
+      // status เป็นของทีม — ingest แตะแค่ "ฟื้นห้องที่หายแล้วกลับมาในตลาด" (expired → candidate) หรือห้องที่ไม่มี status
+      if (!old.status || old.status === 'expired') set.status = 'candidate'
+      prodMut.push({ patch: { id: old._id, set, ...(unset.length ? { unset } : {}), setIfMissing: { firstSeenAt: ROUND } } })
+    }
   }
   // unitSource: merge listings ตาม sourceId — สงวนงาน co-broke ของทีม
   // schema แยก rentListings/saleListings แล้ว (2026-08-08) — merge แยกฝั่ง และ
@@ -642,16 +653,19 @@ for (const u of unitRows) {
   // ไม่งั้นโดน prune ทิ้งทั้งที่ยังไม่ตาย · ส่วนราคา/สถิติกรอง stale ไปแล้วตอนสร้าง both[intent]
   const mergedRent = mergeSide('rentListings', u.listings.filter(l => l.intent === 'rent'))
   const mergedSale = mergeSide('saleListings', u.listings.filter(l => l.intent === 'sale'))
-  intMut.push({ createOrReplace: {
-    _id: oldSrc?._id ?? `unitSource-${ref}`, _type: 'unitSource',
-    refCode: ref, projectName: u.building, floorActual: u.floor,
-    imgHash: u.imgHash ?? oldSrc?.imgHash ?? undefined,   // dHash รูปห้อง = ตัวแยกห้องเสถียร (คงของเดิมถ้ารอบนี้ไม่มี)
-    rentListings: mergedRent.length ? mergedRent : undefined,
-    saleListings: mergedSale.length ? mergedSale : undefined,
-    bestContact: oldSrc?.bestContact, cobrokeStatus: oldSrc?.cobrokeStatus ?? 'not_contacted',
-    cobrokeNote: oldSrc?.cobrokeNote,
-    contactLog: oldSrc?.contactLog,           // ⚠ ห้ามหาย — บันทึกการโทรของทีม
-  } })
+  /* unitSource ก็เขียนเฉพาะช่องของ ingest ด้วย patch (เหตุผลเดียวกับ unitProfile ด้านบน)
+     ช่องของทีม/ระบบอื่น — bestContact, cobrokeStatus/Note, contactLog, party/contact fields
+     ที่ระบบ LINE เพิ่ม ฯลฯ — ไม่ถูกแตะเลย · listing ในสองฝั่งยัง merge in-place เหมือนเดิม
+     (ช่องที่ทีมกรอกในแต่ละ listing ติดไปกับ item) */
+  const srcId = oldSrc?._id ?? `unitSource-${ref}`
+  const sSet = { refCode: ref, projectName: u.building }, sUnset = []
+  u.floor != null ? (sSet.floorActual = u.floor) : sUnset.push('floorActual')
+  if (u.imgHash) sSet.imgHash = u.imgHash   // dHash รูปห้อง — รอบนี้ไม่มี = คงของเดิม
+  mergedRent.length ? (sSet.rentListings = mergedRent) : sUnset.push('rentListings')
+  mergedSale.length ? (sSet.saleListings = mergedSale) : sUnset.push('saleListings')
+  if (!oldSrc) intMut.push({ createIfNotExists: { _id: srcId, _type: 'unitSource', cobrokeStatus: 'not_contacted' } })
+  intMut.push({ patch: { id: srcId, set: sSet, ...(sUnset.length ? { unset: sUnset } : {}),
+    setIfMissing: { cobrokeStatus: 'not_contacted' } } })
 }
 
 // ห้องที่หายจากตลาด → expired
@@ -669,7 +683,7 @@ for (const p of profiles) {
    จะ fingerprint เป็นห้องใหม่ ตัวเก่าค้าง) → ตรวจตรงจาก url ของ listing: ถ้ารอบนี้ portal ลง
    floor "ค่าเดียวชัด" ที่ต่างจากที่เก็บ = แก้ตามนั้น + log · ไม่แตะห้องที่เพิ่ง write รอบนี้ */
 {
-  const written = new Set(intMut.filter(m => m.createOrReplace?._type === 'unitSource').map(m => m.createOrReplace._id))
+  const written = new Set(intMut.filter(m => m.patch?.set?.refCode).map(m => m.patch.id))   // unitSource ที่รอบนี้เขียนแล้ว
   const cardFloor = new Map()
   for (const c of cards) if (c.url && c.floor != null) cardFloor.set(c.url, plausFloor(c.floor))
   let nAudit = 0
@@ -737,7 +751,11 @@ warnings.forEach(w => console.log(`  ⚠ ${w}`))
 console.log(`  mutations: production ${prodMut.length} · internal ${intMut.length}`)
 
 if (DUMP) {
-  const prof = prodMut.filter(m => m.createOrReplace?._type === 'unitProfile').map(m => m.createOrReplace)
+  // ตั้งแต่ 2026-10-05 profile เขียนด้วย createIfNotExists (ห้องใหม่) + patch (ห้องเดิม) — dump ทั้งสองแบบ
+  const prof = prodMut.flatMap(m =>
+    m.createIfNotExists?._type === 'unitProfile' ? [{ op: 'create', ...m.createIfNotExists }]
+    : m.patch?.id?.startsWith('unitProfile-') ? [{ op: 'patch', _id: m.patch.id, set: m.patch.set, unset: m.patch.unset, setIfMissing: m.patch.setIfMissing }]
+    : [])
   writeFileSync(DUMP, JSON.stringify(prof))
   console.log(`📤 dump unitProfile ${prof.length} → ${DUMP}`)
 }
