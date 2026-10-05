@@ -430,7 +430,7 @@ for (const project of projects) {
         mode,
         "dataAsOf": _updatedAt,
         policy{ quota, superQ, bestQ, hotQ, negoQ, investQ, studioMin, b1Min, b2Min, b3Min, b4Min },
-        "lineup": lineup[]->{ ${PROFILE_PROJECTION} },
+        "lineup": lineup[]->{ ${PROFILE_PROJECTION}, onBoardFirstAt },
         rows[]{ unitType, sizeSqm, floor, price, updatedAt, remarks[]{ text, tone } }
       }
     `),
@@ -535,7 +535,13 @@ for (const project of projects) {
        แต่เกิน CLOSED_DAYS วันแล้วต้องหลุดเอง ไม่งั้นบอร์ดกลายเป็นสุสานดีลเก่า */
     /* ตัดห้องที่ทีม hide ออกจาก lineup ด้วย — เครื่องมือ (โหมดเลือกเอง) แสดงบอร์ด = lineup ลบ
        ห้อง hide · จอต้องตรงกัน ไม่งั้นลบในเครื่องมือแล้วยังโผล่บนจอ (พบ 2026-08-10) */
+    /* ห้องที่เข้าบอร์ดล่าสุดขึ้นก่อนเสมอ ในแต่ละแบบห้อง — ทั้งสไลด์บอร์ดและ popup เมนู (ใช้แถวชุดนี้)
+       เรียงตอน build จากวันที่เข้าบอร์ด (onBoardFirstAt) ไม่พึ่งลำดับใน lineup ที่ Save ใน Studio
+       จัดใหม่ได้ทุกครั้ง · ห้องเก่าที่ไม่มีวันที่ = เก่าสุด คงลำดับเดิม (sort เสถียร) · ตัดสินใจ 5 ต.ค. 2569 */
+    const BED_RANK = { studio: 0, '1bed': 1, '2bed': 2, '3bed': 3, '4bed': 4 }
     const lineup = (b.lineup ?? []).filter(p => p && p.status !== 'expired' && !closedTooLong(p) && !p.hideFromBoard)
+      .sort((x, y) => (BED_RANK[x.bedType] ?? 9) - (BED_RANK[y.bedType] ?? 9)
+        || String(y.onBoardFirstAt ?? '').localeCompare(String(x.onBoardFirstAt ?? '')))
     const contactable = (unitProfiles ?? []).filter(p => p.intent === mode && CONTACTABLE.has(p.refCode))
     const auto = selectWithPolicy(contactable, mode, b.policy ?? {})
     const source = lineup.length ? 'lineup' : auto.rows.length ? 'auto' : 'manual'
