@@ -335,7 +335,7 @@ if (COIN_SNAPPED) {
 const [profiles, sources, lockedL] = await Promise.all([
   q(`*[_type == "unitProfile"]{ _id, refCode, intent, projectName, bedType, sqm, bath, priceTHB, status,
       pinToBoard, hideFromBoard, internalNote, firstSeenAt, priceHistory,
-      dealStage, dealStageAt, onBoardFirstAt, onBoardLastAt }`),
+      dealStage, dealStageAt, onBoardFirstAt, onBoardLastAt, listedWithUs }`),
   q(`*[_type == "unitSource"]{ _id, refCode, projectName, floorActual, imgHash,
       rentListings, saleListings, bestContact, cobrokeStatus, cobrokeNote, contactLog,
       "sids": [...coalesce(rentListings, [])[].sourceId, ...coalesce(saleListings, [])[].sourceId] }`, 'internal'),
@@ -533,8 +533,15 @@ unitRows.forEach(u => {
 
 // ── 4. จับคู่ refCode + สร้าง mutations ──────────────────────────────────────
 const seenKeys = new Set()   // refCode·intent ที่พบรอบนี้
-const stats = { newUnits: 0, priceChanges: 0, unchanged: 0, expired: 0, matched: 0, staleKept: 0, newRefs: [] }
+const stats = { newUnits: 0, priceChanges: 0, unchanged: 0, expired: 0, matched: 0, staleKept: 0, newRefs: [], ownedSkipped: 0 }
 const prodMut = [], intMut = []
+/* ห้องที่เจ้าของลงกับเราโดยตรง (unitProfile.listedWithUs) — ข้อมูลเป็นของเจ้าของ ไม่ใช่ของ portal
+   ingest ห้ามแตะ profile พวกนี้ทั้งขั้น expire และขั้นเขียน status/ราคา
+   เหตุ 2026-10-05: รอบ 2026-10-04 ตั้ง L24-U391 (เช่า+ขาย) และ NBL-U350 ขาย เป็น expired
+   เพราะไม่มีประกาศบน portal · และ createOrReplace ด้านล่างไม่พก listedWithUs → ถ้า portal
+   ลงห้องเดียวกันเมื่อไร ธงนี้จะหายพร้อมราคาที่เจ้าของตั้ง (งานค้าง #25)
+   unitSource (หลักฐาน listing ภายใน) ยัง merge ตามปกติ */
+const OWNED = new Set(profiles.filter(p => p.listedWithUs === true).map(p => `${p.refCode}·${p.intent}`))
 const warnings = [...ROUND_WARNINGS]
 
 for (const u of unitRows) {
@@ -555,12 +562,14 @@ for (const u of unitRows) {
     const old = profByKey.get(`${ref}·${intent}`)
     if (!old) continue                        // ไม่มี profile เดิม = ไม่สร้างจากของค้าง
     seenKeys.add(`${ref}·${intent}`)
+    if (OWNED.has(`${ref}·${intent}`)) { stats.ownedSkipped++; continue }
     stats.staleKept++
     prodMut.push({ patch: { id: old._id, set: { lastCheckedAt: ROUND } } })
   }
   for (const intent of ['rent', 'sale']) {
     const d = u[intent]; if (!d) continue
     seenKeys.add(`${ref}·${intent}`)
+    if (OWNED.has(`${ref}·${intent}`)) { stats.ownedSkipped++; continue }   // ห้องเจ้าของลงตรง — ไม่เขียนทับ
     const old = profByKey.get(`${ref}·${intent}`)
     const priceChanged = old && old.priceTHB !== d.price
     if (priceChanged) stats.priceChanges++
@@ -647,6 +656,7 @@ for (const u of unitRows) {
 
 // ห้องที่หายจากตลาด → expired
 for (const p of profiles) {
+  if (p.listedWithUs === true) continue      // ห้องเจ้าของลงตรง ไม่มีบน portal ≠ หายจากตลาด
   if (['candidate', 'verified', 'published'].includes(p.status) && !seenKeys.has(`${p.refCode}·${p.intent}`)) {
     stats.expired++
     prodMut.push({ patch: { id: p._id, set: { status: 'expired', lastCheckedAt: ROUND } } })
@@ -720,6 +730,7 @@ prodMut.push({ createOrReplace: {
 console.log(`\nสรุปรอบ ${ROUND}:`)
 console.log(`  ห้องจับคู่กับของเดิม ${stats.matched} · ห้องใหม่ ${stats.newUnits}${stats.newRefs.length ? ' (' + stats.newRefs.join(',') + (stats.newUnits > 12 ? ',…' : '') + ')' : ''}`)
 console.log(`  ราคาเปลี่ยน ${stats.priceChanges} · ราคาเดิม ${stats.unchanged} · หายจากตลาด→expired ${stats.expired}`)
+console.log(`  ห้องเจ้าของลงตรง (listedWithUs) ${OWNED.size} profile — ไม่ expire ไม่เขียนทับ · ข้ามการ์ดที่จับคู่เข้าได้ ${stats.ownedSkipped} ฝั่ง`)
 console.log(`  ห้องโพสต์ค้างล้วน (คงชีวิตไว้ ตัวเลขแช่แข็ง) ${stats.staleKept}`)
 if (PRUNED) console.log(`  prune listing ตาย/หลุดตลาดออกจาก source ${PRUNED} ใบ (portal ที่เห็นในรอบแต่ไม่เห็นใบนั้นแล้ว)`)
 warnings.forEach(w => console.log(`  ⚠ ${w}`))
