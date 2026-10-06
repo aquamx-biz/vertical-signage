@@ -74,6 +74,14 @@ export default defineType({
       options: { hotspot: true },
       description: 'รูปด้านนอกหรือล็อบบี้ที่ดูออกว่าเป็นตึกไหน — แนวนอน กว้าง ≥1200px · ใช้เป็นรูปหน้าปกของโครงการนี้ทุกที่นอกจอ',
     }),
+    // Photos the juristic person attached on the LINE intake form (/m/site) —
+    // lobby / exterior shots for the site visit; the first one also becomes heroImage
+    defineField({
+      name: 'intakePhotos', title: 'รูปจากนิติ (ฟอร์ม LINE)', type: 'array',
+      of: [{ type: 'image', options: { hotspot: true } }],
+      description: 'ล็อบบี้ / ด้านนอกตึก ที่นิติแนบมาตอนกรอกข้อมูลโครงการเอง — ใช้ดูจุดวางจอก่อนเข้าสำรวจ',
+      hidden: ({ value }) => !value || (value as unknown[]).length === 0,
+    }),
     defineField({ name: 'area',       title: 'Area',              type: 'string', components: { input: AreaInput } }),
     defineField({
       name: 'aliases', title: 'Aliases · ชื่อเรียกอื่น', type: 'array', of: [{ type: 'string' }],
@@ -118,6 +126,17 @@ export default defineType({
     defineField({ name: 'telephone', title: 'Telephone', type: 'string', components: { input: TelephoneInput } }),
     defineField({ name: 'propertyManagementCompany', title: 'Property Management Company', type: 'string' }),
     defineField({ name: 'emailAddress',              title: 'Email Address',               type: 'string' }),
+    defineField({
+      name:         'correspondenceLang',
+      title:        'Correspondence Language',
+      type:         'string',
+      initialValue: 'th',
+      options: { list: [
+        { title: 'Thai only',       value: 'th'    },
+        { title: 'Thai + English',  value: 'th_en' },
+      ], layout: 'radio', direction: 'horizontal' },
+      description: 'Default language of e-mails sent to this juristic person. Thai is always included — English is added for foreign-managed projects.',
+    }),
     defineField({
       name:        'landlord',
       title:       'Landlord / Property Owner (Party)',
