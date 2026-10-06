@@ -445,7 +445,9 @@ export default defineConfig([{
                   rentSpaceList('rs-quotation',  '📝  Quotation (ใบเสนอราคา)',
                     `!defined(contractNumber) && ${NOT_TERMINATED}`),
                   rentSpaceList('rs-contract',   '📄  Contract (สัญญา)',
-                    `defined(contractNumber) && ${NOT_TERMINATED}`),
+                    `defined(contractNumber) && signedStatus != "signed" && ${NOT_TERMINATED}`),
+                  rentSpaceList('rs-signed',     '✅  Signed (ลงนามแล้ว)',
+                    `signedStatus == "signed" && ${NOT_TERMINATED}`),
                   rentSpaceList('rs-terminated', '🔴  Terminated (ยกเลิกแล้ว)',
                     'terminationStatus == "terminated"'),
                 ])
