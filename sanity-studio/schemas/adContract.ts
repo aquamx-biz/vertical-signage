@@ -198,7 +198,7 @@ export default defineType({
     // The bracketed numbers in the standard clauses — defaults are the draft's.
     defineField({ group: 'terms', name: 'paymentDays', readOnly: locked,     title: '2.7 · Payment Within (days)',              type: 'number', initialValue: 7,  description: 'Clause 3.2 — days from signing.' }),
     defineField({ group: 'terms', name: 'fileLeadDays', readOnly: locked,    title: '2.8 · Artwork Lead Time (business days)',  type: 'number', initialValue: 3,  description: 'Clause 4.1.' }),
-    defineField({ group: 'terms', name: 'changesPerMonth', readOnly: locked, title: '2.9 · Free Artwork Changes per Month',     type: 'number', initialValue: 1,  description: 'Clause 4.4.' }),
+    defineField({ group: 'terms', name: 'changesPerMonth', readOnly: locked, title: '2.9 · Free Artwork Changes per Month',     type: 'number', description: 'Clause 4.4. Leave blank to use the Corporate rate card for this package (Media changes row); type a number only for a deal-specific count.' }),
     defineField({ group: 'terms', name: 'cureDays', readOnly: locked,        title: '2.10 · Cure Period (days)',                type: 'number', initialValue: 15, description: 'Clause 6.3.' }),
 
     defineField({

@@ -259,7 +259,7 @@ export default defineType({
         { _type: 'termRow', label_th: 'ค่าบริการรายเดือน', label_en: 'Monthly fee', value_th: '-', value_en: '-', emphasis: true },
         { _type: 'termRow', label_th: 'ส่วนลด',           label_en: 'Discount',    value_th: '-', value_en: '-', emphasis: true },
         { _type: 'termRow', label_th: 'การชำระเงิน',      label_en: 'Payment',     value_th: 'ชำระทั้งหมดเมื่อทำสัญญา', value_en: 'Paid in full on signing' },
-        { _type: 'termRow', label_th: 'สื่อบนจอ',          label_en: 'Media',       value_th: 'ภาพนิ่ง 3 ภาพ หรือวิดีโอ 1 คลิป · แสดงรอบละ 15 วินาที', value_en: '3 still images, or 1 video · 15 seconds per loop' },
+        { _type: 'termRow', label_th: 'สื่อบนจอ',          label_en: 'Media',       value_th: 'ภาพนิ่ง 3 ภาพ หรือวิดีโอ 1 คลิป · แสดงรอบละ 15 วินาที · เปลี่ยนสื่อได้ 2 ครั้ง/เดือน', value_en: '3 still images, or 1 video · 15 seconds per loop · 2 media changes a month' },
       ],
     }),
 
