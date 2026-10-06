@@ -18,6 +18,8 @@ const WHO = [
   { title: 'Owner (listing a room)',       value: 'owner' },
   { title: 'Shop / provider',              value: 'shop' },
   { title: 'Team (listing group)',         value: 'team' },
+  { title: 'Leasing agent',                value: 'juristic' },
+  { title: 'Team (leasing group)',         value: 'teamLeasing' },
 ]
 
 const words = (name: string, title: string, description: string) => defineField({
@@ -32,6 +34,7 @@ const LEAD_TYPES = [
   { title: 'List a property (listProperty)', value: 'listProperty' },
   { title: 'Shop / provider (shop)',         value: 'shop' },
   { title: 'Order (order)',                  value: 'order' },
+  { title: 'Leasing — juristic person (leasing)', value: 'leasing' },
 ]
 
 const norm = (s: string) => String(s ?? '').toLowerCase().replace(/\s+/g, ' ').trim()
