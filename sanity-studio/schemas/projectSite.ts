@@ -145,6 +145,14 @@ export default defineType({
       description: 'Link to a Party record for this landlord. Create the party first under CRM → Parties.',
     }),
     defineField({
+      name:        'leasingAgent',
+      title:       'Leasing Agent (Party)',
+      type:        'reference',
+      to:          [{ type: 'party' }],
+      options:     { filter: '"leasingAgent" in partyRole' },
+      description: 'The leasing agent who brought this project in via the LINE OA ("menu"). Set by the bot; change here to reassign.',
+    }),
+    defineField({
       name:        'pipelineStage',
       title:       'Pipeline Stage',
       type:        'string',

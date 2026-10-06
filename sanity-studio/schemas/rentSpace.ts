@@ -453,6 +453,14 @@ export default defineType({
       of:          [{ type: 'file', options: { accept: '.pdf,image/*' } }],
     }),
     defineField({ group: 'signed', name: 'signedNote', title: '18. Signing Note', type: 'string', description: 'Optional remark about signing (e.g. signed at office, courier, etc.)' }),
+    defineField({
+      group:       'signed',
+      name:        'quotationSignedDocuments',
+      title:       '18.1 Signed Quotation (accepted by the juristic person)',
+      description: 'The quotation signed & stamped by the juristic person — uploaded by the leasing agent from LINE (Upload Document → Signed quotation). Does not change any status.',
+      type:        'array',
+      of:          [{ type: 'file', options: { accept: '.pdf,image/*' } }],
+    }),
     // Signed status + inline "Mark as Signed" button
     defineField({
       group:      'signed',

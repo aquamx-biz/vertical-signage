@@ -61,6 +61,7 @@ export default defineType({
       options: {
         list: [
           { title: '🏛️ Juristic Person',    value: 'juristicPerson'  },
+          { title: '🧑‍💼 Leasing Agent',     value: 'leasingAgent'    },
           { title: '🏠 Property Owner',     value: 'propertyOwner'   },
           { title: '📢 Advertiser',         value: 'advertiser'      },
           { title: '🤝 Agent / Broker',     value: 'agent'           },

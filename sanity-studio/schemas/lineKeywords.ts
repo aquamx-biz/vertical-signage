@@ -18,7 +18,8 @@ const WHO = [
   { title: 'Owner (listing a room)',       value: 'owner' },
   { title: 'Shop / provider',              value: 'shop' },
   { title: 'Team (listing group)',         value: 'team' },
-  { title: 'Juristic person (leasing)',    value: 'juristic' },
+  { title: 'Leasing agent',                value: 'juristic' },
+  { title: 'Team (leasing group)',         value: 'teamLeasing' },
 ]
 
 const words = (name: string, title: string, description: string) => defineField({
