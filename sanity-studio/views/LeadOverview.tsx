@@ -194,6 +194,25 @@ export function LeadOverview({ document: { displayed: doc } }: Props) {
           </Card>
         )}
 
+        {/* Team notes — what the team talked about with this customer (📝 in aquamx-condofinder) */}
+        {Array.isArray(doc.aiReplies) && doc.aiReplies.some((r: any) => r?.kind === 'note') && (
+          <Card padding={3} border radius={2}>
+            <Stack space={3}>
+              <Text size={0} weight="semibold" style={{ color: '#374151', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                Team Notes (latest 3)
+              </Text>
+              <Stack space={2}>
+                {doc.aiReplies.filter((r: any) => r?.kind === 'note').slice(-3).reverse().map((r: Record<string, any>) => (
+                  <Stack key={r._key} space={1} style={{ borderBottom: '1px solid #F3F4F6', paddingBottom: 6 }}>
+                    <Text size={1}>{r.finalText || '-'}</Text>
+                    <Text size={0} muted>{[r.room || 'General', r.by, r.at ? String(r.at).slice(0, 16).replace('T', ' ') : ''].filter(Boolean).join(' · ')}</Text>
+                  </Stack>
+                ))}
+              </Stack>
+            </Stack>
+          </Card>
+        )}
+
         {/* Linked party */}
         <Stack space={2}>
           <Text size={1} weight="semibold" style={{ color: '#374151' }}>Linked Party</Text>

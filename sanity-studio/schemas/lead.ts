@@ -145,7 +145,7 @@ export default defineType({
       title:    'Bot & Team Log',
       type:     'array',
       readOnly: true,
-      description: 'Every reply the AI drafted and what the team did with it, plus every "talk to a person" handoff. Read to decide when a topic is safe to auto-send.',
+      description: 'Every reply the AI drafted and what the team did with it, every "talk to a person" handoff, and the team\'s notes of what they talked about with this customer (📝 in the LINE group). Read to decide when a topic is safe to auto-send.',
       of: [{
         type: 'object',
         name: 'aiReply',
@@ -153,7 +153,11 @@ export default defineType({
           defineField({ name: 'kind',     title: 'Kind',   type: 'string', options: { list: [
             { title: 'AI draft',  value: 'draft'   },
             { title: 'Handoff',   value: 'handoff' },
+            { title: 'Team note', value: 'note'    },
           ] } }),
+          defineField({ name: 'room', title: 'Room', type: 'string',
+            description: 'Team note only: the room code the note is about (empty = about the customer in general).',
+            hidden: ({ parent }: any) => parent?.kind !== 'note' }),
           defineField({ name: 'at',       title: 'At',       type: 'datetime' }),
           defineField({ name: 'topic',    title: 'Topic',    type: 'string' }),
           defineField({ name: 'question', title: 'Customer message', type: 'text', rows: 2 }),
@@ -165,14 +169,16 @@ export default defineType({
             { title: 'Auto-sent',       value: 'auto'   },
             { title: 'Handed to team',  value: 'handoff' },
           ] } }),
-          defineField({ name: 'finalText', title: 'Text sent', type: 'text', rows: 3 }),
+          defineField({ name: 'finalText', title: 'Text sent / Note', type: 'text', rows: 3 }),
           defineField({ name: 'by',        title: 'By',        type: 'string' }),
           defineField({ name: 'endedAt',   title: 'Handoff ended', type: 'datetime' }),
         ],
         preview: {
-          select: { kind: 'kind', at: 'at', action: 'action', topic: 'topic', by: 'by' },
-          prepare: ({ kind, at, action, topic, by }: any) => ({
-            title: `${kind === 'handoff' ? '🙋 Handoff' : '💬 AI draft'}${topic ? ` · ${topic}` : ''}${action ? ` → ${action}` : ''}`,
+          select: { kind: 'kind', at: 'at', action: 'action', topic: 'topic', by: 'by', text: 'finalText', room: 'room' },
+          prepare: ({ kind, at, action, topic, by, text, room }: any) => ({
+            title: kind === 'note'
+              ? `📝 ${room ? `${room} · ` : ''}${String(text ?? '').slice(0, 80)}`
+              : `${kind === 'handoff' ? '🙋 Handoff' : '💬 AI draft'}${topic ? ` · ${topic}` : ''}${action ? ` → ${action}` : ''}`,
             subtitle: [at ? String(at).slice(0, 16).replace('T', ' ') : '', by].filter(Boolean).join(' · '),
           }),
         },
