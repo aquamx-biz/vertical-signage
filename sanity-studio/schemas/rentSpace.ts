@@ -126,11 +126,13 @@ export default defineType({
       readOnly:    ({ document }) => (document?.contractApprovalStatus as string) === 'approved',
       description: 'The counterparty to this contract. Create the party first under CRM → Parties.',
       validation:  Rule => Rule.custom((val, ctx: any) => {
-        // Warn if no party AND no legacy customerName fallback
-        if (!val && !ctx.document?.customerName) {
+        if (val) return true
+        // Legacy contracts (pre-Party) still carry customerName — warn only, so they stay editable
+        if (ctx.document?.customerName) {
           return { message: 'Please link a Party record. Without it, {{customer_name}} will be blank in generated documents.', level: 'warning' }
         }
-        return true
+        // New contracts: the counterparty (juristic person) is required
+        return 'Party is required — link the juristic person (create it under CRM → Parties first).'
       }),
     }),
     // Legacy fallback — kept hidden so old contracts still generate correctly.
