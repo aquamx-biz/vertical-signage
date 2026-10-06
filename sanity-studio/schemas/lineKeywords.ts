@@ -27,6 +27,13 @@ const words = (name: string, title: string, description: string) => defineField(
   hidden: ({ parent }) => Boolean((parent as { fixed?: boolean } | undefined)?.fixed),
 })
 
+const LEAD_TYPES = [
+  { title: 'Find a condo (findCondo)',       value: 'findCondo' },
+  { title: 'List a property (listProperty)', value: 'listProperty' },
+  { title: 'Shop / provider (shop)',         value: 'shop' },
+  { title: 'Order (order)',                  value: 'order' },
+]
+
 const norm = (s: string) => String(s ?? '').toLowerCase().replace(/\s+/g, ' ').trim()
 
 const TOPICS = [
@@ -45,6 +52,7 @@ export default defineType({
   groups: [
     { name: 'commands', title: 'Commands', default: true },
     { name: 'ai',       title: 'AI Assistant' },
+    { name: 'groups',   title: 'Team Groups' },
   ],
   fields: [
     defineField({
@@ -149,6 +157,72 @@ export default defineType({
             defineField({ name: 'answerTh', title: 'Answer (Thai)', type: 'text', rows: 3 }),
             defineField({ name: 'answerEn', title: 'Answer (English)', type: 'text', rows: 3 }),
           ], preview: { select: { title: 'question', subtitle: 'answerTh' } } }] }),
+      ],
+    }),
+    // ── Team Groups — which LINE group hears about what ───────────────────
+    // One row per team group. The bot (aquamx-handoff lib/team-groups.ts)
+    // re-reads this every five minutes: adding a group is adding a row and
+    // publishing — no deploy. The four rows the code was born with keep their
+    // keys (notify, listing, shop, condofinder); a row with no group ID falls
+    // back to the code's own ID for that key.
+    defineField({
+      name: 'teamGroups', group: 'groups', title: 'Team Groups', type: 'array',
+      description: 'Invite the bot to the LINE group, type "id" there to get the group ID, then add a row. The relay (customer messages batched into the group, "รับเรื่อง" button) works for every row with Handoff on.',
+      of: [{
+        type: 'object', name: 'teamGroup', title: 'Team group',
+        fields: [
+          defineField({ name: 'key', title: 'Key', type: 'string', validation: Rule => Rule.required().regex(/^[a-z][a-z0-9-]*$/, { name: 'lowercase letters, digits and dashes' }),
+            description: 'Short name the code and logs use, e.g. "order". Never changed once in use.' }),
+          defineField({ name: 'label', title: 'Label on cards', type: 'string', validation: Rule => Rule.required(),
+            description: 'Printed on cards: "→ aquamx-order".' }),
+          defineField({ name: 'groupId', title: 'LINE group ID', type: 'string',
+            description: 'Starts with "C". Type "id" in the group and the bot replies with it.' }),
+          defineField({ name: 'leadTypes', title: 'Lead types routed here', type: 'array', of: [{ type: 'string' }],
+            options: { list: LEAD_TYPES, layout: 'grid' },
+            description: 'A customer whose open lead is one of these types is reported to this group. The row that names the type wins — remove it from the other row.' }),
+          defineField({ name: 'handoff', title: 'Handoff enabled', type: 'boolean', initialValue: true,
+            description: 'Off: cards still go here, but without the "รับเรื่อง" button and without the customer card.' }),
+          defineField({ name: 'customerCardAfterMin', title: 'Customer card after idle (min)', type: 'number',
+            description: 'Blank = the global value below.', validation: Rule => Rule.min(0).max(60) }),
+          defineField({ name: 'batchEveryMin', title: 'Batch every (min)', type: 'number',
+            description: 'Blank = the global value below.', validation: Rule => Rule.min(1).max(60) }),
+        ],
+        preview: {
+          select: { key: 'key', label: 'label', groupId: 'groupId', leadTypes: 'leadTypes', handoff: 'handoff' },
+          prepare({ key, label, groupId, leadTypes, handoff }) {
+            return { title: `${label ?? key ?? ''}  (${key ?? ''})`,
+              subtitle: `${groupId ? String(groupId).slice(0, 8) + '…' : 'code default'} · ${(leadTypes ?? []).join(', ') || 'no lead types'}${handoff === false ? ' · handoff off' : ''}` }
+          },
+        },
+      }],
+      validation: Rule => Rule.custom((rows: any[] | undefined) => {
+        if (!rows?.length) return true
+        const keys = new Set<string>(); const types = new Map<string, string>()
+        for (const r of rows) {
+          if (keys.has(r?.key)) return `Two rows share the key "${r.key}"`
+          keys.add(r?.key)
+          for (const t of r?.leadTypes ?? []) {
+            if (types.has(t)) return `Lead type "${t}" is in both "${types.get(t)}" and "${r.key}" — keep it in one row`
+            types.set(t, r.key)
+          }
+        }
+        return true
+      }),
+    }),
+    defineField({
+      name: 'relay', group: 'groups', title: 'Customer messages → team (relay)', type: 'object',
+      options: { collapsible: false },
+      fields: [
+        defineField({ name: 'customerCardAfterMin', title: 'Customer card after idle (min)', type: 'number', initialValue: 1,
+          description: 'When a customer stops typing for this long, has asked a question, and nobody has tapped "รับเรื่อง": send them one "ส่งถึงทีมงานแล้ว" card. 0 = immediately.',
+          validation: Rule => Rule.min(0).max(60) }),
+        defineField({ name: 'batchEveryMin', title: 'Batch into the group every (min)', type: 'number', initialValue: 5,
+          description: 'Messages from one customer are collected and sent to the team group as one card per customer, this often.',
+          validation: Rule => Rule.min(1).max(60) }),
+        defineField({ name: 'questionMarkers', title: 'Words that make a message a question', type: 'array', of: [{ type: 'string' }],
+          options: { layout: 'tags' },
+          description: 'A message containing one of these (or "?") counts as a question: it is highlighted on the team card and earns the customer card. Anything else is "noted" only.',
+          initialValue: ['ไหม', 'มั้ย', 'มั๊ย', 'หรือเปล่า', 'รึเปล่า', 'หรือยัง', 'รึยัง', 'ปะ', 'เท่าไหร่', 'เท่าไร', 'ยังไง', 'อย่างไร', 'ได้มั้ย', 'กี่', 'ที่ไหน', 'เมื่อไหร่', 'ทำไม', 'อะไร', 'ขอ', 'ช่วย', 'do you', 'is there', 'are there', 'available', 'how much', 'how many', 'how long', 'can i', 'can you', 'could you', 'when', 'where', 'which', 'what', 'why', 'please'] }),
       ],
     }),
   ],
