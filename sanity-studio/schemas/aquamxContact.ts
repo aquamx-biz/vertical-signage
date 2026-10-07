@@ -40,6 +40,21 @@ export default defineType({
     defineField({ name: 'signatoryNameEn', title: 'Signing · Signatory name (English)', type: 'string', initialValue: 'Mr. Sakchai Suthipipat' }),
     defineField({ name: 'signatoryTitleTh', title: 'Signing · Signatory title (Thai)', type: 'string', initialValue: 'กรรมการผู้มีอำนาจ' }),
     defineField({ name: 'signatoryTitleEn', title: 'Signing · Signatory title (English)', type: 'string', initialValue: 'Authorized Director' }),
+    // ── Company papers sent back with a signed contract — certified copies
+    // ("รับรองสำเนาถูกต้อง" + signature + seal) scanned once and kept here. The
+    // affidavit expires: the bot refuses to attach one past its validity.
+    defineField({ name: 'companyAffidavit', title: 'Company papers · Affidavit (หนังสือรับรองบริษัท) — certified copy, PDF', type: 'file', options: { accept: '.pdf' },
+      description: 'Every page signed "รับรองสำเนาถูกต้อง" with the seal. Sent to the juristic person together with the counter-signed contract.' }),
+    defineField({ name: 'companyAffidavitIssuedAt', title: 'Company papers · Affidavit issue date', type: 'date', description: 'Date printed on the DBD affidavit.' }),
+    defineField({ name: 'companyAffidavitValidMonths', title: 'Company papers · Affidavit valid for (months)', type: 'number', initialValue: 6,
+      description: 'Counterparties usually accept an affidavit up to 3–6 months old. Past this the bot flags it and asks for a fresh one before sending.' }),
+    defineField({ name: 'directorIdCopy', title: 'Company papers · Director ID card — certified copy, PDF', type: 'file', options: { accept: '.pdf' },
+      description: 'Signed "รับรองสำเนาถูกต้อง", used only for contracts (สำเนาบัตรประชาชนสำหรับสัญญาเช่า).' }),
+    defineField({ name: 'otherCompanyDocuments', title: 'Company papers · Other documents sent with a contract', type: 'array',
+      of: [{ type: 'object', fields: [
+        { name: 'label', title: 'Label (as shown on the card / e-mail)', type: 'string', validation: (r: any) => r.required() },
+        { name: 'file', title: 'PDF', type: 'file', options: { accept: '.pdf' }, validation: (r: any) => r.required() },
+      ], preview: { select: { title: 'label' } } }] }),
     defineField({ name: 'signatureAnchors', title: 'Signing · Text that marks the lessee line', type: 'array', of: [{ type: 'string' }],
       description: 'The bot looks for these in the PDF to find where to sign (spaces ignored). Defaults to the two signatory names above — change only if the contract template prints something else.' }),
   ],
