@@ -46,10 +46,13 @@ export default defineType({
     defineField({ name: 'companyAffidavit', title: 'Company papers · Affidavit (หนังสือรับรองบริษัท) — as issued by DBD, PDF', type: 'file', options: { accept: '.pdf' },
       description: 'Upload the DBD e-certificate as downloaded. The bot certifies it per contract when sending ("รับรองสำเนาถูกต้อง" + signature + seal + a line naming the contract) — nothing to sign by hand.' }),
     defineField({ name: 'companyAffidavitIssuedAt', title: 'Company papers · Affidavit issue date', type: 'date', description: 'Date printed on the DBD affidavit.' }),
+    defineField({ name: 'companyAffidavitPreCertified', title: 'Company papers · Affidavit is already a certified copy — attach as is', type: 'boolean', initialValue: false,
+      description: 'Tick when the file already carries "รับรองสำเนาถูกต้อง" + signature + seal (e.g. a scanned certified copy). The bot then sends it unchanged instead of stamping it again.' }),
     defineField({ name: 'companyAffidavitValidMonths', title: 'Company papers · Affidavit valid for (months)', type: 'number', initialValue: 6,
       description: 'Counterparties usually accept an affidavit up to 3–6 months old. Past this the bot flags it and asks for a fresh one before sending.' }),
     defineField({ name: 'directorIdCopy', title: 'Company papers · Director ID card copy — plain scan, PDF', type: 'file', options: { accept: '.pdf' },
       description: 'A clean scan of the card, no watermark. The bot certifies it per contract when sending (signature, seal, purpose line naming the contract).' }),
+    defineField({ name: 'directorIdCopyPreCertified', title: 'Company papers · ID copy is already certified — attach as is', type: 'boolean', initialValue: false }),
     defineField({ name: 'otherCompanyDocuments', title: 'Company papers · Other documents sent with a contract', type: 'array',
       of: [{ type: 'object', fields: [
         { name: 'label', title: 'Label (as shown on the card / e-mail)', type: 'string', validation: (r: any) => r.required() },
