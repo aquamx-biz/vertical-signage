@@ -475,6 +475,7 @@ export default defineType({
     defineField({ group: 'signed', name: 'sentToJuristicAt',  title: '17.3 Sent to juristic person at', type: 'datetime', readOnly: true }),
     defineField({ group: 'signed', name: 'sentToJuristicVia', title: '17.3 Sent via', type: 'string', readOnly: true, description: 'line · line+email' }),
     defineField({ group: 'signed', name: 'sentToJuristicTo',  title: '17.3 Sent to', type: 'string', readOnly: true }),
+    defineField({ group: 'signed', name: 'sentToJuristicDocs', title: '17.3 Documents sent', type: 'string', readOnly: true, description: 'Contract + company papers that went out (affidavit, director ID copy, …).' }),
     // Signed status + inline "Mark as Signed" button
     defineField({
       group:      'signed',
