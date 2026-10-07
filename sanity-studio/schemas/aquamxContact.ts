@@ -43,13 +43,13 @@ export default defineType({
     // ── Company papers sent back with a signed contract — certified copies
     // ("รับรองสำเนาถูกต้อง" + signature + seal) scanned once and kept here. The
     // affidavit expires: the bot refuses to attach one past its validity.
-    defineField({ name: 'companyAffidavit', title: 'Company papers · Affidavit (หนังสือรับรองบริษัท) — certified copy, PDF', type: 'file', options: { accept: '.pdf' },
-      description: 'Every page signed "รับรองสำเนาถูกต้อง" with the seal. Sent to the juristic person together with the counter-signed contract.' }),
+    defineField({ name: 'companyAffidavit', title: 'Company papers · Affidavit (หนังสือรับรองบริษัท) — as issued by DBD, PDF', type: 'file', options: { accept: '.pdf' },
+      description: 'Upload the DBD e-certificate as downloaded. The bot certifies it per contract when sending ("รับรองสำเนาถูกต้อง" + signature + seal + a line naming the contract) — nothing to sign by hand.' }),
     defineField({ name: 'companyAffidavitIssuedAt', title: 'Company papers · Affidavit issue date', type: 'date', description: 'Date printed on the DBD affidavit.' }),
     defineField({ name: 'companyAffidavitValidMonths', title: 'Company papers · Affidavit valid for (months)', type: 'number', initialValue: 6,
       description: 'Counterparties usually accept an affidavit up to 3–6 months old. Past this the bot flags it and asks for a fresh one before sending.' }),
-    defineField({ name: 'directorIdCopy', title: 'Company papers · Director ID card — certified copy, PDF', type: 'file', options: { accept: '.pdf' },
-      description: 'Signed "รับรองสำเนาถูกต้อง", used only for contracts (สำเนาบัตรประชาชนสำหรับสัญญาเช่า).' }),
+    defineField({ name: 'directorIdCopy', title: 'Company papers · Director ID card copy — plain scan, PDF', type: 'file', options: { accept: '.pdf' },
+      description: 'A clean scan of the card, no watermark. The bot certifies it per contract when sending (signature, seal, purpose line naming the contract).' }),
     defineField({ name: 'otherCompanyDocuments', title: 'Company papers · Other documents sent with a contract', type: 'array',
       of: [{ type: 'object', fields: [
         { name: 'label', title: 'Label (as shown on the card / e-mail)', type: 'string', validation: (r: any) => r.required() },
