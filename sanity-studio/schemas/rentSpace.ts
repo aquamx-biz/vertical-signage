@@ -452,6 +452,8 @@ export default defineType({
       type:        'array',
       of:          [{ type: 'file', options: { accept: '.pdf,image/*' } }],
     }),
+    defineField({ group: 'signed', name: 'quotationSignedAt', title: '18.1 Signed quotation uploaded at', type: 'datetime', readOnly: true }),
+    defineField({ group: 'signed', name: 'quotationSignedBy', title: '18.1 Signed quotation uploaded by', type: 'string', readOnly: true }),
     defineField({ group: 'signed', name: 'signedNote', title: '18. Signing Note', type: 'string', description: 'Optional remark about signing (e.g. signed at office, courier, etc.)' }),
     defineField({
       group:       'signed',
@@ -496,6 +498,11 @@ export default defineType({
     defineField({ name: 'generatedDocType', title: 'Generated Doc Type', type: 'string', hidden: true, readOnly: true }),
     // Combined status + error visible in the Generated Documents tab
     defineField({ group: 'generated', name: 'lastGenerationResult', title: '21. Last Generation', type: 'string', readOnly: true }),
+    // Reviewed in aquamx-leasing, then sent to the leasing agent (LINE) — the agent never gets an unreviewed PDF
+    defineField({ group: 'generated', name: 'quotationSentToAgentAt', title: '21.1 Quotation sent to agent at', type: 'datetime', readOnly: true }),
+    defineField({ group: 'generated', name: 'quotationSentToAgentBy', title: '21.1 Quotation sent to agent by', type: 'string', readOnly: true }),
+    defineField({ group: 'generated', name: 'contractSentToAgentAt',  title: '21.2 Contract sent to agent at',  type: 'datetime', readOnly: true }),
+    defineField({ group: 'generated', name: 'contractSentToAgentBy',  title: '21.2 Contract sent to agent by',  type: 'string', readOnly: true }),
 
     // ── Rental Agreement ──────────────────────────────────────────────────────
     defineField({ group: 'generated', name: 'contractGoogleDocUrl', title: '22. Agreement — Google Doc URL', type: 'url',      readOnly: true }),
