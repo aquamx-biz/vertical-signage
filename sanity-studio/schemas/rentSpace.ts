@@ -461,6 +461,20 @@ export default defineType({
       type:        'array',
       of:          [{ type: 'file', options: { accept: '.pdf,image/*' } }],
     }),
+    // aquamx side — drawn in by the LINE bot (ลงนาม aquamx + ประทับตรา) or uploaded by hand
+    defineField({
+      group:       'signed',
+      name:        'aquamxSignedDocument',
+      title:       '17.2 Contract signed by aquamx (both parties)',
+      description: 'The juristic-signed PDF with the director signature + company seal drawn into the lessee block — made by the bot from the aquamx-leasing card, or upload a hand-signed scan here. This is the copy sent back to the juristic person.',
+      type:        'file',
+      options:     { accept: '.pdf' },
+    }),
+    defineField({ group: 'signed', name: 'aquamxSignedAt', title: '17.2 Signed by aquamx at', type: 'datetime', readOnly: true }),
+    defineField({ group: 'signed', name: 'aquamxSignedBy', title: '17.2 Signed by aquamx — tapped by', type: 'string', readOnly: true }),
+    defineField({ group: 'signed', name: 'sentToJuristicAt',  title: '17.3 Sent to juristic person at', type: 'datetime', readOnly: true }),
+    defineField({ group: 'signed', name: 'sentToJuristicVia', title: '17.3 Sent via', type: 'string', readOnly: true, description: 'line · line+email' }),
+    defineField({ group: 'signed', name: 'sentToJuristicTo',  title: '17.3 Sent to', type: 'string', readOnly: true }),
     // Signed status + inline "Mark as Signed" button
     defineField({
       group:      'signed',
@@ -776,10 +790,12 @@ export default defineType({
       projectEn:              'projectSite.projectEn',
       contractApprovalStatus: 'contractApprovalStatus',
       signedStatus:           'signedStatus',
+      aquamxSigned:           'aquamxSignedDocument.asset._ref',
+      sentToJuristicAt:       'sentToJuristicAt',
       addendum0:              'addenda.0.addendumNo',
       terminationStatus:      'terminationStatus',
     },
-    prepare({ contractNumber, quotationNumber, partyLegalEn, partyLegalTh, partyFirst, customerName, projectEn, contractApprovalStatus, signedStatus, addendum0, terminationStatus }) {
+    prepare({ contractNumber, quotationNumber, partyLegalEn, partyLegalTh, partyFirst, customerName, projectEn, contractApprovalStatus, signedStatus, aquamxSigned, sentToJuristicAt, addendum0, terminationStatus }) {
       const partyName   = partyLegalEn ?? partyLegalTh ?? partyFirst ?? customerName
       const projectName = projectEn ?? partyName ?? '—'
       const stage       = contractNumber ? 'Contract' : quotationNumber ? 'Quotation' : 'New'
@@ -794,7 +810,7 @@ export default defineType({
         not_requested: '',
       }
       const approval = approvalLabel[contractApprovalStatus ?? ''] ?? ''
-      const signed   = signedStatus === 'signed' ? '✍️ Signed' : ''
+      const signed   = signedStatus !== 'signed' ? '' : sentToJuristicAt ? '📤 Signed (both) · sent' : aquamxSigned ? '✍️✍️ Signed (both)' : '✍️ Signed (juristic)'
       const addendum = addendum0 ? '📎 Addendum' : ''
       const terminated = terminationStatus === 'terminated'   ? '🔴 Terminated'
                        : terminationStatus === 'notice_given' ? '📤 Notice given'
