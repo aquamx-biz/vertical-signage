@@ -22,6 +22,7 @@ import order              from './order'
 import quotation          from './quotation'
 import adContract         from './adContract'
 import adContractTemplate from './adContractTemplate'
+import leaseDocTemplate from './leaseDocTemplate'
 import discountCode       from './discountCode'
 import customerOrder      from './customerOrder'
 import receipt            from './receipt'
@@ -72,6 +73,7 @@ export const schemaTypes = [
   quotation,
   adContract,
   adContractTemplate,
+  leaseDocTemplate,
   discountCode,
   customerOrder,
   receipt,

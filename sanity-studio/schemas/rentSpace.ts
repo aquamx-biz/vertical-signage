@@ -381,8 +381,16 @@ export default defineType({
             title:   'Signed Addendum (PDF / photo)',
             type:    'file',
             options: { accept: '.pdf,image/*' },
-            hidden:  ({ parent }) => (parent as any)?.status !== 'signed',
+            description: 'The copy the juristic person signed — uploaded by the leasing agent from LINE (Upload Document → Signed annex) or here',
+            hidden:  ({ parent }) => !['agreed', 'signed'].includes((parent as any)?.status),
           }),
+          // ── LINE flow (lib/line-annex) — written by the bot ──
+          defineField({ name: 'signedBy',   title: 'Signed — confirmed by', type: 'string', readOnly: true, hidden: ({ parent }) => (parent as any)?.status !== 'signed' }),
+          defineField({ name: 'signedNote', title: 'Signed — note', type: 'string', readOnly: true, hidden: ({ parent }) => !(parent as any)?.signedNote }),
+          defineField({ name: 'aquamxSignedFile', title: 'Signed by aquamx (both parties)', type: 'file', options: { accept: '.pdf' }, description: 'After-signing addendum counter-signed by aquamx (ลงนาม aquamx + ประทับตรา in the LINE group) — upload by hand when the bot cannot sign a scan', hidden: ({ parent }) => (parent as any)?.status !== 'signed' }),
+          defineField({ name: 'aquamxSignedAt', title: 'aquamx signed at', type: 'datetime', readOnly: true, hidden: ({ parent }) => !(parent as any)?.aquamxSignedAt }),
+          defineField({ name: 'aquamxSignedBy', title: 'aquamx signed by', type: 'string', readOnly: true, hidden: ({ parent }) => !(parent as any)?.aquamxSignedBy }),
+          defineField({ name: 'sentToAgentAt', title: 'Sent to agent at', type: 'datetime', readOnly: true, hidden: ({ parent }) => !(parent as any)?.sentToAgentAt }),
           // ── Generated document (written by backend) — generate from the Generate tab ──
           defineField({ name: 'googleDocUrl', title: 'Addendum — Google Doc URL', type: 'url',      readOnly: true }),
           defineField({ name: 'pdfAsset',     title: 'Addendum — PDF File',       type: 'file',     readOnly: true }),
@@ -439,6 +447,20 @@ export default defineType({
     }),
     defineField({ group: 'approval', name: 'contractApprovedAt',  title: '15. Contract Approved At', type: 'datetime', readOnly: true }),
     defineField({ group: 'approval', name: 'approvalResetReason', title: '16. Reset Reason',         type: 'string',   readOnly: true }),
+    // After-signing addendum (บันทึกข้อตกลงแก้ไขเพิ่มเติม) — approved on its own, documentType "addendum" (lib/line-annex, 8 Oct 2026)
+    defineField({ group: 'approval', name: 'addendumApprovalStatus', title: '16.1 Addendum Approval (after signing)', type: 'string', readOnly: true,
+      description: 'The agreed after-signing addendum on 16.3 — requested from the LINE group (✅ ตกลง) or the Approval tab',
+      options: { list: [
+        { title: '—  Not Requested', value: 'not_requested' },
+        { title: '⏳ Pending',        value: 'pending'       },
+        { title: '✓  Approved',      value: 'approved'      },
+        { title: '✗  Rejected',      value: 'rejected'      },
+        { title: '⚠  Reset',         value: 'reset'         },
+      ]},
+    }),
+    defineField({ group: 'approval', name: 'addendumApprovedAt', title: '16.2 Addendum Approved At', type: 'datetime', readOnly: true }),
+    defineField({ group: 'approval', name: 'pendingAddendumKey', title: '16.3 Addendum in approval (key)', type: 'string', readOnly: true, description: 'Which addenda[] item 16.1 is about' }),
+    defineField({ name: 'lastApprovalSnapshot', title: 'Addendum Approval Snapshot', type: 'string', hidden: true, readOnly: true }),
     // Hidden — snapshots of key fields at approval time for reset-on-edit detection
     defineField({ name: 'lastQuotationSnapshot', title: 'Quotation Snapshot', type: 'string', hidden: true, readOnly: true }),
     defineField({ name: 'lastContractSnapshot',  title: 'Contract Snapshot',  type: 'string', hidden: true, readOnly: true }),

@@ -739,6 +739,12 @@ export default defineType({
               type:        'string',
               description: 'The ID from the Google Doc URL: docs.google.com/document/d/THIS_PART/edit',
             }),
+            defineField({
+              name:        'webPath',
+              title:       'Web renderer path',
+              type:        'string',
+              description: 'When set, the document is printed from this app page instead of the Google Doc, e.g. /lease-quotation or /lease-contract (the app appends /<contract id>/pdf). Leave blank to keep using the Google Doc template.',
+            }),
           ],
           preview: {
             select: { name: 'name', prefix: 'numberPrefix', key: 'key' },
