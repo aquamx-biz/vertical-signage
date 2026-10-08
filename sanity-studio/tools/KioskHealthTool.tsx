@@ -35,7 +35,7 @@ interface Health { device: string; homeappId: string; anrToday: number; anrYeste
 interface Row { device: string; id: string; beacon?: Beacon; health?: Health }
 
 // HomeApp beacon `err` field — "wd=0 cache=801/18 store=36MB home=yes lock=off screen=on cmd=… api=host"
-interface AppStats { wd?: number; cacheHits?: number; cacheMiss?: number; storeMB?: number; home?: string; lock?: string; screen?: string; cmd?: string; api?: string }
+interface AppStats { wd?: number; cacheHits?: number; cacheMiss?: number; storeMB?: number; home?: string; lock?: string; screen?: string; cmd?: string; api?: string; rec?: number; bl?: string; blfix?: number; remote?: string; remoteAgo?: number }
 function parseStats(err: string): AppStats {
   const s: AppStats = {}
   for (const [, k, v] of String(err || '').matchAll(/(\w+)=(\S+)/g)) {
@@ -47,6 +47,11 @@ function parseStats(err: string): AppStats {
     else if (k === 'screen') s.screen = v
     else if (k === 'cmd') s.cmd = v
     else if (k === 'api') s.api = v
+    else if (k === 'rec') s.rec = +v            // v0.9.33: self-resurrections after a process kill
+    else if (k === 'bl') s.bl = v               // v0.9.34: backlight power:brightness per node
+    else if (k === 'blfix') s.blfix = +v        // v0.9.34: times the backlight had to be forced on
+    else if (k === 'remote') s.remote = v       // folded in by the feed: collector PC → box over Tailscale/adb
+    else if (k === 'remoteAgo') s.remoteAgo = +v
   }
   return s
 }
@@ -352,10 +357,29 @@ export function KioskHealthTool() {
                 const s = r.beacon ? parseStats(r.beacon.err).screen : undefined
                 if (!s) return dash(r.id)
                 const on = s === 'on'
+                const st = parseStats(r.beacon!.err)
                 return (
                   <td key={r.id} style={{ ...cell, fontSize: 12, fontWeight: 500, color: on ? '#1b5e3a' : '#5c6b82' }}>
                     {on ? '🟢 จอเปิด' : '🌙 จอปิด'}
                     {r.health?.screenAwake && <span style={{ fontSize: 10, color: '#b4bcc9', marginLeft: 6 }}>adb: {r.health.screenAwake === 'yes' ? 'awake' : 'asleep'}</span>}
+                    {/* v0.9.34: backlight power:brightness per node + forced-on count */}
+                    {st.bl && <div style={{ fontSize: 10, color: st.blfix ? AMBER : '#b4bcc9', marginTop: 2 }}>backlight {st.bl}{st.blfix ? ` · บังคับเปิด ${st.blfix} ครั้ง` : ''}</div>}
+                  </td>
+                )
+              })}
+            </tr>
+            {/* can WE get in — the PC's Tailscale/adb probe every 15 min; a box can play
+                and beacon with its VPN dead, and this is the only row that shows it */}
+            <tr style={{ borderBottom: '1px solid #f1f3f6' }}>
+              <td style={lbl}>รีโมท{sub('Tailscale/adb จาก PC')}</td>
+              {rows.map(r => {
+                const s = r.beacon ? parseStats(r.beacon.err) : undefined
+                if (!s?.remote) return dash(r.id)
+                const ok = s.remote === 'ok'
+                return (
+                  <td key={r.id} style={{ ...cell, fontSize: 12, fontWeight: 500, color: ok ? '#1b5e3a' : RED }}>
+                    {ok ? '🛰️ เข้าได้' : '🛰️ เข้าไม่ได้ ⚠'}
+                    <span style={{ fontSize: 10, color: '#b4bcc9', marginLeft: 6 }}>{s.remoteAgo != null ? `${s.remoteAgo} นาทีที่แล้ว` : ''}</span>
                   </td>
                 )
               })}
