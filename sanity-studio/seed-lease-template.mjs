@@ -13,48 +13,49 @@ const doc = {
  "effectiveDate": "2026-10-08",
  "changeNote": "v1 — wording moved from the Google Docs templates (Rental Contract Template v2, Quotation) into Studio; printed by the app in the advertising-document form",
  "quotationTh": {
-  "title": "ใบเสนอราคาค่าเช่าพื้นที่ติดตั้งจอโฆษณา",
-  "intro": "ใบเสนอราคานี้จัดทำขึ้นเพื่อแจ้งเงื่อนไขและข้อตกลงในการเช่าพื้นที่สำหรับติดตั้งจอโฆษณาดิจิทัลภายในโครงการของท่าน aquamx เสนอจอสัมผัสแนวตั้งคุณภาพสูง ที่ช่วยเพิ่มความสวยงามให้กับทรัพย์สิน สื่อสารกับผู้อยู่อาศัยและผู้มาเยือนได้อย่างมีประสิทธิภาพ และเป็นแพลตฟอร์มที่ทันสมัยสำหรับการเผยแพร่ข้อมูลและประกาศของนิติบุคคลภายในอาคาร",
+  "title": "ใบเสนอราคาสำหรับค่าเช่าพื้นที่ป้ายโฆษณา",
+  "to": "ฝ่ายบริหารโครงการ",
+  "intro": "ใบเสนอราคานี้จัดทำขึ้นเพื่อแจ้งเงื่อนไขและข้อตกลงในการเช่าพื้นที่สำหรับป้ายโฆษณาในโครงการอันทรงเกียรติของท่าน เราเสนอทางเลือกป้ายโฆษณาดิจิทัลคุณภาพสูงที่จะช่วยเพิ่มความสวยงามให้กับทรัพย์สิน สื่อสารกับผู้อยู่อาศัยและผู้เยี่ยมชมได้อย่างมีประสิทธิภาพ และเป็นแพลตฟอร์มที่ทันสมัยสำหรับการเผยแพร่ข้อมูลภายในอาคาร",
   "terms": [
    {
     "_type": "leaseTermRow",
     "_key": "k152",
     "label": "ขนาดหน้าจอขั้นต่ำ",
-    "value": "{screenInch} นิ้ว ({screenH} มม. สูง × {screenW} มม. กว้าง)",
+    "value": "43 นิ้ว (941 มม. สูง x 529 มม. กว้าง)",
     "emphasis": false
    },
    {
     "_type": "leaseTermRow",
     "_key": "k153",
     "label": "ขนาดโครงสร้างขั้นต่ำ",
-    "value": "{unitH} มม. (สูง) × {unitW} มม. (กว้าง) × {unitD} มม. (ลึก)",
+    "value": "1,800 มม. (สูง) x 599 มม. (กว้าง) x 460 มม. (ลึก)",
     "emphasis": false
    },
    {
     "_type": "leaseTermRow",
     "_key": "k154",
     "label": "ค่าเช่ารายเดือน",
-    "value": "{rent} บาทต่อเดือน (ไม่รวมค่าไฟฟ้า)",
-    "emphasis": true
+    "value": "{rent} บาท",
+    "emphasis": false
    },
    {
     "_type": "leaseTermRow",
     "_key": "k155",
-    "label": "ค่าไฟฟ้า",
-    "value": "{electricity} บาทต่อหน่วย ตามการใช้งานจริง",
+    "label": "ค่าไฟฟ้าโดยประมาณ",
+    "value": "{electricity} บาท (ต่อเดือน)",
     "emphasis": false
    },
    {
     "_type": "leaseTermRow",
     "_key": "k156",
     "label": "ระยะเวลาเช่า",
-    "value": "{months} เดือน — {startDate} ถึง {endDate}",
-    "emphasis": true
+    "value": "{months} เดือน",
+    "emphasis": false
    },
    {
     "_type": "leaseTermRow",
     "_key": "k157",
-    "label": "ตำแหน่งติดตั้ง",
+    "label": "ตำแหน่ง",
     "value": "{location}",
     "emphasis": false
    },
@@ -62,60 +63,58 @@ const doc = {
     "_type": "leaseTermRow",
     "_key": "k158",
     "label": "เงื่อนไขการแข่งขัน",
-    "value": "พื้นที่ที่ให้เช่าเพิ่มเติม ไม่สามารถให้เช่าแก่บุคคลหรือองค์กรที่มีการแข่งขันโดยตรงกับผู้เช่ารายอื่น เว้นแต่จะได้รับความยินยอมล่วงหน้าจากผู้เช่า",
+    "value": "พื้นที่ให้เช่าเพิ่มเติม ไม่สามารถให้เช่าแก่บุคคลหรือองค์กรที่มีการแข่งขันโดยตรงกับผู้เช่ารายอื่น เว้นแต่จะได้รับความยินยอมล่วงหน้าจากผู้เช่า",
     "emphasis": false
    },
    {
     "_type": "leaseTermRow",
     "_key": "k159",
-    "label": "การให้ความร่วมมือติดตั้งอินเทอร์เน็ต",
-    "value": "นิติบุคคลจะอำนวยความสะดวกในการติดตั้งระบบอินเทอร์เน็ต โดยค่าใช้จ่ายในการติดตั้งและค่าบริการเป็นความรับผิดชอบของบริษัท ทั้งนี้อาจจำเป็นต้องใช้ที่อยู่ของโครงการในการขอติดตั้งบริการกับผู้ให้บริการ (ISP)",
+    "label": "การให้ความร่วมมือเพื่อติดตั้งบริการอินเทอร์เน็ต",
+    "value": "นิติบุคคลจะอำนวยความสะดวกในการติดตั้งระบบอินเทอร์เน็ต โดยค่าใช้จ่ายในการติดตั้งและค่าบริการเป็นความรับผิดชอบของบริษัท โดยในการติดตั้งจำเป็นต้องใช้ที่อยู่ของโครงการในการขอติดตั้งบริการกับผู้ให้บริการ (ISP)",
     "emphasis": false
    }
   ],
-  "lineLabel": "ค่าเช่าพื้นที่ติดตั้งจอโฆษณา (ต่อเดือน)",
-  "note": "ชำระค่าเช่าเป็นรายเดือนภายในวันที่ 1 ของทุกเดือน · ค่าไฟฟ้าเรียกเก็บตามการใช้งานจริงแยกต่างหาก",
-  "closing": "โซลูชันจอโฆษณาดิจิทัลของเรามีคุณประโยชน์หลากหลาย ทั้งการสร้างบรรยากาศระดับ 5 ดาวสำหรับผู้อยู่อาศัยและแขก การเป็นแพลตฟอร์มที่ยอดเยี่ยมสำหรับธุรกิจท้องถิ่นในการส่งเสริมบริการและผลิตภัณฑ์ และการมีหน้าจอเฉพาะสำหรับการประกาศที่จำเป็นของนิติบุคคลและข้อมูลอาคาร ขอขอบคุณที่พิจารณาข้อเสนอของเรา เราหวังเป็นอย่างยิ่งว่าจะได้มีโอกาสร่วมงานกับท่าน",
-  "acceptHint": "ลงนามผู้มีอำนาจพร้อมประทับตรา แล้วส่งกลับผ่านตัวแทนของบริษัท หรือ info@aquamx.co.th / LINE @aquamx"
+  "closing": "โซลูชันป้ายโฆษณาดิจิทัลของเรามีคุณประโยชน์หลากหลาย และสร้างบรรยากาศระดับ 5 ดาวสำหรับผู้อยู่อาศัยและแขก การเป็นแพลตฟอร์มที่ยอดเยี่ยมสำหรับธุรกิจท้องถิ่นในการส่งเสริมบริการและผลิตภัณฑ์ของพวกเขา และการมีหน้าจอเฉพาะสำหรับการประกาศที่จำเป็นของนิติบุคคลและข้อมูลอาคาร สิ่งนี้จะช่วยปรับปรุงประสิทธิภาพการสื่อสารและความพึงพอใจของผู้อยู่อาศัยได้อย่างมาก ขอขอบคุณที่พิจารณาข้อเสนอของเรา เราหวังเป็นอย่างยิ่งว่าจะได้มีโอกาสร่วมงานกับท่าน"
  },
  "quotationEn": {
-  "title": "Quotation for Rental of Signage Space",
-  "intro": "This quotation outlines the terms and conditions for the rental of signage space at your project. aquamx offers a high-quality vertical touchscreen display that enhances the aesthetic appeal of the property, communicates effectively with residents and visitors, and provides a modern platform for building information and juristic announcements.",
+  "title": "QUOTATION FOR RENTAL OF SIGNAGE SPACE",
+  "to": "Project Management",
+  "intro": "This quotation outlines the terms and conditions for the rental of signage space at your esteemed project. We propose providing high-quality digital signage solutions that will enhance the aesthetic appeal of the property, effectively communicate with residents and visitors, and provide a modern platform for information dissemination within the building premises.",
   "terms": [
    {
     "_type": "leaseTermRow",
     "_key": "k160",
-    "label": "Screen min. size",
-    "value": "{screenInch} inches ({screenH} mm H × {screenW} mm W)",
+    "label": "Screen Min Size",
+    "value": "43 inches (941 mm H x 529 mm W)",
     "emphasis": false
    },
    {
     "_type": "leaseTermRow",
     "_key": "k161",
-    "label": "Structure min. dimension",
-    "value": "{unitH} mm (H) × {unitW} mm (W) × {unitD} mm (D)",
+    "label": "Structure Min Dimension",
+    "value": "1,800 mm (H) x 599 mm (W) x 460 mm (D)",
     "emphasis": false
    },
    {
     "_type": "leaseTermRow",
     "_key": "k162",
-    "label": "Monthly rental fee",
-    "value": "{rent} Baht per month (excluding electricity)",
-    "emphasis": true
+    "label": "Monthly Rental Fee",
+    "value": "{rent} Baht",
+    "emphasis": false
    },
    {
     "_type": "leaseTermRow",
     "_key": "k163",
-    "label": "Electricity",
-    "value": "{electricity} Baht per unit, on actual use",
+    "label": "Estimated Electricity",
+    "value": "{electricity} Baht (per month)",
     "emphasis": false
    },
    {
     "_type": "leaseTermRow",
     "_key": "k164",
-    "label": "Lease term",
-    "value": "{months} months — {startDate} to {endDate}",
-    "emphasis": true
+    "label": "Lease Term",
+    "value": "{months} months",
+    "emphasis": false
    },
    {
     "_type": "leaseTermRow",
@@ -127,26 +126,23 @@ const doc = {
    {
     "_type": "leaseTermRow",
     "_key": "k166",
-    "label": "Non-competition",
-    "value": "Additional rental space cannot be leased to individuals or organizations that directly compete with the tenant unless prior consent is obtained from the tenant.",
+    "label": "Non-competitive clause",
+    "value": "Additional rental space cannot be leased to individuals or organizations that directly compete with the other tenant unless prior consent is obtained from the tenant.",
     "emphasis": false
    },
    {
     "_type": "leaseTermRow",
     "_key": "k167",
-    "label": "WiFi provider cooperation",
+    "label": "Wifi Provider Cooperation",
     "value": "The juristic person agrees to facilitate the installation of WiFi connectivity, at the company’s cost. The company may need to use the project’s address when applying for installation with the internet service provider (ISP).",
     "emphasis": false
    }
   ],
-  "lineLabel": "Signage space rental (per month)",
-  "note": "Rent is paid monthly by the 1st of each month · electricity is billed separately on actual use",
-  "closing": "Our digital signage solutions offer numerous advantages, including creating a 5-star ambience for residents and guests, providing an excellent platform for local businesses to promote their services and products, and offering a dedicated screen for essential juristic announcements and building information. Thank you for considering our proposal. We look forward to the opportunity to collaborate with you.",
-  "acceptHint": "Sign by an authorised signatory, stamp, and return through our leasing agent or to info@aquamx.co.th / LINE @aquamx"
+  "closing": "Our digital signage solutions offer numerous advantages, including creating a 5-star ambience for residents and guests, providing an excellent platform for local businesses to promote their services and products, and offering a dedicated screen for essential juristic announcements and building information. Thank you for considering our proposal. We look forward to the opportunity to collaborate with you."
  },
  "contractTh": {
   "title": "สัญญาเช่าพื้นที่เพื่อติดตั้งจอโฆษณา",
-  "intro": "สัญญาฉบับนี้ทำขึ้นระหว่าง {lessee} ทะเบียนนิติบุคคลเลขที่ {lesseeTaxId} สำนักงานตั้งอยู่เลขที่ {lesseeAddress} ซึ่งเป็นผู้เช่า (ต่อไปนี้เรียกว่า “ผู้เช่า”) ฝ่ายหนึ่ง กับ {lessor} สำนักงานตั้งอยู่เลขที่ {lessorAddress} ซึ่งเป็นผู้ให้เช่า (ต่อไปนี้เรียกว่า “ผู้ให้เช่า”) อีกฝ่ายหนึ่ง โดยทั้งสองฝ่ายตกลงทำสัญญาเช่าพื้นที่เพื่อติดตั้งจอโฆษณา (Signage) ภายใต้เงื่อนไขดังต่อไปนี้",
+  "intro": "สัญญาฉบับนี้ทำขึ้น ณ วันที่ {contractDate} ระหว่าง {lessee} ซึ่งเป็นผู้เช่า (ต่อไปนี้เรียกว่า \"ผู้เช่า\") ที่อยู่: {lesseeAddress} และ {lessor} ซึ่งเป็นผู้ให้เช่า (ต่อไปนี้เรียกว่า \"ผู้ให้เช่า\") ที่อยู่: {lessorAddress} โดยทั้งสองฝ่ายตกลงทำสัญญาเช่าพื้นที่เพื่อติดตั้งจอโฆษณา (Signage) ภายใต้เงื่อนไขดังต่อไปนี้",
   "clauses": [
    {
     "_type": "contractClause",
@@ -340,14 +336,14 @@ const doc = {
       "_key": "k027",
       "label": "•",
       "level": "sub",
-      "text": "ขนาดจอแสดงผล: {screenInch} นิ้ว ({screenH} มม. สูง x {screenW} มม. กว้าง) หรือขนาดที่ใหญ่กว่า ขึ้นกับความเหมาะสมของพื้นที่"
+      "text": "ขนาดจอแสดงผล: 43 นิ้ว (941 มม. สูง x 529.4 มม. กว้าง) หรือขนาดที่ใหญ่กว่า ขึ้นกับความเหมาะสมของพื้นที่"
      },
      {
       "_type": "clauseItem",
       "_key": "k028",
       "label": "•",
       "level": "sub",
-      "text": "ขนาดรวมของจอและโครงสร้าง: {unitH} มม. สูง x {unitW} มม. กว้าง x {unitD} มม. ลึก หรือขนาดที่ใหญ่กว่า ขึ้นกับความเหมาะสมของพื้นที่"
+      "text": "ขนาดรวมของจอและโครงสร้าง: 1,800 มม. สูง x 599 มม. กว้าง x 460 มม. ลึก หรือขนาดที่ใหญ่กว่า ขึ้นกับความเหมาะสมของพื้นที่"
      },
      {
       "_type": "clauseItem",
@@ -683,12 +679,11 @@ const doc = {
   "closing": "สัญญานี้ทำขึ้นเป็นสองฉบับ มีข้อความถูกต้องตรงกัน คู่สัญญาทั้งสองฝ่ายได้อ่านและเข้าใจดีแล้วจึงลงลายมือชื่อไว้เป็นหลักฐาน",
   "lessorLabel": "ผู้ให้เช่า",
   "lesseeLabel": "ผู้เช่า",
-  "lessorTitle": "ผู้จัดการนิติบุคคล",
-  "witnessLabel": "พยาน"
+  "lessorTitle": "ผู้จัดการนิติบุคคล"
  },
  "contractEn": {
   "title": "Lease Agreement for Screen Signage",
-  "intro": "This Agreement is made between {lessee}, company registration no. {lesseeTaxId}, whose office is at {lesseeAddress}, hereinafter referred to as the “Lessee”, of the one part, and {lessor}, whose office is at {lessorAddress}, hereinafter referred to as the “Lessor”, of the other part. The parties agree to lease an area for the purpose of screen signage installation (the “Signage”) under the following terms and conditions:",
+  "intro": "This Agreement is made on {contractDate}, by and between: {lessee}, hereinafter referred to as the \"Lessee\", residing at: {lesseeAddress} and {lessor}, hereinafter referred to as the \"Lessor\", residing at: {lessorAddress}. The parties agree to lease an area for the purpose of screen signage installation (the “Signage”) under the following terms and conditions:",
   "clauses": [
    {
     "_type": "contractClause",
@@ -882,14 +877,14 @@ const doc = {
       "_key": "k103",
       "label": "•",
       "level": "sub",
-      "text": "Display size: {screenInch} inches ({screenH} mm height x {screenW} mm width) or larger, as the space allows"
+      "text": "Display Size: 43 inches (941.2 mm height x 529.4 mm width) or upper"
      },
      {
       "_type": "clauseItem",
       "_key": "k104",
       "label": "•",
       "level": "sub",
-      "text": "Overall unit size: {unitH} mm height x {unitW} mm width x {unitD} mm depth or larger, as the space allows"
+      "text": "Overall Unit Size: 1800 mm height x 599 mm width x 460 mm depth or upper"
      },
      {
       "_type": "clauseItem",
@@ -1182,7 +1177,7 @@ const doc = {
       "_key": "k146",
       "label": "13.1",
       "level": "main",
-      "text": "This Agreement is made in both Thai and English; in case of any conflict or inconsistency in interpretation, the Thai version shall prevail."
+      "text": "In the event that this Agreement is made in both Thai and English languages, in case of any conflict or inconsistency in interpretation, the Thai version shall prevail."
      },
      {
       "_type": "clauseItem",
@@ -1215,20 +1210,12 @@ const doc = {
     ]
    }
   ],
-  "closing": "Signed in duplicate, with both parties having read and understood the terms and conditions herein.",
+  "closing": "Signed in duplicate, with both parties acknowledging the terms and conditions herein.",
   "lessorLabel": "Lessor",
   "lesseeLabel": "Lessee",
-  "lessorTitle": "Condominium Juristic Manager",
-  "witnessLabel": "Witness"
+  "lessorTitle": "Condominium Juristic Manager"
  },
- "screenInch": 43,
- "screenH": 941,
- "screenW": 529,
- "unitH": 1800,
- "unitW": 599,
- "unitD": 460,
  "lessorMinutes": 60,
- "quotationValidDays": 30,
  "_type": "leaseDocTemplate"
 }
 const res = await fetch(`https://${PROJECT_ID}.api.sanity.io/v${API_VER}/data/mutate/${DATASET}`, {
