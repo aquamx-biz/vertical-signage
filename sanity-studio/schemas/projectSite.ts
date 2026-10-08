@@ -56,6 +56,7 @@ export default defineType({
     }),
     defineField({ name: 'projectTh', title: 'Project Name (TH)', type: 'string', readOnly: ({ document }) => (document?.approvalStatus as string) === 'approved', components: { input: ProjectNameTranslateInput } }),
     defineField({ name: 'address',    title: 'Address',          type: 'text',   rows: 2, readOnly: ({ document }) => (document?.approvalStatus as string) === 'approved', components: { input: AddressInput } }),
+    defineField({ name: 'addressEn', title: 'Address (English) — printed in the English contract', type: 'text', rows: 2 }),
     defineField({ name: 'btsStation', title: 'BTS / MRT Station', type: 'string', components: { input: BtsInput } }),
     defineField({
       name: 'meetingPoint', title: 'Meeting Point · จุดนัดพบ', type: 'string',
