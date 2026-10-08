@@ -67,6 +67,9 @@ export function DocumentTypeSelect(props: StringInputProps) {
           <option value="contract">Any Contract (catch-all)</option>
           <option value="projectSite">Project Site</option>
           <option value="procurement">Procurement</option>
+          <option value="termination">Lease Termination (บอกเลิกสัญญาเช่า)</option>
+          <option value="withdrawal">Withdrawal of Termination (ถอนการบอกเลิก)</option>
+          <option value="addendum">Lease Addendum after signing (บันทึกข้อตกลงแก้ไขเพิ่มเติม)</option>
           <option value="both">Both (Quotation + Any Contract)</option>
         </optgroup>
 
