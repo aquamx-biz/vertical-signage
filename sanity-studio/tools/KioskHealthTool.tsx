@@ -31,7 +31,7 @@ const FALLBACK_IDS: Record<string, string> = {
 }
 
 interface Beacon { project: string; bid: string; slide: string; upMin: number; minAgo: number; online: boolean; scr: string; board: string; andr: string; err: string }
-interface Health { device: string; homeappId: string; anrToday: number; anrYesterday: number; anr7d: number; anr7dPrev: number; topCpu: string; cores: number; ramUsedPct: number; ramFreeMB: number; ramTotalMB: number; storagePct: number; storageTotalMB: number; storageFreeMB: number; apps: string; focus: string; screenRes: string; wifiRssi: number; wifiLink: number; wifiFreq: number; wifiReachLost: number; netType: string; chip: string; homeApp: string; screenAwake: string; checkedMinAgo: number; anrCause: string; anrFixed: string; anrPending: string; anrAssessed: string }
+interface Health { device: string; homeappId: string; label?: string; source?: string; anrToday: number; anrYesterday: number; anr7d: number; anr7dPrev: number; topCpu: string; cores: number; ramUsedPct: number; ramFreeMB: number; ramTotalMB: number; storagePct: number; storageTotalMB: number; storageFreeMB: number; apps: string; focus: string; screenRes: string; wifiRssi: number; wifiLink: number; wifiFreq: number; wifiReachLost: number; netType: string; chip: string; homeApp: string; screenAwake: string; checkedMinAgo: number; anrCause: string; anrFixed: string; anrPending: string; anrAssessed: string }
 interface Row { device: string; id: string; beacon?: Beacon; health?: Health }
 
 // HomeApp beacon `err` field — "wd=0 cache=801/18 store=36MB home=yes lock=off screen=on cmd=… api=host"
@@ -233,10 +233,15 @@ export function KioskHealthTool() {
       // entry yet still gets a column, so a freshly paired box is never invisible.
       const byId = new Map<string, Row>()
       const nameOfId = (id: string) => FALLBACK_IDS[id] || id
+      // A box may be described twice while the PC collector is still running
+      // alongside the box's own report (HomeApp ≥ v0.9.35, source=box): the
+      // freshest wins. The column keeps the PC's short name while it exists,
+      // else the box's fleet label, else the id.
       for (const h of healths) {
         const id = h.homeappId || Object.keys(FALLBACK_IDS).find(k => FALLBACK_IDS[k] === h.device) || h.device
+        const name = h.source === 'box' ? (FALLBACK_IDS[id] || h.label || h.device) : h.device
         const cur = byId.get(id)
-        if (!cur || !cur.health || h.checkedMinAgo < cur.health.checkedMinAgo) byId.set(id, { device: h.device, id, health: h })
+        if (!cur || !cur.health || h.checkedMinAgo < cur.health.checkedMinAgo) byId.set(id, { device: name, id, health: h })
       }
       for (const [id, b] of Array.from(appBeacon.entries())) {
         // a beacon silent for over a week is a retired/re-paired box, not a column
