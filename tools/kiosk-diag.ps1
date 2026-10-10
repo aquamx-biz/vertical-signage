@@ -118,6 +118,9 @@ function Diagnose([string]$deviceId) {
             Sh $serial 'cmd statusbar collapse' | Out-Null
             $r.fixes += 'ปิดแถบแจ้งเตือนที่ถูกดึงลงมาบังจอ'
         } elseif (-not $s.pid -or $s.focus -ne 'biz.aquamx.homeapp') {
+            # Locked boxes (am task lock): if HomeApp's process died the system can stay pinned to the dead
+            # task and refuse a new MainActivity = black screen (lumpini 2026-10-10). Release the lock first.
+            ShRoot $serial 'am task lock stop' | Out-Null
             Sh $serial 'am start -n biz.aquamx.homeapp/.MainActivity' | Out-Null
             $r.fixes += "เปิด HomeApp กลับขึ้นหน้าจอ (เดิม: $(if ($s.pid) {$s.focus} else {'HomeApp ไม่ได้รัน'}))"
         }
