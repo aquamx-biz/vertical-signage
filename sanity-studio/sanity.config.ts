@@ -2,6 +2,7 @@ import { defineConfig, definePlugin } from 'sanity'
 import { structureTool } from 'sanity/structure'
 import { visionTool } from '@sanity/vision'
 import { schemaTypes } from './schemas'
+import { FORM_TYPES as LEGAL_FORM_TYPES } from './schemas/legalForm'
 import unitSource from './schemas/unitSource'
 import listing from './schemas/listing'
 import { ListingSplitTool } from './tools/ListingSplitTool'
@@ -429,7 +430,6 @@ export default defineConfig([{
             can('saleOpportunity') && S.documentTypeListItem('saleOpportunity').title('Sale Opportunities'),
             can('quotation')       && S.documentTypeListItem('quotation').title('Quotations — ใบเสนอราคา'),
             can('adContract')      && S.documentTypeListItem('adContract').title('Ad Contracts — สัญญารับโฆษณา'),
-            can('adContract')      && S.documentTypeListItem('adContractTemplate').title('Ad Contract Templates'),
             can('emailCampaign')   && S.documentTypeListItem('emailCampaign').title('Email Campaigns'),
           ]),
 
@@ -437,7 +437,6 @@ export default defineConfig([{
           (can('projectSite') || can('contract') || can('serviceContract') || can('installation')) &&
           group('projects', 'Projects', '🏗', [
             can('projectSite')        && S.documentTypeListItem('projectSite').title('Project Sites'),
-            can('contract')           && S.documentTypeListItem('leaseDocTemplate').title('Lease Document Templates'),
             can('contract')           && S.listItem()
               .id('rent-space')
               .title('Rent Space')
@@ -456,6 +455,20 @@ export default defineConfig([{
             can('serviceContract')    && S.documentTypeListItem('serviceContract').title('Service Contracts'),
             S.divider(),
             can('installation')       && S.documentTypeListItem('installation').title('Install & Activate'),
+          ]),
+
+          // ── Legal Forms — every legal wording, versioned, one schema ──────
+          (can('adContract') || can('contract')) &&
+          group('legal-forms', 'Legal Forms', '⚖️', [
+            S.listItem().title('All forms').id('legal-all').child(
+              S.documentTypeList('legalForm').title('All forms')
+                .defaultOrdering([{ field: 'formType', direction: 'asc' }, { field: 'version', direction: 'desc' }])),
+            S.divider(),
+            ...LEGAL_FORM_TYPES.map(t => S.listItem().title(t.title).id(`legal-${t.value}`).child(
+              S.documentList().title(t.short).schemaType('legalForm')
+                .filter('_type == "legalForm" && formType == $t').params({ t: t.value })
+                .defaultOrdering([{ field: 'version', direction: 'desc' }])
+                .initialValueTemplates([S.initialValueTemplateItem(`legalForm-${t.value}`)]))),
           ]),
 
           // ── Finance ────────────────────────────────────────────────────────
@@ -544,6 +557,11 @@ export default defineConfig([{
     // then failed the whole Structure with "template id is required".
     templates: (prev: any[]) => [
       ...prev,
+      // one "new Legal Form" template per form type — the type's list pre-fills it
+      ...LEGAL_FORM_TYPES.map(t => ({
+        id: `legalForm-${t.value}`, title: t.short, schemaType: 'legalForm',
+        value: () => ({ formType: t.value, status: 'draft', version: 1 }),
+      })),
       {
         id:         'ratecard-commission',
         title:      'แผนค่าคอมร้านค้า',

@@ -64,7 +64,7 @@ export default defineType({
     try {
       const client = context.getClient({ apiVersion: '2024-01-01' })
       const tpl = await client.fetch(
-        `*[_type == "adContractTemplate" && status == "active" && !(_id in path("drafts.**"))] | order(version desc)[0]{ _id, version, intro, clauses, closing }`,
+        `*[_type == "legalForm" && formType == "adContract" && status == "active" && !(_id in path("drafts.**"))] | order(version desc)[0]{ _id, version, "intro": th.intro, "clauses": th.clauses, "closing": th.closing }`,
       )
       if (!tpl) return base
       return { ...base, template: { _type: 'reference', _ref: tpl._id }, templateVersion: tpl.version, intro: tpl.intro, clauses: tpl.clauses ?? [], closing: tpl.closing }
@@ -220,10 +220,10 @@ export default defineType({
       name:        'template',
       title:       '2b.1 · Template',
       type:        'reference',
-      to:          [{ type: 'adContractTemplate' }],
-      options:     { disableNew: true, filter: 'status == "active"' },
+      to:          [{ type: 'legalForm' }],
+      options:     { disableNew: true, filter: 'formType == "adContract" && status == "active"' },
       readOnly:    locked,
-      description: 'Which template version the wording below was copied from. To re-copy after changing it, use "Load Template Wording" in the ⋯ menu.',
+      description: 'Which Legal Form (Ad Contract) version the wording below was copied from. To re-copy after changing it, use "Load Template Wording" in the ⋯ menu.',
     }),
     defineField({ group: 'wording', name: 'templateVersion', title: '2b.2 · Template Version', type: 'number', readOnly: true }),
     defineField({ group: 'wording', name: 'intro',   title: '2b.3 · Opening Paragraph', type: 'text', rows: 5, readOnly: locked, description: 'Copied from the template — edit here only for a deal-specific change. Placeholders like {advertiserName} are filled in when printed.' }),

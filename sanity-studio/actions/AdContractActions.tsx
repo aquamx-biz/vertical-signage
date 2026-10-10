@@ -7,7 +7,7 @@
  *   keeps the earlier PDF in Issued Versions. Not offered once signed — a signed
  *   contract changes by addendum (clause 7.4), never by editing.
  *
- * Load Template Wording — copies the wording of the chosen (or active) template
+ * Load Template Wording — copies the wording of the chosen (or active) Legal Form (Ad Contract)
  *   version into this contract. Only while the contract is a Draft; replaces the
  *   contract's current wording, so it asks first.
  */
@@ -74,10 +74,10 @@ export function LoadTemplateAction(props: DocumentActionProps): DocumentActionDe
         setBusy(true)
         try {
           const tpl = await client.fetch(
-            `coalesce(*[_type == "adContractTemplate" && _id == $ref][0], *[_type == "adContractTemplate" && status == "active" && !(_id in path("drafts.**"))] | order(version desc)[0]){ _id, version, intro, clauses, closing }`,
+            `coalesce(*[_type == "legalForm" && formType == "adContract" && _id == $ref][0], *[_type == "legalForm" && formType == "adContract" && status == "active" && !(_id in path("drafts.**"))] | order(version desc)[0]){ _id, version, "intro": th.intro, "clauses": th.clauses, "closing": th.closing }`,
             { ref: doc.template?._ref ?? '' },
           )
-          if (!tpl) throw new Error('No template found — create and activate an Ad Contract Template first.')
+          if (!tpl) throw new Error('No template found — create and activate a Legal Form of type Ad Contract first.')
           const id = props.id.replace(/^drafts\./, '')
           const { _rev, _createdAt, _updatedAt, ...base } = (props.published ?? {}) as any
           void _rev; void _createdAt; void _updatedAt
