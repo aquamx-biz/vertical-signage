@@ -1,6 +1,6 @@
 import { defineField, defineType, defineArrayMember } from 'sanity'
 import { createAutoNumberInput } from '../components/AutoNumberInput'
-import { contractClause } from './adContractTemplate'
+import { contractClause } from './legalForm'
 
 const AdContractNumberInput = createAutoNumberInput('adContract', { fixedPrefix: 'AD', dateField: 'contractDate' })
 
