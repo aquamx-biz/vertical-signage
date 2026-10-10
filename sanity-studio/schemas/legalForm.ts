@@ -1,5 +1,4 @@
 import { defineField, defineType, defineArrayMember } from 'sanity'
-import { contractClause } from './adContractTemplate'
 
 /**
  * Legal Form — every piece of legal wording the system prints, in ONE schema
@@ -28,6 +27,43 @@ export const FORM_TYPES = [
   { value: 'lessorPoa',          title: '✍️ Lessor Power of Attorney',  short: 'Lessor Power of Attorney' },
 ] as const
 export type FormType = typeof FORM_TYPES[number]['value']
+
+/** One paragraph of a clause, and a clause (heading + paragraphs) — shared with Ad Contract. */
+export const clauseItem = defineArrayMember({
+  type:  'object',
+  name:  'clauseItem',
+  title: 'Paragraph',
+  fields: [
+    defineField({ name: 'label', title: 'Number', type: 'string', description: 'e.g. 3.1 or (ก). Leave blank for a plain paragraph.' }),
+    defineField({
+      name: 'level', title: 'Indent', type: 'string', initialValue: 'main',
+      options: { list: [
+        { title: 'Main — under the clause heading',                value: 'main' },
+        { title: 'Sub — (ก)(ข)(ค) nested under the item above',    value: 'sub'  },
+        { title: 'Continuation — lines up with the item above',    value: 'cont' },
+      ], layout: 'radio' },
+    }),
+    defineField({ name: 'text', title: 'Text', type: 'text', rows: 3, validation: Rule => Rule.required() }),
+  ],
+  preview: {
+    select: { label: 'label', text: 'text' },
+    prepare: ({ label, text }: any) => ({ title: `${label ? label + '  ' : ''}${String(text ?? '').slice(0, 90)}` }),
+  },
+})
+
+export const contractClause = defineArrayMember({
+  type:  'object',
+  name:  'contractClause',
+  title: 'Clause',
+  fields: [
+    defineField({ name: 'title', title: 'Heading', type: 'string', description: 'Printed as "ข้อ N <heading>" — N is the clause\'s position.', validation: Rule => Rule.required() }),
+    defineField({ name: 'items', title: 'Paragraphs', type: 'array', of: [clauseItem] }),
+  ],
+  preview: {
+    select: { title: 'title', items: 'items' },
+    prepare: ({ title, items }: any) => ({ title, subtitle: `${(items ?? []).length} paragraph(s)` }),
+  },
+})
 
 const frozen = ({ document }: { document?: any }) => !!document?.status && document.status !== 'draft'
 /** Field shown only for these form types. */
