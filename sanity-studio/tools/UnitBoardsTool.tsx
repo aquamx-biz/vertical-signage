@@ -195,7 +195,7 @@ function PriceMove({ p }: { p?: Profile }) {
   const hist = h.map(x => `${x.date ?? '—'} · ฿${(x.price ?? 0).toLocaleString('en-US')}`).join('\n')
   return (
     <span title={`ประวัติราคา:\n${hist}`}
-      style={{ marginLeft: 4, fontSize: 11, fontWeight: 700, cursor: 'help', color: pct < 0 ? '#166534' : '#c2410c' }}>
+      style={{ display: 'block', fontSize: 11, lineHeight: 1.2, fontWeight: 700, cursor: 'help', color: pct < 0 ? '#166534' : '#c2410c' }}>
       {pct < 0 ? '▼' : '▲'}{Math.abs(pct)}%
     </span>
   )
