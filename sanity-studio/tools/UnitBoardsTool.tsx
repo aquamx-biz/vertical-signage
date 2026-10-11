@@ -234,7 +234,10 @@ function DealChip({ p }: { p?: Profile }) {
   return <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 2 }}>{out}</div>
 }
 
-export function UnitBoardsTool() {
+/* view: แท็บ Market Intel สองแท็บใช้ instance เดียวกัน (ติ๊ก/โหมด/Save ร่วมกัน) แค่โชว์คนละส่วน
+   'lineup' = Board Lineup · ห้องบนจอ (โหมดบอร์ด + สถานะดีล + ห้องที่เอาออก)
+   'units'  = All Units · ห้องทั้งหมด (สรุป + ตัวกรอง + ตาราง) */
+export function UnitBoardsTool({ view = 'units', onGoUnits }: { view?: 'lineup' | 'units'; onGoUnits?: () => void } = {}) {
   const client = useClient({ apiVersion: '2024-01-01' })
   const internal = useMemo(() => client.withConfig({ dataset: 'internal' }), [client])
   const toast = useToast()
@@ -642,6 +645,10 @@ export function UnitBoardsTool() {
       onChange={e => set({ ...P, [k]: Math.max(0, parseInt(e.currentTarget.value) || 0) })}
       style={{ width: 46, padding: '3px 5px', border: '1px solid #d1d5db', borderRadius: 5, textAlign: 'right', background: disabled ? '#f3f4f6' : '#fff' }} />
   )
+  /* ชี้ไปแท็บตาราง — การติ๊กเพิ่มเกิดที่ All Units ไม่ใช่หน้านี้ */
+  const goUnits = onGoUnits
+    ? <> ที่แท็บ <a onClick={onGoUnits} style={{ cursor: 'pointer', textDecoration: 'underline', fontWeight: 700 }}>All Units</a></>
+    : null
   const polRow = (label: string, P: Policy, set: (p: Policy) => void, m2: 'r' | 's') => {
     const man = m2 === 'r' ? manualR : manualS
     const setMan = m2 === 'r' ? setManualR : setManualS
@@ -663,7 +670,7 @@ export function UnitBoardsTool() {
             เหลือแค่ "จำนวนห้อง" · โหมดปกติเติมดีลดีสุดให้เต็มจำนวนนี้ · โหมดเลือกเอง = เฉพาะที่ติ๊ก
             (ห้ามใช้ fragment ใน Inline — มันจะเรียงลงแนวตั้ง ใช้ Inline ซ้อนแทน) */}
         {man
-          ? <Text size={1} style={{ color: '#0f3460' }}>บอร์ด = {shownCount} ห้องที่เลือก (ไม่เติมอัตโนมัติ) · ติ๊ก Select {m2 === 'r' ? 'R' : 'S'} เพิ่ม / ✕ เอาออก แล้ว<b> กด Save</b> เพื่อบันทึก</Text>
+          ? <Text size={1} style={{ color: '#0f3460' }}>บอร์ด = {shownCount} ห้องที่เลือก (ไม่เติมอัตโนมัติ) · ติ๊ก Select {m2 === 'r' ? 'R' : 'S'} เพิ่ม{goUnits} / ✕ เอาออก แล้ว<b> กด Save</b> เพื่อบันทึก</Text>
           : <Inline space={2}>
               <Text size={1}>จำนวนห้อง</Text>{numIn(P, set, 'quota')}
               <Text size={1} muted>เลือกดีลดีสุดให้เต็มจำนวนนี้อัตโนมัติ</Text>
@@ -928,7 +935,7 @@ export function UnitBoardsTool() {
         .ub-scroll::-webkit-scrollbar-track{background:#eef1f5}`}</style>
       <Stack space={4} style={{ flexShrink: 0 }}>
         <Flex align="center" gap={3} wrap="wrap">
-          <Text size={2} weight="bold">Unit Boards · คัดห้องขึ้นบอร์ดราคา</Text>
+          <Text size={2} weight="bold">{view === 'lineup' ? 'Board Lineup · ห้องบนจอ' : 'All Units · ห้องทั้งหมด'}</Text>
           <select value={proj} onChange={e => setProj(e.currentTarget.value)}
             style={{ padding: '6px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 14 }}>
             {projectNames.map(n => <option key={n} value={n}>{n}{NAME_TO_CODE[n] ? '' : ' (ยังไม่มี project doc)'}</option>)}
@@ -964,15 +971,16 @@ export function UnitBoardsTool() {
           })()}
         </Flex>
 
-        <Inline space={2}>
+        {view === 'units' && <Inline space={2}>
           {([['ห้องจริง', stat.units], ['เช่า/ขาย', `${stat.rent}/${stat.sale}`], ['Dual', stat.dual], ['ขึ้นบอร์ด', stat.board],
             ['รอตรวจ', stat.candidate], ['ตรวจแล้ว', stat.verified], ['ขึ้นจอได้', stat.published]] as Array<[string, number | string]>).map(([l, v]) => (
             <Card key={l} padding={2} radius={2} border><Stack space={1}>
               <Text size={0} muted>{l}</Text><Text size={2} weight="bold">{v}</Text>
             </Stack></Card>
           ))}
-        </Inline>
+        </Inline>}
 
+        {view === 'lineup' && <>
         <Card padding={3} radius={2} border tone="transparent">
           <Stack space={3}>
             {polRow('Rent board', polR, setPolR, 'r')}
@@ -1021,7 +1029,7 @@ export function UnitBoardsTool() {
                 <Inline space={2}>
                   <Text size={1} muted weight="semibold">{label}</Text>
                   <Text size={1} weight="bold" style={{ color: sim.rows.length ? '#166534' : '#b42318' }}>{sim.rows.length} ห้อง</Text>
-                  {sim.rows.length === 0 && <Text size={1} muted>ยังไม่ได้เลือก — {(m2 === 'rent' ? manualR : manualS) ? `ติ๊ก Select ${m2 === 'rent' ? 'R' : 'S'} ในตาราง` : 'ไม่มีห้องผ่านเกณฑ์'}</Text>}
+                  {sim.rows.length === 0 && <Text size={1} muted>ยังไม่ได้เลือก — {(m2 === 'rent' ? manualR : manualS) ? <>ติ๊ก Select {m2 === 'rent' ? 'R' : 'S'}{goUnits ?? ' ในตาราง'}</> : 'ไม่มีห้องผ่านเกณฑ์'}</Text>}
                 </Inline>
                 {/* จัดกลุ่มตามชนิดห้องให้ตรงกับรูปแบบใหม่ที่ "หนึ่งสไลด์ = หนึ่งชนิด"
                     และบอกตรงนี้เลยว่าชนิดไหนจะได้สไลด์จริง คนเลือกจะได้ไม่ต้องเดา */}
@@ -1082,20 +1090,21 @@ export function UnitBoardsTool() {
             <Text size={0} muted>กดแล้วมีผลทันที ไม่ต้อง publish · เอาห้องออกแล้วตัวคัดจะดึงห้องถัดไปขึ้นมาแทน · ห้องที่ปิดดีลโชว์บนจอ 30 วันแล้วหลุดเอง</Text>
           </Stack>
         </Card>
+        </>}
 
-        <Flex gap={2} wrap="wrap" align="center">
+        {view === 'units' && <Flex gap={2} wrap="wrap" align="center">
           {FILTERS.map(([k, l]) => (
             <Button key={k} text={l} mode={mode === k ? 'default' : 'ghost'} tone={mode === k ? 'primary' : 'default'} fontSize={1} padding={2}
               onClick={() => setMode(k)} />
           ))}
           <Box style={{ width: 220 }}><TextInput fontSize={1} placeholder="Search Ref / Agent" value={q} onChange={e => setQ(e.currentTarget.value)} /></Box>
           <Text size={1} muted>{shown.length} units</Text>
-        </Flex>
+        </Flex>}
       </Stack>
 
       {/* ตารางกินพื้นที่ที่เหลือของจอ — แถบเลื่อนแนวนอน/แนวตั้งอยู่ในสายตาเสมอ ไม่จมใต้ fold */}
       {/* กล่องตารางหนึบขอบบน — เลื่อนส่วนบนพ้นไปแล้วหัวตารางกับคอลัมน์ที่ฟรีซยังอยู่ */}
-      <div className="ub-scroll" style={{ position: 'sticky', top: 0, height: 'calc(100vh - 120px)', overflow: 'auto', border: '1px solid #e3e8ef', borderRadius: 6, background: '#fff' }}>
+      {view === 'units' && <div className="ub-scroll" style={{ position: 'sticky', top: 0, height: 'calc(100vh - 120px)', overflow: 'auto', border: '1px solid #e3e8ef', borderRadius: 6, background: '#fff' }}>
           <table style={{ borderCollapse: 'collapse', width: 'max-content', minWidth: '100%' }}>
             <thead><tr>
               <th style={thFz(0)} title="ลำดับตามการเรียง/กรองปัจจุบัน">#</th>
@@ -1232,7 +1241,7 @@ export function UnitBoardsTool() {
               })}
             </tbody>
           </table>
-      </div>
+      </div>}
       <Text size={1} muted style={{ flexShrink: 0 }}>internal use only — มีชั้นจริง + ลิงก์ต้นทาง · Save = draft เท่านั้น ทีมยัง publish ผ่าน Pending Publish ตามเดิม</Text>
     </Flex>
   )
