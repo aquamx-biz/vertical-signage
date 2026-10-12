@@ -105,6 +105,14 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: var(--stag
 .c .nm .s .val { color: var(--green); }
 .c .nm .s .ps { color: rgba(255,255,255,0.86); }
 .st { font-size: 26px; font-weight: 700; padding: 3px 16px; border-radius: 999px; line-height: 1.25; }
+/* ป้ายขนาด — เทียบห้องใหญ่สุดของชนิดเดียวกัน · คำบวกเท่านั้น (ไม่มี "ขนาดกลาง") */
+.sz { font-size: 26px; font-weight: 700; padding: 1px 14px; border-radius: 999px; line-height: 1.3; }
+.sz.top { background: var(--bronze); color: #2a1600; }
+.sz.big { border: 2px solid rgba(224,154,85,0.8); color: #F3C08E; }
+/* บรรทัดสองไม่บีบป้าย — ให้ล้นจริงแล้วไปหดฟอนต์ทั้งบรรทัดแทน (บีบแล้วข้อความในป้ายขาด) */
+.c .nm .s > * { flex-shrink: 0; white-space: nowrap; }
+.c .nm .s.tight { font-size: 26px; gap: 8px; } .c .nm .s.tight .st, .c .nm .s.tight .sz { font-size: 22px; padding: 1px 10px; }
+.c .nm .s.tighter { font-size: 23px; } .c .nm .s.tighter .st, .c .nm .s.tighter .sz { font-size: 20px; padding: 0 8px; }
 .st.view { background: #FFD66B; color: #3a2a00; }
 .st.talk { background: var(--cyan); color: #06263a; }
 .st.int  { background: rgba(255,255,255,0.16); color: #fff; }
@@ -230,8 +238,13 @@ const SEG_LABEL = { STUDIO: "Studio", "1BED": "1 Bed", "2BED": "2 Bed", "3BED": 
    หัวจะบอกว่าต่อเนื่อง คนอ่านไม่หลงว่าขึ้นกลุ่มใหม่ */
 const pages = [], pageSegs = []
 {
-  const sorted = SEG_ORDER.flatMap(sg => rows.filter(r => r.type === sg))
-    .concat(rows.filter(r => !SEG_ORDER.includes(r.type)))
+  /* ภายในแต่ละชนิด เรียงตามชั้น: ชั้นสูงอยู่บน ชั้นต่ำอยู่ล่าง (หลายหน้า → หน้า 1 = ชั้นบน)
+     ห้องที่ไม่มีเลขชั้นจริง ใช้โซนแทน (ล่าง≈5 · กลาง≈15 · สูง≈25) · ชั้นเท่ากัน → ราคาถูกก่อน */
+  const ZONE_FLOOR = { LOW: 5, MID: 15, HIGH: 25 }
+  const floorKey = r => r.floorNo != null ? r.floorNo : (ZONE_FLOOR[r.floor] ?? 15)
+  const byFloor = list => list.slice().sort((a, b) => floorKey(b) - floorKey(a) || (a.price || 0) - (b.price || 0))
+  const sorted = SEG_ORDER.flatMap(sg => byFloor(rows.filter(r => r.type === sg)))
+    .concat(byFloor(rows.filter(r => !SEG_ORDER.includes(r.type))))
   const n = sorted.length
   const pageCount = Math.max(1, Math.ceil(n / PER_PAGE))
   const base = Math.floor(n / pageCount), rem = n % pageCount
@@ -297,6 +310,18 @@ const valueOf = (r, t) => {
   const ps = r.pricePerSqm ?? (r.sqm ? Math.round(r.price / r.sqm) : null)
   return ps ? `<span class="ps">${ps.toLocaleString()} ${t.psqmU}</span>` : ""
 }
+/* ขนาดเทียบห้องใหญ่สุด "ชนิดเดียวกัน" บนบอร์ดนี้: 100% = กว้างสุด · ≥90% = ห้องใหญ่ · ต่ำกว่านั้นไม่ติดป้าย
+   ชนิดที่มีห้องเดียว หรือทุกห้องขนาดเท่ากัน → ไม่ติด (ทุกใบจะเป็น "กว้างสุด" = ไม่ได้บอกอะไร) */
+const SZW = { top: { th: "กว้างสุด", en: "Largest", ja: "最大の広さ", zh: "面积最大" },
+              big: { th: "ห้องใหญ่", en: "Spacious", ja: "広め", zh: "宽敞" } }
+const TSZ = {}
+for (const r of DATA.rows || []) if (r.sqm) { const x = TSZ[r.type] ??= { max: 0, min: Infinity }; x.max = Math.max(x.max, r.sqm); x.min = Math.min(x.min, r.sqm) }
+const sizeOf = r => {
+  const x = TSZ[r.type]
+  if (r.takenLabel || !r.sqm || !x || x.max === x.min) return ""
+  const k = r.sqm >= x.max ? "top" : r.sqm / x.max >= 0.9 ? "big" : ""
+  return k ? `<span class="sz ${k}">${SZW[k][LANGS[lang]]}</span>` : ""
+}
 const statusOf = (r, t) =>
   r.takenLabel ? `<span class="st done">${MODE === "sale" ? t.doneS : t.doneR}</span>` :
   r.actTalking ? `<span class="st talk">${t.talk}</span>` :
@@ -328,7 +353,7 @@ function paint() {
       : (r.sqm ? `${t.saleM} · <b>${fmtPsqmK(r.price, r.sqm)}</b> ${t.saleQ}` : t.saleM)
     return `<div class="c${r.takenLabel ? " taken" : ""}">
       <span class="nm"><div class="t">${r.sqm} ${t.bedU} <span class="dot">·</span> ${fl(r, t)} ${flag}</div>
-        <div class="s">${valueOf(r, t)}${statusOf(r, t)}</div></span>
+        <div class="s">${valueOf(r, t)}${statusOf(r, t)}${sizeOf(r)}</div></span>
       <span class="prw"><div class="pr">${pr}</div><div class="pru">${pru}</div></span>
     </div>`
   }
@@ -342,6 +367,10 @@ function paint() {
     const t = nm.querySelector(".t")
     t.classList.remove("tight")
     if (nm.scrollWidth > nm.clientWidth + 1) t.classList.add("tight")
+    /* บรรทัดสอง (คุ้ม% + สถานะ + ขนาด) ยาวเกิน → หดหนึ่งขั้น · ยังเกิน → อีกขั้น */
+    const s2 = nm.querySelector(".s"); s2.classList.remove("tight", "tighter")
+    if (s2.scrollWidth > nm.clientWidth + 1) s2.classList.add("tight")
+    if (s2.scrollWidth > nm.clientWidth + 1) s2.classList.add("tighter")
   })
 }
 
@@ -370,6 +399,9 @@ addEventListener("resize", fitStage)
 const REC = new URLSearchParams(location.search).get("rec") === "1"
 if (!REC) lang = nextLang()
 paint()
+/* วัดความยาวอีกรอบเมื่อฟอนต์เว็บโหลดเสร็จ — ก่อนหน้านั้นวัดจากฟอนต์สำรองที่แคบกว่า
+   (บนกล่องฟอนต์มาทีหลัง → ข้อความล้นแต่ไม่หด) */
+try { document.fonts.ready.then(() => { if (!REC) paint() }) } catch (e) {}
 
 /* ── โหมดอัดวิดีโอ (?rec=1) — เดินเวลาจากภายนอกทีละเฟรม แทน setInterval
  *    ให้ recorder เรียก __paintAt(tMs) → ได้วิดีโอ deterministic ลูปพอดีเป๊ะ
