@@ -276,10 +276,10 @@ export function UnitBoardsTool({ view = 'units', onGoUnits }: { view?: 'lineup' 
   /* ต้องอยู่เหนือ `if (loading) return` — hook ที่อยู่ใต้ early return จะถูกเรียก
      ไม่เท่ากันระหว่าง render ตอนโหลดกับตอนโหลดเสร็จ แล้ว React จะพังทั้งเครื่องมือ */
   const [stageBusy, setStageBusy] = useState<string | null>(null)
-  const [stageOpen, setStageOpen] = useState(true)                 // กางแผงไว้ — หัวข้อกลุ่มคือสาระ
-  const [segOpen, setSegOpen] = useState<Set<string>>(new Set())   // กลุ่มที่กางอยู่ · ว่าง = พับหมด
   const [selRemove, setSelRemove] = useState<Set<string>>(new Set())  // ติ๊กไว้เพื่อเอาออกทีเดียว (คีย์ refCode·mode)
   const [hiddenOpen, setHiddenOpen] = useState(false)  // รายการห้องที่เอาออก — พับไว้ (ยาวได้เป็นร้อย)
+  const [stageFilter, setStageFilter] = useState('all')   // Board Lineup: กรองตามสถานะดีล
+  const [pv, setPv] = useState<{ mode: 'rent' | 'sale'; seg: string }>({ mode: 'rent', seg: '' })   // สไลด์ที่จอจำลองโชว์
 
   useEffect(() => {
     let dead = false
@@ -779,64 +779,168 @@ export function UnitBoardsTool({ view = 'units', onGoUnits }: { view?: 'lineup' 
     </>
   }
 
-  const stageRow = (p: Profile, m2: 'rent' | 'sale') => {
+  /* ── Board Lineup (แบบใหม่) ────────────────────────────────────────────────
+     สองบอร์ดคู่กัน (เช่า | ขาย) · ทุกห้องเห็นทันที ไม่ต้องกางกลุ่ม · หัวบอร์ด+หัวคอลัมน์ตรึงตอนเลื่อน
+     แถวเรียงตามชั้น (สูง→ต่ำ) ตรงกับบอร์ดบนจอ · กดแถว = จอจำลองด้านขวาเปิดสไลด์ของห้องนั้น
+     เขียนข้อมูลเหมือนเดิมทุกอย่าง: สถานะดีล / เอาออก (อัตโนมัติ) / เอากลับ = published ทันที
+     · เลือกเอง: ✕ = ถอดติ๊ก (local) ต้องกด Save → แถบเหลืองลอยล่างจอบอกว่ายังไม่บันทึก */
+  const STAGE_ICON: Record<string, string> = { '': '—', viewing: '👀', talking: '💬', closed: '✅' }
+  const STAGE_LINE: Record<string, string> = { viewing: '#f59e0b', talking: '#60a5fa', closed: '#16a34a' }
+  const floorOf = (p: Profile) => sources.get(p.refCode)?.floorActual ?? null
+  const floorKey = (p: Profile) => floorOf(p) ?? ({ low: 5, mid: 15, high: 25 } as Record<string, number>)[p.floorZone ?? ''] ?? 15
+  const LU_COLS = '22px 88px 44px minmax(52px,60px) 64px minmax(72px,1fr) auto 28px'   // สถานะดีล = auto (ปุ่มกว้างตามป้าย) · จอแคบไม่ล้นการ์ด
+  const luCode = NAME_TO_CODE[proj]
+  const savedOf = (m2: 'rent' | 'sale') => new Set(luCode ? boardLineups[`${luCode}·${m2}`] ?? [] : [])
+  /* ของที่ยังไม่ได้ Save — เทียบกับ lineup ที่บันทึกไว้ (โหมดเลือกเอง) / จำนวนห้อง+โหมด (อัตโนมัติ) */
+  const pendingOf = (m2: 'rent' | 'sale') => {
+    const man = m2 === 'rent' ? manualR : manualS, sel = m2 === 'rent' ? selR : selS, saved = savedOf(m2)
+    const savedMan = luCode ? boardManual[`${luCode}·${m2}`] ?? false : false
+    const pol = m2 === 'rent' ? polR : polS
+    const savedQuota = (luCode ? boardPolicies[`${luCode}·${m2}`]?.quota : undefined) ?? DEFAULT_POLICY.quota
+    const removed = man ? [...saved].filter(r => !sel.has(r)) : []
+    const added = man ? [...sel].filter(r => !saved.has(r)) : []
+    return { removed, added, modeChanged: man !== savedMan, quotaChanged: !man && pol.quota !== savedQuota }
+  }
+  const pend = { rent: pendingOf('rent'), sale: pendingOf('sale') }
+  const pendCount = (['rent', 'sale'] as const).reduce((n, m) => n + pend[m].removed.length + pend[m].added.length
+    + (pend[m].modeChanged ? 1 : 0) + (pend[m].quotaChanged ? 1 : 0), 0)
+  const undoPending = () => {
+    setSelR(savedOf('rent')); setSelS(savedOf('sale'))
+    setManualR(luCode ? boardManual[`${luCode}·rent`] ?? false : false)
+    setManualS(luCode ? boardManual[`${luCode}·sale`] ?? false : false)
+    setPolR({ ...DEFAULT_POLICY, investQ: 0, ...(luCode ? boardPolicies[`${luCode}·rent`] : {}) })
+    setPolS({ ...DEFAULT_POLICY, ...(luCode ? boardPolicies[`${luCode}·sale`] : {}) })
+  }
+  const stageMatch = (p: Profile) => stageFilter === 'all' || (stageFilter === 'none' ? !p.dealStage : p.dealStage === stageFilter)
+
+  const luRow = (p: Profile, m2: 'rent' | 'sale', ghost = false) => {
     const cur = p.dealStage ?? ''
     const id = `unitProfile-${p.refCode}-${m2}`
     const selKey = `${p.refCode}·${m2}`
+    const man = m2 === 'rent' ? manualR : manualS
+    const e = expectedOf(p, m2)
+    const f = floorOf(p)
+    const isNew = man && pend[m2].added.includes(p.refCode)
+    const isPv = !ghost && pv.mode === m2 && pv.seg === p.bedType
     return (
-      <Flex key={p.refCode + m2} align="center" gap={2} style={{ padding: '3px 0', opacity: stageBusy === id ? 0.45 : 1 }}>
-        <input type="checkbox" checked={selRemove.has(selKey)} title="ติ๊กเพื่อเอาออกทีเดียวหลายห้อง"
+      <div key={p.refCode + m2 + (ghost ? 'g' : '')}
+        onClick={ev => { if (ghost || (ev.target as HTMLElement).closest('button,input,a')) return; setPv({ mode: m2, seg: p.bedType ?? '' }) }}
+        style={{ display: 'grid', gridTemplateColumns: LU_COLS, alignItems: 'center', gap: 8, padding: '6px 12px',
+          borderTop: '1px solid #f0f2f5', cursor: ghost ? 'default' : 'pointer', opacity: ghost || stageBusy === id ? 0.45 : 1,
+          textDecoration: ghost ? 'line-through' : undefined, background: isPv ? '#eef4ff' : undefined,
+          boxShadow: STAGE_LINE[cur] && !ghost ? `inset 3px 0 0 ${STAGE_LINE[cur]}` : undefined }}>
+        {ghost ? <span /> : <input type="checkbox" checked={selRemove.has(selKey)} title="ติ๊กหลายห้องเพื่อเอาออกทีเดียว"
           onChange={() => setSelRemove(x => { const n = new Set(x); n.has(selKey) ? n.delete(selKey) : n.add(selKey); return n })}
-          style={{ cursor: 'pointer', width: 15, height: 15 }} />
-        <Text size={1} style={{ width: 92, fontFamily: 'monospace' }}>{p.refCode}</Text>
-        <Text size={1} muted style={{ minWidth: 430, whiteSpace: 'nowrap' }}>
-          {p.sqm} ตรม. · {sources.get(p.refCode)?.floorActual != null ? `ชั้น ${sources.get(p.refCode)!.floorActual}` : (ZONE_TH[p.floorZone ?? ''] ?? '')}
-          {' · '}{(p.priceTHB ?? 0) >= 1e6 ? `${(p.priceTHB! / 1e6).toFixed(1)}M` : `${Math.round((p.priceTHB ?? 0) / 1e3)}K`}
-          {/* ราคาต่อ ตร.ม. — ตัวเดียวที่เทียบห้องคนละขนาดได้ตรง ๆ · โชว์เฉพาะในเครื่องมือ
-              ไม่ส่งขึ้นจอ เพราะบนบอร์ดมี "ถูกกว่าค่าเฉลี่ยชั้นนี้ X%" ที่อ่านง่ายกว่าอยู่แล้ว */}
-          {(() => {
-            const ps = p.pricePerSqm ?? (p.priceTHB && p.sqm ? Math.round(p.priceTHB / p.sqm) : null)
-            if (ps == null) return null
-            const fmtPs = (n: number) => n >= 1000 ? `${Math.round(n / 1000)}K` : Math.round(n).toLocaleString()
-            /* "ควรเป็น" = ราคากลางของตึกนี้ ปรับตามชั้นของห้องแล้ว — เลขเดียวกับที่
-               ทำให้จอขึ้นว่า "คุ้มกว่า X%" ต่างกันแค่จอบอกผลลัพธ์ ที่นี่บอกที่มา
-               ติดลบ = ถูกกว่าที่ควรเป็น = ดีลดี จึงเป็นสีเขียว */
-            const e = expectedOf(p, m2)
-            return <>
-              <span style={{ color: '#0f3460', fontWeight: 600 }}>
-                {'  '}{fmtPs(ps)} ฿/ตร.ม.{m2 === 'rent' ? '/ด.' : ''}
-              </span>
-              {e && e.pct != null && (
-                <span title={`ราคากลางของตึกปรับตามชั้นแล้ว = ${Math.round(e.exp).toLocaleString()} ฿/ตร.ม.`
-                  + (e.borrowed ? ' · ตึกนี้ข้อมูลไม่พอ ใช้ floor premium กลางของทุกตึกแทน' : '')}>
-                  {' · ควรเป็น '}{fmtPs(e.exp)}{e.borrowed ? '*' : ''}
-                  <b style={{ color: e.pct < 0 ? '#067647' : '#b42318', marginLeft: 4 }}>
-                    {e.pct < 0 ? `คุ้มกว่า ${-e.pct}%` : `แพงกว่า ${e.pct}%`}
-                  </b>
-                </span>
-              )}
-            </>
-          })()}
-        </Text>
-        <Flex gap={1}>
-          {STAGES.map(([v, label, bg]) => (
-            <button key={v || 'none'} onClick={() => setStage(p, m2, v)} disabled={stageBusy === id}
-              style={{ fontSize: 11.5, padding: '3px 9px', borderRadius: 999, cursor: 'pointer',
-                border: cur === v ? '1px solid #0f3460' : '1px solid #d1d5db',
-                background: cur === v ? bg : '#fff', fontWeight: cur === v ? 700 : 400 }}>{label}</button>
-          ))}
-        </Flex>
-        {p.dealStageAt && cur === 'closed' && <Text size={0} muted>ปิดเมื่อ {p.dealStageAt}</Text>}
-        <button onClick={() => (m2 === 'rent' ? manualR : manualS)
-            ? (m2 === 'rent' ? setSelR : setSelS)(x => { const n = new Set(x); n.delete(p.refCode); return n })
-            : setHidden(p, true)}
-          disabled={stageBusy === p.refCode}
-          title={(m2 === 'rent' ? manualR : manualS) ? 'ถอดห้องนี้ออกจากที่เลือก — กด Save เพื่อบันทึก' : 'เอาห้องนี้ออกจากบอร์ด — ตัวคัดจะดึงห้องถัดไปขึ้นมาแทน'}
-          style={{ marginLeft: 'auto', fontSize: 11.5, padding: '3px 10px', borderRadius: 999,
-            border: '1px solid #e5b4b4', background: '#fff', color: '#b42318', cursor: 'pointer' }}>✕ เอาออก</button>
-      </Flex>
+          style={{ cursor: 'pointer', width: 15, height: 15 }} />}
+        <span style={{ fontFamily: 'monospace', fontSize: 13, fontWeight: 600 }} title={isNew ? 'เพิ่มใหม่ — ยังไม่ได้ Save' : undefined}>
+          {p.refCode}{isNew && <span style={{ marginLeft: 4, fontSize: 10, color: '#b45309' }}>●</span>}</span>
+        <span style={{ fontSize: 13, color: '#6b7280', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{p.sqm ?? '—'}</span>
+        <span style={{ fontSize: 13, color: '#6b7280', textAlign: 'right', whiteSpace: 'nowrap' }}>{f ?? (ZONE_TH[p.floorZone ?? ''] ?? '—')}</span>
+        <span style={{ fontSize: 13, fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>{m2 === 'rent' ? fmtK(p.priceTHB) : fmtM(p.priceTHB)}</span>
+        <span style={{ justifySelf: 'end' }}>{e?.pct != null
+          ? <span title={`ราคาที่ควรเป็นของชั้นนี้ = ${Math.round(e.exp).toLocaleString('en-US')} ฿/ตร.ม.${e.borrowed ? ' · ตึกนี้ข้อมูลไม่พอ ใช้ floor premium กลางแทน' : ''}`}
+              style={{ fontSize: 12, fontWeight: 700, padding: '2px 8px', borderRadius: 999, whiteSpace: 'nowrap',
+                color: e.pct < 0 ? '#067647' : '#b42318', background: e.pct < 0 ? '#e7f6ec' : '#fdecec' }}>
+              {e.pct < 0 ? `คุ้มกว่า ${-e.pct}%` : `แพงกว่า ${e.pct}%`}</span>
+          : <span style={{ color: '#9aa3b2', fontSize: 12 }}>—</span>}</span>
+        {ghost ? <span style={{ fontSize: 12, color: '#b45309', justifySelf: 'end', textDecoration: 'none' }}>ถอดออก · ยังไม่ Save</span>
+          : <span style={{ justifySelf: 'end', display: 'inline-flex', border: '1px solid #d1d5db', borderRadius: 7, overflow: 'hidden' }}>
+              {STAGES.map(([v, label, bg]) => (
+                <button key={v || 'none'} onClick={() => setStage(p, m2, v)} disabled={stageBusy === id} title={v ? label : 'ว่าง (ไม่มีดีล)'}
+                  style={{ fontSize: 12, padding: '3px 8px', border: 'none', borderLeft: v ? '1px solid #e5e7eb' : 'none', cursor: 'pointer',
+                    background: cur === v ? bg : '#fff', fontWeight: cur === v ? 700 : 400, color: cur === v ? '#111827' : '#6b7280', whiteSpace: 'nowrap' }}>
+                  {cur === v && v ? label : STAGE_ICON[v]}</button>
+              ))}</span>}
+        {ghost
+          ? <button onClick={() => (m2 === 'rent' ? setSelR : setSelS)(x => new Set(x).add(p.refCode))} title="เอากลับเข้าที่เลือก"
+              style={{ border: 0, background: 'transparent', color: '#0f3460', cursor: 'pointer', fontSize: 15 }}>↩</button>
+          : <button onClick={() => man
+                ? (m2 === 'rent' ? setSelR : setSelS)(x => { const n = new Set(x); n.delete(p.refCode); return n })
+                : setHidden(p, true)}
+              disabled={stageBusy === p.refCode}
+              title={man ? 'ถอดห้องนี้ออกจากที่เลือก — กด Save เพื่อบันทึก' : 'เอาห้องนี้ออกจากบอร์ด (มีผลทันที) — ตัวคัดจะดึงห้องถัดไปขึ้นมาแทน'}
+              style={{ border: 0, background: 'transparent', color: '#b42318', cursor: 'pointer', fontSize: 15, borderRadius: 6 }}>✕</button>}
+      </div>
     )
   }
+
+  const luBoard = (m2: 'rent' | 'sale', label: string, sim: { rows: Profile[]; warnings: string[] }) => {
+    const man = m2 === 'rent' ? manualR : manualS
+    const setMan = m2 === 'rent' ? setManualR : setManualS
+    const P = m2 === 'rent' ? polR : polS, setP = m2 === 'rent' ? setPolR : setPolS
+    const rows = sim.rows.filter(stageMatch)
+    const keys = sim.rows.map(p => `${p.refCode}·${m2}`)
+    const allSel = keys.length > 0 && keys.every(k => selRemove.has(k))
+    const selHere = keys.filter(k => selRemove.has(k)).length
+    const ghosts = pend[m2].removed.map(r => pool.find(p => p.refCode === r && p.intent === m2)).filter(Boolean) as Profile[]
+    return (
+      <div style={{ background: '#fff', border: '1px solid #e3e8ef', borderRadius: 10, minWidth: 0 }}>
+        {/* หัวบอร์ด + หัวคอลัมน์ ตรึงไว้ตอนเลื่อนลง */}
+        <div style={{ position: 'sticky', top: 0, zIndex: 3, background: '#fff', borderRadius: '10px 10px 0 0' }}>
+          <Flex align="center" gap={3} wrap="wrap" style={{ padding: '10px 12px', borderBottom: '1px solid #e3e8ef' }}>
+            <Text size={2} weight="bold">{label}</Text>
+            <span style={{ fontSize: 22, fontWeight: 700, color: sim.rows.length ? '#067647' : '#b42318', lineHeight: 1 }}>{sim.rows.length}<span style={{ fontSize: 12, fontWeight: 500, color: '#6b7280', marginLeft: 3 }}>ห้อง</span></span>
+            <div style={{ display: 'inline-flex', border: '1px solid #d1d5db', borderRadius: 999, padding: 2, background: '#f3f4f6' }}>
+              {([[false, 'อัตโนมัติ'], [true, 'เลือกเอง']] as const).map(([v, t]) => (
+                <button key={String(v)} onClick={() => setMan(v)}
+                  style={{ fontSize: 12, fontWeight: man === v ? 700 : 400, padding: '3px 11px', borderRadius: 999, cursor: 'pointer', border: 'none',
+                    background: man === v ? '#0f3460' : 'transparent', color: man === v ? '#fff' : '#6b7280' }}>{t}</button>
+              ))}
+            </div>
+          </Flex>
+          <div style={{ padding: '6px 12px', fontSize: 12.5, color: '#6b7280', background: '#fafbfc', borderBottom: '1px solid #e3e8ef' }}>
+            {man
+              ? <span>เลือกเอง — บอร์ด = เฉพาะห้องที่เลือก · เพิ่มห้อง{goUnits ?? 'ที่ตาราง'}</span>
+              : <Inline space={2}><span>อัตโนมัติ — เติมดีลดีสุดให้ครบ</span>{numIn(P, setP, 'quota')}<span>ห้อง</span></Inline>}
+            {sim.warnings.map((w, i) => <div key={i} style={{ color: '#c2410c' }}>⚠ {w}</div>)}
+          </div>
+          {selHere > 0 && (
+            <Flex align="center" gap={2} style={{ padding: '7px 12px', background: '#fef2f2', borderBottom: '1px solid #f3c6c6' }}>
+              <Text size={1} weight="semibold" style={{ color: '#b42318' }}>ติ๊กไว้ {selHere} ห้อง</Text>
+              <button onClick={removeMany} disabled={stageBusy === '__bulk__'}
+                style={{ fontSize: 12, fontWeight: 700, padding: '4px 12px', borderRadius: 999, cursor: 'pointer', border: '1px solid #b42318', background: '#b42318', color: '#fff' }}>
+                {stageBusy === '__bulk__' ? 'กำลังเอาออก…' : '✕ เอาออกที่ติ๊ก'}</button>
+              <button onClick={() => setSelRemove(x => { const n = new Set(x); keys.forEach(k => n.delete(k)); return n })}
+                style={{ fontSize: 12, padding: '4px 10px', borderRadius: 999, cursor: 'pointer', border: '1px solid #d1d5db', background: '#fff' }}>ยกเลิก</button>
+            </Flex>
+          )}
+          <div style={{ display: 'grid', gridTemplateColumns: LU_COLS, gap: 8, alignItems: 'center', padding: '6px 12px',
+            background: '#0f3460', color: '#fff', fontSize: 11, fontWeight: 600, letterSpacing: '.03em', whiteSpace: 'nowrap' }}>
+            <input type="checkbox" checked={allSel} title="ติ๊กทั้งบอร์ด" style={{ width: 15, height: 15 }}
+              onChange={() => setSelRemove(x => { const n = new Set(x); keys.forEach(k => allSel ? n.delete(k) : n.add(k)); return n })} />
+            <span>ห้อง</span><span style={{ textAlign: 'right' }}>ตร.ม.</span><span style={{ textAlign: 'right' }}>ชั้น</span>
+            <span>{m2 === 'rent' ? 'ค่าเช่า' : 'ราคา'}</span><span style={{ textAlign: 'right' }}>vs ควรเป็น</span>
+            <span style={{ textAlign: 'right' }}>สถานะดีล</span><span />
+          </div>
+        </div>
+        {sim.rows.length === 0 && <div style={{ padding: 16, fontSize: 13, color: '#6b7280' }}>
+          ยังไม่มีห้อง — {man ? <span>ติ๊ก Select {m2 === 'rent' ? 'R' : 'S'}{goUnits ?? ' ในตาราง'}</span> : 'ไม่มีห้องผ่านเกณฑ์'}</div>}
+        {BED_ORDER.filter(b => rows.some(p => p.bedType === b)).map(b => {
+          const rs = rows.filter(p => p.bedType === b).sort((x, y) => floorKey(y) - floorKey(x) || (x.priceTHB ?? 0) - (y.priceTHB ?? 0))
+          return (
+            <div key={b}>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'baseline', padding: '5px 12px', background: '#f3f5f8', borderTop: '1px solid #e3e8ef',
+                fontSize: 12, fontWeight: 700, color: '#475467' }}>
+                {BED_LABEL[b] ?? b}<span style={{ fontWeight: 500, color: '#6b7280' }}>{sim.rows.filter(p => p.bedType === b).length} ห้อง</span>
+              </div>
+              {rs.map(p => luRow(p, m2))}
+            </div>
+          )
+        })}
+        {sim.rows.length > 0 && rows.length === 0 && <div style={{ padding: 14, fontSize: 13, color: '#6b7280' }}>— ไม่มีห้องตามตัวกรองสถานะ —</div>}
+        {ghosts.length > 0 && <div style={{ borderTop: '1px dashed #e5b4b4' }}>{ghosts.map(p => luRow(p, m2, true))}</div>}
+      </div>
+    )
+  }
+
+  /* จอจำลอง: เทมเพลตตัวเดียวกับจอจริง (board-preview → board-cards-v2) ด้วย lineup ที่เห็นอยู่ — ยังไม่ต้อง Save */
+  const pvRows = (pv.mode === 'rent' ? simR : simS).rows
+  const pvSegs = BED_ORDER.filter(b => pvRows.some(p => p.bedType === b))
+  const pvSeg = pvSegs.includes(pv.seg) ? pv.seg : pvSegs[0] ?? ''
+  const pvSrc = pvSeg ? `/static/board-preview.html?tpl=cards&embed=1&lang=th#sim=${encodeURIComponent(JSON.stringify({
+    project: proj.toUpperCase(), mode: pv.mode, dataAsOf: dataRound ?? undefined, segment: BED_LABEL[pvSeg] ?? pvSeg,
+    rows: pvRows.filter(p => p.bedType === pvSeg).map(p => ({ ...profileToRow({ ...p, floorActual: floorOf(p) ?? undefined }), valuePct: expectedOf(p, pv.mode)?.pct ?? null })),
+  }))}` : ''
 
   const FILTERS: Array<[string, string]> = [
     ['all', 'All'], ['rent', 'Has rent'], ['sale', 'Has sale'], ['dual', 'Dual'],
@@ -986,115 +1090,106 @@ export function UnitBoardsTool({ view = 'units', onGoUnits }: { view?: 'lineup' 
         </Inline>}
 
         {view === 'lineup' && <>
-        <Card padding={3} radius={2} border tone="transparent">
-          <Stack space={3}>
-            {polRow('Rent board', polR, setPolR, 'r')}
-            {polRow('Sale board', polS, setPolS, 's')}
-            {(simR.warnings.length > 0 || simS.warnings.length > 0) && (
-              <Stack space={1}>
-                {simR.warnings.map((w, i) => <Text key={'r' + i} size={1} style={{ color: '#c2410c' }}>⚠ rent · {w}</Text>)}
-                {simS.warnings.map((w, i) => <Text key={'s' + i} size={1} style={{ color: '#c2410c' }}>⚠ sale · {w}</Text>)}
-              </Stack>
-            )}
-          </Stack>
-        </Card>
-
-        {/* สถานะดีลของเฉพาะห้องที่ถูกเลือกขึ้นบอร์ด — ไม่ใช่ทั้ง 234 ห้อง */}
-        <Card padding={3} radius={2} border tone="transparent">
-          <Stack space={3}>
-            {/* พับไว้เป็นค่าเริ่มต้น — หัวข้อสรุปให้เห็นว่ามีอะไรค้างอยู่โดยไม่ต้องกางทั้ง 38 แถว */}
-            <Flex align="center" gap={2} style={{ cursor: 'pointer' }} onClick={() => setStageOpen(o => !o)}>
-              <Text size={1} weight="bold">{stageOpen ? '▾' : '▸'} สถานะดีล · เฉพาะห้องที่จะขึ้นจอ ({simR.rows.length + simS.rows.length} ห้อง)</Text>
-              {(() => {
-                const all = [...simR.rows, ...simS.rows]
-                const n = (v: string) => all.filter(p => (p.dealStage ?? '') === v).length
-                const bits = ([['closed', '✅ ปิดดีล'], ['viewing', '👀 นัดชม'], ['talking', '💬 กำลังคุย']] as const)
-                  .filter(([v]) => n(v) > 0).map(([v, l]) => `${l} ${n(v)}`)
-                return bits.length
-                  ? <Text size={1} style={{ color: '#166534' }}>{bits.join(' · ')}</Text>
-                  : <Text size={1} muted>ยังไม่มีห้องไหนถูกทำเครื่องหมาย</Text>
-              })()}
+        {/* ชิปสถานะดีล = ตัวกรองด้วย (กด "นัดชม" ดูเฉพาะห้องที่นัดชม) */}
+        {(() => {
+          const all = [...simR.rows, ...simS.rows]
+          const n = (v: string) => all.filter(p => (p.dealStage ?? '') === v).length
+          const chips: Array<[string, string, number]> = [['all', 'ทั้งหมด', all.length], ['talking', '💬 กำลังคุย', n('talking')],
+            ['viewing', '👀 นัดชม', n('viewing')], ['closed', '✅ ปิดดีล', n('closed')], ['none', 'ยังไม่มีดีล', n('')]]
+          return (
+            <Flex gap={2} wrap="wrap" align="center">
+              {chips.map(([k, l, c]) => (
+                <button key={k} onClick={() => setStageFilter(k)}
+                  style={{ fontSize: 13, padding: '5px 12px', borderRadius: 999, cursor: 'pointer',
+                    border: `1px solid ${stageFilter === k ? '#0f3460' : '#d1d5db'}`,
+                    background: stageFilter === k ? '#0f3460' : '#fff', color: stageFilter === k ? '#fff' : '#14213a' }}>
+                  {l} <b style={{ marginLeft: 3 }}>{c}</b></button>
+              ))}
+              {pendCount === 0 && <Text size={1} style={{ color: '#067647', marginLeft: 'auto' }}>✓ บอร์ดตรงกับที่บันทึกไว้</Text>}
             </Flex>
-            {stageOpen && selRemove.size > 0 && (
-              <Flex align="center" gap={3} style={{ background: '#fef2f2', border: '1px solid #f3c6c6', padding: '8px 12px', borderRadius: 8 }}>
-                <Text size={1} weight="semibold" style={{ color: '#b42318' }}>ติ๊กไว้ {selRemove.size} ห้อง</Text>
-                <button onClick={removeMany} disabled={stageBusy === '__bulk__'}
-                  style={{ fontSize: 12.5, fontWeight: 700, padding: '5px 14px', borderRadius: 999, cursor: 'pointer',
-                    border: '1px solid #b42318', background: '#b42318', color: '#fff' }}>
-                  {stageBusy === '__bulk__' ? 'กำลังเอาออก…' : `✕ เอาออกที่ติ๊กทั้งหมด (${selRemove.size})`}</button>
-                <button onClick={() => setSelRemove(new Set())} disabled={stageBusy === '__bulk__'}
-                  style={{ fontSize: 12, padding: '5px 12px', borderRadius: 999, cursor: 'pointer',
-                    border: '1px solid #d1d5db', background: '#fff', color: '#374151' }}>ยกเลิกที่ติ๊ก</button>
-              </Flex>
-            )}
-            {/* แสดงหัวบอร์ดทั้งสองฝั่งเสมอ — 0 ห้องต้องเห็นเป็น "0" ไม่ใช่หายไปทั้งบล็อก
-                (ไม่งั้นแยกไม่ออกว่าไม่มีห้อง หรือ UI พลาด) */}
-            {stageOpen && ([['บอร์ดเช่า', 'rent', simR], ['บอร์ดขาย', 'sale', simS]] as const).map(([label, m2, sim]) => (
-              <Stack key={m2} space={2}>
-                <Inline space={2}>
-                  <Text size={1} muted weight="semibold">{label}</Text>
-                  <Text size={1} weight="bold" style={{ color: sim.rows.length ? '#166534' : '#b42318' }}>{sim.rows.length} ห้อง</Text>
-                  {sim.rows.length === 0 && <Text size={1} muted>ยังไม่ได้เลือก — {(m2 === 'rent' ? manualR : manualS) ? <>ติ๊ก Select {m2 === 'rent' ? 'R' : 'S'}{goUnits ?? ' ในตาราง'}</> : 'ไม่มีห้องผ่านเกณฑ์'}</Text>}
-                </Inline>
-                {/* จัดกลุ่มตามชนิดห้องให้ตรงกับรูปแบบใหม่ที่ "หนึ่งสไลด์ = หนึ่งชนิด"
-                    และบอกตรงนี้เลยว่าชนิดไหนจะได้สไลด์จริง คนเลือกจะได้ไม่ต้องเดา */}
-                {BED_ORDER.filter(b => sim.rows.some(p => p.bedType === b)).map(b => {
-                  const rs = sim.rows.filter(p => p.bedType === b)
-                  const ok = rs.length >= SEG_MIN
-                  return (
-                    <Stack key={b} space={1} style={{ paddingLeft: 8, borderLeft: `3px solid ${ok ? '#166534' : '#e5e7eb'}` }}>
-                      <Inline space={2} style={{ cursor: 'pointer' }} onClick={() => setSegOpen(x => {
-                        const n = new Set(x); const k = m2 + b; n.has(k) ? n.delete(k) : n.add(k); return n })}>
-                        <Text size={1} weight="bold">{segOpen.has(m2 + b) ? '▾' : '▸'} {BED_LABEL[b] ?? b}</Text>
-                        <Text size={1} muted>{rs.length} ห้อง</Text>
-                        <Text size={0} style={{ color: ok ? '#166534' : '#9aa3b2' }}>
-                          {ok ? '→ ได้สไลด์ของตัวเอง' : `→ ไม่ถึง ${SEG_MIN} ห้อง ไม่ได้สไลด์ (ยังอยู่ในป๊อปอัป)`}
-                        </Text>
-                        {segOpen.has(m2 + b) && (() => {
-                          const keys = rs.map(p => `${p.refCode}·${m2}`)
-                          const allSel = keys.every(k => selRemove.has(k))
-                          return <a onClick={e => { e.stopPropagation(); setSelRemove(x => {
-                            const n = new Set(x); keys.forEach(k => allSel ? n.delete(k) : n.add(k)); return n }) }}
-                            style={{ fontSize: 11.5, color: '#0f3460', cursor: 'pointer', textDecoration: 'underline' }}>
-                            {allSel ? 'เอาติ๊กออกทั้งกลุ่ม' : 'ติ๊กทั้งกลุ่ม'}</a>
-                        })()}
-                      </Inline>
-                      {segOpen.has(m2 + b) && rs.map(p => stageRow(p, m2))}
-                    </Stack>
-                  )
-                })}
-              </Stack>
-            ))}
-            {stageOpen && hiddenHere.length > 0 && (
-              <Stack space={2} style={{ paddingTop: 6, borderTop: '1px solid #e6e9f1' }}>
-                <Flex align="center" gap={3}>
-                  <Text size={1} muted weight="semibold" style={{ cursor: 'pointer' }} onClick={() => setHiddenOpen(o => !o)}>
-                    {hiddenOpen ? '▾' : '▸'} เอาออกจากบอร์ดไว้ ({hiddenHere.length} ห้อง)</Text>
-                  <button onClick={unhideAll} disabled={stageBusy === '__unhideall__'}
-                    style={{ fontSize: 11.5, fontWeight: 700, padding: '3px 12px', borderRadius: 999, cursor: 'pointer',
-                      border: '1px solid #0f3460', background: '#0f3460', color: '#fff' }}>
-                    {stageBusy === '__unhideall__' ? 'กำลังเอากลับ…' : `↩ เอากลับทั้งหมด (${hiddenHere.length})`}</button>
+          )
+        })()}
+
+        {/* สองบอร์ด (ซ้าย) + จอจำลอง (ขวา หนึบ) */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 330px', gap: 16, alignItems: 'start' }}>
+          <Stack space={4} style={{ minWidth: 0 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(600px, 1fr))', gap: 16, alignItems: 'start' }}>
+              {luBoard('rent', 'บอร์ดเช่า', simR)}
+              {luBoard('sale', 'บอร์ดขาย', simS)}
+            </div>
+
+            {/* เอาออกจากบอร์ดไว้ — พับไว้ · "เอากลับทั้งหมด" ถามยืนยันก่อน (มีผลกับจอทันที) */}
+            {hiddenHere.length > 0 && (
+              <div style={{ background: '#fff', border: '1px solid #e3e8ef', borderRadius: 10 }}>
+                <Flex align="center" gap={3} style={{ padding: '10px 12px', cursor: 'pointer' }} onClick={() => setHiddenOpen(o => !o)}>
+                  <Text size={1} weight="semibold">{hiddenOpen ? '▾' : '▸'} เอาออกจากบอร์ดไว้ {hiddenHere.length} ห้อง</Text>
+                  <Text size={1} muted>· ตัวคัดอัตโนมัติจะข้ามห้องเหล่านี้</Text>
+                  <a onClick={e => { e.stopPropagation(); if (window.confirm(`เอากลับขึ้นบอร์ดทั้ง ${hiddenHere.length} ห้อง? มีผลกับจอทันที`)) unhideAll() }}
+                    style={{ marginLeft: 'auto', fontSize: 12.5, color: '#0f3460', textDecoration: 'underline', cursor: 'pointer' }}>
+                    {stageBusy === '__unhideall__' ? 'กำลังเอากลับ…' : 'เอากลับทั้งหมด'}</a>
                 </Flex>
                 {hiddenOpen && (
-                  <Stack space={1} style={{ maxHeight: 360, overflowY: 'auto', paddingRight: 6 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '0 16px', padding: '0 12px 10px' }}>
                     {hiddenHere.map(p => (
-                      <Flex key={p.refCode} align="center" gap={2}>
+                      <Flex key={p.refCode} align="center" gap={2} style={{ padding: '6px 0', borderTop: '1px solid #f0f2f5' }}>
                         <Text size={1} style={{ width: 92, fontFamily: 'monospace' }}>{p.refCode}</Text>
-                        <Text size={1} muted style={{ minWidth: 210 }}>
-                          {BED_LABEL[p.bedType ?? ''] ?? p.bedType} · {p.sqm} ตรม.
-                        </Text>
+                        <Text size={1} muted>{BED_LABEL[p.bedType ?? ''] ?? p.bedType} · {p.sqm} ตรม.</Text>
                         <button onClick={() => setHidden(p, false)} disabled={stageBusy === p.refCode}
-                          style={{ fontSize: 11.5, padding: '3px 10px', borderRadius: 999,
-                            border: '1px solid #0f3460', background: '#fff', color: '#0f3460', cursor: 'pointer' }}>↩ เอากลับขึ้นบอร์ด</button>
+                          style={{ marginLeft: 'auto', fontSize: 11.5, padding: '3px 10px', borderRadius: 999,
+                            border: '1px solid #0f3460', background: '#fff', color: '#0f3460', cursor: 'pointer' }}>↩ เอากลับ</button>
                       </Flex>
                     ))}
-                  </Stack>
+                  </div>
                 )}
-              </Stack>
+              </div>
             )}
-            <Text size={0} muted>กดแล้วมีผลทันที ไม่ต้อง publish · เอาห้องออกแล้วตัวคัดจะดึงห้องถัดไปขึ้นมาแทน · ห้องที่ปิดดีลโชว์บนจอ 30 วันแล้วหลุดเอง</Text>
+            <Text size={0} muted>สถานะดีล · เอาออก (อัตโนมัติ) · เอากลับ = มีผลทันที ไม่ต้อง publish · ✕ ในโหมดเลือกเอง = ต้องกด Save · ห้องที่ปิดดีลโชว์บนจอ 30 วันแล้วหลุดเอง</Text>
           </Stack>
-        </Card>
+
+          <div style={{ position: 'sticky', top: 0, background: '#1A2332', borderRadius: 12, padding: 12, color: '#fff' }}>
+            <Flex align="center" gap={2} style={{ marginBottom: 8 }}>
+              <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#22c55e', boxShadow: '0 0 0 3px rgba(34,197,94,.25)' }} />
+              <Text size={1} weight="semibold" style={{ color: '#cfd8e6' }}>บนจอ · จอจริง 9:16</Text>
+            </Flex>
+            <Flex gap={1} wrap="wrap" style={{ marginBottom: 6 }}>
+              {([['rent', 'บอร์ดเช่า'], ['sale', 'บอร์ดขาย']] as const).map(([m, l]) => (
+                <button key={m} onClick={() => setPv(x => ({ ...x, mode: m }))}
+                  style={{ fontSize: 12, padding: '4px 10px', borderRadius: 999, cursor: 'pointer', border: '1px solid #3a475c',
+                    background: pv.mode === m ? '#fff' : 'transparent', color: pv.mode === m ? '#0f3460' : '#cfd8e6', fontWeight: pv.mode === m ? 700 : 400 }}>{l}</button>
+              ))}
+            </Flex>
+            <Flex gap={1} wrap="wrap" style={{ marginBottom: 8 }}>
+              {pvSegs.map(b => (
+                <button key={b} onClick={() => setPv(x => ({ ...x, seg: b }))}
+                  style={{ fontSize: 12, padding: '4px 10px', borderRadius: 999, cursor: 'pointer', border: '1px solid #3a475c',
+                    background: pvSeg === b ? '#fff' : 'transparent', color: pvSeg === b ? '#0f3460' : '#cfd8e6', fontWeight: pvSeg === b ? 700 : 400 }}>
+                  {BED_LABEL[b] ?? b} <span style={{ opacity: .6 }}>{pvRows.filter(p => p.bedType === b).length}</span></button>
+              ))}
+            </Flex>
+            {pvSrc
+              ? <iframe key={pvSrc} src={pvSrc} title="จอจำลอง" style={{ width: '100%', aspectRatio: '9 / 16', border: 0, borderRadius: 8, background: '#060B14', display: 'block' }} />
+              : <div style={{ aspectRatio: '9 / 16', borderRadius: 8, background: '#060B14', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#8fa0b8', fontSize: 13 }}>บอร์ดนี้ยังไม่มีห้อง</div>}
+            <Text size={0} style={{ color: '#8fa0b8', marginTop: 8 }}>หนึ่งชนิดห้อง = หนึ่งสไลด์ · แก้ทางซ้าย จอนี้เปลี่ยนตามทันที (ยังไม่ต้อง Save) · กดแถวห้องเพื่อเปิดสไลด์ของห้องนั้น</Text>
+          </div>
+        </div>
+
+        {/* แถบเหลืองลอยล่างจอ — มีของค้างยังไม่ Save (ลอย ไม่ดันรายการ กดแถวถัดไปไม่พลาด) */}
+        {pendCount > 0 && (
+          <div style={{ position: 'sticky', bottom: 16, zIndex: 5, alignSelf: 'center', width: 'min(760px, 100%)',
+            display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', background: '#fff7e0',
+            border: '1px solid #f1d58a', borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,.16)' }}>
+            <Text size={1}>✎ <b style={{ color: '#8a5a00' }}>{[
+              pend.rent.removed.length + pend.sale.removed.length ? `ถอดออก ${pend.rent.removed.length + pend.sale.removed.length} ห้อง` : '',
+              pend.rent.added.length + pend.sale.added.length ? `เพิ่ม ${pend.rent.added.length + pend.sale.added.length} ห้อง` : '',
+              pend.rent.modeChanged || pend.sale.modeChanged ? 'เปลี่ยนโหมดบอร์ด' : '',
+              pend.rent.quotaChanged || pend.sale.quotaChanged ? 'เปลี่ยนจำนวนห้อง' : '',
+            ].filter(Boolean).join(' · ')}</b> — ยังไม่บันทึก</Text>
+            <span style={{ marginLeft: 'auto' }} />
+            <Button text="ยกเลิก" mode="ghost" fontSize={1} padding={2} onClick={undoPending} />
+            <Button text={saving ? 'Saving…' : 'Save to lineup (draft)'} tone="primary" fontSize={1} padding={2}
+              disabled={!projDoc || saving || overQuota} onClick={save} />
+          </div>
+        )}
         </>}
 
         {view === 'units' && <Flex gap={2} wrap="wrap" align="center">

@@ -36,6 +36,10 @@ body { min-height: 100vh; background: #1A2332; display: flex; align-items: cente
 .bottombar i { font-style: normal; color: #6DD5E8; }
 .tag { position: fixed; top: 10px; left: 14px; color: #8fa0b8; font-size: 13px; z-index: 9; font-family: Anuphan, 'IBM Plex Sans Thai', sans-serif; }
 .tag b { color: #fff; }
+/* ?embed=1 — ฝังในหน้า Board Lineup ของ Studio: ไม่มีป้ายคำอธิบาย ไม่เว้นขอบ เต็มกรอบพอดี */
+.embed body, body.embed { padding: 0; background: #060B14; }
+body.embed .tag { display: none; }
+body.embed .stage { border-radius: 0; box-shadow: none; }
 </style>
 </head>
 <body>
@@ -52,9 +56,11 @@ body { min-height: 100vh; background: #1A2332; display: flex; align-items: cente
 </div>
 <script>
 const P = new URLSearchParams(location.search)
+const EMBED = P.get('embed') === '1'
+if (EMBED) document.body.classList.add('embed')
 /* tpl=cards → บอร์ดการ์ดที่ทุกตึกใช้อยู่ (v2) · tpl=cards-v1 → แบบเก่า (ตึกใน CARDS_V1) · tpl=flap → split-flap */
 const tpl = P.get('tpl') === 'flap' ? 'board.html' : P.get('tpl') === 'cards-v1' ? 'board-cards.html' : 'board-cards-v2.html'
-document.getElementById('fr').src = './' + tpl + location.hash
+document.getElementById('fr').src = './' + tpl + (P.get('lang') ? '?lang=' + encodeURIComponent(P.get('lang')) : '') + location.hash
 try {
   const sim = JSON.parse(decodeURIComponent(location.hash.slice(5)))
   if (sim.project) document.getElementById('pj').textContent = sim.project
@@ -64,9 +70,10 @@ const tick = () => document.getElementById('clock').textContent =
   new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })
 tick(); setInterval(tick, 30000)
 function fit() {
-  const s = Math.min((innerWidth - 32) / 1080, (innerHeight - 32) / 1920)
+  const pad = EMBED ? 0 : 32
+  const s = Math.min((innerWidth - pad) / 1080, (innerHeight - pad) / 1920)
   document.getElementById('stage').style.transform = `scale(${s})`
-  document.body.style.height = Math.max(innerHeight, 1920 * s + 32) + 'px'
+  document.body.style.height = Math.max(innerHeight, 1920 * s + pad) + 'px'
 }
 fit(); addEventListener('resize', fit)
 </script>

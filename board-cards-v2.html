@@ -397,7 +397,8 @@ fitStage()
 addEventListener("resize", fitStage)
 
 const REC = new URLSearchParams(location.search).get("rec") === "1"
-if (!REC) lang = nextLang()
+/* ?lang=th|en|ja|zh ปักภาษา (จอจำลองใน Studio) · จอจริงไม่ส่งพารามิเตอร์นี้ → หมุนภาษาต่อรอบตามเดิม */
+if (!REC) { const ql = LANGS.indexOf(new URLSearchParams(location.search).get("lang")); lang = ql >= 0 ? ql : nextLang() }
 paint()
 /* วัดความยาวอีกรอบเมื่อฟอนต์เว็บโหลดเสร็จ — ก่อนหน้านั้นวัดจากฟอนต์สำรองที่แคบกว่า
    (บนกล่องฟอนต์มาทีหลัง → ข้อความล้นแต่ไม่หด) */
