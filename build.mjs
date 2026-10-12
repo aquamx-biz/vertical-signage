@@ -507,6 +507,7 @@ for (const project of projects) {
   const outDir = join(__dirname, '..', code)
   mkdirSync(outDir, { recursive: true })
   const bakedBoardPaths = new Set()   // board pages this build wrote (web-board guard, below)
+  const boardCardRows = new Map()     // /board-cards/... path → จำนวนห้อง (คำนวณเวลาออกอากาศ ด้านล่าง)
 
   // Category icons are referenced by the kiosk player (icons/*.svg) —
   // copy the folder for those projects so they aren't 404. Skip for others so
@@ -616,7 +617,7 @@ for (const project of projects) {
     const cardsDir = join(outDir, 'board-cards', mode)
     mkdirSync(cardsDir, { recursive: true })
     writeFileSync(join(cardsDir, 'index.html'), cardsHtml, 'utf8')
-    if (rows.length) bakedBoardPaths.add(`/board-cards/${mode}/`)
+    if (rows.length) { bakedBoardPaths.add(`/board-cards/${mode}/`); boardCardRows.set(`/board-cards/${mode}/`, rows.length) }
 
     /* หน้าแยกตามชนิดห้อง — สไลด์ละชนิด คนที่หา 1 นอนไม่ต้องรอดู 3 นอนผ่านไป
        ชนิดที่มีไม่ถึง SEG_MIN ห้องไม่ได้หน้าของตัวเอง เพราะสไลด์หนึ่งใบกินเวลา
@@ -635,7 +636,7 @@ for (const project of projects) {
       writeFileSync(join(dir, 'index.html'), cardsTpl.replace('</head>',
         `<script>/* baked by build.mjs — rev ${segData.rev} */\nwindow.__BOARD__ = ${JSON.stringify(segData)};\n</script>\n</head>`), 'utf8')
       segsMade.push(`${slug}:${segRows.length}`)
-      bakedBoardPaths.add(`/board-cards/${mode}/${slug}/`)
+      bakedBoardPaths.add(`/board-cards/${mode}/${slug}/`); boardCardRows.set(`/board-cards/${mode}/${slug}/`, segRows.length)
     }
     console.log(`  board-cards[${mode}]${useCardsV2(code) ? ' (v2)' : ' (v1)'}: รวม ${rows.length} · แยกชนิด ${segsMade.join(' ') || '— (ไม่มีชนิดไหนถึง ' + SEG_MIN + ' ห้อง)'}`)
   }
@@ -673,6 +674,28 @@ for (const project of projects) {
     droppedBoardSlides.push(`${s.title ?? s.kind ?? 'web'} → ${u.pathname}`)
     return false
   })
+  /* เวลาออกอากาศของสไลด์บอร์ดการ์ด = จำนวนหน้าจริง × เวลาต่อหน้า (ขั้นต่ำ 15 วิ)
+     เดิมตั้งตายตัวใน media.defaultImageDuration ตอน seed (หน้า × 28 วิ ของรอบ 4 ภาษาเดิม)
+     → จำนวนห้องเปลี่ยนแล้วไม่ตาม: ห้องเดียวค้าง 84 วิ, 2 หน้าวนซ้ำ 3–4 รอบ
+     คิดใหม่ทุก build จากหน้าที่ bake จริง · ถ้าทีมตั้ง displayDuration ใน playlist ไว้ = ทีมชนะ
+     ต้องตรงกับเทมเพลต: v2 เปลี่ยนหน้าทุก 10 วิ (PAGE_MS) · v1 หน้าละ 4 ภาษา × 7 วิ = 28 วิ
+     เพดาน 21 ห้อง ÷ 7 ใบต่อหน้า = 3 หน้า (เท่ากับ rows.slice(0, 21) ในเทมเพลต) */
+  const BOARD_MIN_S = 15
+  const pageSec = useCardsV2(code) ? 10 : 28
+  let boardTimed = 0
+  for (const s of airablePlaylist) {
+    const href = s.webUrl ?? s.url
+    if ((s.mediaType ?? s.type) !== 'web' || !href || s.displayDuration != null || s.imageDurationOverride != null) continue
+    let u; try { u = new URL(href) } catch { continue }
+    const ours = (u.hostname.endsWith('.netlify.app') && u.hostname.split('.')[0] === code) || u.hostname === 'player.aquamx.local'
+    const n = ours && boardCardRows.get(normPath(u.pathname))
+    if (!n) continue
+    const pages = Math.ceil(Math.min(n, 21) / 7)
+    const secs = Math.max(BOARD_MIN_S, pages * pageSec)
+    s.defaultDuration = s.defaultImageDuration = secs
+    boardTimed++
+  }
+  if (boardTimed) console.log(`  board airtime: ${boardTimed} สไลด์ = หน้า × ${pageSec} วิ (ขั้นต่ำ ${BOARD_MIN_S})`)
   if (droppedBoardSlides.length) {
     console.warn(`  ⚠  [${code}] ${droppedBoardSlides.length} web-board slide(s) dropped — page not baked this build (board empty?):`)
     droppedBoardSlides.forEach(d => console.warn(`       · ${d}`))
