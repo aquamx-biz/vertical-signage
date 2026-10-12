@@ -108,10 +108,12 @@ const boardTemplate = readFileSync(join(__dirname, 'board.html'), 'utf8')
 // สองหน้าตาของบอร์ดเดียวกัน: split-flap (/board/) กับ การ์ด 3 ภาษา (/board-cards/)
 // ใช้ข้อมูลชุดเดียวกัน — media doc ชี้ URL ไหนก็ได้ตามที่โครงการเลือก
 const cardsTemplate = readFileSync(join(__dirname, 'board-cards.html'), 'utf8')
-// Card board v2 (หนึ่งรอบ = ภาษาเดียว · คุ้ม% + สถานะคู่กัน · ขายโชว์ ล้านบาท + ฿/ตร.ม.)
-// canary — เปิดทีละตึก · URL เดิม (/board-cards/...) จึงไม่ต้องแตะ media ใน Sanity
-// ถอยกลับ = เอา code ออกจากชุดนี้แล้ว rebuild · ทุกตึกใช้แล้วค่อยรวมเป็นไฟล์เดียว
-const CARDS_V2 = new Set(['39-by-sansiri', 'lumpini-24'])
+// Card board v2 (หนึ่งรอบ = ภาษาเดียว · คุ้ม% + สถานะคู่กัน · เรียงตามชั้น · ป้ายขนาด ·
+// ขายโชว์ ล้านบาท + ฿/ตร.ม.) = ค่าเริ่มต้นของทุกตึก (canary 39bs → lumpini-24 → ทั้งหมด)
+// URL เดิม (/board-cards/...) จึงไม่ต้องแตะ media ใน Sanity
+// ถอยตึกไหนกลับแบบเดิม = ใส่ code ใน CARDS_V1 แล้ว rebuild
+const CARDS_V1 = new Set([])
+const useCardsV2 = code => !CARDS_V1.has(code)
 const cardsTemplateV2 = readFileSync(join(__dirname, 'board-cards-v2.html'), 'utf8')
 
 // unitProfile.projectName is a free string from the scraping pipeline and does
@@ -606,7 +608,7 @@ for (const project of projects) {
     writeFileSync(join(boardDir, 'index.html'), boardHtml, 'utf8')
     if (rows.length) bakedBoardPaths.add(`/board/${mode}/`)
 
-    const cardsTpl = CARDS_V2.has(code) ? cardsTemplateV2 : cardsTemplate
+    const cardsTpl = useCardsV2(code) ? cardsTemplateV2 : cardsTemplate
     const cardsHtml = cardsTpl.replace(
       '</head>',
       `<script>/* baked by build.mjs — rev ${boardData.rev} */\nwindow.__BOARD__ = ${JSON.stringify(boardData)};\n</script>\n</head>`
@@ -635,7 +637,7 @@ for (const project of projects) {
       segsMade.push(`${slug}:${segRows.length}`)
       bakedBoardPaths.add(`/board-cards/${mode}/${slug}/`)
     }
-    console.log(`  board-cards[${mode}]${CARDS_V2.has(code) ? ' (v2)' : ''}: รวม ${rows.length} · แยกชนิด ${segsMade.join(' ') || '— (ไม่มีชนิดไหนถึง ' + SEG_MIN + ' ห้อง)'}`)
+    console.log(`  board-cards[${mode}]${useCardsV2(code) ? ' (v2)' : ' (v1)'}: รวม ${rows.length} · แยกชนิด ${segsMade.join(' ') || '— (ไม่มีชนิดไหนถึง ' + SEG_MIN + ' ห้อง)'}`)
   }
 
   // Web-board guard — a web slide may only air if the page it embeds was BAKED
