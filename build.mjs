@@ -111,7 +111,7 @@ const cardsTemplate = readFileSync(join(__dirname, 'board-cards.html'), 'utf8')
 // Card board v2 (หนึ่งรอบ = ภาษาเดียว · คุ้ม% + สถานะคู่กัน · ขายโชว์ ล้านบาท + ฿/ตร.ม.)
 // canary — เปิดทีละตึก · URL เดิม (/board-cards/...) จึงไม่ต้องแตะ media ใน Sanity
 // ถอยกลับ = เอา code ออกจากชุดนี้แล้ว rebuild · ทุกตึกใช้แล้วค่อยรวมเป็นไฟล์เดียว
-const CARDS_V2 = new Set(['39-by-sansiri'])
+const CARDS_V2 = new Set(['39-by-sansiri', 'lumpini-24'])
 const cardsTemplateV2 = readFileSync(join(__dirname, 'board-cards-v2.html'), 'utf8')
 
 // unitProfile.projectName is a free string from the scraping pipeline and does
