@@ -11,10 +11,11 @@ import { readFileSync, writeFileSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..')
-for (const f of ['board-cards.html', 'board.html']) {
+for (const f of ['board-cards.html', 'board-cards-v2.html', 'board.html']) {
   const src = readFileSync(join(root, f), 'utf8')
   const dst = join(root, 'sanity-studio', 'static', f)
-  if (readFileSync(dst, 'utf8') === src) { console.log(`= ${f} ตรงกันอยู่แล้ว`); continue }
+  let cur = null; try { cur = readFileSync(dst, 'utf8') } catch {}   // ไฟล์ใหม่ยังไม่มีใน static/
+  if (cur === src) { console.log(`= ${f} ตรงกันอยู่แล้ว`); continue }
   writeFileSync(dst, src)
   console.log(`↻ ${f} ซิงก์จากราก → static/`)
 }

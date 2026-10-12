@@ -182,6 +182,11 @@ function profileToRow(p: Profile & { floorActual?: number }) {
     sqm: p.sqm, floor: String(p.floorZone ?? '').toUpperCase(),
     floorNo: p.floorActual ?? null,
     updated: p.lastCheckedAt, price: p.priceTHB, remarks: remarks.slice(0, 4),
+    // ที่เหลือ = ตัวที่การ์ดบนจอใช้ (บรรทัดสอง + ห้องปิดดีล) — ไม่มีแล้ว Preview โชว์น้อยกว่าจอจริง
+    pricePerSqm: p.pricePerSqm ?? null, vsFloorPct: p.vsFloorPct ?? null,
+    takenLabel: p.dealStage === 'closed' ? (p.intent === 'sale' ? 'sale' : 'rent') : null,
+    actTalking: p.dealStage === 'talking' || null,
+    actViewing: p.dealStage === 'viewing' || null,
   }
 }
 
@@ -947,7 +952,7 @@ export function UnitBoardsTool({ view = 'units', onGoUnits }: { view?: 'lineup' 
             <Button key={m2} text={label} mode="ghost" fontSize={1} disabled={!sim.rows.length}
               title="เห็นเหมือนบนจอจริง: บอร์ดการ์ดในกรอบ player (header/footer navy) ด้วย lineup ที่เห็นอยู่ตอนนี้ — ยังไม่ต้อง Save"
               onClick={() => {
-                const payload = { project: proj.toUpperCase(), mode: m2, dataAsOf: dataRound ?? undefined, rows: sim.rows.map(p => profileToRow({ ...p, floorActual: sources.get(p.refCode)?.floorActual })) }
+                const payload = { project: proj.toUpperCase(), mode: m2, dataAsOf: dataRound ?? undefined, rows: sim.rows.map(p => ({ ...profileToRow({ ...p, floorActual: sources.get(p.refCode)?.floorActual }), valuePct: expectedOf(p, m2)?.pct ?? null })) }
                 window.open(`/static/board-preview.html?tpl=cards#sim=${encodeURIComponent(JSON.stringify(payload))}`, '_blank')
               }} />
           ))}
@@ -955,7 +960,7 @@ export function UnitBoardsTool({ view = 'units', onGoUnits }: { view?: 'lineup' 
             <Button key={'f' + m2} text={label} mode="bleed" fontSize={0} disabled={!sim.rows.length}
               title="บอร์ด split-flap (หน้ายืนเดี่ยว /board/) ในกรอบจอจริง"
               onClick={() => {
-                const payload = { project: proj.toUpperCase(), mode: m2, dataAsOf: dataRound ?? undefined, rows: sim.rows.map(p => profileToRow({ ...p, floorActual: sources.get(p.refCode)?.floorActual })) }
+                const payload = { project: proj.toUpperCase(), mode: m2, dataAsOf: dataRound ?? undefined, rows: sim.rows.map(p => ({ ...profileToRow({ ...p, floorActual: sources.get(p.refCode)?.floorActual }), valuePct: expectedOf(p, m2)?.pct ?? null })) }
                 window.open(`/static/board-preview.html?tpl=flap#sim=${encodeURIComponent(JSON.stringify(payload))}`, '_blank')
               }} />
           ))}
