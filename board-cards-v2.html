@@ -118,6 +118,17 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: var(--stag
   font-size: 58px; font-weight: 300; line-height: 1; color: rgba(255,255,255,0.5); }
 .tapon #cards .c.tap { transform: scale(0.985); background: #16457f; transition: transform .12s, background-color .12s; }
 .bh .sum .taphint { color: var(--cyan); font-weight: 700; }
+/* นิ้ว 👆 กดลงแล้วเด้งกลับทุก ~2.2 วิ — บอกว่า "แตะได้" ให้จอไม่ดูนิ่ง
+   transform อย่างเดียว ชิ้นเล็กชิ้นเดียว ไม่มี will-change/เบลอ/เงา (งบ GPU ของกล่อง)
+   หน้าบอร์ดถูกถอด src ตอนสไลด์ไม่ขึ้นจอ → ไม่เดินค้างเบื้องหลัง */
+.bh .sum .taphint .finger { display: inline-block; transform-origin: 50% 85%; animation: aqTap 2.2s ease-in-out infinite; }
+@keyframes aqTap {
+  0%, 58%, 100% { transform: translateY(0) scale(1); }
+  68%           { transform: translateY(6px) scale(0.86); }
+  80%           { transform: translateY(-1px) scale(1.04); }
+  90%           { transform: translateY(0) scale(1); }
+}
+@media (prefers-reduced-motion: reduce) { .bh .sum .taphint .finger { animation: none; } }
 .c .nm .s.tight { font-size: 26px; gap: 8px; } .c .nm .s.tight .st, .c .nm .s.tight .sz { font-size: 22px; padding: 1px 10px; }
 .c .nm .s.tighter { font-size: 23px; } .c .nm .s.tighter .st, .c .nm .s.tighter .sz { font-size: 20px; padding: 0 8px; }
 .st.view { background: #FFD66B; color: #3a2a00; }
@@ -216,13 +227,13 @@ const LANGS = ["th", "en", "ja", "zh"]
 /* v2 — ป้ายเพิ่ม: สถานะดีลแบบสั้น (เป็นป้ายสี) · เช่าแล้ว/ขายแล้ว หมุนภาษาได้ · สรุปหัวสไลด์ · อัปเดต */
 const L2 = {
   th: { view: "มีนัดชมแล้ว", talk: "กำลังคุยอยู่", interest: "มีคนสนใจ %s ราย", doneR: "✓ เช่าแล้ว", doneS: "✓ ขายแล้ว",
-        sumR: "ว่าง <b>%n ห้อง</b> · เริ่ม <b>%p</b>/เดือน", sumS: "ว่าง <b>%n ห้อง</b> · เริ่ม <b>%m ล้านบาท</b>", updW: "อัปเดต %d", tapHint: "👆 แตะห้องที่สนใจ" },
+        sumR: "ว่าง <b>%n ห้อง</b> · เริ่ม <b>%p</b>/เดือน", sumS: "ว่าง <b>%n ห้อง</b> · เริ่ม <b>%m ล้านบาท</b>", updW: "อัปเดต %d", tapHint: "แตะห้องที่สนใจ" },
   en: { view: "Viewing booked", talk: "In talks", interest: "%s enquiries", doneR: "✓ Rented", doneS: "✓ Sold",
-        sumR: "<b>%n available</b> · from <b>%p</b>/mo", sumS: "<b>%n available</b> · from <b>฿%p</b>", updW: "Updated %d", tapHint: "👆 Tap a unit" },
+        sumR: "<b>%n available</b> · from <b>%p</b>/mo", sumS: "<b>%n available</b> · from <b>฿%p</b>", updW: "Updated %d", tapHint: "Tap a unit" },
   ja: { view: "内見予約あり", talk: "商談中", interest: "問い合わせ %s 件", doneR: "✓ 成約済み", doneS: "✓ 成約済み",
-        sumR: "空室 <b>%n 件</b> · <b>%p</b>/月から", sumS: "空室 <b>%n 件</b> · <b>%p</b> から", updW: "更新 %d", tapHint: "👆 タップで詳細" },
+        sumR: "空室 <b>%n 件</b> · <b>%p</b>/月から", sumS: "空室 <b>%n 件</b> · <b>%p</b> から", updW: "更新 %d", tapHint: "タップで詳細" },
   zh: { view: "已预约看房", talk: "洽谈中", interest: "%s 人咨询", doneR: "✓ 已成交", doneS: "✓ 已成交",
-        sumR: "可租 <b>%n 套</b> · <b>%p</b>/月起", sumS: "在售 <b>%n 套</b> · <b>%p</b> 起", updW: "更新 %d", tapHint: "👆 点击查看" },
+        sumR: "可租 <b>%n 套</b> · <b>%p</b>/月起", sumS: "在售 <b>%n 套</b> · <b>%p</b> 起", updW: "更新 %d", tapHint: "点击查看" },
 }
 for (const k of LANGS) Object.assign(L[k], L2[k])
 
@@ -374,7 +385,7 @@ function paint() {
     const min = Math.min(...live.map(r => r.price))
     $("headS").innerHTML = (MODE === "sale" ? t.sumS : t.sumR).replace("%n", live.length)
       .replace("%p", MODE === "sale" ? fmtSaleM(min) : fmtRentK(min)).replace("%m", fmtSaleM(min).replace("M", ""))
-      + (TAP ? ` · <span class="taphint">${t.tapHint}</span>` : "")
+      + (TAP ? ` · <span class="taphint"><span class="finger">👆</span> ${t.tapHint}</span>` : "")
   } else $("headS").innerHTML = ""
   $("headU").textContent = updD ? t.updW.replace("%d", updD(lang)) : ""
   $("langInd").innerHTML = LANGS.map((x, i) => i === lang ? `<b>${L[x].ind}</b>` : L[x].ind).join(" · ")
