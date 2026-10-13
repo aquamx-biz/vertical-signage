@@ -5428,19 +5428,43 @@ stage.addEventListener('click', e => {
 
 /* ── Board card tap → that room's popup, preselected ─────────────────────────
    The board <iframe> stays pointer-events:none (every touch belongs to the
-   player — swipe, CTA, menu). A plain tap that lands on a board slide is
-   hit-tested INTO the same-origin board page: the card under the finger names
-   its room (data-ref = refCode = orderItems key) and the slide's own popup opens
-   with that room on top and already picked. Closed rooms (.taken) are not
-   tappable. Only boards that opted in react (window.__BOARD_TAP, baked per
-   building); a cross-origin board throws on access and nothing happens.
-   The board stops flipping pages while the popup is up (__boardHold), so the
-   room under the finger is the room in the popup. */
-let _heldBoard = null, _tapDown = null;
-function releaseBoardHold() { try { if (_heldBoard) _heldBoard.__boardHold = false; } catch (e) {} _heldBoard = null; }
+   player — swipe, CTA, menu). A plain tap on a board slide is ASKED of the
+   board page by postMessage: "what is at (x, y)?" → the board answers with the
+   card's room (data-ref = refCode = orderItems key) and whether it is closed.
+   postMessage, not contentDocument: on the boxes HomeApp serves the player from
+   https://player.aquamx.local/ while the board loads from {code}.netlify.app —
+   cross-origin, so reaching into the board throws (the first version did that
+   and silently never fired on any box; only the netlify-hosted page worked).
+   Only boards baked with DATA.tap answer tap:true. Closed rooms are not
+   tappable. While the popup is up the board is told to stop flipping pages
+   (aq-board-hold), so the room under the finger is the room in the popup. */
+let _heldBoardFrame = null, _tapDown = null, _hitSeq = 0;
+const _hitWaits = new Map();
+window.addEventListener('message', e => {
+    const m = e.data || {};
+    if (m.type !== 'aq-board-hit-result') return;
+    const w = _hitWaits.get(m.id);
+    if (!w || e.source !== w.win) return;          // only the board we asked
+    _hitWaits.delete(m.id);
+    w.resolve(m);
+});
+function askBoard(fr, x, y) {
+    return new Promise(resolve => {
+        const id = ++_hitSeq, win = fr.contentWindow;
+        if (!win) return resolve(null);
+        _hitWaits.set(id, { win, resolve });
+        try { win.postMessage({ type: 'aq-board-hit', id, x, y }, '*'); }
+        catch (err) { _hitWaits.delete(id); return resolve(null); }
+        setTimeout(() => { if (_hitWaits.delete(id)) resolve(null); }, 400);   // old board / no answer → no tap
+    });
+}
+function boardHold(fr, hold) {
+    try { fr && fr.contentWindow && fr.contentWindow.postMessage({ type: 'aq-board-hold', hold: !!hold }, '*'); } catch (err) {}
+}
+function releaseBoardHold() { boardHold(_heldBoardFrame, false); _heldBoardFrame = null; }
 // a swipe is never a card tap — some WebViews still fire click after a short drag
 stage.addEventListener('pointerdown', e => { _tapDown = { x: e.clientX, y: e.clientY, t: Date.now() }; }, { passive: true });
-stage.addEventListener('click', e => {
+stage.addEventListener('click', async e => {
     if (_tapDown && (Math.hypot(e.clientX - _tapDown.x, e.clientY - _tapDown.y) > 14 || Date.now() - _tapDown.t > 800)) return;
     if (e.target.closest('.cta, .slot-more, .slot-eyebrow, button, a')) return;
     if (detailOverlay.classList.contains('open')) return;
@@ -5448,27 +5472,22 @@ stage.addEventListener('click', e => {
     const fr = slotEl && slotEl.querySelector('iframe.slot-web');
     const src = fr ? (fr.getAttribute('src') || '') : '';
     if (!/\/board-cards\//.test(src)) return;
-    let w, d;
-    try { w = fr.contentWindow; d = fr.contentDocument; } catch (err) { return; }
-    if (!w || !d || !w.__BOARD_TAP) return;
     const r = fr.getBoundingClientRect();
     if (!r.width || !r.height) return;
     // client px → the board page's own CSS px (the stage may be scaled to the panel)
     const x = (e.clientX - r.left) * fr.offsetWidth / r.width;
     const y = (e.clientY - r.top) * fr.offsetHeight / r.height;
-    const hit = d.elementFromPoint(x, y);
-    const card = hit && hit.closest && hit.closest('#cards .c[data-ref]');
-    if (!card || card.classList.contains('taken') || !card.dataset.ref) return;
+    const hit = await askBoard(fr, x, y);
+    if (!hit || !hit.tap || !hit.ref || hit.taken) return;
+    if (detailOverlay.classList.contains('open')) return;   // something else opened while we asked
     const idx = slotEl.dataset.index != null ? +slotEl.dataset.index : cur;
     const s = SLOTS[idx];
     if (!s) return;
     uTouch(s.mediaId);
-    uUnitPick((/\/board-cards\/sale\//.test(src) ? 'sale' : 'rent') + '-' + card.dataset.ref);   // the tap IS the room-interest signal
-    card.classList.add('tap');
-    setTimeout(() => card.classList.remove('tap'), 160);
-    try { w.__boardHold = true; _heldBoard = w; } catch (err) {}
+    uUnitPick((/\/board-cards\/sale\//.test(src) ? 'sale' : 'rent') + '-' + hit.ref);   // the tap IS the room-interest signal
+    boardHold(fr, true); _heldBoardFrame = fr;
     const primary = (s.ctas || []).find(c => c.kind === 'primary') || (s.ctas || [])[0] || null;
-    setTimeout(() => openDetail(Object.assign(slideDetailCtx(s, primary), { preselect: card.dataset.ref })), 170);
+    setTimeout(() => openDetail(Object.assign(slideDetailCtx(s, primary), { preselect: hit.ref })), 150);   // let the card's press show
 });
 
 /* Everything the popup needs from a commercial slide — shared by the CTA dock and

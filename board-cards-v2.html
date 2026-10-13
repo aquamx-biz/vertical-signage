@@ -305,6 +305,28 @@ const TAP = !!DATA.tap
 window.__BOARD_TAP = TAP
 window.__boardHold = false
 if (TAP) document.body.classList.add("tapon")
+/* player ถามผ่าน postMessage (มักคนละ origin: HomeApp เปิด player ที่ player.aquamx.local)
+   aq-board-hit {x,y} → ตอบ ref/taken ของการ์ดตรงนั้น (+ การ์ดยุบ) · aq-board-hold → หยุด/เดินเปลี่ยนหน้า
+   รับเฉพาะจาก parent · ตอบกลับไปที่ origin ของ parent */
+window.addEventListener("message", e => {
+  if (e.source !== window.parent) return
+  const m = e.data || {}
+  if (m.type === "aq-board-hit") {
+    let ref = null, taken = false
+    if (TAP) {
+      const el = document.elementFromPoint(m.x, m.y)
+      const c = el && el.closest && el.closest("#cards .c[data-ref]")
+      if (c) {
+        ref = c.dataset.ref; taken = c.classList.contains("taken")
+        if (!taken) { c.classList.add("tap"); setTimeout(() => c.classList.remove("tap"), 160) }
+      }
+    }
+    e.source.postMessage({ type: "aq-board-hit-result", id: m.id, tap: TAP, ref, taken },
+      e.origin && e.origin !== "null" ? e.origin : "*")
+  } else if (m.type === "aq-board-hold") {
+    window.__boardHold = !!m.hold
+  }
+})
 /* ไม่มี ".0" ห้อย — 30K · 29.5K · 4M · 4.2M */
 const fmtRentK = p => (p / 1e3).toFixed(1).replace(/\.0$/, "") + "K"
 const fmtSaleM = p => { let s = (p / 1e6).toFixed(1); if (s.length > 4) s = String(Math.round(p / 1e6)); return s.replace(/\.0$/, "") + "M" }
