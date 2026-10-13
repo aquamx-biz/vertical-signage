@@ -111,6 +111,13 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: var(--stag
 .sz.big { border: 2px solid rgba(224,154,85,0.8); color: #F3C08E; }
 /* บรรทัดสองไม่บีบป้าย — ให้ล้นจริงแล้วไปหดฟอนต์ทั้งบรรทัดแทน (บีบแล้วข้อความในป้ายขาด) */
 .c .nm .s > * { flex-shrink: 0; white-space: nowrap; }
+/* แตะการ์ดได้ (เฉพาะตึกที่เปิด DATA.tap) — ลูกศร › ท้ายการ์ดห้องว่าง · ห้องปิดดีลไม่มีลูกศร = แตะไม่ได้
+   การ์ดยุบนิดหน่อยตอนแตะ (player ใส่ .tap ให้ 160ms) */
+.tapon #cards .c:not(.taken) { position: relative; padding-right: 64px; }
+.tapon #cards .c:not(.taken)::after { content: '›'; position: absolute; right: 22px; top: 50%; transform: translateY(-52%);
+  font-size: 58px; font-weight: 300; line-height: 1; color: rgba(255,255,255,0.5); }
+.tapon #cards .c.tap { transform: scale(0.985); background: #16457f; transition: transform .12s, background-color .12s; }
+.bh .sum .taphint { color: var(--cyan); font-weight: 700; }
 .c .nm .s.tight { font-size: 26px; gap: 8px; } .c .nm .s.tight .st, .c .nm .s.tight .sz { font-size: 22px; padding: 1px 10px; }
 .c .nm .s.tighter { font-size: 23px; } .c .nm .s.tighter .st, .c .nm .s.tighter .sz { font-size: 20px; padding: 0 8px; }
 .st.view { background: #FFD66B; color: #3a2a00; }
@@ -209,13 +216,13 @@ const LANGS = ["th", "en", "ja", "zh"]
 /* v2 — ป้ายเพิ่ม: สถานะดีลแบบสั้น (เป็นป้ายสี) · เช่าแล้ว/ขายแล้ว หมุนภาษาได้ · สรุปหัวสไลด์ · อัปเดต */
 const L2 = {
   th: { view: "มีนัดชมแล้ว", talk: "กำลังคุยอยู่", interest: "มีคนสนใจ %s ราย", doneR: "✓ เช่าแล้ว", doneS: "✓ ขายแล้ว",
-        sumR: "ว่าง <b>%n ห้อง</b> · เริ่ม <b>%p</b>/เดือน", sumS: "ว่าง <b>%n ห้อง</b> · เริ่ม <b>%m ล้านบาท</b>", updW: "อัปเดต %d" },
+        sumR: "ว่าง <b>%n ห้อง</b> · เริ่ม <b>%p</b>/เดือน", sumS: "ว่าง <b>%n ห้อง</b> · เริ่ม <b>%m ล้านบาท</b>", updW: "อัปเดต %d", tapHint: "👆 แตะห้องที่สนใจ" },
   en: { view: "Viewing booked", talk: "In talks", interest: "%s enquiries", doneR: "✓ Rented", doneS: "✓ Sold",
-        sumR: "<b>%n available</b> · from <b>%p</b>/mo", sumS: "<b>%n available</b> · from <b>฿%p</b>", updW: "Updated %d" },
+        sumR: "<b>%n available</b> · from <b>%p</b>/mo", sumS: "<b>%n available</b> · from <b>฿%p</b>", updW: "Updated %d", tapHint: "👆 Tap a unit" },
   ja: { view: "内見予約あり", talk: "商談中", interest: "問い合わせ %s 件", doneR: "✓ 成約済み", doneS: "✓ 成約済み",
-        sumR: "空室 <b>%n 件</b> · <b>%p</b>/月から", sumS: "空室 <b>%n 件</b> · <b>%p</b> から", updW: "更新 %d" },
+        sumR: "空室 <b>%n 件</b> · <b>%p</b>/月から", sumS: "空室 <b>%n 件</b> · <b>%p</b> から", updW: "更新 %d", tapHint: "👆 タップで詳細" },
   zh: { view: "已预约看房", talk: "洽谈中", interest: "%s 人咨询", doneR: "✓ 已成交", doneS: "✓ 已成交",
-        sumR: "可租 <b>%n 套</b> · <b>%p</b>/月起", sumS: "在售 <b>%n 套</b> · <b>%p</b> 起", updW: "更新 %d" },
+        sumR: "可租 <b>%n 套</b> · <b>%p</b>/月起", sumS: "在售 <b>%n 套</b> · <b>%p</b> 起", updW: "更新 %d", tapHint: "👆 点击查看" },
 }
 for (const k of LANGS) Object.assign(L[k], L2[k])
 
@@ -292,6 +299,12 @@ function nextLang() {
   } catch (e) { return 0 }
 }
 let page = 0, lang = 0, flagIdx = 0
+/* แตะการ์ดบนจอ: เปิดเฉพาะตึกที่ build ใส่ DATA.tap · player อ่าน __BOARD_TAP ก่อนรับแตะ
+   และตั้ง __boardHold ระหว่างที่แผ่นรายการห้องเปิด → ไม่เปลี่ยนหน้าใต้มือคน */
+const TAP = !!DATA.tap
+window.__BOARD_TAP = TAP
+window.__boardHold = false
+if (TAP) document.body.classList.add("tapon")
 /* ไม่มี ".0" ห้อย — 30K · 29.5K · 4M · 4.2M */
 const fmtRentK = p => (p / 1e3).toFixed(1).replace(/\.0$/, "") + "K"
 const fmtSaleM = p => { let s = (p / 1e6).toFixed(1); if (s.length > 4) s = String(Math.round(p / 1e6)); return s.replace(/\.0$/, "") + "M" }
@@ -339,6 +352,7 @@ function paint() {
     const min = Math.min(...live.map(r => r.price))
     $("headS").innerHTML = (MODE === "sale" ? t.sumS : t.sumR).replace("%n", live.length)
       .replace("%p", MODE === "sale" ? fmtSaleM(min) : fmtRentK(min)).replace("%m", fmtSaleM(min).replace("M", ""))
+      + (TAP ? ` · <span class="taphint">${t.tapHint}</span>` : "")
   } else $("headS").innerHTML = ""
   $("headU").textContent = updD ? t.updW.replace("%d", updD(lang)) : ""
   $("langInd").innerHTML = LANGS.map((x, i) => i === lang ? `<b>${L[x].ind}</b>` : L[x].ind).join(" · ")
@@ -351,7 +365,7 @@ function paint() {
     /* ขาย: ล้านบาท + ฿/ตร.ม. คู่กันนิ่ง ๆ (เดิมสลับทุก 3.5 วิ = ตัวเลขเปลี่ยนระหว่างอ่าน) */
     const pru = MODE === "rent" ? t.rentU
       : (r.sqm ? `${t.saleM} · <b>${fmtPsqmK(r.price, r.sqm)}</b> ${t.saleQ}` : t.saleM)
-    return `<div class="c${r.takenLabel ? " taken" : ""}">
+    return `<div class="c${r.takenLabel ? " taken" : ""}"${r.ref ? ` data-ref="${String(r.ref).replace(/"/g, "")}"` : ""}>
       <span class="nm"><div class="t">${r.sqm} ${t.bedU} <span class="dot">·</span> ${fl(r, t)} ${flag}</div>
         <div class="s">${valueOf(r, t)}${statusOf(r, t)}${sizeOf(r)}</div></span>
       <span class="prw"><div class="pr">${pr}</div><div class="pru">${pru}</div></span>
@@ -432,6 +446,7 @@ if (REC) {
 
 /* เปลี่ยนหน้า — ภาษาคงเดิมทั้งรอบ */
 if (!REC && pages.length > 1) setInterval(() => {
+  if (window.__boardHold) return
   document.body.classList.add("fade-page")
   setTimeout(() => {
     page = (page + 1) % pages.length

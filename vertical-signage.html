@@ -1584,6 +1584,9 @@ body {
 .detail-vm.nudge { animation: qtyNudge 0.5s ease-in-out 2; }
 .detail-mit.hinted { margin-bottom: 2.4vh; }
 .detail-qty.has b { color: var(--dot-cyan); }
+/* ห้องที่แตะจากบอร์ด — ขึ้นบนสุด ถูกเลือกไว้แล้ว · บรอนซ์ = ห้องของคุณ */
+.detail-tapped { color: #F3C08E; font-size: 1.1vh; font-weight: 600; letter-spacing: .02em; margin: 0.5vh 0 0.2vh; }
+.detail-mit.tapped { background: rgba(201,134,76,0.13); box-shadow: inset 0.45vh 0 0 #C9864C; border-radius: 1vh; margin: 0 -1vh; padding-left: 1vh; padding-right: 1vh; }
 /* maxQty=1 (rooms, one-per-customer promos) → single select toggle */
 .detail-qty .q-tog {
     display: inline-flex; align-items: center; justify-content: center;
@@ -4460,7 +4463,11 @@ function buildDetailDyn(ctx){
                              : `<div class="detail-mit"><span class="th"></span><span class="nm">${isTH?'เพิ่มรายการเมนู…':'Add a menu item…'}</span><span class="pr"></span></div>`);
     }
     if (t==='order'){
-        const items = ctx.orderItems||[], ful = ctx.fulfillment||[];
+        let items = ctx.orderItems||[];
+        const ful = ctx.fulfillment||[];
+        /* แตะการ์ดห้องบนบอร์ด → ห้องนั้นขึ้นบนสุดและถูกเลือกไว้แล้ว (ctx.preselect = refCode) */
+        const pre = ctx.preselect ? items.find(m => String(m.key) === String(ctx.preselect) && !m.sold) : null;
+        if (pre) items = [pre, ...items.filter(m => m !== pre)];
         // An item without its own photo shows the offer's photo — a blank grey
         // square next to "THB 265" reads as a broken screen, not as "no photo".
         const fbImg = ctx.img || (Array.isArray(ctx.images) && ctx.images[0]) || '';
@@ -4490,12 +4497,14 @@ function buildDetailDyn(ctx){
                    // data-mode feeds the room-pick counter: the unit refCode alone
                    // can't say sale vs rent (dual-listed units share a refCode)
                    const uMode = isProp ? ` data-mode="${ctx.category === 'forSale' ? 'sale' : 'rent'}"` : '';
+                   const on = m === pre;
                    const ctrl = max === 1
-                     ? `<span class="detail-qty pick"${thb}${uMode} data-key="${key}" data-max="1" data-prop="${isProp?1:0}"><b style="display:none">0</b><span class="q-tog">${PICK_LABEL(isProp, false, isTH)}</span></span>`
+                     ? `<span class="detail-qty pick${on ? ' has' : ''}"${thb}${uMode} data-key="${key}" data-max="1" data-prop="${isProp?1:0}"><b style="display:none">${on ? 1 : 0}</b><span class="q-tog">${PICK_LABEL(isProp, on, isTH)}</span></span>`
                      : `<span class="detail-qty"${thb} data-key="${key}" data-max="${max}"><span class="q-dec">−</span><b>0</b><span class="q-inc">＋</span></span>`;
                    // the hint rides the first pickable row only (max>1 → has a ＋; toggles say "เลือก" already)
                    const hint = (i === 0 && max > 1 && !isProp) ? `<span class="qty-hint">${isTH ? 'กด ＋ ใส่จำนวน' : 'Tap ＋ to add'}</span>` : '';
-                   return `<div class="detail-mit${hint ? ' hinted' : ''}"><span class="th"${(m.image||fbImg)?` style="background-image:url('${m.image||fbImg}')"`:''}></span><span class="nm">${nm(m)}</span><span class="pr">${m.price?esc(m.price):''}</span>${ctrl}${hint}</div>`;
+                   const tapLine = on ? `<div class="detail-tapped">${isTH ? 'ห้องที่คุณแตะ · เลือกไว้ให้แล้ว' : 'The unit you tapped · already selected'}</div>` : '';
+                   return `${tapLine}<div class="detail-mit${hint ? ' hinted' : ''}${on ? ' tapped' : ''}"><span class="th"${(m.image||fbImg)?` style="background-image:url('${m.image||fbImg}')"`:''}></span><span class="nm">${nm(m)}</span><span class="pr">${m.price?esc(m.price):''}</span>${ctrl}${hint}</div>`;
                }).join('')
                              : `<div class="detail-mit"><span class="th"></span><span class="nm">${isTH?'เพิ่มสินค้า…':'Add a product…'}</span><span class="pr"></span></div>`)
              // Total lives here so it can be updated in place on every tap.
@@ -4649,6 +4658,10 @@ function openDetail(ctx) {
     const dyn = document.getElementById('detailDyn');
     if (dyn) dyn.innerHTML = ctx.isUpdate ? '' : buildDetailDyn(ctx);
     dyn?.closest('.detail-body')?.classList.remove('picked');   // fresh popup → the 👆 hint shows again
+    if (ctx.preselect && dyn && dyn.querySelector('.detail-mit.tapped')) {
+        dyn.closest('.detail-body')?.classList.add('picked');
+        updateCartTotal();
+    }
     if (ctx.ctaType === 'book') updateSlotAvail();   // grey out slots the cutoff forbids
 
     const hs = document.getElementById('handoffStep');
@@ -4713,6 +4726,7 @@ function _endDetail(reason) {
 }
 function closeDetail() {
     _endDetail();
+    releaseBoardHold();
     scanWatch.stop();              // QR gone → stop asking whether it was scanned
     detailOverlay.classList.remove('open');
     // Belt-and-braces: force the overlay out of the compositor after the fade,
@@ -5412,28 +5426,54 @@ stage.addEventListener('click', e => {
     if (typeof openCategory === 'function' && cat && (cat.items || []).length) openCategory(key);
 });
 
-/* CTA on the current commercial slide → detail of that offer/slot.
-   The "...more" chip after a clipped title/description opens the SAME detail
-   popup (that's where the full text lives), so it reuses this handler. */
+/* ── Board card tap → that room's popup, preselected ─────────────────────────
+   The board <iframe> stays pointer-events:none (every touch belongs to the
+   player — swipe, CTA, menu). A plain tap that lands on a board slide is
+   hit-tested INTO the same-origin board page: the card under the finger names
+   its room (data-ref = refCode = orderItems key) and the slide's own popup opens
+   with that room on top and already picked. Closed rooms (.taken) are not
+   tappable. Only boards that opted in react (window.__BOARD_TAP, baked per
+   building); a cross-origin board throws on access and nothing happens.
+   The board stops flipping pages while the popup is up (__boardHold), so the
+   room under the finger is the room in the popup. */
+let _heldBoard = null, _tapDown = null;
+function releaseBoardHold() { try { if (_heldBoard) _heldBoard.__boardHold = false; } catch (e) {} _heldBoard = null; }
+// a swipe is never a card tap — some WebViews still fire click after a short drag
+stage.addEventListener('pointerdown', e => { _tapDown = { x: e.clientX, y: e.clientY, t: Date.now() }; }, { passive: true });
 stage.addEventListener('click', e => {
-    const btn = e.target.closest('.cta, .slot-more');
-    if (!btn) return;
-    // Use the slot the tapped button ACTUALLY belongs to — NOT SLOTS[cur]. During a
-    // crossfade the outgoing slide is still in the DOM and clickable while `cur` has
-    // already advanced, so SLOTS[cur] opened the wrong offer's detail.
-    const slotEl = btn.closest('.slot');
-    const idx = (slotEl && slotEl.dataset.index != null) ? +slotEl.dataset.index : cur;
+    if (_tapDown && (Math.hypot(e.clientX - _tapDown.x, e.clientY - _tapDown.y) > 14 || Date.now() - _tapDown.t > 800)) return;
+    if (e.target.closest('.cta, .slot-more, .slot-eyebrow, button, a')) return;
+    if (detailOverlay.classList.contains('open')) return;
+    const slotEl = e.target.closest('.slot');
+    const fr = slotEl && slotEl.querySelector('iframe.slot-web');
+    const src = fr ? (fr.getAttribute('src') || '') : '';
+    if (!/\/board-cards\//.test(src)) return;
+    let w, d;
+    try { w = fr.contentWindow; d = fr.contentDocument; } catch (err) { return; }
+    if (!w || !d || !w.__BOARD_TAP) return;
+    const r = fr.getBoundingClientRect();
+    if (!r.width || !r.height) return;
+    // client px → the board page's own CSS px (the stage may be scaled to the panel)
+    const x = (e.clientX - r.left) * fr.offsetWidth / r.width;
+    const y = (e.clientY - r.top) * fr.offsetHeight / r.height;
+    const hit = d.elementFromPoint(x, y);
+    const card = hit && hit.closest && hit.closest('#cards .c[data-ref]');
+    if (!card || card.classList.contains('taken') || !card.dataset.ref) return;
+    const idx = slotEl.dataset.index != null ? +slotEl.dataset.index : cur;
     const s = SLOTS[idx];
     if (!s) return;
-    // Credit the slide that was actually on screen, not SLOTS[cur] — same reason
-    // as the idx dance above. A CTA press is also a funnel step; "...more" is not.
     uTouch(s.mediaId);
-    if (btn.classList.contains('cta')) uStep('cta');
-    // Which dock button was tapped → carry its (already form-matched) label so the
-    // detail/handoff CTA reads identically. Falls back to the slot's primary CTA.
-    // a "...more" tap is not a CTA choice — treat it as the slot's primary offer
-    const tappedKind = btn.classList.contains('cta-secondary') ? 'secondary' : 'primary';
-    const tappedCta = (s.ctas || []).find(c => c.kind === tappedKind) || (s.ctas || [])[0] || null;
+    uUnitPick((/\/board-cards\/sale\//.test(src) ? 'sale' : 'rent') + '-' + card.dataset.ref);   // the tap IS the room-interest signal
+    card.classList.add('tap');
+    setTimeout(() => card.classList.remove('tap'), 160);
+    try { w.__boardHold = true; _heldBoard = w; } catch (err) {}
+    const primary = (s.ctas || []).find(c => c.kind === 'primary') || (s.ctas || [])[0] || null;
+    setTimeout(() => openDetail(Object.assign(slideDetailCtx(s, primary), { preselect: card.dataset.ref })), 170);
+});
+
+/* Everything the popup needs from a commercial slide — shared by the CTA dock and
+   the board-card tap, so both open the identical popup. */
+function slideDetailCtx(s, tappedCta) {
     // For a property listing, prefer its own photo gallery over the slide still.
     // Fallback chain so a video offer (no still) still shows something: listing photos
     // → slide images → still → video poster → provider cover/logo.
@@ -5443,7 +5483,7 @@ stage.addEventListener('click', e => {
     const galleryImgs = (Array.isArray(s._listingImages) && s._listingImages.length)
         ? s._listingImages
         : ((Array.isArray(s.images) && s.images.length) ? s.images : (_fallbackImg ? [_fallbackImg] : []));
-    openDetail({
+    return {
         img: _fallbackImg,
         images: galleryImgs,
         eyebrow: s.eyebrow || (s._category ? eyebrowLabel(s._category) : 'Offering'),
@@ -5468,7 +5508,32 @@ stage.addEventListener('click', e => {
         booking: s._booking || null,
         eventInfo: s._eventInfo || null,
         ctaLabel: tappedCta ? tappedCta.label : null
-    });
+    };
+}
+
+/* CTA on the current commercial slide → detail of that offer/slot.
+   The "...more" chip after a clipped title/description opens the SAME detail
+   popup (that's where the full text lives), so it reuses this handler. */
+stage.addEventListener('click', e => {
+    const btn = e.target.closest('.cta, .slot-more');
+    if (!btn) return;
+    // Use the slot the tapped button ACTUALLY belongs to — NOT SLOTS[cur]. During a
+    // crossfade the outgoing slide is still in the DOM and clickable while `cur` has
+    // already advanced, so SLOTS[cur] opened the wrong offer's detail.
+    const slotEl = btn.closest('.slot');
+    const idx = (slotEl && slotEl.dataset.index != null) ? +slotEl.dataset.index : cur;
+    const s = SLOTS[idx];
+    if (!s) return;
+    // Credit the slide that was actually on screen, not SLOTS[cur] — same reason
+    // as the idx dance above. A CTA press is also a funnel step; "...more" is not.
+    uTouch(s.mediaId);
+    if (btn.classList.contains('cta')) uStep('cta');
+    // Which dock button was tapped → carry its (already form-matched) label so the
+    // detail/handoff CTA reads identically. Falls back to the slot's primary CTA.
+    // a "...more" tap is not a CTA choice — treat it as the slot's primary offer
+    const tappedKind = btn.classList.contains('cta-secondary') ? 'secondary' : 'primary';
+    const tappedCta = (s.ctas || []).find(c => c.kind === tappedKind) || (s.ctas || [])[0] || null;
+    openDetail(slideDetailCtx(s, tappedCta));
 });
 
 /* Category card → detail of that listing (offer/provider/update).

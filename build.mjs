@@ -114,6 +114,9 @@ const cardsTemplate = readFileSync(join(__dirname, 'board-cards.html'), 'utf8')
 // ถอยตึกไหนกลับแบบเดิม = ใส่ code ใน CARDS_V1 แล้ว rebuild
 const CARDS_V1 = new Set([])
 const useCardsV2 = code => !CARDS_V1.has(code)
+// แตะการ์ดห้องบนจอ → popup เลือกห้องนั้นไว้ให้ (player + board-cards-v2) · เปิดทีละตึก
+// ปิด = เอา code ออกแล้ว rebuild (การ์ดไม่มีลูกศร ไม่รับแตะ — แบบเดิม)
+const BOARD_TAP = new Set(['39-by-sansiri'])
 const cardsTemplateV2 = readFileSync(join(__dirname, 'board-cards-v2.html'), 'utf8')
 
 // unitProfile.projectName is a free string from the scraping pipeline and does
@@ -596,6 +599,7 @@ for (const project of projects) {
         ? (b.dataAsOf ?? '').slice(0, 10)
         : (source === 'lineup' ? lineup : auto.rows).map(p => p.lastCheckedAt).filter(Boolean).sort().at(-1)),
       rows,
+      tap: useCardsV2(code) && BOARD_TAP.has(code),
     }
     // Same deterministic-rev idea as the player bake: identical content →
     // identical file → no git diff → no redeploy.

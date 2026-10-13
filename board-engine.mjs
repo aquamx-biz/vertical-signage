@@ -160,6 +160,9 @@ export function profileToRow(p) {
     // because "ชั้น 21" tells a passer-by more than "ชั้นกลาง" — and it stops
     // three different units from rendering as the same line.
     floorNo: p.floorActual ?? null,
+    // Room code = the popup's orderItems key — lets a tapped card on the screen
+    // open the popup with that exact room picked (player hit-tests data-ref).
+    ref:     p.refCode ?? null,
     updated: p.lastCheckedAt,
     price:   p.priceTHB,
     remarks: remarksFor(p),

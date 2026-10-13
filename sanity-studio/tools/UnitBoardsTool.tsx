@@ -180,7 +180,7 @@ function profileToRow(p: Profile & { floorActual?: number }) {
   return {
     type: BED_LABEL[p.bedType ?? ''] ?? String(p.bedType ?? '').toUpperCase(),
     sqm: p.sqm, floor: String(p.floorZone ?? '').toUpperCase(),
-    floorNo: p.floorActual ?? null,
+    floorNo: p.floorActual ?? null, ref: p.refCode ?? null,
     updated: p.lastCheckedAt, price: p.priceTHB, remarks: remarks.slice(0, 4),
     // ที่เหลือ = ตัวที่การ์ดบนจอใช้ (บรรทัดสอง + ห้องปิดดีล) — ไม่มีแล้ว Preview โชว์น้อยกว่าจอจริง
     pricePerSqm: p.pricePerSqm ?? null, vsFloorPct: p.vsFloorPct ?? null,
