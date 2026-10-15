@@ -472,13 +472,13 @@ export default defineConfig([{
           ]),
 
           // ── Finance ────────────────────────────────────────────────────────
-          (can('payment') || can('procurement') || can('order') || can('customerOrder') || can('receipt') || can('funding') || can('bankAccount') || can('subscription') || can('journalEntry') || can('asset') || can('assetRegister') || can('ledger') || can('financialStatement')) &&
+          (can('payment') || can('procurement') || can('order') || can('customerOrder') || can('invoiceReceipt') || can('funding') || can('bankAccount') || can('subscription') || can('journalEntry') || can('asset') || can('assetRegister') || can('ledger') || can('financialStatement')) &&
           group('finance', 'Finance', '💰', [
             can('payment')           && S.documentTypeListItem('payment').title('Payments'),
             can('procurement')       && S.documentTypeListItem('procurement').title('Procurements'),
             can('order')             && S.documentTypeListItem('order').title('Orders — ขายพื้นที่จอ'),
             can('customerOrder')     && S.documentTypeListItem('customerOrder').title('Customer Orders — ลูกค้าซื้อจากร้าน'),
-            can('receipt')           && S.documentTypeListItem('receipt').title('Receipts'),
+            can('invoiceReceipt')           && S.documentTypeListItem('invoiceReceipt').title('Invoices / Receipts'),
             can('funding')           && S.documentTypeListItem('funding').title('Funding'),
             S.divider(),
             can('bankAccount')       && S.documentTypeListItem('bankAccount').title('Bank Accounts · บัญชีบริษัท'),

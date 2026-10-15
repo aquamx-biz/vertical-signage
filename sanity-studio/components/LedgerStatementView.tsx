@@ -63,7 +63,7 @@ function rangeFor(mode: string): [string, string] {
 // $accountIds is always an array — [singleId] for leaf, [child1, child2, ...] for parent
 const QUERY_TXN = `
 *[
-  _type in ["payment","receipt","funding","procurement","journalEntry"]
+  _type in ["payment","invoiceReceipt","funding","procurement","journalEntry"]
   && !(_id in path("drafts.**"))
   && accountingEntry.glStatus == "posted"
   && count(accountingEntry.lines[accountCode._ref in $accountIds]) > 0
@@ -74,7 +74,7 @@ const QUERY_TXN = `
   "entryDate": accountingEntry.entryDate,
   "ref": select(
     _type == "payment"     => paymentNumber,
-    _type == "receipt"     => receiptNumber,
+    _type == "invoiceReceipt"     => receiptNumber,
     _type == "funding"     => fundingNumber,
     _type == "procurement" => purchaseOrderNumber,
     _type == "journalEntry" => journalEntryNumber,
@@ -124,7 +124,7 @@ function derivedDesc(tx: Txn, ln: Line): string {
     const dir = tx.direction === 'inflow' ? 'Loan Drawdown' : 'Loan Repayment'
     return [dir, tx.vendorName].filter(Boolean).join(' · ')
   }
-  if (tx._type === 'receipt')      return ln.description || 'Revenue'
+  if (tx._type === 'invoiceReceipt')      return ln.description || 'Revenue'
   if (tx._type === 'journalEntry') return ln.description || tx.memo || tx.journalType || 'Journal Entry'
   if (tx._type === 'procurement') {
     return [tx.vendorName, ln.description].filter(Boolean).join(' · ') || 'Accounts Payable'

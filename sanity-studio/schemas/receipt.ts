@@ -28,8 +28,8 @@ const GlAccountRevenueInput = makeGlAccountInput(['revenue'], { allowCreditBalan
  * traceability back to the template entry.
  */
 export default defineType({
-  name:  'receipt',
-  title: 'Receipt',
+  name:  'invoiceReceipt',
+  title: 'Invoice / Receipt',
   type:  'document',
 
   groups: [
@@ -62,7 +62,7 @@ export default defineType({
         const client = (context as any).getClient({ apiVersion: '2024-01-01' })
         const selfId = (context.document?._id as string)?.replace(/^drafts\./, '')
         const count  = (await client.fetch(
-          `count(*[_type == "receipt" && receiptNumber == $num && _id != $self && !(_id in path("drafts.**"))])`,
+          `count(*[_type == "invoiceReceipt" && receiptNumber == $num && _id != $self && !(_id in path("drafts.**"))])`,
           { num: value, self: selfId ?? '' },
         )) as number
         return count === 0 ? true : `"${value}" is already used by another receipt — regenerate to get a unique number.`

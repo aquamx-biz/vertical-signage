@@ -69,7 +69,7 @@ export function ReceiptsArrayInput(props: ArrayOfObjectsInputProps) {
     await client
       .patch(draftId)
       .setIfMissing({ receipts: [] })
-      .append('receipts', [{ _key: newKey(), _type: 'receipt' }])
+      .append('receipts', [{ _key: newKey(), _type: 'invoiceReceipt' }])
       .commit({ autoGenerateArrayKeys: true })
   }, [client, draftId])
 

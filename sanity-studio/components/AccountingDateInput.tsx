@@ -10,7 +10,7 @@ export function AccountingDateInput(_props: any) {
 
   const txnDate =
     docType === 'payment'      ? paymentDate     :
-    docType === 'receipt'      ? issueDate       :
+    docType === 'invoiceReceipt'      ? issueDate       :
     docType === 'funding'      ? fundingDate     :
     docType === 'journalEntry' ? fundingDate     :
     docType === 'procurement'  ? orderPlacedDate :

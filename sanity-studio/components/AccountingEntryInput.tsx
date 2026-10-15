@@ -151,7 +151,7 @@ export function AccountingEntryInput(_props: StringInputProps) {
 
   // Step 4: resolve WHT Receivable account for receipts — code 1113100 (stored as "113100")
   useEffect(() => {
-    if (docType !== 'receipt' || wht === 0) { setRcptWhtAccountId(null); return }
+    if (docType !== 'invoiceReceipt' || wht === 0) { setRcptWhtAccountId(null); return }
     setRcptWhtAccountId(undefined)  // loading
     client
       .fetch<{ _id: string } | null>(
@@ -188,7 +188,7 @@ export function AccountingEntryInput(_props: StringInputProps) {
         (paymentMode !== 'procurement' || procLinkedApRef !== undefined)
       )
     ) &&
-    (docType !== 'receipt' || wht === 0 || rcptWhtAccountId !== undefined)
+    (docType !== 'invoiceReceipt' || wht === 0 || rcptWhtAccountId !== undefined)
 
   // ── State ─────────────────────────────────────────────────────────────────
   const [accountNames, setAccountNames] = useState<Record<string, string>>({})
@@ -222,7 +222,7 @@ export function AccountingEntryInput(_props: StringInputProps) {
   // ── Auto-fill entryDate from transaction date ─────────────────────────────
   const txnDate =
     docType === 'payment'      ? paymentDate    :
-    docType === 'receipt'      ? issueDate      :
+    docType === 'invoiceReceipt'      ? issueDate      :
     docType === 'funding'      ? fundingDate    :
     docType === 'journalEntry' ? fundingDate    : // fundingDate reads ['date'], same field
     docType === 'procurement'  ? orderPlacedDate :
@@ -336,7 +336,7 @@ export function AccountingEntryInput(_props: StringInputProps) {
       }
     }
 
-    if (docType === 'receipt') {
+    if (docType === 'invoiceReceipt') {
       if (!lineItems?.length && !totalAmount) return null
       const rcptLines: Line[] = (lineItems ?? []).map(li => ({
         _key:         genKey(),
