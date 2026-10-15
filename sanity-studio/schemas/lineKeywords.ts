@@ -160,6 +160,22 @@ export default defineType({
             defineField({ name: 'answerTh', title: 'Answer (Thai)', type: 'text', rows: 3 }),
             defineField({ name: 'answerEn', title: 'Answer (English)', type: 'text', rows: 3 }),
           ], preview: { select: { title: 'question', subtitle: 'answerTh' } } }] }),
+        // ── Shop guide — free-text questions in a shop's own LINE group / 1:1 ──
+        // Answers come from the shop's own state (package, quota, ads in review,
+        // the invoice sent into that chat, the step left half-done) as plain
+        // chat text; price / discount / contract / complaint / document changes
+        // always go to the team (aquamx-handoff lib/shop-guide).
+        defineField({ name: 'shopGuideMode', title: 'Shop guide — Mode', type: 'string', initialValue: 'auto',
+          description: 'Free-text questions from a shop in its LINE group or 1:1 chat. Auto: the guide answers at once from the shop\'s own data and copies each answer to aquamx-shop. Draft: the answer waits in aquamx-shop for the team to tap Send. Price, discount, contract, complaint and document changes always go to the team.',
+          options: { layout: 'radio', list: [
+            { title: 'Auto — answer the shop directly, copy to aquamx-shop', value: 'auto'  },
+            { title: 'Draft — the team taps Send in aquamx-shop',           value: 'draft' },
+            { title: 'Off',                                                  value: 'off'   },
+          ] } }),
+        defineField({ name: 'shopGuideHandoffTh', title: 'Shop guide — when handed to the team (Thai)', type: 'string',
+          initialValue: 'รับเรื่องแล้วครับ ทีมงานขอดูให้ก่อน เดี๋ยวตอบในแชทนี้ครับ' }),
+        defineField({ name: 'shopGuideHandoffEn', title: 'Shop guide — when handed to the team (English)', type: 'string',
+          initialValue: 'Got it — our team will look into this and reply right here.' }),
       ],
     }),
     // ── Team Groups — which LINE group hears about what ───────────────────
