@@ -11,6 +11,7 @@ import { AutoReceiptStatusInput }   from '../components/AutoReceiptStatusInput'
 import { accountingEntryField }     from './accountingEntryField'
 
 const ReceiptNumberInput    = createAutoNumberInput('receipt', { fixedPrefix: 'RCT' })
+const InvoiceNumberInput    = createAutoNumberInput('invoice', { fixedPrefix: 'INV', dateField: 'invoiceDate' })
 const GlAccountRevenueInput = makeGlAccountInput(['revenue'], { allowCreditBalance: true })
 
 /**
@@ -21,7 +22,11 @@ const GlAccountRevenueInput = makeGlAccountInput(['revenue'], { allowCreditBalan
  *   tax_invoice  → ใบกำกับภาษี
  *   combined     → ใบเสร็จรับเงิน / ใบกำกับภาษี  (most common B2B)
  *
- * Lifecycle: draft → issued → voided
+ * Lifecycle: draft → invoiced (invoice number, not yet paid) → issued (receipt
+ * number = paid) → posted → voided. A deal that is billed first (วางบิล) lives
+ * in ONE document: the invoice fields are filled when the team sends the
+ * invoice from the aquamx-shop LINE group, the receipt fields when the
+ * payment is recorded — so the customer's "เอกสารของฉัน" card reads one row.
  *
  * Line items are a one-time snapshot copied from the linked contract's
  * Process Setup receiptCharges[] template. sourceChargeKey preserves
@@ -68,6 +73,44 @@ export default defineType({
         return count === 0 ? true : `"${value}" is already used by another receipt — regenerate to get a unique number.`
       }),
     }),
+
+    // ── Invoice half (วางบิล) — filled before payment; empty for Beam receipts ──
+    defineField({
+      group:       'header',
+      name:        'invoiceNumber',
+      title:       '1.1a · Invoice Number',
+      type:        'string',
+      description: 'Auto-generated. Format: INV-yymm-001. Empty when the payment came through Beam (receipt only).',
+      components:  { input: InvoiceNumberInput },
+      validation:  Rule => Rule.custom(async (value, context) => {
+        if (!value) return true
+        const client = (context as any).getClient({ apiVersion: '2024-01-01' })
+        const selfId = (context.document?._id as string)?.replace(/^drafts\./, '')
+        const count  = (await client.fetch(
+          `count(*[_type == "invoiceReceipt" && invoiceNumber == $num && _id != $self && !(_id in path("drafts.**"))])`,
+          { num: value, self: selfId ?? '' },
+        )) as number
+        return count === 0 ? true : `"${value}" is already used by another invoice — regenerate to get a unique number.`
+      }),
+    }),
+    defineField({ group: 'header', name: 'invoiceDate', title: '1.1b · Invoice Date', type: 'date',
+      hidden: ({ document }: any) => !document?.invoiceNumber }),
+    defineField({ group: 'header', name: 'dueDate',     title: '1.1c · Payment Due',  type: 'date',
+      description: 'Invoice date + the party\'s credit terms. Overdue reminders in the aquamx-shop LINE group key on this.',
+      hidden: ({ document }: any) => !document?.invoiceNumber }),
+    defineField({ group: 'header', name: 'invoiceSentAt', title: '1.1d · Invoice Sent On', type: 'datetime', readOnly: true,
+      hidden: ({ document }: any) => !document?.invoiceNumber }),
+    defineField({
+      group:       'header',
+      name:        'quotation',
+      title:       '1.1e · Quotation',
+      type:        'reference',
+      to:          [{ type: 'quotation' }],
+      description: 'The accepted quotation this invoice / receipt settles (ad packages). Leave empty for rent receipts.',
+      options:     { disableNew: true },
+    }),
+    defineField({ group: 'header', name: 'pkgOrderId', title: '1.1f · Package Order (Firestore)', type: 'string', readOnly: true,
+      description: 'pkgOrders document this payment is for — written by the LINE flow.' }),
 
     defineField({
       group:        'header',

@@ -6,32 +6,37 @@ import { useFormValue }          from 'sanity'
 
 function deriveStatus(doc: {
   receiptNumber?:    string
+  invoiceNumber?:    string
   voidedAt?:         string
   accountingEntry?:  { glStatus?: string }
 }): string {
   if (doc.voidedAt)                                              return 'voided'
   if (doc.receiptNumber && doc.accountingEntry?.glStatus === 'posted') return 'posted'
   if (doc.receiptNumber)                                         return 'issued'
+  if (doc.invoiceNumber)                                         return 'invoiced'
   return 'draft'
 }
 
 const STATUS_LABELS: Record<string, string> = {
-  draft:  '📝 Draft',
-  issued: '✅ Issued',
+  draft:    '📝 Draft',
+  invoiced: '🧾 Invoiced — awaiting payment',
+  issued:   '✅ Issued',
   posted: '📒 Posted',
   voided: '🚫 Voided',
 }
 
 const STATUS_DESCRIPTIONS: Record<string, string> = {
   draft:  'Receipt not yet issued. Assign a receipt number (section 1.1) to issue it.',
+  invoiced: 'Invoice sent, payment not yet received. The receipt number is assigned when the payment is recorded (LINE: 💰 รับชำระ).',
   issued: 'Receipt number assigned and document is ready. Go to Accounting section and post the journal entry to finalize.',
   posted: 'Journal entry posted to the general ledger. This receipt is fully recorded.',
   voided: 'Receipt has been cancelled. Set Voided At to record the cancellation date.',
 }
 
 const STATUS_TONE: Record<string, 'default' | 'caution' | 'positive' | 'critical'> = {
-  draft:  'default',
-  issued: 'caution',
+  draft:    'default',
+  invoiced: 'caution',
+  issued:   'caution',
   posted: 'positive',
   voided: 'critical',
 }

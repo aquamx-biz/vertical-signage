@@ -254,6 +254,35 @@ export default defineType({
       description: 'Group conversation ID from LINE. Add the bot to the group and send any message — the bot will reply with this ID.',
     }),
     defineField({
+      group: 'identity', name: 'contacts', title: 'Contact People', type: 'array',
+      description: 'Everyone we deal with at this party — the "send to" rows when the team sends a quotation / invoice / receipt from LINE. One can be the primary contact. The bot adds a row when the team types "ชื่อ · เบอร์ · LINE ID · อีเมล" in the send card.',
+      hidden: ({ document }: any) => document?.identityType !== 'corporate',
+      of: [{
+        type: 'object', name: 'partyContact',
+        fields: [
+          defineField({ name: 'name',       title: 'Name',          type: 'string', validation: Rule => Rule.required() }),
+          defineField({ name: 'role',       title: 'Role',          type: 'string',
+            options: { list: [
+              { title: 'ผู้ดูแล / Account contact', value: 'manager'    },
+              { title: 'บัญชี / Accounting',         value: 'accounting' },
+              { title: 'ผู้บริหาร / Executive',      value: 'executive'  },
+              { title: 'อื่น ๆ / Other',             value: 'other'      },
+            ] }, initialValue: 'manager' }),
+          defineField({ name: 'phone',      title: 'Phone',         type: 'string' }),
+          defineField({ name: 'email',      title: 'Email',         type: 'string', validation: Rule => Rule.email() }),
+          defineField({ name: 'lineUserId', title: 'LINE User ID',  type: 'string', description: 'U… — the person\'s own chat with @aquamx. Documents can be sent here privately.' }),
+          defineField({ name: 'primary',    title: 'Primary contact', type: 'boolean', initialValue: false }),
+        ],
+        preview: {
+          select: { name: 'name', role: 'role', email: 'email', line: 'lineUserId', primary: 'primary' },
+          prepare: ({ name, role, email, line, primary }: any) => ({
+            title:    `${primary ? '★ ' : ''}${name ?? '-'}`,
+            subtitle: [role, email, line ? 'LINE ✓' : 'no LINE'].filter(Boolean).join(' · '),
+          }),
+        },
+      }],
+    }),
+    defineField({
       group: 'identity', name: 'logins', title: 'Website Logins', type: 'array',
       of: [{ type: 'string' }], readOnly: true,
       description: 'Login identities linked to this party (email:<addr> / line:<userId>) — written automatically by aquamx.biz sign-in (account.js). One party can hold several logins.',
