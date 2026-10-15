@@ -90,7 +90,7 @@ const QUERY_LEDGERS = `
 // Period transactions — for Income Statement (from → to)
 const QUERY_TXNS = `
   *[
-    _type in ["payment","receipt","funding","procurement","journalEntry"]
+    _type in ["payment","invoiceReceipt","funding","procurement","journalEntry"]
     && !(_id in path("drafts.**"))
     && accountingEntry.glStatus == "posted"
     && ($from == "" || accountingEntry.entryDate >= $from)
@@ -121,7 +121,7 @@ const QUERY_REG_CAP = `
 // Cumulative transactions — for Balance Sheet & Trial Balance (up to 'to', no from)
 const QUERY_BS_TXNS = `
   *[
-    _type in ["payment","receipt","funding","procurement","journalEntry"]
+    _type in ["payment","invoiceReceipt","funding","procurement","journalEntry"]
     && !(_id in path("drafts.**"))
     && accountingEntry.glStatus == "posted"
     && ($to == "" || accountingEntry.entryDate <= $to)

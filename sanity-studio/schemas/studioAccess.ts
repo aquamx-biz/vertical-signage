@@ -29,7 +29,7 @@ const SCHEMA_OPTIONS = [
   { title: '🔧 Install & Activate',     value: 'installation'     },
   // ── Finance ──────────────────────────────────────────────────────────────
   { title: '💳 Payments',               value: 'payment'          },
-  { title: '🧾 Receipts',               value: 'receipt'          },
+  { title: '🧾 Invoices / Receipts',    value: 'invoiceReceipt'   },
   { title: '💰 Funding',                value: 'funding'          },
   { title: '📦 Procurements',           value: 'procurement'      },
   { title: '📒 Journal Entries',        value: 'journalEntry'     },

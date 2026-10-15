@@ -172,7 +172,7 @@ export function LedgerListPane() {
             "bfCr":      coalesce(broughtForwardCredit, 0)
           },
           "txns": *[
-            _type in ["payment","receipt","funding","procurement","journalEntry"]
+            _type in ["payment","invoiceReceipt","funding","procurement","journalEntry"]
             && accountingEntry.glStatus == "posted"
             && accountingEntry.entryDate >= $from
             && accountingEntry.entryDate <= $to

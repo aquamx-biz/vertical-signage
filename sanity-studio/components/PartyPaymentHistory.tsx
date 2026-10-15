@@ -173,7 +173,7 @@ export function PartyPaymentHistory(_props: any) {
         { partyId },
       ),
       client.fetch<ReceiptRow[]>(
-        `*[_type == "receipt" && payer._ref == $partyId && !(_id in path("drafts.**"))]
+        `*[_type == "invoiceReceipt" && payer._ref == $partyId && !(_id in path("drafts.**"))]
          | order(issueDate desc) {
            _id, receiptNumber, receiptType, status,
            issueDate, billingPeriod, totalAmount, whtAmount, paymentDate, currency,
@@ -376,7 +376,7 @@ export function PartyPaymentHistory(_props: any) {
                 mode="ghost"
                 fontSize={0}
                 padding={2}
-                onClick={e => { e.stopPropagation(); router.navigateIntent('edit', { id: r._id, type: 'receipt' }) }}
+                onClick={e => { e.stopPropagation(); router.navigateIntent('edit', { id: r._id, type: 'invoiceReceipt' }) }}
               />
             </Flex>
           </Flex>

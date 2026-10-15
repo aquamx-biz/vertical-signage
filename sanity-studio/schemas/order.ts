@@ -421,7 +421,7 @@ export default defineType({
       description: 'One order can produce several receipts — a deposit, a balance, a monthly period. Receipts remain the only accounting document; this order never posts to the GL itself.',
       of: [defineArrayMember({
         type: 'reference',
-        to:   [{ type: 'receipt' }],
+        to:   [{ type: 'invoiceReceipt' }],
         options: { disableNew: true },
       })],
     }),
