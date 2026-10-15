@@ -361,6 +361,15 @@ export default defineType({
 
     defineField({
       group:       'financial',
+      name:        'vendorCode',
+      title:       'Our Vendor Code at this Customer',
+      type:        'string',
+      description: 'The supplier / vendor number this customer\'s purchasing system gave aquamx (e.g. Plus Property 318288). Printed on invoices as รหัสผู้ขาย.',
+      hidden:      ({ document }: any) => document?.identityType !== 'corporate',
+    }),
+
+    defineField({
+      group:       'financial',
       name:        'paymentTermsDays',
       title:       'Payment Terms (days)',
       type:        'number',
