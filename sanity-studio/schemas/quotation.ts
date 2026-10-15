@@ -409,6 +409,17 @@ export default defineType({
       }],
     }),
     defineField({ group: 'followup', name: 'decidedAt', title: '4.3 · Accepted / Declined On',  type: 'datetime' }),
+    // Written by the aquamx-shop LINE group (lib/commercial): the team taps
+    // "✅ ลูกค้าตอบรับใบเสนอราคาแล้ว" → acceptedAt + the corporate package it
+    // opened; "✗ ลูกค้าปฏิเสธ" → declinedReason; the PO number the customer sent.
+    defineField({ group: 'followup', name: 'acceptedAt',    title: '4.3b · Accepted On (LINE)',  type: 'datetime', readOnly: true,
+      description: 'Stamped when the team records the acceptance in the aquamx-shop LINE group.' }),
+    defineField({ group: 'followup', name: 'poNumber',      title: '4.3c · Customer PO Number',   type: 'string',
+      description: 'Purchase order the customer issued against this quotation (e.g. 6700013116). Printed on the invoice.' }),
+    defineField({ group: 'followup', name: 'pkgOrderId',    title: '4.3d · Package Order (Firestore)', type: 'string', readOnly: true,
+      description: 'pkgOrders document opened from this quotation — the ad package the shop uses.' }),
+    defineField({ group: 'followup', name: 'declinedReason', title: '4.3e · Declined — Reason',   type: 'text', rows: 2,
+      hidden: ({ document }: any) => document?.status !== 'declined' }),
     defineField({
       group:       'followup',
       name:        'correspondence',
