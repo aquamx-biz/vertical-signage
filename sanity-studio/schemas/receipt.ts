@@ -476,6 +476,31 @@ export default defineType({
       description: 'Upload the signed / issued receipt PDF or image.',
     }),
 
+    // The exact PDF the customer received each time the invoice or the receipt
+    // was sent from aquamx-shop (aquamx-handoff lib/commercial archiveIssued) —
+    // same shape as quotation.issuedVersions, plus which half (kind).
+    defineField({
+      group: 'amounts', name: 'issuedVersions', title: '2.15b · Issued Versions', type: 'array', readOnly: true,
+      description: 'The PDF as sent, written by the bot on every send — the record of what the customer received.',
+      of: [{
+        type: 'object', name: 'issuedVersion',
+        fields: [
+          defineField({ name: 'rev',      title: 'Revision',  type: 'number' }),
+          defineField({ name: 'kind',     title: 'Document',  type: 'string', options: { list: [{ title: 'Invoice', value: 'invoice' }, { title: 'Receipt', value: 'receipt' }] } }),
+          defineField({ name: 'issuedAt', title: 'Issued At', type: 'datetime' }),
+          defineField({ name: 'pdf',      title: 'PDF as sent', type: 'file' }),
+          defineField({ name: 'lang',     title: 'Language',  type: 'string' }),
+          defineField({ name: 'channel',  title: 'Channel',   type: 'string' }),
+          defineField({ name: 'to',       title: 'Sent To',   type: 'string' }),
+          defineField({ name: 'sentBy',   title: 'Sent By',   type: 'string' }),
+        ],
+        preview: {
+          select: { rev: 'rev', kind: 'kind', issuedAt: 'issuedAt', to: 'to' },
+          prepare: ({ rev, kind, issuedAt, to }: any) => ({ title: `${kind === 'receipt' ? 'Receipt' : 'Invoice'} · Rev.${rev ?? '-'} · ${issuedAt ? String(issuedAt).slice(0, 10) : '-'}`, subtitle: to }),
+        },
+      }],
+    }),
+
     defineField({
       group: 'amounts',
       name:  'internalNotes',
