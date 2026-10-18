@@ -174,6 +174,7 @@ export default defineType({
         contract:    'Any Contract',
         projectSite: 'Project Site',
         both:        'Both',
+        mediaBeforePayment: 'Media before payment',
       }
       const typeLabel = STATIC_LABELS[type] ?? (type ? `Contract Type: ${type.slice(0, 8)}…` : '—')
       return {
