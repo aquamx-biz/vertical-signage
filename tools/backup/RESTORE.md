@@ -36,27 +36,40 @@ cd ..
 
 ## 2. Sanity
 
-Always restore into a **new dataset first**, check it in Studio, then decide.
-Importing straight over `production` replaces live documents that kiosks bake
-from on the next rebuild.
+**There is no spare dataset to restore into.** The plan allows 3 datasets and
+all 3 are taken (`production`, `production-comments`, `internal`), so
+`sanity dataset create` fails with *Payment Required - Quota exceeded*. Check
+the archive on the laptop instead, then import into the live dataset with the
+flag that touches the least.
+
+### Check the archive
 
 ```bash
-cd sanity-studio
-npx sanity dataset create restore-check --visibility private
-npx sanity dataset import ../_restore/sanity-production.tar.gz restore-check
-# compare: count(*) in restore-check vs the number in MANIFEST.txt
+mkdir -p _restore/p && tar --force-local -xzf _restore/sanity-production.tar.gz -C _restore/p
+wc -l _restore/p/*/data.ndjson                                        # = "documents" in MANIFEST.txt
+find _restore/p -type f \( -path '*/images/*' -o -path '*/files/*' \) | wc -l   # = "asset files"
+grep -F '"_id":"THE-DOC-ID"' _restore/p/*/data.ndjson                 # is the lost doc in there?
 ```
 
-To put lost documents back into production, import with `--missing` (only adds
-docs that no longer exist — the safe choice after an accidental delete) or
-`--replace` (also overwrites docs that still exist with the backed-up version):
+Tested 2026-10-18 on the first backup: 6,145/6,145 documents matched live
+`_rev` for `_rev`, all 690 asset files passed their sha1, internal 13,593/13,593.
+The only live docs not in an export are the 13 system `_.groups.*` docs, which
+Sanity never exports and does not need restored.
 
-```bash
-npx sanity dataset import ../_restore/sanity-production.tar.gz production --missing
-```
+### Put data back — pick the smallest that fixes it
 
-Remove the check dataset afterwards: `npx sanity dataset delete restore-check`.
-`internal` works the same way with `_restore/sanity-internal.tar.gz`.
+Run from `sanity-studio/`. Every write here is a normal Sanity mutation, so the
+publish webhook fires and the kiosks rebuild — do it when a rebuild is fine.
+
+| Situation | Command |
+|---|---|
+| Documents were **deleted** (the 16/09 purge kind) | `npx sanity dataset import ../_restore/sanity-production.tar.gz production --missing` — adds only docs whose `_id` no longer exists; nothing that still exists is touched |
+| **One document** was edited wrongly | `grep -F '"_id":"THE-DOC-ID"' ../_restore/p/*/data.ndjson > ../_restore/one.json` then `npx sanity documents create ../_restore/one.json --replace --dataset production` |
+| The dataset is **wrecked** | `npx sanity dataset import ../_restore/sanity-production.tar.gz production --replace` — every backed-up doc overwrites its live version; docs created after the backup stay |
+
+`internal` works the same way with `_restore/sanity-internal.tar.gz` and
+`--dataset internal` / `internal` as the target. Never import into
+`production-comments`.
 
 ## 3. Firestore
 
