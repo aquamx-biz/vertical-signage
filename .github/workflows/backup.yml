@@ -1,0 +1,131 @@
+# Weekly backup → Google Drive (Shared Drive "aquamx-backup")
+#
+# Sunday 03:00 Bangkok. One folder per run (YYYY-MM-DD), newest 8 kept;
+# older ones go to the Shared Drive trash. Restore steps: tools/backup/RESTORE.md
+#
+#   sanity-production.tar.gz        documents + images/videos (public-read data — not encrypted)
+#   sanity-internal.tar.gz.enc      private co-broke contacts (PDPA) — encrypted
+#   firestore.ndjson.gz.enc         leads, orders, payments, config (holds credentials) — encrypted
+#   MANIFEST.txt                    sizes, sha256, document counts
+#
+# Encryption: openssl AES-256-CBC, PBKDF2 600k iterations, key = BACKUP_PASSPHRASE.
+# GitHub cannot show a secret again — the passphrase must ALSO live somewhere a
+# human can read it, or the encrypted files are unrecoverable.
+#
+# Secrets (Settings > Secrets and variables > Actions):
+#   SANITY_BACKUP_TOKEN            Sanity Viewer token (reads production + internal)
+#   FIREBASE_SERVICE_ACCOUNT_JSON  handoff service account (Firestore read)
+#   GDRIVE_SA_JSON                 drive-backup@aquamx-handoff — Content manager on the drive
+#   BACKUP_PASSPHRASE              encryption passphrase
+#   LINE_CHANNEL_ACCESS_TOKEN      failure alert → "aquamx notify" group
+#
+# Errors are re-emitted as ::error:: annotations (see studio-deploy.yml for why).
+
+name: Weekly backup
+
+on:
+  schedule:
+    - cron: '0 20 * * 6'        # Sat 20:00 UTC = Sun 03:00 Asia/Bangkok
+  workflow_dispatch:
+
+concurrency:
+  group: weekly-backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      OUT: ${{ github.workspace }}/_backup
+      SANITY_AUTH_TOKEN: ${{ secrets.SANITY_BACKUP_TOKEN }}
+      SANITY_BACKUP_TOKEN: ${{ secrets.SANITY_BACKUP_TOKEN }}
+      FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+      GDRIVE_SA_JSON: ${{ secrets.GDRIVE_SA_JSON }}
+      BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20', cache: 'npm', cache-dependency-path: sanity-studio/package-lock.json }
+
+      - name: Secrets present?
+        run: |
+          missing=""
+          for s in SANITY_AUTH_TOKEN FIREBASE_SERVICE_ACCOUNT_JSON GDRIVE_SA_JSON BACKUP_PASSPHRASE; do
+            [ -z "${!s}" ] && missing="$missing $s"
+          done
+          if [ -n "$missing" ]; then echo "::error::missing secrets:$missing"; exit 1; fi
+          if [ ${#BACKUP_PASSPHRASE} -lt 20 ]; then echo "::error::BACKUP_PASSPHRASE shorter than 20 chars"; exit 1; fi
+          mkdir -p "$OUT"
+          echo "SET=$(TZ=Asia/Bangkok date +%F)" >> "$GITHUB_ENV"
+
+      - name: Install Sanity CLI (studio deps)
+        working-directory: sanity-studio
+        run: npm ci --no-audit --no-fund
+
+      - name: Export Sanity production
+        working-directory: sanity-studio
+        run: |
+          set +e; out=$(npx sanity dataset export production "$OUT/sanity-production.tar.gz" --overwrite 2>&1); rc=$?
+          echo "$out" | tail -20
+          if [ $rc -ne 0 ]; then echo "::error title=sanity production::$(echo "$out" | tail -c 900 | tr '\n' ' ')"; exit $rc; fi
+
+      - name: Export Sanity internal
+        working-directory: sanity-studio
+        run: |
+          set +e; out=$(npx sanity dataset export internal "$OUT/sanity-internal.tar.gz" --overwrite 2>&1); rc=$?
+          echo "$out" | tail -20
+          if [ $rc -ne 0 ]; then echo "::error title=sanity internal::$(echo "$out" | tail -c 900 | tr '\n' ' ')"; exit $rc; fi
+
+      - name: Export Firestore
+        run: node tools/backup/backup-firestore.mjs "$OUT/firestore.ndjson.gz" | tee "$OUT/.firestore.log"
+
+      - name: Verify archives + count documents
+        run: |
+          cd "$OUT"
+          count() { tar -xzOf "$1" --wildcards '*/data.ndjson' | wc -l; }
+          for f in sanity-production.tar.gz sanity-internal.tar.gz; do
+            gzip -t "$f" || { echo "::error::$f is corrupt"; exit 1; }
+          done
+          gzip -t firestore.ndjson.gz
+          P=$(count sanity-production.tar.gz); I=$(count sanity-internal.tar.gz); F=$(zcat firestore.ndjson.gz | wc -l)
+          A=$(tar -tzf sanity-production.tar.gz | grep -cE '/(images|files)/' || true)
+          echo "production docs=$P assets=$A · internal docs=$I · firestore docs=$F"
+          # a near-empty export means a token lost its access, not a quiet week
+          if [ "$P" -lt 500 ] || [ "$F" -lt 100 ]; then echo "::error::export suspiciously small (production=$P firestore=$F)"; exit 1; fi
+          { echo "aquamx backup $SET  (run $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID)"
+            echo "sanity production: $P documents, $A asset files"
+            echo "sanity internal:   $I documents"
+            echo "firestore:         $F documents"; echo; } > MANIFEST.txt
+
+      - name: Encrypt private sets
+        run: |
+          cd "$OUT"
+          # a secret pasted/piped with a trailing newline would encrypt with a key
+          # nobody can type back at restore time
+          export BACKUP_PASSPHRASE="$(printf %s "$BACKUP_PASSPHRASE" | tr -d '\r\n')"
+          for f in sanity-internal.tar.gz firestore.ndjson.gz; do
+            openssl enc -aes-256-cbc -pbkdf2 -iter 600000 -md sha256 -salt \
+              -in "$f" -out "$f.enc" -pass env:BACKUP_PASSPHRASE
+            # prove it decrypts before the plaintext is gone
+            openssl enc -d -aes-256-cbc -pbkdf2 -iter 600000 -md sha256 \
+              -in "$f.enc" -pass env:BACKUP_PASSPHRASE | cmp - "$f"
+            # hash of the plaintext too, so a decrypted restore can be checked against it
+            sha256sum "$f" | sed 's/^/sha256 /' >> MANIFEST.txt
+            rm "$f"
+          done
+          rm -f .firestore.log
+          sha256sum sanity-production.tar.gz *.enc | sed 's/^/sha256 /' >> MANIFEST.txt
+          ls -la
+
+      - name: Upload to Drive + keep newest 8
+        run: node tools/backup/upload-drive.mjs "$OUT" "$SET" 8
+
+      - name: LINE alert on failure
+        if: failure()
+        env:
+          LINE_CHANNEL_ACCESS_TOKEN: ${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }}
+        run: |
+          node tools/backup/notify-line.mjs "⚠️ backup รายสัปดาห์ไม่ผ่าน (${SET:-$(date +%F)})
+          ข้อมูล Sanity/Firestore สัปดาห์นี้ยังไม่ได้สำรอง — ชุดเก่าใน Drive ยังอยู่ครบ
+          ดูสาเหตุ: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
