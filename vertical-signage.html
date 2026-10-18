@@ -3077,6 +3077,16 @@ function fitMedia(img) {
     const media = img.closest('.slot-media');
     if (media) media.classList.toggle('media-zoom', isCover);
 }
+/* Same rule for a slot VIDEO (18 Oct 2026 — Plus at 39 by Sansiri played
+   letterboxed with side bars): the player area is wider than 9:16, so a 9:16
+   clip needs cover to fill it edge-to-edge; any other ratio stays contain so
+   nothing of a non-9:16 clip is cropped. Read on loadeddata (videoWidth is 0
+   before). object-fit costs nothing on the GPU — no new layer. */
+function fitVideo(v) {
+    if (!v || !v.videoWidth || !v.videoHeight) return;
+    const isCover = Math.abs(v.videoWidth / v.videoHeight - 0.5625) <= 0.04;  // 9:16
+    v.style.objectFit = isCover ? 'cover' : 'contain';
+}
 
 /* Ask Sanity's image CDN for a display-sized, format-optimised copy. The kiosk is
    ~1080px wide, so serving the full-resolution original just makes Android WebView
@@ -3495,7 +3505,7 @@ function manageSlotVideo(idx) {
         // video slide"). The poster/provider still underneath carries the slot;
         // the video swaps in only once it can actually show pixels.
         v.style.display = 'none';
-        const revealVideo = () => { if (myToken === advanceToken) v.style.display = 'block'; };
+        const revealVideo = () => { if (myToken === advanceToken) { fitVideo(v); v.style.display = 'block'; } };
         if (v.readyState >= 2) revealVideo(); else v.onloadeddata = revealVideo;
         try { v.currentTime = 0; } catch(e) {}
 
