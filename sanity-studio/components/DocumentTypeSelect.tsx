@@ -71,6 +71,7 @@ export function DocumentTypeSelect(props: StringInputProps) {
           <option value="withdrawal">Withdrawal of Termination (ถอนการบอกเลิก)</option>
           <option value="addendum">Lease Addendum after signing (บันทึกข้อตกลงแก้ไขเพิ่มเติม)</option>
           <option value="both">Both (Quotation + Any Contract)</option>
+          <option value="mediaBeforePayment">Media before payment (ad goes on screen before the invoice is paid)</option>
         </optgroup>
 
         {contractTypes.length > 0 && (
