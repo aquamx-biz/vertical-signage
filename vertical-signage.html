@@ -2398,7 +2398,9 @@ async function loadProviders() {
         return {
             slug:               p.slug,
             nameEN:             p.name_en ?? p.name_th ?? '',
-            nameTH:             p.name_th ?? p.name_en ?? '',
+            // Studio › Provider › Display Name Language = "English only" → the
+            // English name shows on the Thai UI too (brands like Plus Property)
+            nameTH:             p.displayName === 'en' ? (p.name_en || p.name_th || '') : (p.name_th ?? p.name_en ?? ''),
             name_th:            p.name_th ?? '',
             name_en:            p.name_en ?? '',
             displayName:        p.displayName ?? 'th',
@@ -2936,7 +2938,7 @@ function adaptPlaylistToSlots(pl) {
                 slug: item.provider.slug,
                 logo: item.provider.logo || '',
                 name_th: item.provider.name_th, name_en: item.provider.name_en,
-                nameTH: item.provider.name_th || item.provider.name_en || '',
+                nameTH: (item.provider.displayName === 'en' ? item.provider.name_en || item.provider.name_th : item.provider.name_th || item.provider.name_en) || '',
                 nameEN: item.provider.name_en || item.provider.name_th || '',
                 phone: item.provider.phone || '',
                 line: item.provider.lineId || '',
@@ -4459,7 +4461,7 @@ function buildDetailDyn(ctx){
     const t = ctx.ctaType || '';
     const p = ctx.provider || null;
     const nm = m => esc(isTH ? (m.name_th||m.name_en) : (m.name_en||m.name_th));
-    const store = p ? esc(isTH ? (p.name_th||p.nameTH||p.name_en) : (p.name_en||p.nameEN||p.name_th)) : '';
+    const store = p ? esc(isTH ? (p.nameTH||p.name_th||p.name_en) : (p.nameEN||p.name_en||p.name_th)) : '';
     const price = ctx.price ? `<div class="detail-price">${esc(ctx.price)}</div>` : '';
     const FUL = { dine_in:isTH?'ทานที่ร้าน':'Dine-in', delivery:isTH?'เดลิเวอรี':'Delivery', pickup:isTH?'รับเอง':'Pickup' };
     const evParts = ev => [(ev&&ev.dates||[]).join(', '), ev&&ev.place, (ev&&ev.capacity)?(isTH?'รับ ':'Cap ')+ev.capacity:''].filter(Boolean);
