@@ -1,6 +1,6 @@
-# Weekly backup → Google Drive (Shared Drive "aquamx-backup")
+# Daily backup → Google Drive (Shared Drive "aquamx-backup")
 #
-# Sunday 03:00 Bangkok. One folder per run (YYYY-MM-DD), newest 8 kept;
+# Every day 01:00 Bangkok. One folder per run (YYYY-MM-DD), newest 14 kept;
 # older ones go to the Shared Drive trash. Restore steps: tools/backup/RESTORE.md
 #
 #   sanity-production.tar.gz        documents + images/videos (public-read data — not encrypted)
@@ -21,15 +21,18 @@
 #
 # Errors are re-emitted as ::error:: annotations (see studio-deploy.yml for why).
 
-name: Weekly backup
+name: Daily backup
 
 on:
   schedule:
-    - cron: '0 20 * * 6'        # Sat 20:00 UTC = Sun 03:00 Asia/Bangkok
+    # 01:00 not 00:00: the Monday 00:03 unit scrape writes to Sanity and must
+    # finish first, or the export catches it half-applied. GitHub starts
+    # scheduled runs 5-30 min late, so expect files around 01:00-01:30.
+    - cron: '0 18 * * *'        # 18:00 UTC = 01:00 Asia/Bangkok
   workflow_dispatch:
 
 concurrency:
-  group: weekly-backup
+  group: daily-backup
   cancel-in-progress: false
 
 jobs:
@@ -118,14 +121,14 @@ jobs:
           sha256sum sanity-production.tar.gz *.enc | sed 's/^/sha256 /' >> MANIFEST.txt
           ls -la
 
-      - name: Upload to Drive + keep newest 8
-        run: node tools/backup/upload-drive.mjs "$OUT" "$SET" 8
+      - name: Upload to Drive + keep newest 14
+        run: node tools/backup/upload-drive.mjs "$OUT" "$SET" 14
 
       - name: LINE alert on failure
         if: failure()
         env:
           LINE_CHANNEL_ACCESS_TOKEN: ${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }}
         run: |
-          node tools/backup/notify-line.mjs "⚠️ backup รายสัปดาห์ไม่ผ่าน (${SET:-$(date +%F)})
-          ข้อมูล Sanity/Firestore สัปดาห์นี้ยังไม่ได้สำรอง — ชุดเก่าใน Drive ยังอยู่ครบ
+          node tools/backup/notify-line.mjs "⚠️ backup รายวันไม่ผ่าน (${SET:-$(date +%F)})
+          ข้อมูล Sanity/Firestore วันนี้ยังไม่ได้สำรอง — ชุดเก่าใน Drive ยังอยู่ครบ
           ดูสาเหตุ: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"

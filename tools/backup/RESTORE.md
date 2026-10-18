@@ -1,7 +1,7 @@
 # กู้ข้อมูลจาก backup · Restoring a backup
 
-Backups run every Sunday 03:00 (`.github/workflows/backup.yml`) into the
-Google Shared Drive **aquamx-backup**, one folder per week, newest 8 kept.
+Backups run every day at 01:00 (`.github/workflows/backup.yml`) into the
+Google Shared Drive **aquamx-backup**, one folder per day, newest 14 kept.
 Older folders sit in the Shared Drive trash for 30 days.
 
 | File | What | Encrypted |
@@ -79,5 +79,5 @@ credentials in plain form.
 
 ## Run a backup now
 
-GitHub → Actions → **Weekly backup** → Run workflow. A failure posts in the
+GitHub → Actions → **Daily backup** → Run workflow. A failure posts in the
 "aquamx notify" LINE group with a link to the run.

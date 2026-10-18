@@ -1,6 +1,6 @@
 // Upload one backup set to the aquamx-backup Shared Drive, then prune old sets.
 //
-//   node tools/backup/upload-drive.mjs <dir> <setName> [keep=8]
+//   node tools/backup/upload-drive.mjs <dir> <setName> [keep=14]
 //   env GDRIVE_SA_JSON   drive-backup@aquamx-handoff — Content manager on the drive
 //       GDRIVE_DRIVE_ID  optional; defaults to the aquamx-backup Shared Drive
 //
@@ -13,11 +13,11 @@ import { readdir, stat, readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { serviceAccountFromEnv, accessToken } from './google-auth.mjs'
 
-const [dir, setName, keepArg = '8'] = process.argv.slice(2)
+const [dir, setName, keepArg = '14'] = process.argv.slice(2)
 if (!dir || !/^\d{4}-\d{2}-\d{2}/.test(setName ?? '')) {
   console.error('usage: upload-drive.mjs <dir> <YYYY-MM-DD…> [keep]'); process.exit(2)
 }
-const KEEP     = Math.max(1, Number(keepArg) || 8)
+const KEEP     = Math.max(1, Number(keepArg) || 14)
 const DRIVE_ID = process.env.GDRIVE_DRIVE_ID || '0AELUbtPLaWdRUk9PVA'   // aquamx-backup
 const FOLDER   = 'application/vnd.google-apps.folder'
 const API      = 'https://www.googleapis.com/drive/v3'

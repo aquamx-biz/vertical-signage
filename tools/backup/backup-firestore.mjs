@@ -7,7 +7,7 @@
 // so a restore writes back exactly what was read — see tools/backup/RESTORE.md.
 //
 // Cost: one read per document plus one listCollectionIds call per document
-// (subcollection discovery). ~2,000 docs on 2026-10-18 → ~4k reads a week, far
+// (subcollection discovery). ~2,000 docs on 2026-10-18 → ~4k reads per daily run, far
 // under the free 50k/day the fleet pages also live on (firestore-read-quota).
 // The project has no managed export: that needs Blaze, which we do not pay for.
 
