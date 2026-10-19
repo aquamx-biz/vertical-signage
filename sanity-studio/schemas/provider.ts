@@ -195,6 +195,13 @@ export default defineType({
       description: '① เชิญ @aquamx เข้ากลุ่มรับคิวของร้าน (ในกลุ่มต้องไม่มี OA อื่น) ② พิมพ์ "id" ในกลุ่ม → bot ตอบรหัส C… ③ วางรหัสที่นี่ · แบบรายคน: เจ้าของร้านแอดเพื่อน @aquamx แล้วทัก "id" → ได้รหัส U… · เว้นว่าง = แจ้งเราอย่างเดียว',
     }),
     defineField({
+      name: 'lineGroupInvite',
+      title: 'Group invite link · ลิงก์เชิญเข้ากลุ่มลูกค้า',
+      type: 'url',
+      description: 'Corporate: ลูกค้าส่งสื่อในกลุ่ม LINE ของบริษัท — ลิงก์นี้เป็นปุ่ม "เปิดกลุ่ม" เมื่อเขากดลงโฆษณาในแชทส่วนตัว · สร้างในแอป LINE: เปิดกลุ่ม → เชิญ → คัดลอกลิงก์ (line.me/R/ti/g/…). Not shown on the kiosk.',
+      validation: Rule => Rule.uri({ scheme: ['https'] }).custom(v => !v || /^https:\/\/line\.me\//.test(String(v)) || 'ต้องเป็นลิงก์ line.me'),
+    }),
+    defineField({
       name: 'leadRelay',
       title: 'Lead Relay Mode · โหมดส่งต่อคำขอถึงร้าน',
       type: 'string',
