@@ -212,6 +212,13 @@ export default defineType({
       description: 'Last day the ad runs.',
       validation:  Rule => Rule.min(Rule.valueOfField('periodStart')),
     }),
+    defineField({ readOnly: locked,
+      group:       'scope',
+      name:        'startOnFirstAir',
+      title:       '2.3c · Term Starts on First Air',
+      type:        'boolean',
+      description: 'On = the months count from the day the first media goes on screen (add-ons bought from the LINE quota card). Campaign Start/End above are then provisional — the package re-dates itself on first air.',
+    }),
 
     defineField({ readOnly: locked,
       group:        'scope',
