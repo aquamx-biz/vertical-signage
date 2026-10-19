@@ -272,12 +272,18 @@ export default defineType({
           defineField({ name: 'email',      title: 'Email',         type: 'string', validation: Rule => Rule.email() }),
           defineField({ name: 'lineUserId', title: 'LINE User ID',  type: 'string', description: 'U… — the person\'s own chat with @aquamx. Documents can be sent here privately.' }),
           defineField({ name: 'primary',    title: 'Primary contact', type: 'boolean', initialValue: false }),
+          defineField({ name: 'access', title: 'Access · สิทธิ์', type: 'string',
+            options: { list: [
+              { title: 'Shop admin · ผู้ดูแลร้าน (ส่งสื่อ ซื้อเพิ่ม เมนูร้านค้า รับเอกสาร)', value: 'admin' },
+              { title: 'Documents only · รับเอกสารอย่างเดียว', value: 'docs' },
+            ], layout: 'radio' },
+            description: 'Blank = shop admin when the contact has a LINE User ID. Changed by the team from the LINE request cards (aquamx-shop).' }),
         ],
         preview: {
-          select: { name: 'name', role: 'role', email: 'email', line: 'lineUserId', primary: 'primary' },
-          prepare: ({ name, role, email, line, primary }: any) => ({
+          select: { name: 'name', role: 'role', email: 'email', line: 'lineUserId', primary: 'primary', access: 'access' },
+          prepare: ({ name, role, email, line, primary, access }: any) => ({
             title:    `${primary ? '★ ' : ''}${name ?? '-'}`,
-            subtitle: [role, email, line ? 'LINE ✓' : 'no LINE'].filter(Boolean).join(' · '),
+            subtitle: [role, access === 'docs' ? 'documents only' : line ? 'shop admin' : '', email, line ? 'LINE ✓' : 'no LINE'].filter(Boolean).join(' · '),
           }),
         },
       }],
