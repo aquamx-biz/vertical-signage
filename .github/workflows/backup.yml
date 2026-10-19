@@ -6,6 +6,8 @@
 #   sanity-production.tar.gz        documents + images/videos (public-read data — not encrypted)
 #   sanity-internal.tar.gz.enc      private co-broke contacts (PDPA) — encrypted
 #   firestore.ndjson.gz.enc         leads, orders, payments, config (holds credentials) — encrypted
+#   homeapp-fleet.ndjson.gz.enc     HomeApp console (Sanity xayudhgw): devices with PIN + box secret,
+#                                   pairings, alerts, command audit — encrypted. Screenshots skipped.
 #   MANIFEST.txt                    sizes, sha256, document counts
 #
 # Encryption: openssl AES-256-CBC, PBKDF2 600k iterations, key = BACKUP_PASSPHRASE.
@@ -18,6 +20,7 @@
 #   GDRIVE_SA_JSON                 drive-backup@aquamx-handoff — Content manager on the drive
 #   BACKUP_PASSPHRASE              encryption passphrase
 #   LINE_CHANNEL_ACCESS_TOKEN      failure alert → "aquamx notify" group
+#   HOMEAPP_BACKUP_TOKEN           Viewer token on Sanity project xayudhgw (HomeApp fleet)
 #
 # Errors are re-emitted as ::error:: annotations (see studio-deploy.yml for why).
 
@@ -46,6 +49,7 @@ jobs:
       FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
       GDRIVE_SA_JSON: ${{ secrets.GDRIVE_SA_JSON }}
       BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+      HOMEAPP_BACKUP_TOKEN: ${{ secrets.HOMEAPP_BACKUP_TOKEN }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -54,7 +58,7 @@ jobs:
       - name: Secrets present?
         run: |
           missing=""
-          for s in SANITY_AUTH_TOKEN FIREBASE_SERVICE_ACCOUNT_JSON GDRIVE_SA_JSON BACKUP_PASSPHRASE; do
+          for s in SANITY_AUTH_TOKEN FIREBASE_SERVICE_ACCOUNT_JSON GDRIVE_SA_JSON BACKUP_PASSPHRASE HOMEAPP_BACKUP_TOKEN; do
             [ -z "${!s}" ] && missing="$missing $s"
           done
           if [ -n "$missing" ]; then echo "::error::missing secrets:$missing"; exit 1; fi
@@ -83,6 +87,14 @@ jobs:
       - name: Export Firestore
         run: node tools/backup/backup-firestore.mjs "$OUT/firestore.ndjson.gz" | tee "$OUT/.firestore.log"
 
+      # Plain export API, not the CLI: the CLI is bound to this repo's project.
+      # Documents only — the asset files are the latest box screenshots, which
+      # the boxes replace within minutes and nobody needs restored.
+      - name: Export HomeApp fleet (Sanity xayudhgw)
+        run: |
+          set -o pipefail
+          curl -sfS --retry 3 -H "Authorization: Bearer $HOMEAPP_BACKUP_TOKEN"             "https://xayudhgw.api.sanity.io/v2021-06-07/data/export/production" | gzip > "$OUT/homeapp-fleet.ndjson.gz"             || { echo "::error title=homeapp export::export API failed (token missing access to xayudhgw?)"; exit 1; }
+
       - name: Verify archives + count documents
         run: |
           cd "$OUT"
@@ -90,16 +102,18 @@ jobs:
           for f in sanity-production.tar.gz sanity-internal.tar.gz; do
             gzip -t "$f" || { echo "::error::$f is corrupt"; exit 1; }
           done
-          gzip -t firestore.ndjson.gz
+          gzip -t firestore.ndjson.gz; gzip -t homeapp-fleet.ndjson.gz
           P=$(count sanity-production.tar.gz); I=$(count sanity-internal.tar.gz); F=$(zcat firestore.ndjson.gz | wc -l)
+          H=$(zcat homeapp-fleet.ndjson.gz | wc -l); D=$(zcat homeapp-fleet.ndjson.gz | grep -c '"_type":"device"' || true)
           A=$(tar -tzf sanity-production.tar.gz | grep -cE '/(images|files)/' || true)
-          echo "production docs=$P assets=$A · internal docs=$I · firestore docs=$F"
+          echo "production docs=$P assets=$A · internal docs=$I · firestore docs=$F · homeapp docs=$H devices=$D"
           # a near-empty export means a token lost its access, not a quiet week
-          if [ "$P" -lt 500 ] || [ "$F" -lt 100 ]; then echo "::error::export suspiciously small (production=$P firestore=$F)"; exit 1; fi
+          if [ "$P" -lt 500 ] || [ "$F" -lt 100 ] || [ "$D" -lt 1 ]; then echo "::error::export suspiciously small (production=$P firestore=$F homeapp devices=$D)"; exit 1; fi
           { echo "aquamx backup $SET  (run $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID)"
             echo "sanity production: $P documents, $A asset files"
             echo "sanity internal:   $I documents"
-            echo "firestore:         $F documents"; echo; } > MANIFEST.txt
+            echo "firestore:         $F documents"
+            echo "homeapp fleet:     $H documents, $D devices"; echo; } > MANIFEST.txt
 
       - name: Encrypt private sets
         run: |
@@ -107,7 +121,7 @@ jobs:
           # a secret pasted/piped with a trailing newline would encrypt with a key
           # nobody can type back at restore time
           export BACKUP_PASSPHRASE="$(printf %s "$BACKUP_PASSPHRASE" | tr -d '\r\n')"
-          for f in sanity-internal.tar.gz firestore.ndjson.gz; do
+          for f in sanity-internal.tar.gz firestore.ndjson.gz homeapp-fleet.ndjson.gz; do
             openssl enc -aes-256-cbc -pbkdf2 -iter 600000 -md sha256 -salt \
               -in "$f" -out "$f.enc" -pass env:BACKUP_PASSPHRASE
             # prove it decrypts before the plaintext is gone

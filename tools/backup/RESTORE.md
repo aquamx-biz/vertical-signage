@@ -9,6 +9,7 @@ Older folders sit in the Shared Drive trash for 30 days.
 | `sanity-production.tar.gz` | every Studio document + images/videos | no (dataset is public-read anyway) |
 | `sanity-internal.tar.gz.enc` | private co-broke contacts (PDPA) | yes |
 | `firestore.ndjson.gz.enc` | leads, orders, payments, config (holds credentials) | yes |
+| `homeapp-fleet.ndjson.gz.enc` | HomeApp console (Sanity `xayudhgw`): devices with PIN + box secret, pairings, alerts, command audit | yes |
 | `MANIFEST.txt` | document counts + sha256 of each file | no |
 
 Run everything below in **Git Bash** (it ships `openssl`), from the
@@ -25,7 +26,8 @@ in `aquamx-handoff/.env.local` (git-ignored), a second one outside this laptop.
 export BACKUP_PASSPHRASE="$(grep '^BACKUP_PASSPHRASE=' ../aquamx-handoff/.env.local | cut -d= -f2- | tr -d '"\r\n')"
 # no .env.local? type it instead:  read -rs BACKUP_PASSPHRASE && export BACKUP_PASSPHRASE
 cd _restore
-for f in sanity-internal.tar.gz firestore.ndjson.gz; do
+for f in sanity-internal.tar.gz firestore.ndjson.gz homeapp-fleet.ndjson.gz; do
+  [ -f "$f.enc" ] || continue   # sets before 2026-10-19 have no homeapp file
   openssl enc -d -aes-256-cbc -pbkdf2 -iter 600000 -md sha256 -in "$f.enc" -out "$f" -pass env:BACKUP_PASSPHRASE
 done
 sha256sum -c <(grep '^sha256 ' MANIFEST.txt | cut -d' ' -f2-)   # every line must say OK
@@ -85,7 +87,31 @@ node tools/backup/restore-firestore.mjs _restore/firestore.ndjson.gz --only lead
 
 Careful with `config`: it also holds settings the fleet reads live.
 
-## 4. Clean up
+## 4. HomeApp fleet (Sanity `xayudhgw`)
+
+Only documents are backed up — the image assets are the latest box
+screenshots, which the boxes replace on their own.
+
+**Just need one box's PIN?** No import needed:
+
+```bash
+zcat _restore/homeapp-fleet.ndjson.gz | grep '"_type":"device"' | node -e "require('readline').createInterface({input:process.stdin}).on('line',l=>{const d=JSON.parse(l);console.log(d._id, d.label??'', 'pin', d.pin)})"
+```
+
+**Console lost its devices** (box commands fail, boxes still play): import
+from `homeapp/studio`, which is the Studio configured for `xayudhgw`:
+
+```bash
+cd ../homeapp/studio
+gunzip -k ../../vertical-signage/_restore/homeapp-fleet.ndjson.gz
+npx sanity dataset import ../../vertical-signage/_restore/homeapp-fleet.ndjson production --missing
+```
+
+`--missing` puts back deleted devices and pairings without touching live ones.
+Each restored device carries its old box secret, so the boxes reconnect on
+their next poll with no re-pairing.
+
+## 5. Clean up
 
 `rm -rf _restore` when done — the decrypted files hold phone numbers and
 credentials in plain form.
