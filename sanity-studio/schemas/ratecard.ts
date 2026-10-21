@@ -379,25 +379,58 @@ export default defineType({
     }),
 
     // ── The same card as a picture ─────────────────────────────────────────
-    // For LINE, e-mail, and anywhere a link will not do. It does NOT follow
-    // the rows above: change a number there and this image still shows the old
-    // one, which is worse than having no image at all. Whoever edits the table
-    // re-exports and re-uploads here in the same sitting.
+    // Drawn by the system from the rows above (aquamx-handoff
+    // lib/ratecard-snapshot.ts): every publish is checked, and only a change
+    // to what the picture shows draws a new one. Each new picture is kept in
+    // the log below with what changed, so nobody exports or uploads by hand.
     defineField({
       name: 'infographic',
-      title: 'อินโฟกราฟิก · Infographic (ไทย)',
+      title: 'Infographic (Thai)',
       type: 'image',
       options: { hotspot: false },
-      description: '⚠️ ไม่อัปเดตตามตารางข้างบนอัตโนมัติ — แก้ตัวเลขในตารางแล้วต้อง export รูปใหม่มาอัปทับที่นี่ด้วย ไม่งั้นเลขในรูปกับในระบบจะไม่ตรงกัน',
+      readOnly: true,
+      description: 'Updated automatically — always the newest picture in the log below. Link: app.aquamx.co.th/api/ratecard?card=sme|corporate (property: no card), add &lang=en or &format=pdf.',
       hidden: ({ document }) => document?.kind === 'commission',
     }),
     defineField({
       name: 'infographicEn',
-      title: 'อินโฟกราฟิก · Infographic (English)',
+      title: 'Infographic (English)',
       type: 'image',
       options: { hotspot: false },
-      description: 'ฉบับภาษาอังกฤษ · เว้นว่างได้ถ้ายังไม่มี',
+      readOnly: true,
+      description: 'Updated automatically together with the Thai picture.',
       hidden: ({ document }) => document?.kind === 'commission',
+    }),
+    defineField({
+      name: 'infographicLog',
+      title: 'Infographic History',
+      type: 'array',
+      readOnly: true,
+      description: 'One entry each time the picture changed — when, what changed, and the files sent out at that time (PNG + PDF, Thai and English). Newest at the bottom.',
+      hidden: ({ document }) => document?.kind === 'commission',
+      of: [{
+        type: 'object',
+        name: 'infographicSnapshot',
+        title: 'Snapshot',
+        fields: [
+          defineField({ name: 'at', title: 'Drawn at', type: 'datetime' }),
+          defineField({ name: 'summary', title: 'What changed', type: 'text', rows: 3 }),
+          defineField({ name: 'image', title: 'Picture (Thai)', type: 'image' }),
+          defineField({ name: 'imageEn', title: 'Picture (English)', type: 'image' }),
+          defineField({ name: 'pdf', title: 'PDF (Thai)', type: 'file' }),
+          defineField({ name: 'pdfEn', title: 'PDF (English)', type: 'file' }),
+          defineField({ name: 'hash', title: 'Fingerprint', type: 'string', hidden: true }),
+          defineField({ name: 'data', title: 'Data drawn from', type: 'text', hidden: true }),
+        ],
+        preview: {
+          select: { at: 'at', summary: 'summary', media: 'image' },
+          prepare: ({ at, summary, media }) => ({
+            title: at ? new Date(at).toLocaleString('en-GB', { timeZone: 'Asia/Bangkok', dateStyle: 'medium', timeStyle: 'short' }) : 'Snapshot',
+            subtitle: summary,
+            media,
+          }),
+        },
+      }],
     }),
   ],
 
