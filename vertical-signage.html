@@ -3714,7 +3714,7 @@ async function fetchWeather() {
         try { updateWeatherUI(JSON.parse(cd)); return; } catch(e) {}
     }
     try {
-        const r = await fetch('https://aquamx.biz/.netlify/functions/weather');
+        const r = await fetch('https://aquamx.co.th/.netlify/functions/weather');
         if (!r.ok) throw new Error();
         const d = await r.json();
         if (d.main?.temp && d.weather?.[0]) {
@@ -3766,7 +3766,7 @@ async function fetchNews() {
         try { updateNewsUI(JSON.parse(cd)); return; } catch(e) {}
     }
     try {
-        const r = await fetch('https://aquamx.biz/.netlify/functions/news');
+        const r = await fetch('https://aquamx.co.th/.netlify/functions/news');
         if (!r.ok) throw new Error();
         const d = await r.json();
         if (d.results?.length) {
