@@ -4692,8 +4692,11 @@ function openDetail(ctx) {
                 : (uiLang === 'th' ? '🛒 ดูตะกร้า · สั่ง'   : '🛒 View cart · Order');
         } else {
             const v = MOBILE_VERB[ctx.ctaType];
-            const verb = v ? (uiLang === 'th' ? v.th : v.en)
-                           : (ctx.ctaLabel || (uiLang === 'th' ? 'ดูเพิ่มเติม' : 'View more'));
+            // contact: the brand's own words ("Plan your voyage", "Shop now") — the
+            // generic "ดูข้อเสนอ" made the popup disagree with the button just pressed
+            const own = ctx.ctaType === 'contact' && ctx.ctaLabel ? ctx.ctaLabel : '';
+            const verb = own || (v ? (uiLang === 'th' ? v.th : v.en)
+                           : (ctx.ctaLabel || (uiLang === 'th' ? 'ดูเพิ่มเติม' : 'View more')));
             vm.textContent = `${verb} →`;
         }
     }
@@ -5531,6 +5534,7 @@ function slideDetailCtx(s, tappedCta) {
         provider: s._provider || null,
         ctaType: tappedCta ? tappedCta.ctaType : null,
         ctaURL: tappedCta ? tappedCta.url : '',
+        ctaLabel: tappedCta ? tappedCta.label : '',   // the button they pressed — step 1 repeats it
         deepLink: s._deepLink || '',
         menuItems: s._menuItems || [],
         orderItems: s._orderItems || [],
