@@ -9,8 +9,10 @@
  *       So images are cached from the ORIGINAL no-cors <img> request (or a
  *       { mode:'no-cors' } prewarm) → an *opaque* 200 that renders in <img> but
  *       whose bytes we can't read. Opaque is fine for <img>; useless for <video>.
- *   - FILE CDN   cdn.sanity.io/files/…   → ALLOWS CORS + Range (206). Verified:
- *       a request with Origin + Range returns 206 + Access-Control-Allow-Origin.
+ *   - FILE CDN   cdn.sanity.io/files/…   → CORS + Range (206) ONLY for origins in
+ *       the Sanity project's CORS allow-list (manage.sanity.io → API → CORS).
+ *       A kiosk site missing from that list gets 403 → serveVideo falls back to
+ *       plain pass-through (plays, just not cached offline).
  *       So video CAN be fetched CORS (readable bytes) → cached in full → and each
  *       <video> Range request answered by slicing the cached buffer into a 206.
  *
@@ -93,8 +95,14 @@ async function serveVideo(req) {
       // ranged request straight through; the CDN answers 206 natively.
       return fetch(req);
     }
-    const full = await fetch(req.url, { mode: 'cors' }); // file CDN allows CORS → readable 200
-    if (!full || full.status !== 200) return full;       // unexpected → pass through
+    // An origin missing from the Sanity CORS allow-list gets 403 here — the
+    // CORS fetch rejects and, uncaught, failed the <video> request outright
+    // (39-by-sansiri: no video ever played, 2026-10-22). Fall back to the
+    // player's own no-cors request: plays fine, just isn't cached offline.
+    let full;
+    try { full = await fetch(req.url, { mode: 'cors' }); }
+    catch (_) { return fetch(req); }
+    if (!full || full.status !== 200) return fetch(req); // 403 etc. → native pass-through
     cache.put(req.url, full.clone()).catch(() => {});    // background copy (atomic)
     return full;                                         // player streams from byte 0 NOW
     // (a 200 answering a bytes=0- request is valid — the player treats it as
