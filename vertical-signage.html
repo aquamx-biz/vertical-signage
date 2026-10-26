@@ -396,6 +396,17 @@ body {
     text-shadow: 0 0.15vh 0.9vh rgba(0,0,0,0.65);
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0;
 }
+/* Customer rating beside the shop name — "★ 4.8 (23)". Only shops with
+   enough ratings get one (the API decides); the star is the bronze accent. */
+.shop-rate {
+    flex-shrink: 0; font-style: normal; white-space: nowrap;
+    font-family: 'Prompt','IBM Plex Sans Thai',sans-serif;
+    font-size: 1.8vh; font-weight: 600; color: var(--ink-100);
+    text-shadow: 0 0.15vh 0.9vh rgba(0,0,0,0.65);
+}
+.shop-rate b { color: #C9864C; font-weight: 700; }
+.shop-rate i { font-style: normal; font-weight: 400; opacity: 0.8; }
+.cat-card-provider .shop-rate { font-size: inherit; margin-left: 0.6vh; }
 .slot.active .slot-shop { opacity: 0.9; transform: translateY(0); }
 .slot.exiting .slot-shop, .slot.leaving .slot-shop {
     opacity: 0; transform: translateY(2vh);
@@ -2162,6 +2173,8 @@ const CONFIG = {
     SCAN_POLL_MS:        2500,   // while the QR is on screen
     SCAN_WATCH_MAX_MS: 180000,   // give up polling after 3 min (idle return fires first anyway)
     SCAN_DONE_CLOSE_MS: 10000,   // "✓ สแกนแล้ว" stays this long, then back to the attract loop
+    RATINGS_API:  'https://app.aquamx.biz/api/ratings', // "★ 4.8 (23)" per shop (see loadRatings)
+    RATINGS_REFRESH_MS: 3600000, // hourly; the API is CDN-cached 10 min anyway
 
     // ── Sanity CMS ──
     SANITY_PROJECT_ID: 'awjj9g8u',
@@ -3155,6 +3168,52 @@ function escHTML(v) {
     return String(v == null ? '' : v).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 }
 
+/* ── Shop ratings ──────────────────────────────────────────────────────────
+   Customers rate a shop with stars on their delivered-order card in LINE; the
+   app keeps a running {sum, n} per shop. The screen asks once at boot (after a
+   random delay so a fleet reboot doesn't arrive at once) and then hourly, for
+   every shop it carries. Shops below the app's minimum review count are left
+   out of the answer, so they show nothing. A failed fetch keeps what we had —
+   the last good answer also survives a reboot in localStorage. Pure text: no
+   layers, no images, nothing for the compositor. */
+const RATINGS_KEY = 'shop_ratings_v1';
+let SHOP_RATINGS = (function () {
+    try { return (JSON.parse(localStorage.getItem(RATINGS_KEY) || '{}').ratings) || {}; }
+    catch (e) { return {}; }
+})();
+function ratingHTML(slug) {
+    const r = slug && SHOP_RATINGS[slug];
+    if (!r || !(Number(r.n) > 0) || !(Number(r.avg) > 0)) return '';
+    return `<em class="shop-rate"><b>★</b> ${Number(r.avg).toFixed(1)} <i>(${Number(r.n)})</i></em>`;
+}
+function applyRatings() {
+    document.querySelectorAll('[data-rate]').forEach(el => {
+        const old = el.querySelector('.shop-rate');
+        const html = ratingHTML(el.dataset.rate);
+        if (old) old.remove();
+        if (html) el.insertAdjacentHTML('beforeend', html);
+    });
+}
+function ratingSlugs() {
+    const out = new Set();
+    (playlist || []).forEach(it => { const s = (it.provider && it.provider.slug) || it.providerSlug; if (s) out.add(s); });
+    Object.keys(MOCK_PROVIDERS || {}).forEach(k => (MOCK_PROVIDERS[k] || []).forEach(p => { if (p && p.slug) out.add(p.slug); }));
+    return Array.from(out).filter(s => /^[A-Za-z0-9_-]{1,96}$/.test(s)).sort();
+}
+async function loadRatings() {
+    const slugs = ratingSlugs();
+    if (!CONFIG.RATINGS_API || !slugs.length) return;
+    try {
+        const r = await fetch(`${CONFIG.RATINGS_API}?p=${encodeURIComponent(slugs.join(','))}`);
+        if (!r.ok) return;                                  // 503 etc. → keep what we had
+        const j = await r.json();
+        if (!j || typeof j.ratings !== 'object' || !j.ratings) return;
+        SHOP_RATINGS = j.ratings;
+        try { localStorage.setItem(RATINGS_KEY, JSON.stringify({ ratings: SHOP_RATINGS, at: Date.now() })); } catch (e) {}
+        applyRatings();
+    } catch (e) { /* offline kiosk: keep the cached ratings */ }
+}
+
 function renderCommercial(s) {
     const titleLines = s.titleLines || [s.title];
     // Latin-only titles get a tighter line-height (.latin) — any Thai glyph keeps
@@ -3218,7 +3277,7 @@ function renderCommercial(s) {
 
         ${s.eyebrow ? `<div class="slot-eyebrow"><span class="eb-t">${s.eyebrow}</span></div>` : ''}
         <div class="slot-content">
-            ${(showText && (s.providerLogo || shopName)) ? `<div class="slot-shop">${s.providerLogo ? `<img src="${sizedImg(s.providerLogo, 240, 240)}" alt="">` : ''}${shopName ? `<span>${shopName}</span>` : ''}</div>` : ''}
+            ${(showText && (s.providerLogo || shopName)) ? `<div class="slot-shop" data-rate="${escHTML(p.slug || s._providerSlug || '')}">${s.providerLogo ? `<img src="${sizedImg(s.providerLogo, 240, 240)}" alt="">` : ''}${shopName ? `<span>${shopName}</span>` : ''}${ratingHTML(p.slug || s._providerSlug)}</div>` : ''}
             ${showText ? `<div class="slot-title${titleIsLatin ? ' latin' : ''}">${titleHTML}</div>` : ''}
             ${(showText && s._price && (typeof s._price === 'string' || typeof s._price === 'number')) ? `<div class="slot-price">${s._price}</div>` : ''}
             ${(showText && s.sub) ? `<div class="slot-sub"><span class="tx">${thaiBreakHTML(s.sub)}</span></div>` : ''}
@@ -4016,7 +4075,8 @@ function buildCatCard(it, idx) {
     if (provName) {
         const pn = document.createElement('div');
         pn.className = 'cat-card-provider';
-        pn.textContent = provName;
+        pn.dataset.rate = p.slug || '';
+        pn.innerHTML = escHTML(provName) + ratingHTML(p.slug);
         imgWrap.appendChild(pn);
     }
     card.appendChild(imgWrap);
@@ -5900,6 +5960,10 @@ async function init() {
     // FIX 3: surface a misconfigured production screen instead of silently
     // showing demo (Aurora/Mahogany) content as if it were live.
     maybeShowNoLiveDataBanner();
+
+    // Shop ratings: cached copy is already in SHOP_RATINGS (painted by the
+    // render above); refresh after a random 0–60s so a fleet reboot is spread out.
+    setTimeout(() => { loadRatings(); setInterval(loadRatings, CONFIG.RATINGS_REFRESH_MS); }, Math.random() * 60000);
 
     // Pre-warm the SW cache with the DISPLAY media URLs so every slide is cached
     // right after load — not only after it cycles into view once.
