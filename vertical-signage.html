@@ -1481,6 +1481,69 @@ body {
 /* ============================================================
    DETAIL POPUP — CTA / card tap → detail + QR + phone handoff
 ============================================================ */
+
+/* ── Room view: a board room with owner photos (26 Oct 2026) ──────────────
+   Board card with the stacked-photo icon → photos + details here. "สนใจห้องนี้"
+   → the room list (detail popup) with this room ticked; from the list a room
+   with photos opens here again (← back to the list). Hidden = visibility:hidden
+   (out of the compositor, kiosk GPU rule) · no backdrop-filter · one big image. */
+.room-overlay { position: absolute; inset: 0; z-index: 310; background: rgba(4,6,10,0.84);
+  display: flex; align-items: flex-start; justify-content: center; padding-top: 8vh;
+  opacity: 0; pointer-events: none; visibility: hidden;
+  transition: opacity 0.25s ease, visibility 0s linear 0.25s; }
+.room-overlay.open { opacity: 1; pointer-events: auto; visibility: visible; transition: opacity 0.25s ease, visibility 0s linear 0s; }
+.room-card { position: relative; width: 88%; background: rgba(20,26,40,0.98); border: 0.1vh solid rgba(255,255,255,0.14);
+  border-radius: 2.1vh; overflow: hidden; box-shadow: 0 3vh 7vh rgba(0,0,0,0.6); color: #fff; }
+.room-x, .room-back { position: absolute; top: 1.25vh; z-index: 5; width: 4vh; height: 4vh; border-radius: 50%;
+  background: rgba(8,12,22,0.65); border: 0.1vh solid rgba(255,255,255,0.35); color: #fff; font-size: 2vh; line-height: 1;
+  display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; }
+.room-x { right: 1.25vh; } .room-back { left: 1.25vh; display: none; }
+.room-overlay.from-list .room-back { display: flex; }
+.room-gal { position: relative; height: 40vh; background: #11151c; }
+.room-img { position: absolute; inset: 0; background-size: cover; background-position: center; }
+.room-chip { position: absolute; top: 1.45vh; left: 1.45vh; font-size: 1.25vh; font-weight: 800; letter-spacing: 0.08em;
+  background: #B87333; padding: 0.4vh 0.95vh; border-radius: 0.6vh; }
+.room-overlay.from-list .room-chip { left: 6.3vh; }
+.room-nav { position: absolute; top: 50%; transform: translateY(-50%); width: 4.4vh; height: 4.4vh; border-radius: 50%;
+  background: rgba(8,12,22,0.55); border: 0.1vh solid rgba(255,255,255,0.3); color: #fff; font-size: 2.6vh; line-height: 1;
+  display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; }
+.room-nav.l { left: 1.15vh; } .room-nav.r { right: 1.15vh; }
+.room-cnt { position: absolute; right: 1.45vh; bottom: 1.25vh; font-size: 1.35vh; font-weight: 700;
+  background: rgba(8,12,22,0.7); padding: 0.3vh 0.85vh; border-radius: 999px; }
+.room-th { display: flex; gap: 0.55vh; padding: 0.75vh 1.45vh 0; overflow-x: auto; scrollbar-width: none; }
+.room-th::-webkit-scrollbar { display: none; }
+.room-th i { flex: 0 0 5vh; height: 3.75vh; border-radius: 0.6vh; background: #1d2636 center/cover; opacity: 0.55;
+  border: 0.16vh solid transparent; cursor: pointer; }
+.room-th i.on { opacity: 1; border-color: #E09A55; }
+.room-body { padding: 1.35vh 2.1vh 2.1vh; }
+.room-eb { font-size: 1.25vh; font-weight: 700; letter-spacing: 0.14em; color: #9BE8FF; }
+.room-t { font-size: 2.7vh; font-weight: 800; margin-top: 0.4vh; line-height: 1.15; display: flex; align-items: center; gap: 0.85vh; flex-wrap: wrap; }
+.room-t .flag { font-size: 1.25vh; font-weight: 800; letter-spacing: 0.08em; padding: 0.15vh 0.6vh; border-radius: 0.5vh; border: 0.13vh solid currentColor; }
+.room-t .flag.g { color: #7DE8A4; } .room-t .flag.o { color: #FFB25E; } .room-t .flag.w { color: #fff; }
+.room-sp { display: flex; gap: 2.1vh; margin-top: 1.15vh; flex-wrap: wrap; }
+.room-sp div { font-size: 1.25vh; color: rgba(255,255,255,0.7); }
+.room-sp b { display: block; font-size: 2.1vh; font-weight: 800; color: #fff; margin-top: 0.1vh; }
+.room-sp .pr b { color: #E09A55; }
+.room-tags { display: flex; gap: 0.6vh; flex-wrap: wrap; margin-top: 1.15vh; }
+.room-tags:empty { display: none; }
+.room-tags span { font-size: 1.35vh; font-weight: 700; padding: 0.3vh 0.95vh; border-radius: 999px;
+  background: rgba(255,255,255,0.1); border: 0.08vh solid rgba(255,255,255,0.22); }
+.room-cta { margin-top: 1.45vh; width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.75vh;
+  height: 5.4vh; border-radius: 1.25vh; background: #B87333; color: #fff; font-size: 2vh; font-weight: 800; border: 0; cursor: pointer; font-family: inherit; }
+.room-cta:active { filter: brightness(1.08); }
+/* in the room list: rooms with photos get the stacked-photo badge on the thumbnail + "ดูรูป ×N" */
+.detail-mit[data-ph] { cursor: pointer; }
+.detail-mit[data-ph] .th { position: relative; overflow: visible; }
+.detail-mit .th .ph-badge { position: absolute; right: -0.9vh; top: -0.75vh; width: 2.7vh; height: 2.3vh; }
+.detail-ph { display: table; margin-top: 0.35vh; font-size: 1.1vh; font-weight: 700; color: #9BE8FF; border: 0.1vh solid rgba(155,232,255,0.5);
+  border-radius: 999px; padding: 0.1vh 0.6vh; white-space: nowrap; }
+/* QR page for rooms: which rooms (instead of "รวม ฿… ยังไม่ต้องชำระ", which read like a bill) */
+.handoff-amount.rooms { display: block; }
+.handoff-amount .ho-room { display: flex; align-items: center; gap: 1vh; padding: 0.5vh 0; }
+.handoff-amount .ho-room + .ho-room { border-top: 0.08vh solid rgba(255,255,255,0.1); }
+.handoff-amount .ho-room .th { flex: 0 0 4vh; height: 3vh; border-radius: 0.5vh; background: #1d2636 center/cover; }
+.handoff-amount .ho-room .nm { flex: 1; font-size: 1.35vh; color: rgba(255,255,255,0.9); }
+.handoff-amount .ho-room .pr { font-size: 1.4vh; font-weight: 700; color: #E09A55; white-space: nowrap; }
 .detail-overlay {
     position: absolute; inset: 0; z-index: 300;
     background: rgba(4,6,10,0.78);
@@ -2111,6 +2174,29 @@ html.lite .bottombar-track { transform: none !important; }
             </div>
             <div class="detail-foot" id="detailFoot">
                 <div class="detail-vm" id="detailVm">📱 View on mobile</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ROOM VIEW — a board room with owner photos (openRoom) -->
+    <div class="room-overlay" id="roomOverlay">
+        <div class="room-card">
+            <button class="room-x" id="roomClose" type="button" aria-label="Close">✕</button>
+            <button class="room-back" id="roomBack" type="button" aria-label="Back">←</button>
+            <div class="room-gal">
+                <div class="room-img" id="roomImg"></div>
+                <span class="room-chip" id="roomChip"></span>
+                <button class="room-nav l" id="roomPrev" type="button">‹</button>
+                <button class="room-nav r" id="roomNext" type="button">›</button>
+                <span class="room-cnt" id="roomCnt"></span>
+            </div>
+            <div class="room-th" id="roomTh"></div>
+            <div class="room-body">
+                <div class="room-eb" id="roomEb"></div>
+                <div class="room-t" id="roomT"></div>
+                <div class="room-sp" id="roomSp"></div>
+                <div class="room-tags" id="roomTags"></div>
+                <button class="room-cta" id="roomCta" type="button"></button>
             </div>
         </div>
     </div>
@@ -4266,6 +4352,137 @@ document.querySelectorAll('.lang-toggle').forEach(btn => btn.addEventListener('c
    DETAIL POPUP + LIVE HANDOFF (QR + phone → LEAD_API)
 ============================================================ */
 const detailOverlay = document.getElementById('detailOverlay');
+
+/* ── Room view — a board room with owner photos (26 Oct 2026) ─────────────────
+   From the board: a card with the stacked-photo icon (board answers photos:true)
+   opens here instead of the list. "สนใจห้องนี้" → the room list (openDetail)
+   with this room ticked, so more rooms can be added and booked in one QR.
+   From the list: a row with photos opens here again; the button ticks it (if not
+   yet) and goes back. No QR here on purpose — the phone comes in only when a
+   viewing is asked for, so the screen gets used and we learn which rooms. */
+const roomOverlay = document.getElementById('roomOverlay');
+let _room = null;          // { items, ref, item, ix, from: 'board'|'list', s, primary }
+let _detailItems = [];     // the open popup's orderItems (set in openDetail)
+const ROOM_URL = (u, q) => u ? String(u).split('?')[0] + '?' + q : '';
+function roomItemOf(items, ref) {
+    return (items || []).find(m => m && String(m.key) === String(ref) && !m.sold && Array.isArray(m.photos) && m.photos.length) || null;
+}
+function roomPicked(ref) {
+    const q = [...document.querySelectorAll('#detailDyn .detail-qty')].find(x => x.dataset.key === String(ref));
+    return !!(q && q.classList.contains('has'));
+}
+function paintRoomPhoto() {
+    if (!_room) return;
+    const ph = _room.item.photos;
+    document.getElementById('roomImg').style.backgroundImage = `url('${ROOM_URL(ph[_room.ix], 'w=1080&fit=max&auto=format')}')`;
+    document.getElementById('roomCnt').textContent = `${_room.ix + 1} / ${ph.length}`;
+    document.querySelectorAll('#roomTh i').forEach((el, i) => el.classList.toggle('on', i === _room.ix));
+    const on = document.querySelector('#roomTh i.on');
+    if (on) on.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+}
+function roomCtaLabel() {
+    const isTH = uiLang === 'th';
+    if (_room && _room.from === 'list' && roomPicked(_room.ref)) return isTH ? '✓ เลือกไว้แล้ว — กลับไปรายการ' : '✓ Added — back to the list';
+    return isTH ? '✓ สนใจห้องนี้' : '✓ Interested in this unit';
+}
+function openRoom(items, ref, from, s, primary) {
+    const item = roomItemOf(items, ref);
+    if (!item) return false;
+    const isTH = uiLang === 'th';
+    const esc = v => String(v == null ? '' : v).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    _room = { items, ref: String(ref), item, ix: 0, from, s, primary };
+    const r = item.room || {};
+    const sale = (s && s._category === 'forSale') || /M$/.test(String(item.price || ''));
+    document.getElementById('roomChip').textContent = (sale ? 'FOR SALE' : 'FOR RENT') + (r.owner ? ' · OWNER' : '');
+    document.getElementById('roomEb').textContent = [window.__BAKED__?.projectTitle || '', item.key].filter(Boolean).join(' · ').toUpperCase();
+    const TONE = { green: 'g', orange: 'o', white: 'w' };
+    document.getElementById('roomT').innerHTML = esc(isTH ? (item.name_th || item.name_en) : (item.name_en || item.name_th))
+        + (r.flags || []).map(f => ` <span class="flag ${TONE[f.tone] || 'w'}">${esc(f.text)}</span>`).join('');
+    const sp = [
+        `<div class="pr">${isTH ? (sale ? 'ราคา' : 'ค่าเช่า') : (sale ? 'Price' : 'Rent')}<b>${esc(item.price || '')}</b></div>`,
+        r.sqm != null ? `<div>${isTH ? 'ขนาด' : 'Size'}<b>${esc(r.sqm)} ${isTH ? 'ตร.ม.' : 'sqm'}</b></div>` : '',
+        r.floor != null ? `<div>${isTH ? 'ชั้น' : 'Floor'}<b>${esc(r.floor)}</b></div>` : '',
+        r.psqm != null ? `<div>${isTH ? '฿/ตร.ม.' : '฿/sqm'}<b>${Number(r.psqm).toLocaleString()}</b></div>` : '',
+    ];
+    document.getElementById('roomSp').innerHTML = sp.join('');
+    document.getElementById('roomTags').innerHTML = (r.features || []).map(f => `<span>${esc(f)}</span>`).join('');
+    document.getElementById('roomTh').innerHTML = item.photos.map((u, i) =>
+        `<i data-i="${i}" style="background-image:url('${ROOM_URL(u, 'w=160&h=120&fit=crop&auto=format')}')"></i>`).join('');
+    document.getElementById('roomCta').textContent = roomCtaLabel();
+    roomOverlay.classList.toggle('from-list', from === 'list');
+    paintRoomPhoto();
+    roomOverlay.classList.add('open');
+    if (from === 'board') { clearAllSlotTimers(); advanceToken++; }
+    syncInteractingClass();
+    resetIdle();
+    return true;
+}
+/* keep = leave the board hold and the paused rotation for the popup that follows */
+function closeRoom(keep) {
+    if (!roomOverlay.classList.contains('open')) { _room = null; return; }
+    const from = _room && _room.from;
+    roomOverlay.classList.remove('open');
+    _room = null;
+    syncInteractingClass();
+    if (keep || from === 'list' || detailOverlay.classList.contains('open')) return;
+    releaseBoardHold();
+    resumeRotation();
+}
+document.getElementById('roomPrev').addEventListener('click', () => {
+    if (!_room) return; _room.ix = (_room.ix - 1 + _room.item.photos.length) % _room.item.photos.length; paintRoomPhoto();
+});
+document.getElementById('roomNext').addEventListener('click', () => {
+    if (!_room) return; _room.ix = (_room.ix + 1) % _room.item.photos.length; paintRoomPhoto();
+});
+document.getElementById('roomTh').addEventListener('click', e => {
+    const t = e.target.closest('i[data-i]'); if (!t || !_room) return;
+    _room.ix = +t.dataset.i; paintRoomPhoto();
+});
+document.getElementById('roomBack').addEventListener('click', () => closeRoom());
+document.getElementById('roomClose').addEventListener('click', () => {
+    const fromList = _room && _room.from === 'list';
+    closeRoom();
+    if (fromList) closeDetail();
+});
+roomOverlay.addEventListener('click', e => { if (e.target === roomOverlay) closeRoom(); });
+document.getElementById('roomCta').addEventListener('click', () => {
+    if (!_room) return;
+    const r = _room;
+    if (r.from === 'list') {
+        if (!roomPicked(r.ref)) {
+            const q = [...document.querySelectorAll('#detailDyn .detail-qty')].find(x => x.dataset.key === r.ref);
+            q?.querySelector('.q-tog')?.click();     // the list's own toggle — counts, totals, demand signal
+        }
+        closeRoom();
+        return;
+    }
+    closeRoom(true);
+    openDetail(Object.assign(slideDetailCtx(r.s, r.primary), { preselect: r.ref, preselectFrom: 'view' }));
+});
+/* a row with photos in the room list → its room view (the toggle still just ticks) */
+detailOverlay.addEventListener('click', e => {
+    if (e.target.closest('.detail-qty')) return;
+    const row = e.target.closest('.detail-mit[data-ph]');
+    if (!row) return;
+    openRoom(_detailItems, row.dataset.ph, 'list');
+});
+/* QR page for rooms: the rooms picked, with their photo — not a "total" */
+function showHandoffRooms() {
+    const box = document.getElementById('handoffAmount');
+    if (!box) return;
+    const rows = [...document.querySelectorAll('#detailDyn .detail-qty.has')].map(q => q.closest('.detail-mit')).filter(Boolean);
+    if (!rows.length) return;
+    box.innerHTML = rows.map(m => {
+        const th = m.querySelector('.th');
+        const nm = m.querySelector('.nm')?.cloneNode(true);
+        nm?.querySelector('.detail-ph')?.remove();
+        return `<div class="ho-room"><span class="th" style="${(th && th.getAttribute('style')) || ''}"></span>`
+             + `<span class="nm">${nm ? nm.innerHTML : ''}</span><span class="pr">${m.querySelector('.pr')?.innerHTML || ''}</span></div>`;
+    }).join('');
+    box.classList.remove('is-pay');
+    box.classList.add('rooms');
+    box.style.display = '';
+}
 let lastDetailCtx = null;   // last ctx passed to openDetail — re-render popup on lang toggle
 let handoffCtx = { offerSlug: null, providerSlug: null, provider: null,
                    offerTitleTH: null, offerTitleEN: null, category: null, unitRef: '' };
@@ -4575,8 +4792,13 @@ function buildDetailDyn(ctx){
                      : `<span class="detail-qty"${thb} data-key="${key}" data-max="${max}"><span class="q-dec">−</span><b>0</b><span class="q-inc">＋</span></span>`;
                    // the hint rides the first pickable row only (max>1 → has a ＋; toggles say "เลือก" already)
                    const hint = (i === 0 && max > 1 && !isProp) ? `<span class="qty-hint">${isTH ? 'กด ＋ ใส่จำนวน' : 'Tap ＋ to add'}</span>` : '';
-                   const tapLine = on ? `<div class="detail-tapped">${isTH ? 'ห้องที่คุณแตะ · เลือกไว้ให้แล้ว' : 'The unit you tapped · already selected'}</div>` : '';
-                   return `${tapLine}<div class="detail-mit${hint ? ' hinted' : ''}${on ? ' tapped' : ''}"><span class="th"${(m.image||fbImg)?` style="background-image:url('${m.image||fbImg}')"`:''}></span><span class="nm">${nm(m)}</span><span class="pr">${m.price?esc(m.price):''}</span>${ctrl}${hint}</div>`;
+                   const viewed = ctx.preselectFrom === 'view';
+                   const tapLine = on ? `<div class="detail-tapped">${isTH ? (viewed ? 'ห้องที่คุณดู · เลือกไว้ให้แล้ว' : 'ห้องที่คุณแตะ · เลือกไว้ให้แล้ว') : (viewed ? 'The unit you viewed · already selected' : 'The unit you tapped · already selected')}</div>` : '';
+                   // a room with owner photos: badge + "ดูรูป ×N", the row opens its room view (openRoom)
+                   const nPh = isProp && Array.isArray(m.photos) ? m.photos.length : 0;
+                   const phAttr = nPh ? ` data-ph="${key}"` : '';
+                   const phChip = nPh ? `<span class="detail-ph">${isTH ? 'ดูรูป' : 'Photos'} ×${nPh}</span>` : '';
+                   return `${tapLine}<div class="detail-mit${hint ? ' hinted' : ''}${on ? ' tapped' : ''}"${phAttr}><span class="th"${(m.image||fbImg)?` style="background-image:url('${m.image||fbImg}')"`:''}>${nPh ? '<svg class="ph-badge" viewBox="0 0 76 64" aria-hidden="true"><g transform="rotate(-12 26 40)"><rect x="6" y="20" width="40" height="32" rx="5" fill="#123A6B" stroke="#9BE8FF" stroke-width="4" opacity=".6"/></g><g transform="rotate(6 40 40)"><rect x="20" y="16" width="42" height="34" rx="5" fill="#0B2547" stroke="#9BE8FF" stroke-width="4"/><path d="M25 45 L36 32 L43 39 L48 34 L57 45 Z" fill="#9BE8FF"/></g><circle cx="58" cy="11" r="8" fill="#FF5A4E" stroke="#fff" stroke-width="2.5"/></svg>' : ''}</span><span class="nm">${nm(m)}${phChip}</span><span class="pr">${m.price?esc(m.price):''}</span>${ctrl}${hint}</div>`;
                }).join('')
                              : `<div class="detail-mit"><span class="th"></span><span class="nm">${isTH?'เพิ่มสินค้า…':'Add a product…'}</span><span class="pr"></span></div>`)
              // Total lives here so it can be updated in place on every tap.
@@ -4648,6 +4870,7 @@ function layoutDetailText(isUpdate) {
 }
 
 function openDetail(ctx) {
+    _detailItems = Array.isArray(ctx.orderItems) ? ctx.orderItems : [];
     lastDetailCtx = ctx;   // remember for lang-toggle re-render
     uStep('detail');
     _detailOpenedAt = Date.now();
@@ -4800,6 +5023,7 @@ function _endDetail(reason) {
     _detailOpenedAt = 0;
 }
 function closeDetail() {
+    closeRoom(true);
     _endDetail();
     releaseBoardHold();
     scanWatch.stop();              // QR gone → stop asking whether it was scanned
@@ -5127,9 +5351,12 @@ function showHandoff() {
         ? (isTH ? 'สแกนเพื่อนัดชม — ฟรีทุกขั้น · เช่า/ซื้อสำเร็จผ่านระบบ รับ voucher ฿200'
                 : 'Scan to book a viewing — free · close the deal via aquamx and get a ฿200 voucher')
         : (isTH ? 'สแกนคิวอาร์โค้ดด้วยโทรศัพท์ของท่านเพื่อดำเนินการต่อ' : 'Scan the QR code with your phone to continue'));
-    setTxt('handoffPhoneLabel', isTH ? 'กรอกเบอร์โทร ร้านจะโทรกลับรับออเดอร์' : 'Enter your number — the shop will call you back');
-    setTxt('sendLinkBtn',       isTH ? 'ให้ร้านโทรกลับ' : 'Have the shop call me');
-    setTxt('phoneReveal',       isTH ? 'ไม่สะดวกสแกน? ให้ร้านโทรกลับ' : "Can't scan? Have the shop call you");
+    // rooms are booked with our team, not a shop
+    setTxt('handoffPhoneLabel', isPropHandoff ? (isTH ? 'กรอกเบอร์โทร ทีมจะโทรกลับนัดชม' : 'Enter your number — our team will call you to book')
+                                              : (isTH ? 'กรอกเบอร์โทร ร้านจะโทรกลับรับออเดอร์' : 'Enter your number — the shop will call you back'));
+    setTxt('sendLinkBtn',       isPropHandoff ? (isTH ? 'ให้ทีมโทรกลับ' : 'Have our team call me') : (isTH ? 'ให้ร้านโทรกลับ' : 'Have the shop call me'));
+    setTxt('phoneReveal',       isPropHandoff ? (isTH ? 'ไม่สะดวกสแกน? ให้ทีมโทรกลับ' : "Can't scan? Have our team call you")
+                                              : (isTH ? 'ไม่สะดวกสแกน? ให้ร้านโทรกลับ' : "Can't scan? Have the shop call you"));
     setTxt('sendConfirmOk',     isTH ? 'ตกลง' : 'OK');
     setTxt('phoneConfirmLabel', isTH ? 'ยืนยันเบอร์โทรศัพท์ของท่าน' : 'Confirm your phone number');
     setTxt('phoneConfirmYes',   isTH ? '✓ ยืนยัน' : '✓ Confirm');
@@ -5151,6 +5378,7 @@ function showHandoff() {
 
     // Carry the amount onto this page — step 1's total is hidden here.
     updateHandoffAmount();
+    if (isPropHandoff) showHandoffRooms();
 
     // A3: honor the provider's preferred handoff channel (qr / sms / both).
     const ht = handoffCtx.handoffType || 'both';
@@ -5344,6 +5572,7 @@ function updateCartTotal() {
 function updateHandoffAmount() {
     const box = document.getElementById('handoffAmount');
     if (!box) return;
+    box.classList.remove('rooms');
     const t = cartTotalTHB();
     if (!t.ok) { box.style.display = 'none'; return; }
     const isTH = uiLang === 'th';
@@ -5562,7 +5791,10 @@ stage.addEventListener('click', async e => {
     uUnitPick((/\/board-cards\/sale\//.test(src) ? 'sale' : 'rent') + '-' + hit.ref);   // the tap IS the room-interest signal
     boardHold(fr, true); _heldBoardFrame = fr;
     const primary = (s.ctas || []).find(c => c.kind === 'primary') || (s.ctas || [])[0] || null;
-    setTimeout(() => openDetail(Object.assign(slideDetailCtx(s, primary), { preselect: hit.ref })), 150);   // let the card's press show
+    setTimeout(() => {   // let the card's press show
+        if (hit.photos && openRoom(s._orderItems, hit.ref, 'board', s, primary)) return;   // owner photos → photos + details first
+        openDetail(Object.assign(slideDetailCtx(s, primary), { preselect: hit.ref }));
+    }, 150);
 });
 
 /* Everything the popup needs from a commercial slide — shared by the CTA dock and
@@ -5754,6 +5986,7 @@ function resetIdle() {
     const interacting = isMenuOpen
         || catScreen.classList.contains('open')
         || detailOverlay.classList.contains('open')
+        || roomOverlay.classList.contains('open')
         || categoryPanel.classList.contains('open');
     if (!interacting) return;
 
@@ -5802,6 +6035,7 @@ function returnToMain() {
     menuBackdrop.classList.remove('open');
     catScreen.classList.remove('open');
     detailOverlay.classList.remove('open');
+    closeRoom(true);
     currentCatKey = null;
     clearTimeout(idleTimer);
     clearInterval(countdownInterval);
@@ -5812,7 +6046,7 @@ function returnToMain() {
 }
 function syncInteractingClass() {
     document.body.classList.toggle('is-interacting',
-        catScreen.classList.contains('open') || detailOverlay.classList.contains('open'));
+        catScreen.classList.contains('open') || detailOverlay.classList.contains('open') || roomOverlay.classList.contains('open'));
 }
 document.addEventListener('touchstart', resetIdle, { passive: true });
 document.addEventListener('click', resetIdle, { passive: true });

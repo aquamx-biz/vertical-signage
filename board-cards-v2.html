@@ -154,6 +154,12 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: var(--stag
 .lang-ind { font-size: 22px; font-weight: 600; color: rgba(255,255,255,0.55); letter-spacing: 0.06em; white-space: nowrap; }
 .lang-ind b { color: var(--cyan); font-weight: 700; }
 
+/* ห้องมีรูป (เจ้าของส่ง) — รูปซ้อน 3 ใบ + หมุด + ×จำนวน ลอยแบบยกกำลัง · ขอบการ์ดฟ้าอ่อน
+   แตะแล้ว player เปิดรูป+รายละเอียดห้อง (26 ต.ค. 2569) */
+.c .ph { display: inline-flex; align-items: flex-start; gap: 2px; flex-shrink: 0; }
+.c .ph svg { width: 80px; height: 68px; display: block; }
+.c .ph b { font-family: 'IBM Plex Mono', monospace; font-size: 26px; font-weight: 700; color: var(--cyan); line-height: 1; margin-top: -2px; }
+.c.has-ph { border-color: rgba(155,232,255,0.55); }
 .fade-page .cards { opacity: 0; }
 .cards { transition: opacity 0.4s; }
 </style>
@@ -325,21 +331,23 @@ window.addEventListener("message", e => {
   if (e.source !== window.parent) return
   const m = e.data || {}
   if (m.type === "aq-board-hit") {
-    let ref = null, taken = false
+    let ref = null, taken = false, photos = false
     if (TAP) {
       const el = document.elementFromPoint(m.x, m.y)
       const c = el && el.closest && el.closest("#cards .c[data-ref]")
       if (c) {
-        ref = c.dataset.ref; taken = c.classList.contains("taken")
+        ref = c.dataset.ref; taken = c.classList.contains("taken"); photos = c.classList.contains("has-ph")
         if (!taken) { c.classList.add("tap"); setTimeout(() => c.classList.remove("tap"), 160) }
       }
     }
-    e.source.postMessage({ type: "aq-board-hit-result", id: m.id, tap: TAP, ref, taken },
+    e.source.postMessage({ type: "aq-board-hit-result", id: m.id, tap: TAP, ref, taken, photos },
       e.origin && e.origin !== "null" ? e.origin : "*")
   } else if (m.type === "aq-board-hold") {
     window.__boardHold = !!m.hold
   }
 })
+/* ไอคอนห้องมีรูป: รูปซ้อน 3 ใบเอียงเหลื่อม + หมุดแดงปักใบหน้า + ×จำนวน (ยกกำลัง) */
+const PH_ICON = n => `<span class="ph"><svg viewBox="0 0 76 64" aria-hidden="true"><g transform="rotate(-12 26 40)"><rect x="6" y="20" width="40" height="32" rx="5" fill="#123A6B" stroke="#9BE8FF" stroke-width="3.5" opacity=".55"/></g><g transform="rotate(-4 32 40)"><rect x="12" y="18" width="40" height="32" rx="5" fill="#123A6B" stroke="#9BE8FF" stroke-width="3.5" opacity=".8"/></g><g transform="rotate(6 40 40)"><rect x="20" y="16" width="42" height="34" rx="5" fill="#0B2547" stroke="#9BE8FF" stroke-width="3.5"/><path d="M25 45 L36 32 L43 39 L48 34 L57 45 Z" fill="#9BE8FF"/><circle cx="50" cy="25" r="3.5" fill="#FFD66B"/></g><circle cx="58" cy="11" r="8" fill="#FF5A4E" stroke="#fff" stroke-width="2.5"/><path d="M55 17 L49 28" stroke="#fff" stroke-width="3" stroke-linecap="round"/></svg><b>×${n}</b></span>`
 /* ไม่มี ".0" ห้อย — 30K · 29.5K · 4M · 4.2M */
 const fmtRentK = p => (p / 1e3).toFixed(1).replace(/\.0$/, "") + "K"
 const fmtSaleM = p => { let s = (p / 1e6).toFixed(1); if (s.length > 4) s = String(Math.round(p / 1e6)); return s.replace(/\.0$/, "") + "M" }
@@ -401,8 +409,9 @@ function paint() {
     /* ขาย: ล้านบาท + ฿/ตร.ม. คู่กันนิ่ง ๆ (เดิมสลับทุก 3.5 วิ = ตัวเลขเปลี่ยนระหว่างอ่าน) */
     const pru = MODE === "rent" ? t.rentU
       : (r.sqm ? `${t.saleM} · <b>${fmtPsqmK(r.price, r.sqm)}</b> ${t.saleQ}` : t.saleM)
-    return `<div class="c${r.takenLabel ? " taken" : ""}"${r.ref ? ` data-ref="${String(r.ref).replace(/"/g, "")}"` : ""}>
-      <span class="nm"><div class="t">${r.sqm} ${t.bedU} <span class="dot">·</span> ${fl(r, t)} ${flag}</div>
+    const ph = !r.takenLabel && r.photoCount > 0 ? PH_ICON(r.photoCount) : ""
+    return `<div class="c${r.takenLabel ? " taken" : ""}${ph ? " has-ph" : ""}"${r.ref ? ` data-ref="${String(r.ref).replace(/"/g, "")}"` : ""}>
+      <span class="nm"><div class="t">${r.sqm} ${t.bedU} <span class="dot">·</span> ${fl(r, t)} ${flag}${ph}</div>
         <div class="s">${valueOf(r, t)}${statusOf(r, t)}${sizeOf(r)}</div></span>
       <span class="prw"><div class="pr">${pr}</div><div class="pru">${pru}</div></span>
     </div>`
