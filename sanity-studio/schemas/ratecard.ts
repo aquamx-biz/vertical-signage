@@ -445,6 +445,10 @@ export default defineType({
       hidden: ({ document }) => document?.kind === 'commission',
       fields: [
         defineField({ name: 'enabled', title: 'Use the shop layout', type: 'boolean', initialValue: false }),
+        defineField({
+          name: 'creditSignupBy', title: 'GP credit — last day to sign up', type: 'date',
+          description: 'Shops whose first paid SME package is on or before this day get their ad fee back as GP credit on shop orders (per package month, no carry-over), for as long as they keep an SME package. Empty = no credit.',
+        }),
         localeString('kicker', 'Kicker (small tag above the headline)'),
         localeString('headline', 'Headline — line 1'),
         localeString('headlineHi', 'Headline — line 2 (orange)'),
