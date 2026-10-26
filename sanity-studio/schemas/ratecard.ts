@@ -38,6 +38,58 @@ const localeString = (name: string, title: string, description?: string) =>
     ],
   })
 
+const localeText = (name: string, title: string, description?: string) =>
+  defineField({
+    name,
+    title,
+    type: 'object',
+    options: { columns: 2 },
+    description,
+    fields: [
+      defineField({ name: 'th', title: 'Thai',    type: 'text', rows: 2 }),
+      defineField({ name: 'en', title: 'English', type: 'text', rows: 2 }),
+    ],
+  })
+
+// Step pictures drawn by the system (same artwork on the A4 picture and the web page)
+const STEP_ICONS = [
+  { title: 'Choose a package', value: 'package' },
+  { title: 'Pay',              value: 'pay' },
+  { title: 'Send media',       value: 'media' },
+  { title: 'Set up shop',      value: 'shop' },
+  { title: 'Catalogue / menu', value: 'catalog' },
+  { title: 'Shop on screen',   value: 'onscreen' },
+]
+const stepFlow = (name: string, title: string) =>
+  defineField({
+    name,
+    title,
+    type: 'object',
+    options: { collapsible: true, collapsed: true },
+    fields: [
+      localeString('title', 'Heading'),
+      localeString('note', 'Small note after the heading', 'Optional, e.g. "(after you advertise)"'),
+      defineField({
+        name: 'steps',
+        title: 'Steps (numbered 1, 2, 3 …)',
+        type: 'array',
+        validation: Rule => Rule.max(4),
+        of: [{
+          type: 'object',
+          name: 'shopStep',
+          fields: [
+            localeString('title', 'Step'),
+            defineField({ name: 'icon', title: 'Picture', type: 'string', options: { list: STEP_ICONS, layout: 'dropdown' } }),
+          ],
+          preview: {
+            select: { th: 'title.th', en: 'title.en', icon: 'icon' },
+            prepare: ({ th, en, icon }) => ({ title: th || en || '(step)', subtitle: icon }),
+          },
+        }],
+      }),
+    ],
+  })
+
 export default defineType({
   name: 'ratecard',
   title: 'Rate Card',
@@ -375,6 +427,58 @@ export default defineType({
             },
           }],
         }),
+      ],
+    }),
+
+    // ── SME "open a shop" page ─────────────────────────────────────────────
+    // On: the A4 picture (aquamx-handoff lib/ratecard-tier-image.ts) and the
+    // web page (aquamx-landing build-ratecard.js) switch to the shop layout.
+    // Only the words live here — prices, GP %, the screen packs and the
+    // worked example are taken from the rows, the default commission plan
+    // and the screen ladder above, so they can never disagree.
+    defineField({
+      name: 'shopCard',
+      title: 'Shop page (SME — newspaper layout)',
+      type: 'object',
+      description: 'Words for the "open a shop" rate card. Numbers come from the rows, the commission plan and the screen ladder. Bold: **text**. In the offer, {gp} becomes the GP % (e.g. 10%).',
+      options: { collapsible: true, collapsed: true },
+      hidden: ({ document }) => document?.kind === 'commission',
+      fields: [
+        defineField({ name: 'enabled', title: 'Use the shop layout', type: 'boolean', initialValue: false }),
+        localeString('kicker', 'Kicker (small tag above the headline)'),
+        localeString('headline', 'Headline — line 1'),
+        localeString('headlineHi', 'Headline — line 2 (orange)'),
+        localeString('deckTag', 'Deck tag (orange box)'),
+        localeString('deck', 'Deck (text after the tag)'),
+        localeString('offerTitle', 'Offer card title — line 1'),
+        localeString('offerTitleHi', 'Offer card title — line 2 (orange)'),
+        localeText('offerBody', 'Offer text', 'Use {gp} for the GP % and **…** for bold. The worked example under it is calculated.'),
+        localeString('offerNote', 'Offer small print'),
+        stepFlow('shopFlow', 'How to open a shop (steps)'),
+        localeString('gpNote', 'GP box — extra line', 'e.g. the delivery-fee rule. **…** = bold.'),
+        defineField({
+          name: 'chips',
+          title: 'Chips under the GP box',
+          type: 'array',
+          of: [{
+            type: 'object',
+            name: 'shopChip',
+            fields: [
+              localeString('text', 'Text'),
+              defineField({ name: 'strong', title: 'Highlight (orange outline)', type: 'boolean', initialValue: false }),
+            ],
+            preview: {
+              select: { th: 'text.th', en: 'text.en', strong: 'strong' },
+              prepare: ({ th, en, strong }) => ({ title: `${strong ? '◉ ' : ''}${th || en || '(chip)'}` }),
+            },
+          }],
+        }),
+        localeString('adTitle', 'Ad section heading'),
+        localeString('adOnly', 'Ad section line (ad-only option)'),
+        localeString('adUnit', 'Price note on the right'),
+        localeString('packsLabel', 'Packs label', 'Shown before the screen packs from the ladder (5 · 10 · 20 screens).'),
+        localeText('rotation', 'Rotation note', 'Two lines: the first is bold.'),
+        stepFlow('adFlow', 'How to advertise (steps)'),
       ],
     }),
 
