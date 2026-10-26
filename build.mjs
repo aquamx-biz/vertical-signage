@@ -31,7 +31,7 @@ import { readFileSync, mkdirSync, writeFileSync, copyFileSync, cpSync, existsSyn
 import { join, dirname }                                        from 'path'
 import { fileURLToPath }                                        from 'url'
 import { createHash }                                           from 'crypto'
-import { selectWithPolicy, profileToRow, PROFILE_PROJECTION, closedTooLong, CLOSED_DAYS } from './board-engine.mjs'
+import { selectWithPolicy, profileToRow, remarksFor, PROFILE_PROJECTION, closedTooLong, CLOSED_DAYS } from './board-engine.mjs'
 
 /* แถวบอร์ด → รายการห้องใน popup — mirror ของ profileToOrderItem ใน tools/seed-board-offers.mjs
    และ UnitBoardsTool.unitToOrderItem (KEEP IN SYNC) · shape = ที่ player อ่าน (key, maxQty, sold) */
@@ -40,6 +40,12 @@ const OI_BED_TH = { studio: 'สตูดิโอ', '1bed': '1 ห้องน�
 const OI_BED_EN = { studio: 'Studio', '1bed': '1 Bedroom', '2bed': '2 Bedroom', '3bed': '3 Bedroom', '4bed': '4 Bed+' }
 const OI_ZONE_TH = { low: 'ชั้นล่าง', mid: 'ชั้นกลาง', high: 'ชั้นสูง' }
 const OI_ZONE_EN = { low: 'Low floor', mid: 'Mid floor', high: 'High floor' }
+/* รูปห้องที่เจ้าของส่งมาและเปิดให้แสดง (photosPublic) เท่านั้น — รูปจากประกาศเอเจนต์
+   ที่ทีมเก็บไว้ใช้ภายในไม่ขึ้นจอ (กติกาเดิม) · 26 ต.ค. 2569: ห้องมีรูปได้ไอคอนบนบอร์ด
+   แตะแล้วดูรูป+รายละเอียดบนจอ */
+const PHOTO_PROJECTION = `photosPublic, "photos": photos[0...24].asset->url, features`
+const roomPhotos = p => p?.photosPublic === true ? (p.photos ?? []).filter(Boolean) : []
+
 function boardOrderItem(p, mode) {
   const fl = p.floorActual != null
     ? { th: `ชั้น ${p.floorActual}`, en: `Floor ${p.floorActual}` }
@@ -52,7 +58,17 @@ function boardOrderItem(p, mode) {
     price: mode === 'rent' ? `${(p.priceTHB / 1e3).toFixed(1)}K ฿/ด.` : `${(p.priceTHB / 1e6).toFixed(1)}M`,
     priceTHB: p.priceTHB ?? null,
     sold: p.dealStage === 'closed' ? true : null,
-    image: null,
+    image: roomPhotos(p)[0] ? `${roomPhotos(p)[0]}?w=240&h=240&fit=crop&auto=format` : null,
+    // ห้องมีรูป: จอเปิดหน้า "รูป + รายละเอียด" ของห้องนี้ได้ (player openRoom)
+    ...(roomPhotos(p).length ? {
+      photos: roomPhotos(p),
+      room: {
+        sqm: p.sqm ?? null, floor: p.floorActual ?? null, zone: p.floorZone ?? null,
+        psqm: p.pricePerSqm ?? (p.sqm && p.priceTHB ? Math.round(p.priceTHB / p.sqm) : null),
+        flags: remarksFor(p), features: (p.features ?? []).filter(Boolean).slice(0, 8),
+        owner: p.postedByOwner === true,
+      },
+    } : {}),
   }
 }
 import { marketModel, expectedPsqm, valueVsExpected } from './market-model.mjs'
@@ -441,7 +457,7 @@ for (const project of projects) {
         mode,
         "dataAsOf": _updatedAt,
         policy{ quota, superQ, bestQ, hotQ, negoQ, investQ, studioMin, b1Min, b2Min, b3Min, b4Min },
-        "lineup": lineup[]->{ ${PROFILE_PROJECTION}, onBoardFirstAt },
+        "lineup": lineup[]->{ ${PROFILE_PROJECTION}, onBoardFirstAt, ${PHOTO_PROJECTION} },
         rows[]{ unitType, sizeSqm, floor, price, updatedAt, remarks[]{ text, tone } }
       }
     `),
@@ -457,7 +473,7 @@ for (const project of projects) {
         status == "published" &&
         defined(lastCheckedAt) &&
         lastCheckedAt >= "${new Date(Date.now() - 30 * 864e5).toISOString().slice(0, 10)}"
-      ]{ ${PROFILE_PROJECTION} }
+      ]{ ${PROFILE_PROJECTION}, ${PHOTO_PROJECTION} }
     `),
 
   ])
@@ -570,7 +586,8 @@ for (const project of projects) {
       const v = valueVsExpected(p.pricePerSqm, exp)
       return v == null ? null : Math.round(v * 100)
     }
-    const withFloor = p => ({ ...profileToRow({ ...p, floorActual: FLOOR_BY_REF.get(p.refCode) }), valuePct: valueOf(p) })
+    const withFloor = p => ({ ...profileToRow({ ...p, floorActual: FLOOR_BY_REF.get(p.refCode) }), valuePct: valueOf(p),
+      ...(roomPhotos(p).length ? { photoCount: roomPhotos(p).length } : {}) })
     const rows = source === 'lineup' ? lineup.map(withFloor)
       : source === 'auto' ? auto.rows.map(withFloor)
       : (b.rows ?? []).map(r => ({
