@@ -15,6 +15,7 @@
 # Secrets required (Settings > Secrets and variables > Actions):
 #   - SANITY_TOKEN   read token for the awjj9g8u/production dataset
 #   - GH_PAT         fine-grained PAT, contents:read+write on aquamx-biz/*
+#   - VIRTUAL_SITE_PUBLISH_KEY   shared secret for /api/virtual-site/publish on app.aquamx.co.th
 
 name: Rebuild signage sites
 
@@ -47,6 +48,10 @@ jobs:
       - name: Run build.mjs
         env:
           SANITY_TOKEN: ${{ secrets.SANITY_TOKEN }}
+          # Virtual sites (project.virtualSite.enabled): build.mjs POSTs the baked
+          # player to app.aquamx.co.th instead of a public Netlify site. Same value
+          # as VIRTUAL_SITE_PUBLISH_KEY in aquamx-handoff's Netlify env.
+          VIRTUAL_SITE_PUBLISH_KEY: ${{ secrets.VIRTUAL_SITE_PUBLISH_KEY }}
         # build.mjs writes per-project output to ../{code}/ (sibling directories
         # of this checkout). Print what got produced so we know what to push.
         run: |

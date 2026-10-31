@@ -106,7 +106,7 @@ async function sanityFetch(query, dataset = SANITY_DATASET) {
 // ── 1. Fetch all active projects ──────────────────────────────────────────────
 console.log('Fetching active projects from Sanity…')
 const projects = await sanityFetch(
-  `*[_type == "project" && isActive == true]{ _id, title, "code": code.current }`
+  `*[_type == "project" && isActive == true]{ _id, title, "code": code.current, "virtualSite": virtualSite{ enabled } }`
 )
 
 if (!projects?.length) {
@@ -795,6 +795,32 @@ for (const project of projects) {
     `  ✓  ../${code}/index.html` +
     `  (playlist: ${airablePlaylist.length}, providers: ${rawProviders?.length ?? 0}, notices: ${notices?.length ?? 0}, boards: ${[...bakedBoardModes].join('+') || 'none'})`
   )
+
+  // ── Virtual site: publish the baked player privately instead of to a public Netlify site ──
+  // app.aquamx.co.th stores the HTML (Firestore) and serves it at /v/{code}/screen only to a
+  // phone holding a live one-time token (LINE login + lobby-sticker scan). The sibling
+  // ../{code}/ folder is still written above, but rebuild.yml has no repo mapping for it,
+  // so nothing public is deployed. Needs VIRTUAL_SITE_PUBLISH_KEY (same value as the
+  // Netlify env of aquamx-handoff); without it we only warn, never fail the fleet build.
+  if (project.virtualSite?.enabled) {
+    const publishUrl = process.env.VIRTUAL_SITE_PUBLISH_URL || 'https://app.aquamx.co.th/api/virtual-site/publish'
+    const publishKey = process.env.VIRTUAL_SITE_PUBLISH_KEY || ''
+    if (!publishKey) {
+      console.warn(`  ⚠  [${code}] virtual site enabled but VIRTUAL_SITE_PUBLISH_KEY is not set — player NOT published`)
+    } else {
+      try {
+        const r = await fetch(publishUrl, {
+          method:  'POST',
+          headers: { 'content-type': 'application/json', authorization: `Bearer ${publishKey}` },
+          body:    JSON.stringify({ code, projectId, title, rev: baked.rev, html: injectedHtml }),
+        })
+        if (!r.ok) throw new Error(`${r.status} ${await r.text()}`)
+        console.log(`  ✓  [${code}] virtual site player published to ${new URL(publishUrl).host} (${(injectedHtml.length / 1024).toFixed(0)} KB)`)
+      } catch (e) {
+        console.warn(`  ⚠  [${code}] virtual site publish failed: ${e.message}`)
+      }
+    }
+  }
 }
 
 console.log('\nBuild complete.')

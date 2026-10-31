@@ -213,6 +213,65 @@ export default defineType({
       description: 'Base URL for handoff / QR links on mobile landing pages.',
     }),
 
+    // ── Virtual site — AR kiosk on residents' phones for buildings with no screen yet ──
+    // The baked player is NOT pushed to a public Netlify site for these projects;
+    // build.mjs posts it to app.aquamx.co.th which serves it only behind a one-time,
+    // short-lived token issued after LINE login + marker scan. Settings here are read
+    // by /v/{code} on app.aquamx.co.th; nothing secret is stored (dataset is public).
+    defineField({
+      name:  'virtualSite',
+      title: '📱 Virtual Site (AR on phone)',
+      type:  'object',
+      description: 'Turn this on for a building we have not entered yet: residents scan the lobby sticker, log in with LINE, and see the 43" screen in AR at the planned spot.',
+      options: { collapsible: true, collapsed: true },
+      fields: [
+        defineField({
+          name: 'enabled', title: 'Enabled', type: 'boolean', initialValue: false,
+          description: 'On = build publishes the player privately for /v/{code}. Keep the Netlify site unlinked for this project.',
+        }),
+        defineField({
+          name: 'tokenTtlSec', title: 'Token lifetime after scan (seconds)', type: 'number', initialValue: 120,
+          description: 'How long the one-time link stays valid before the page loads. 120 s is enough to log in and open the camera.',
+          validation: Rule => Rule.min(30).max(900),
+        }),
+        defineField({
+          name: 'refreshSec', title: 'Keep-alive interval while open (seconds)', type: 'number', initialValue: 30,
+          description: 'The player renews its token this often while the page stays open; close the page = must scan again.',
+          validation: Rule => Rule.min(10).max(300),
+        }),
+        defineField({
+          name: 'gpsRadiusM', title: 'GPS radius from Project Site location (m)', type: 'number', initialValue: 150,
+          description: 'Phones outside this distance from the Project Site "Map location" are refused. 0 = no GPS check.',
+          validation: Rule => Rule.min(0).max(2000),
+        }),
+        defineField({
+          name: 'maxScansPerDay', title: 'Max scans per person per day', type: 'number', initialValue: 20,
+          validation: Rule => Rule.min(1).max(500),
+        }),
+        defineField({
+          name: 'markerImage', title: 'Sticker marker image', type: 'image',
+          description: 'The exact artwork printed on the lobby sticker (A5). The AR page trains on this image to find the sticker in the camera.',
+        }),
+        defineField({
+          name: 'markerWidthCm', title: 'Printed sticker width (cm)', type: 'number', initialValue: 14.8,
+          description: 'Real printed width — A5 portrait = 14.8 cm. Sets the scale of the virtual screen.',
+          validation: Rule => Rule.min(5).max(100),
+        }),
+        defineField({
+          name: 'screenOffsetRightCm', title: 'Virtual screen: offset right of sticker (cm)', type: 'number', initialValue: 60,
+          description: 'Negative = left of the sticker.',
+        }),
+        defineField({
+          name: 'screenOffsetDownCm', title: 'Virtual screen: offset below sticker centre (cm)', type: 'number', initialValue: 0,
+          description: 'Negative = above. Use the planned install spot so the 43" screen stands where the real one will.',
+        }),
+        defineField({
+          name: 'publishedAt', title: 'Last published', type: 'datetime', readOnly: true,
+          description: 'Set by build.mjs each time the private player is published.',
+        }),
+      ],
+    }),
+
     // ── Deploy / Ops — where this screen lives and who to call ───────────────
     // Click-through links + on-site knowledge, so debugging "จอไม่อัปเดต/จอดับ"
     // starts from this doc instead of hunting through dashboards. NO SECRETS
