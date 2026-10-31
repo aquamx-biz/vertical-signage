@@ -106,7 +106,7 @@ async function sanityFetch(query, dataset = SANITY_DATASET) {
 // ── 1. Fetch all active projects ──────────────────────────────────────────────
 console.log('Fetching active projects from Sanity…')
 const projects = await sanityFetch(
-  `*[_type == "project" && isActive == true]{ _id, title, "code": code.current, "virtualSite": virtualSite{ enabled } }`
+  `*[_type == "project" && isActive == true]{ _id, title, "code": code.current, "virtualSite": virtualSite{ enabled, "playerFrom": playerFrom->code.current } }`
 )
 
 if (!projects?.length) {
@@ -114,6 +114,11 @@ if (!projects?.length) {
   process.exit(1)
 }
 console.log(`Found ${projects.length} active project(s): ${projects.map(p => p.code).join(', ')}`)
+
+// Baked player HTML per project code (used by the virtual-site publish step after the loop,
+// so a project may show another project's player via virtualSite.playerFrom).
+const builtHtml = {}
+const vsitePublish = []
 
 // ── 2. Read the SW once; the HTML player template is chosen per project below ──
 const swSource = readFileSync(join(__dirname, 'sw.js'), 'utf8')
@@ -796,29 +801,46 @@ for (const project of projects) {
     `  (playlist: ${airablePlaylist.length}, providers: ${rawProviders?.length ?? 0}, notices: ${notices?.length ?? 0}, boards: ${[...bakedBoardModes].join('+') || 'none'})`
   )
 
-  // ── Virtual site: publish the baked player privately instead of to a public Netlify site ──
-  // app.aquamx.co.th stores the HTML (Firestore) and serves it at /v/{code}/screen only to a
-  // phone holding a live one-time token (LINE login + lobby-sticker scan). The sibling
-  // ../{code}/ folder is still written above, but rebuild.yml has no repo mapping for it,
-  // so nothing public is deployed. Needs VIRTUAL_SITE_PUBLISH_KEY (same value as the
-  // Netlify env of aquamx-handoff); without it we only warn, never fail the fleet build.
+  // ── Virtual site: remember this build; published after the loop (see below) ──
+  builtHtml[code] = injectedHtml
   if (project.virtualSite?.enabled) {
-    const publishUrl = process.env.VIRTUAL_SITE_PUBLISH_URL || 'https://app.aquamx.co.th/api/virtual-site/publish'
-    const publishKey = process.env.VIRTUAL_SITE_PUBLISH_KEY || ''
+    vsitePublish.push({ code, projectId, title, rev: baked.rev, from: project.virtualSite.playerFrom || null })
+  }
+}
+
+// ── Virtual site: publish the baked player privately instead of to a public Netlify site ──
+// app.aquamx.co.th stores the HTML (Firestore) and serves it at /v/{code}/screen only to a
+// phone holding a live one-time token (LINE login + lobby-sticker scan). The sibling
+// ../{code}/ folder is still written above, but rebuild.yml has no repo mapping for it,
+// so nothing public is deployed. Needs VIRTUAL_SITE_PUBLISH_KEY (same value as the
+// Netlify env of aquamx-handoff); without it we only warn, never fail the fleet build.
+// virtualSite.playerFrom = show another (active) project's player under this code — demo
+// for buildings that have no shops/offers of their own yet.
+if (vsitePublish.length) {
+  const publishUrl = process.env.VIRTUAL_SITE_PUBLISH_URL || 'https://app.aquamx.co.th/api/virtual-site/publish'
+  const publishKey = process.env.VIRTUAL_SITE_PUBLISH_KEY || ''
+  for (const { code, projectId, title, rev, from } of vsitePublish) {
     if (!publishKey) {
       console.warn(`  ⚠  [${code}] virtual site enabled but VIRTUAL_SITE_PUBLISH_KEY is not set — player NOT published`)
-    } else {
-      try {
-        const r = await fetch(publishUrl, {
-          method:  'POST',
-          headers: { 'content-type': 'application/json', authorization: `Bearer ${publishKey}` },
-          body:    JSON.stringify({ code, projectId, title, rev: baked.rev, html: injectedHtml }),
-        })
-        if (!r.ok) throw new Error(`${r.status} ${await r.text()}`)
-        console.log(`  ✓  [${code}] virtual site player published to ${new URL(publishUrl).host} (${(injectedHtml.length / 1024).toFixed(0)} KB)`)
-      } catch (e) {
-        console.warn(`  ⚠  [${code}] virtual site publish failed: ${e.message}`)
-      }
+      continue
+    }
+    const srcCode = from || code
+    const html = builtHtml[srcCode]
+    if (!html) {
+      console.warn(`  ⚠  [${code}] virtual site playerFrom "${srcCode}" was not built (inactive or missing) — player NOT published`)
+      continue
+    }
+    try {
+      const r = await fetch(publishUrl, {
+        method:  'POST',
+        headers: { 'content-type': 'application/json', authorization: `Bearer ${publishKey}` },
+        body:    JSON.stringify({ code, projectId, title, rev, html }),
+      })
+      if (!r.ok) throw new Error(`${r.status} ${await r.text()}`)
+      console.log(`  ✓  [${code}] virtual site player published to ${new URL(publishUrl).host}` +
+        (from ? ` (player of ${srcCode})` : '') + ` (${(html.length / 1024).toFixed(0)} KB)`)
+    } catch (e) {
+      console.warn(`  ⚠  [${code}] virtual site publish failed: ${e.message}`)
     }
   }
 }

@@ -230,6 +230,11 @@ export default defineType({
           description: 'On = build publishes the player privately for /v/{code}. Keep the Netlify site unlinked for this project.',
         }),
         defineField({
+          name: 'playerFrom', title: 'Show player of another project (demo)', type: 'reference', to: [{ type: 'project' }],
+          description: 'While this building has no shops/offers yet, the virtual screen shows the live player of the project chosen here (e.g. 39 by Sansiri). Clear it once this project has its own content.',
+          options: { filter: 'isActive == true' },
+        }),
+        defineField({
           name: 'tokenTtlSec', title: 'Token lifetime after scan (seconds)', type: 'number', initialValue: 120,
           description: 'How long the one-time link stays valid before the page loads. 120 s is enough to log in and open the camera.',
           validation: Rule => Rule.min(30).max(900),
