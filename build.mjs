@@ -152,6 +152,8 @@ const UNIT_PROJECT_NAMES = {
   'mahogany-tower': ['Mahogany Tower'],
   'noble-geo':      ['Noble Geo'],
   'park24':         ['Park 24'],
+  'siri-at-sukhumvit-rent-space': ['Siri at Sukhumvit'],
+  'siamese-thirty-nine':          ['Siamese Thirty Nine'],
 }
 
 // Contact gate (criteria: "board rows must be reachable"): a unit qualifies

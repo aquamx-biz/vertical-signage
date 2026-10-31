@@ -76,6 +76,8 @@ jobs:
             ["the-room-sukhumvit-21"]="the-room-skv21"
             ["noble-be19"]="noble-be19"
             ["39-by-sansiri"]="39-by-sansiri"
+            ["siri-at-sukhumvit-rent-space"]="siri-at-sukhumvit-rent-space"
+            ["siamese-thirty-nine"]="siamese-thirty-nine"
           )
 
           PUSHED=()
