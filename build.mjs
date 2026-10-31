@@ -106,7 +106,7 @@ async function sanityFetch(query, dataset = SANITY_DATASET) {
 // ── 1. Fetch all active projects ──────────────────────────────────────────────
 console.log('Fetching active projects from Sanity…')
 const projects = await sanityFetch(
-  `*[_type == "project" && isActive == true]{ _id, title, "code": code.current, "virtualSite": virtualSite{ enabled, "playerFrom": playerFrom->code.current } }`
+  `*[_type == "project" && isActive == true]{ _id, title, "code": code.current, kioskBaseUrl, "virtualSite": virtualSite{ enabled, "playerFrom": playerFrom->code.current } }`
 )
 
 if (!projects?.length) {
@@ -330,6 +330,9 @@ const globalCategoryConfig = await sanityFetch(`
 // ── 3. Build a deploy folder for each project ─────────────────────────────────
 for (const project of projects) {
   const { _id: projectId, code, title } = project
+  // the Netlify site can be shorter than the code (siamese-thirty-nine → siamese-39):
+  // board slides point at kioskBaseUrl, so that host counts as ours too
+  const siteHost = (() => { try { return new URL(project.kioskBaseUrl).hostname } catch { return '' } })()
   const tplFile = PLAYER_BY_CODE[code] || DEFAULT_PLAYER
   const templateHtml = readFileSync(join(__dirname, tplFile), 'utf8')
   // __PID__ = โปรเจ็กต์ที่กำลัง build → กรอง "offers อื่นของร้านนี้" (nested provider->offers)
@@ -696,7 +699,7 @@ for (const project of projects) {
     if ((s.mediaType ?? s.type) !== 'web' || !href) return true
     let u; try { u = new URL(href) } catch { return true }
     if (!BOARD_PATH_RE.test(u.pathname)) return true
-    const ours = (u.hostname.endsWith('.netlify.app') && u.hostname.split('.')[0] === code) ||
+    const ours = (u.hostname.endsWith('.netlify.app') && u.hostname.split('.')[0] === code) || u.hostname === siteHost ||
                  u.hostname === 'player.aquamx.local'
     if (!ours) return true
     if (bakedBoardPaths.has(normPath(u.pathname))) return true
@@ -716,7 +719,7 @@ for (const project of projects) {
     const href = s.webUrl ?? s.url
     if ((s.mediaType ?? s.type) !== 'web' || !href || s.displayDuration != null || s.imageDurationOverride != null) continue
     let u; try { u = new URL(href) } catch { continue }
-    const ours = (u.hostname.endsWith('.netlify.app') && u.hostname.split('.')[0] === code) || u.hostname === 'player.aquamx.local'
+    const ours = (u.hostname.endsWith('.netlify.app') && u.hostname.split('.')[0] === code) || u.hostname === siteHost || u.hostname === 'player.aquamx.local'
     const n = ours && boardCardRows.get(normPath(u.pathname))
     if (!n) continue
     const pages = Math.ceil(Math.min(n, 21) / 7)
