@@ -44,6 +44,7 @@ const NAME_TO_CODE = {
   'The Room Sukhumvit 21': 'the-room-skv21', 'Noble BE19': 'noble-be19',
   'Mahogany Tower': 'mahogany-tower', 'Park 24': 'park24',
   'Siri at Sukhumvit': 'siri-at-sukhumvit-rent-space',
+  'Siamese Thirty Nine': 'siamese-thirty-nine',
 }
 
 const [profiles, projects, boards, contacts] = await Promise.all([
