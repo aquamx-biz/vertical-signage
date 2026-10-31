@@ -47,6 +47,13 @@ export default defineType({
     defineField({ name: 'listedWithUs', title: 'Listed with aquamx', type: 'boolean', readOnly: true,
       description: 'Set by the system when an owner lists this room with us (LINE / Full Service). Only these rooms are opened to Google and AI search; scraped ads stay hidden.' }),
     defineField({ name: 'dualListed', title: 'Dual Listed (เช่า+ขาย)', type: 'boolean' }),
+    // Photos — written by the LINE owner flow (lib/line-owner putOnBoard) and the team; were in the
+    // data but not in the schema, so Studio hid them and the MCP refused to write them (31 Oct 2026).
+    defineField({ name: 'photos', title: 'Photos', type: 'array', of: [{ type: 'image' }], options: { layout: 'grid' } }),
+    defineField({ name: 'photosPublic', title: 'Photos public (owner sent / allowed)', type: 'boolean',
+      description: 'Only these photos may show on the public unit page (/u/<ref>) and screens.' }),
+    defineField({ name: 'photosSource', title: 'Photos source', type: 'string' }),
+    defineField({ name: 'photosCount', title: 'Photos count', type: 'number' }),
     defineField({
       name: 'status', title: 'Status', type: 'string', initialValue: 'candidate',
       options: { list: ['candidate', 'verified', 'published', 'taken', 'expired'] },

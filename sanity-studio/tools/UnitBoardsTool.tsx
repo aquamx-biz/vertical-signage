@@ -133,6 +133,7 @@ const NAME_TO_CODE: Record<string, string> = {
   '39 by Sansiri': '39-by-sansiri', 'The Lumpini 24': 'lumpini-24',
   'The Room Sukhumvit 21': 'the-room-skv21', 'Noble BE19': 'noble-be19',
   'Mahogany Tower': 'mahogany-tower', 'Park 24': 'park24',
+  'Siri at Sukhumvit': 'siri-at-sukhumvit-rent-space',
 }
 
 const PROJ = `refCode, intent, projectName, bedType, sqm, floorZone, priceTHB, pricePerSqm,
