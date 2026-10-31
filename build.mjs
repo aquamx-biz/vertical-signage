@@ -816,6 +816,16 @@ for (const project of projects) {
 // Netlify env of aquamx-handoff); without it we only warn, never fail the fleet build.
 // virtualSite.playerFrom = show another (active) project's player under this code — demo
 // for buildings that have no shops/offers of their own yet.
+function inlineIcons(html) {
+  if (!html) return html
+  const dir = join(__dirname, 'icons')
+  return html.replace(/src="icons\/([\w-]+\.svg)"/g, (m, file) => {
+    const f = join(dir, file)
+    if (!existsSync(f)) return m
+    return `src="data:image/svg+xml;base64,${readFileSync(f).toString('base64')}"`
+  })
+}
+
 if (vsitePublish.length) {
   const publishUrl = process.env.VIRTUAL_SITE_PUBLISH_URL || 'https://app.aquamx.co.th/api/virtual-site/publish'
   const publishKey = process.env.VIRTUAL_SITE_PUBLISH_KEY || ''
@@ -825,7 +835,9 @@ if (vsitePublish.length) {
       continue
     }
     const srcCode = from || code
-    const html = builtHtml[srcCode]
+    // The private player is served from app.aquamx.co.th/v/{code}/screen, where the sibling
+    // icons/ folder of the Netlify deploy does not exist → inline the category icons.
+    const html = inlineIcons(builtHtml[srcCode])
     if (!html) {
       console.warn(`  ⚠  [${code}] virtual site playerFrom "${srcCode}" was not built (inactive or missing) — player NOT published`)
       continue
