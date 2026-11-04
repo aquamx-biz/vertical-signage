@@ -1086,6 +1086,25 @@ body {
     72%      { transform: translate(0,0) scale(1) rotate(0); }
     86%, 100% { transform: translate(0,12px) rotate(-6deg); }
 }
+/* top-right hand face plays ONCE per showing (clock starts at the turn, ~1s):
+   pointer presses + radar → shrinks away → a thumbs-up (same white line hand) pops in with a burst */
+.tent-hand .th-pt, .tent-hand .th-tu, .tent-hand .th-burst { transform-box: fill-box; transform-origin: center; }
+.tent-hand .th-tu, .tent-hand .th-burst { opacity: 0; }
+.th-burst { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
+.tent-hand.th-on .th-press { animation: th-tent-press 2.2s ease-in-out forwards; }
+.tent-hand.th-on .th-radar { animation: th-radar .9s cubic-bezier(.2,.6,.35,1) forwards; }
+.tent-hand.th-on .th-pt    { animation: th-pt-out 2.2s ease-in forwards; }
+.tent-hand.th-on .th-tu    { animation: th-tu-in 2.2s cubic-bezier(.3,.7,.3,1) forwards; }
+.tent-hand.th-on .th-burst { animation: th-burst 2.2s ease-out forwards; }
+@keyframes th-tent-press { 0%, 48%, 62%, 100% { transform: translate(0,0); } 55% { transform: translate(.5px,1.6px) scale(.9); } }
+@keyframes th-pt-out { 0%, 64% { opacity: 1; transform: scale(1); } 74%, 100% { opacity: 0; transform: scale(.55); } }
+@keyframes th-tu-in {
+    0%, 66% { opacity: 0; transform: scale(.4) rotate(-20deg); }
+    80%     { opacity: 1; transform: scale(1.18) rotate(8deg); }
+    90%     { opacity: 1; transform: scale(.95) rotate(-3deg); }
+    100%    { opacity: 1; transform: scale(1) rotate(0); }
+}
+@keyframes th-burst { 0%, 74% { opacity: 0; transform: scale(.6); } 82% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(1.25); } }
 @media (prefers-reduced-motion: reduce) { .th-on .th-radar, .th-on .th-press { animation: none; } }
 
 /* ============================================================
@@ -4150,7 +4169,7 @@ document.addEventListener('keydown', e => {
 
 /* ============================================================
    TOUCH HINT controller (CSS: "TOUCH HINT")
-   · top-right tent: weather 10s → hand 2s → TH word 4s → weather 10s → hand 2s → EN word 4s
+   · top-right tent: weather 10s → hand 3s (taps, turns into a thumbs-up) → TH word 4s → weather 10s → hand 3s → EN word 4s
    · CTA hands: every ad, last 30% of its airtime (the swipe hint shows at the
      start), every CTA, + room-to-room hand on unit boards; skipped on video
      slides / open overlays, removed on the first touch
@@ -4173,8 +4192,15 @@ document.addEventListener('keydown', e => {
     const topbar = document.querySelector('.topbar');
     const timeEl = document.getElementById('topTime');
     if (tent) {
-        tent.querySelector('[data-k="hand"]').innerHTML = handSvg([0, .4, .8, 1.2]);
-        const SEQ = [['wx', 10000], ['hand', 2000], ['txt', 4000, 0], ['wx', 10000], ['hand', 2000], ['txt', 4000, 1]];
+        // pointer (taps, radar) that turns into a thumbs-up drawn in the same line style
+        const THUMB = '<path d="M9.5 10.5V4.5a2 2 0 0 1 4 0V10"/><path d="M13.5 10H20a2 2 0 0 1 0 4h-2"/><path d="M18 14h2a2 2 0 0 1 0 4h-2"/><path d="M18 18h1a2 2 0 0 1 0 4h-8"/><path d="M9.5 10.5C6.5 11 4 13 4 16v1.5a4.5 4.5 0 0 0 4.5 4.5H11"/><path d="M13.5 14H18M13.5 18H18"/>';
+        tent.querySelector('[data-k="hand"]').innerHTML =
+            '<svg viewBox="0 0 32 32" aria-hidden="true">' +
+            [1.15, 1.35].map(d => `<circle class="th-radar" cx="14" cy="10" r="22" style="animation-delay:${d}s"/>`).join('') +
+            `<g class="th-pt"><g class="th-press"><g transform="translate(6 8)"><g class="th-hand">${HAND}</g></g></g></g>` +
+            '<g class="th-burst"><path d="M17.5 2v3M10.5 5.5l2 2M24.5 5.5l-2 2"/></g>' +
+            `<g class="th-tu"><g transform="translate(6 8)"><g class="th-hand">${THUMB}</g></g></g></svg>`;
+        const SEQ = [['wx', 10000], ['hand', 3000], ['txt', 4000, 0], ['wx', 10000], ['hand', 3000], ['txt', 4000, 1]];
         let q = 0;
         const turn = (k, word) => {
             const cur = tent.querySelector('.tent-face.is-cur');
