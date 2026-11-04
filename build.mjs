@@ -610,7 +610,14 @@ for (const project of projects) {
         }))
     console.log(`  board[${mode}]: ${source} (${rows.length} rows)`)
     if (source !== 'manual') {
+      /* เมนูห้องใน popup เรียงแบบเดียวกับหน้าบอร์ด (board-cards-v2.html): ในแต่ละแบบห้อง
+         ชั้นสูงอยู่บน · ชั้นเท่ากัน ราคาถูกก่อน · ไม่มีเลขชั้นใช้โซนแทน (ล่าง 5 · กลาง 15 · สูง 25)
+         เดิมเรียงห้องใหม่สุดขึ้นก่อน → บอร์ดกับเมนูคนละลำดับ คนดูหาห้องไม่เจอ (4 พ.ย. 2569) */
+      const ZONE_FLOOR = { low: 5, mid: 15, high: 25 }
+      const floorKey = p => FLOOR_BY_REF.get(p.refCode) ?? ZONE_FLOOR[String(p.floorZone ?? '').toLowerCase()] ?? 15
       const picked = (source === 'lineup' ? lineup : auto.rows).filter(p => p?.refCode && p.priceTHB != null)
+        .sort((x, y) => (BED_RANK[x.bedType] ?? 9) - (BED_RANK[y.bedType] ?? 9)
+          || floorKey(y) - floorKey(x) || (x.priceTHB ?? 0) - (y.priceTHB ?? 0))
       const toItem = p => boardOrderItem({ ...p, floorActual: FLOOR_BY_REF.get(p.refCode) }, mode)
       boardItems.set(`offer-board-${code}-${mode}`, picked.map(toItem))
       const byBed = {}
