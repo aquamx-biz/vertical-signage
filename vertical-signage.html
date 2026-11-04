@@ -1019,6 +1019,61 @@ body {
 @media (prefers-reduced-motion: reduce) { .swipe-hint svg { animation: none; } }
 
 /* ============================================================
+   TOUCH HINT — passers-by don't know the screen is touchable.
+   (1) TOP-RIGHT TENT: the weather slot is a 3-sided paper tent that turns
+       weather → hand+radar → "ลองแตะจอดูสิ" / "It's touchable". 3D lives ONLY
+       for the ~1s turn: afterwards the tent is flat and the old face is
+       display:none (kiosk GPU rule #1); the leaving face ends at opacity 0 (#4).
+   (2) CTA HANDS: a translucent hand swoops onto EVERY CTA, double-taps with a
+       radar burst, backs off — a few seconds on alternate slides, never on
+       video, gone on first touch. Elements are created per showing and
+       removed after, so nothing sits in the compositor between showings.
+============================================================ */
+.topbar-right { align-self: stretch; perspective: 9vh; overflow: hidden; }
+.tent { display: grid; justify-items: end; align-items: center; align-self: stretch; }
+.tent.turning { transform-style: preserve-3d; }
+.tent-face { grid-area: 1 / 1; height: 3vh; display: flex; align-items: center; transform-origin: 50% 50%; }
+.tent-face[hidden] { display: none !important; }
+.tent-word {
+    font-family: 'Prompt', 'IBM Plex Sans Thai', sans-serif;
+    font-size: 1.5vh; font-weight: 600; color: var(--ink-100); white-space: nowrap;
+}
+.tent-hand svg { width: 3.2vh; height: 3.2vh; display: block; overflow: visible; color: var(--ink-100); }
+/* a long project name could meet the hint text — the clock steps aside for those 4s */
+.topbar-left .topbar-time, .topbar-left .topbar-sep { transition: opacity 0.4s ease; }
+.topbar.tent-tight .topbar-time, .topbar.tent-tight .topbar-sep { opacity: 0; }
+
+.th-hand { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.th-hand-under { fill: none; stroke: rgba(0,0,0,0.35); stroke-width: 3.4; stroke-linecap: round; stroke-linejoin: round; }
+.th-radar { fill: none; stroke: currentColor; stroke-width: 1; transform-box: fill-box; transform-origin: center; opacity: 0; }
+.th-on .th-radar { animation: th-radar 1.6s cubic-bezier(.2,.6,.35,1) infinite; }
+.th-on .th-press { animation: th-press 1.6s ease-in-out infinite; }
+@keyframes th-radar { 0% { transform: scale(.08); opacity: .9; } 100% { transform: scale(1); opacity: 0; } }
+@keyframes th-press { 0%, 100% { transform: translate(0,0); } 22%, 38% { transform: translate(.5px,1.6px); } }
+
+.cta-hand {
+    position: absolute; z-index: 8; width: 5.6vh; height: 5.6vh;
+    pointer-events: none; color: var(--ink-100);
+    opacity: 0; transition: opacity 0.45s ease;
+}
+.cta-hand.show { opacity: 0.7; }
+.cta-hand svg { width: 100%; height: 100%; display: block; overflow: visible; }
+/* swoop in from below-right, double-tap, back off — radar bursts land on each tap */
+.cta-hand .th-press { transform-box: fill-box; transform-origin: 30% 10%; }
+.cta-hand.th-on .th-press { animation: th-swoop 2s cubic-bezier(.45,0,.25,1) infinite; }
+.cta-hand.th-on .th-radar { animation: th-radar 2s cubic-bezier(.2,.6,.35,1) infinite; }
+@keyframes th-swoop {
+    0%       { transform: translate(9px,11px) rotate(10deg); }
+    28%      { transform: translate(0,0) rotate(0); }
+    34%      { transform: translate(.6px,2px) scale(.86); }
+    42%      { transform: translate(0,0) scale(1); }
+    50%      { transform: translate(.6px,2px) scale(.86); }
+    60%      { transform: translate(0,0) scale(1); }
+    80%, 100% { transform: translate(9px,11px) rotate(10deg); }
+}
+@media (prefers-reduced-motion: reduce) { .th-on .th-radar, .th-on .th-press { animation: none; } }
+
+/* ============================================================
    BOTTOM TAGLINE / NEWS TICKER
 ============================================================ */
 .bottombar {
@@ -2035,10 +2090,15 @@ html.lite .bottombar-track { transform: none !important; }
         </div>
         <div class="topbar-dot" title="Live"></div>
         <div class="topbar-right">
-            <div class="topbar-weather">
-                <span class="icon" id="topWeatherIcon">☀</span>
-                <span class="temp" id="topWeatherTemp">28°</span>
-                <span id="topWeatherCity">Bangkok</span>
+            <!-- 3-sided tent: weather ⇄ hand ⇄ "touchable" word (touch-hint controller) -->
+            <div class="tent" id="topTent">
+                <div class="tent-face topbar-weather is-cur" data-k="wx">
+                    <span class="icon" id="topWeatherIcon">☀</span>
+                    <span class="temp" id="topWeatherTemp">28°</span>
+                    <span id="topWeatherCity">Bangkok</span>
+                </div>
+                <div class="tent-face tent-hand" data-k="hand" hidden aria-hidden="true"></div>
+                <div class="tent-face tent-word" data-k="txt" hidden></div>
             </div>
         </div>
     </div>
@@ -3736,6 +3796,7 @@ function showSlot(idx, isFirst = false) {
     if (devKind) devKind.textContent = SLOTS[idx].kind;
     if (devIdx) devIdx.textContent = idx + 1;
     if (window.__swipeHintOnSlide) window.__swipeHintOnSlide();   // periodic swipe-hint pacing
+    if (window.__ctaHintOnSlide) window.__ctaHintOnSlide(idx);    // hands on the CTAs, alternate slides
     uAir(SLOTS[idx].mediaId);   // one airing — the denominator for tap rate
 
     slots.forEach((el, i) => {
@@ -4070,6 +4131,121 @@ document.addEventListener('keydown', e => {
         clearTimeout(learnTimer);
         learnTimer = setTimeout(() => { learned = false; }, RELEARN_MS);
     };
+})();
+
+/* ============================================================
+   TOUCH HINT controller (CSS: "TOUCH HINT")
+   · top-right tent: weather 10s → hand 2s → TH word 4s → weather 10s → hand 2s → EN word 4s
+   · CTA hands: on ODD slide counts (the swipe hint owns every 4th = even), ~1.9s
+     after the slide lands (CTAs have risen), 4s, every CTA, skipped on video
+     slides / open overlays, removed on the first touch
+============================================================ */
+(function () {
+    const HAND = '<path d="M22 14a8 8 0 0 1-8 8"/><path d="M18 11v-1a2 2 0 0 0-2-2a2 2 0 0 0-2 2"/><path d="M14 10V9a2 2 0 0 0-2-2a2 2 0 0 0-2 2v1"/><path d="M10 9.5V4a2 2 0 0 0-2-2a2 2 0 0 0-2 2v10"/><path d="M18 11a2 2 0 1 1 4 0v3a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/>';
+    // pointer outline (Lucide "pointer", ISC) — fingertip lands at (14,10) of the 32-box
+    const handSvg = delays =>
+        '<svg viewBox="0 0 32 32" aria-hidden="true">' +
+        delays.map(d => `<circle class="th-radar" cx="14" cy="10" r="22" style="animation-delay:${d}s"/>`).join('') +
+        `<g class="th-press"><g transform="translate(6 8)"><g class="th-hand-under">${HAND}</g><g class="th-hand">${HAND}</g></g></g></svg>`;
+    const WORDS = ['ลองแตะจอดูสิ', "It's touchable"];
+    const overlayUp = () =>
+        (typeof isMenuOpen !== 'undefined' && isMenuOpen) ||
+        (typeof detailOverlay !== 'undefined' && detailOverlay && detailOverlay.classList.contains('open')) ||
+        (typeof catScreen !== 'undefined' && catScreen && catScreen.classList.contains('open'));
+
+    /* ── (1) top-right tent ── */
+    const tent = document.getElementById('topTent');
+    const topbar = document.querySelector('.topbar');
+    const timeEl = document.getElementById('topTime');
+    if (tent) {
+        tent.querySelector('[data-k="hand"]').innerHTML = handSvg([0, .4, .8, 1.2]);
+        const SEQ = [['wx', 10000], ['hand', 2000], ['txt', 4000, 0], ['wx', 10000], ['hand', 2000], ['txt', 4000, 1]];
+        let q = 0;
+        const turn = (k, word) => {
+            const cur = tent.querySelector('.tent-face.is-cur');
+            const nx = tent.querySelector(`.tent-face[data-k="${k}"]`);
+            if (!cur || !nx || cur === nx) return;
+            if (word != null) nx.textContent = word;
+            nx.hidden = false;
+            // a long project name may reach the word: let the clock step aside meanwhile
+            if (topbar && timeEl) {
+                const tight = k === 'txt' && tent.getBoundingClientRect().right - nx.scrollWidth
+                    < timeEl.getBoundingClientRect().right + innerHeight * 0.015;
+                topbar.classList.toggle('tent-tight', tight);
+            }
+            nx.classList.add('th-on');
+            const done = () => {                                   // flatten: no 3D left behind
+                tent.classList.remove('turning');
+                cur.hidden = true; cur.classList.remove('is-cur', 'th-on'); cur.style.transform = '';
+                cur.getAnimations().forEach(a => a.cancel());
+                nx.style.transform = ''; nx.classList.add('is-cur');
+            };
+            if (!tent.animate || matchMedia('(prefers-reduced-motion: reduce)').matches) { done(); return; }
+            const a = cur.offsetHeight / (2 * Math.tan(Math.PI / 3));   // apothem of a triangular prism
+            cur.style.transform = `rotateX(0deg) translateZ(${a}px)`;
+            nx.style.transform  = `rotateX(-120deg) translateZ(${a}px)`;   // the face underneath
+            tent.classList.add('turning');
+            const T = 1050;
+            const anim = tent.animate(
+                [{ transform: `translateZ(${-a}px) rotateX(0deg)` }, { transform: `translateZ(${-a}px) rotateX(120deg)` }],
+                { duration: T, easing: 'cubic-bezier(.5,.05,.25,1.12)' });   // slow lever, small settle
+            cur.animate([{ opacity: 1 }, { opacity: 1, offset: .35 }, { opacity: 0 }], { duration: T, fill: 'forwards' });   // leaving face ENDS at 0
+            nx.animate([{ opacity: 0 }, { opacity: 1, offset: .6 }, { opacity: 1 }], { duration: T });
+            anim.onfinish = done;
+            anim.oncancel = done;
+        };
+        const step = () => {
+            const [k, ms, wi] = SEQ[q++ % SEQ.length];
+            turn(k, wi == null ? null : WORDS[wi]);
+            setTimeout(step, ms);
+        };
+        setTimeout(step, SEQ[0][1]);   // weather shows first
+    }
+
+    /* ── (2) hands on the CTAs ── */
+    const SHOW_DELAY_MS = 1900, SHOW_MS = 4000;
+    let hands = [], showTimer = null, hideTimer = null, slideCount = 0;
+    function clear() {
+        clearTimeout(showTimer); clearTimeout(hideTimer);
+        const old = hands; hands = [];
+        old.forEach(h => h.classList.remove('show'));
+        setTimeout(() => old.forEach(h => h.remove()), 450);      // out of the DOM → out of the compositor
+    }
+    function show(idx) {
+        const slot = slots[idx], s = SLOTS[idx];
+        if (!slot || !s || idx !== cur || overlayUp()) return;
+        const ctas = [...slot.querySelectorAll('.cta-dock .cta')];
+        if (!ctas.length) return;
+        const box = slot.getBoundingClientRect();
+        ctas.forEach((c, i) => {
+            const r = c.getBoundingClientRect();
+            if (!r.width) return;
+            const h = document.createElement('div');
+            h.className = 'cta-hand th-on';
+            h.innerHTML = handSvg([.66, .98, 1.3].map(d => d + i * .5));
+            slot.appendChild(h);
+            // fingertip on the lower half of the button, so the hand hangs below the label
+            const S = h.offsetWidth;
+            h.style.left = (r.left + r.width * 0.62 - box.left - S * 14 / 32) + 'px';
+            h.style.top  = (r.bottom - r.height * 0.3 - box.top - S * 10 / 32) + 'px';
+            if (i) h.querySelector('.th-press').style.animationDelay = (i * .5) + 's';   // the two hands take turns
+            hands.push(h);
+        });
+        requestAnimationFrame(() => hands.forEach(h => h.classList.add('show')));
+        hideTimer = setTimeout(clear, SHOW_MS);
+    }
+    window.__ctaHintOnSlide = function (idx) {
+        clear();
+        slideCount++;
+        if (slideCount % 2 === 0) return;                          // alternate slides; even counts belong to the swipe hint
+        const s = SLOTS[idx];
+        if (!s || (s.mediaType === 'video' && s.video)) return;    // video slides air clean
+        if (!(s.ctas || []).length) return;
+        showTimer = setTimeout(() => show(idx), SHOW_DELAY_MS);
+    };
+    // someone is touching — get out of the way at once
+    document.addEventListener('touchstart', clear, { passive: true });
+    document.addEventListener('mousedown', clear, { passive: true });
 })();
 
 /* ============================================================
