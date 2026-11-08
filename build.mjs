@@ -524,7 +524,9 @@ for (const project of projects) {
   // and the warning names the box class so the reader knows WHY it matters.
   const SLIDE_BUDGET  = 24   // image + video slides (decoded-pixel eaters)
   const SLIDE_ABS_MAX = 30   // every slot incl. web boards
-  const heavySlides = (playlist ?? []).filter(s => s.type !== 'web').length
+  // The projection calls it `mediaType` — `s.type` is always undefined, which
+  // silently counted web boards as heavy (every building looked over budget).
+  const heavySlides = (playlist ?? []).filter(s => s.mediaType !== 'web').length
   const totalSlides = playlist?.length ?? 0
   if (heavySlides > SLIDE_BUDGET || totalSlides > SLIDE_ABS_MAX) {
     console.warn(
