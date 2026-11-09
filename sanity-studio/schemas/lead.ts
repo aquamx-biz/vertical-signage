@@ -100,10 +100,20 @@ export default defineType({
           { title: '🤝 Referral',    value: 'referral' },
           { title: '👋 Direct',      value: 'direct'   },
           { title: '🧑‍💼 Team-booked', value: 'team'    },
+          { title: '📘 Facebook group', value: 'facebook' },
           { title: 'Other',          value: 'other'    },
         ],
       },
       initialValue: 'kiosk',
+    }),
+
+    defineField({
+      group:       'overview',
+      name:        'sourceUrl',
+      title:       'Source Post',
+      type:        'url',
+      description: 'The post this lead came from (e.g. a "looking for a condo" post in a Facebook group) — to go back to the thread and see whether they answered.',
+      hidden:      ({ document }: any) => !document?.sourceUrl && document?.source !== 'facebook',
     }),
 
     defineField({
