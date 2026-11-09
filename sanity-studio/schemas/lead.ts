@@ -223,6 +223,13 @@ export default defineType({
       hidden: ({ document }: any) => document?.leadType !== 'listProperty' || document?.interestType === 'sale' }),
     defineField({ group: 'request', name: 'askingPrice', title: 'Asking Price (THB)', type: 'number',
       hidden: ({ document }: any) => document?.leadType !== 'listProperty' || document?.interestType === 'rent' }),
+    defineField({ group: 'request', name: 'listingPlan', title: 'Plan Offered', type: 'string',
+      description: 'What we offer this lister (owner or agent). Full Service: we act as agent, commission on close. Owner Direct: listing only, they pay the listing fee and take the leads. The outreach link (#unit code) signs them up on this plan.',
+      options: { list: [
+        { title: 'Full Service · ฝากทีมขาย', value: 'fullService' },
+        { title: 'Owner Direct · listing only', value: 'ownerDirect' },
+      ], layout: 'radio' },
+      hidden: ({ document }: any) => document?.leadType !== 'listProperty' }),
 
     defineField({ group: 'request', name: 'businessType', title: 'Business Type', type: 'string',
       description: 'e.g. "laundry", "cleaning".',
