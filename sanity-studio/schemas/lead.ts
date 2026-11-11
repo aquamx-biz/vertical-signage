@@ -186,6 +186,8 @@ export default defineType({
             description: 'Permalink of our comment, when there is one. DMs have none.' }),
           defineField({ name: 'imageSent', title: 'Image sent', type: 'string',
             description: 'Which image went with the message, e.g. "cover L24-U391 rent".' }),
+          defineField({ name: 'screenshot', title: 'Screenshot of the sent message', type: 'image',
+            description: 'Capture of the chat or comment right after sending - proof that it went out. Internal only: it shows the other person\'s name and photo.' }),
           defineField({ name: 'room', title: 'Room', type: 'string',
             description: 'Team note or reply: the room code(s) it is about (empty = about the customer in general).',
             hidden: ({ parent }: any) => parent?.kind !== 'note' && parent?.kind !== 'reply' }),
