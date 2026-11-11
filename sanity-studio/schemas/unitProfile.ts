@@ -112,6 +112,47 @@ export default defineType({
         },
       }],
     }),
+    // Facebook marketing — were written by the posting routine but missing from the schema, so
+    // Studio hid them and reported unknown fields (11 Nov 2026).
+    defineField({ name: 'features', title: 'Features', type: 'array', of: [{ type: 'string' }], options: { layout: 'tags' } }),
+    defineField({
+      name: 'fbInfographic', title: 'Facebook infographic', type: 'object',
+      fields: [
+        defineField({ name: 'pages', title: 'Pages (cover first)', type: 'array', of: [{ type: 'image' }], options: { layout: 'grid' } }),
+        defineField({ name: 'heroPhoto', title: 'Hero photo', type: 'image' }),
+        defineField({ name: 'gallery', title: 'Gallery', type: 'array', options: { layout: 'grid' },
+          of: [{ type: 'image', fields: [defineField({ name: 'label', title: 'Label', type: 'string' })] }] }),
+        defineField({ name: 'highlights', title: 'Highlights', type: 'array', of: [{ type: 'string' }],
+          description: 'Real selling points of the unit only — never lease terms or availability.' }),
+        defineField({ name: 'generatedAt', title: 'Generated at', type: 'datetime' }),
+      ],
+    }),
+    defineField({
+      name: 'fbPosts', title: 'Facebook posts', type: 'array',
+      description: 'Every post or reply made for this listing. The poster checks this list before posting, so a listing is not posted twice in one channel.',
+      of: [{
+        type: 'object',
+        name: 'fbPost',
+        fields: [
+          defineField({ name: 'kind', title: 'Kind', type: 'string',
+            options: { list: ['group post', 'reply to request', 'page post'] } }),
+          defineField({ name: 'channel', title: 'Channel', type: 'reference', to: [{ type: 'demandSource' }] }),
+          defineField({ name: 'group', title: 'Group name (legacy text)', type: 'string' }),
+          defineField({ name: 'url', title: 'Post link', type: 'url' }),
+          defineField({ name: 'postedAt', title: 'Posted at', type: 'datetime' }),
+          defineField({ name: 'status', title: 'Status', type: 'string',
+            options: { list: ['live', 'pending approval', 'removed'] } }),
+          defineField({ name: 'note', title: 'Note', type: 'string' }),
+        ],
+        preview: {
+          select: { kind: 'kind', group: 'group', ch: 'channel.sourceName', code: 'channel.shortCode', at: 'postedAt', status: 'status' },
+          prepare: ({ kind, group, ch, code, at, status }) => ({
+            title: `${code ? code + ' · ' : ''}${ch || group || '—'}`,
+            subtitle: [kind, (at || '').slice(0, 10), status].filter(Boolean).join(' · '),
+          }),
+        },
+      }],
+    }),
     defineField({ name: 'internalNote', title: 'Internal Note', type: 'text' }),
   ],
 
