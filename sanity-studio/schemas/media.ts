@@ -248,6 +248,33 @@ export default defineType({
         }),
       description: 'Upload 1–6 images. Multiple images play as a slideshow, each shown for the duration below.',
     }),
+    // Every time the artwork on screen is swapped, the images it replaced go
+    // here first — so any earlier version can be looked at or put back.
+    defineField({
+      name: 'imageLog',
+      title: 'Image History',
+      type: 'array',
+      readOnly: true,
+      description: 'Earlier versions of the artwork, kept each time it was replaced — when, what changed, and the images that were on screen before. Newest at the bottom.',
+      of: [{
+        type: 'object',
+        name: 'imageSnapshot',
+        title: 'Version',
+        fields: [
+          defineField({ name: 'at', title: 'Replaced at', type: 'datetime' }),
+          defineField({ name: 'summary', title: 'What changed', type: 'text', rows: 2 }),
+          defineField({ name: 'images', title: 'Images on screen before', type: 'array', of: [{ type: 'image' }] }),
+        ],
+        preview: {
+          select: { at: 'at', summary: 'summary', media: 'images.0' },
+          prepare: ({ at, summary, media }) => ({
+            title: at ? new Date(at).toLocaleString('en-GB', { timeZone: 'Asia/Bangkok', dateStyle: 'medium', timeStyle: 'short' }) : 'Version',
+            subtitle: summary,
+            media,
+          }),
+        },
+      }],
+    }),
 
     // ── Default duration ──────────────────────────────────────────────────────
     // For promo images: per-image duration × image count = total slot duration
