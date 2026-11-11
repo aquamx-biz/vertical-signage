@@ -11,7 +11,7 @@ import { defineType, defineField } from 'sanity'
  */
 export default defineType({
   name: 'demandSource',
-  title: 'Demand Source · แหล่งเก็บความต้องการ',
+  title: 'Marketing Channel',
   type: 'document',
   fields: [
     defineField({
@@ -79,6 +79,43 @@ export default defineType({
       description: 'ปิดไว้ก่อนเป็นค่าตั้งต้น — เปิดเฉพาะแหล่งที่ยืนยันแล้วว่ามีของ',
     }),
     defineField({ name: 'lastChecked', title: 'Last checked · สำรวจล่าสุด', type: 'date' }),
+
+    // ── Posting — where we may post our own listings (11 Nov 2026) ─────────────
+    // One registry for both jobs: reading demand (active) and posting listings (postingActive).
+    // The poster picks listing × channel pairs from these fields — never from a hand-written plan —
+    // so a for-sale unit cannot land in a rent-only group and a listing is not posted twice.
+    defineField({ name: 'shortCode', title: 'Short code', type: 'string',
+      description: 'Label used in tables and logs, e.g. K1, C36, BL1.' }),
+    defineField({ name: 'postingActive', title: 'Post listings here', type: 'boolean', initialValue: false,
+      description: 'Off = never post listings in this channel (owner-only groups, groups without a composer).' }),
+    defineField({ name: 'accepts', title: 'Accepts', type: 'array', of: [{ type: 'string' }],
+      options: { list: [{ title: 'Rent', value: 'rent' }, { title: 'Sale', value: 'sale' }] },
+      description: 'Read the group name and rules. A "for rent" group accepts Rent only.' }),
+    defineField({ name: 'scope', title: 'Scope', type: 'string',
+      options: { list: [
+        { title: 'General — any building', value: 'general' },
+        { title: 'Building — listed buildings only', value: 'building' },
+        { title: 'Owner only — agents may not post', value: 'ownerOnly' },
+      ] } }),
+    defineField({ name: 'buildings', title: 'Buildings', type: 'array',
+      of: [{ type: 'reference', to: [{ type: 'projectSite' }] }],
+      hidden: ({ document }) => document?.scope !== 'building',
+      description: 'Only listings in these buildings may be posted here.' }),
+    defineField({ name: 'buildingCodes', title: 'Building codes', type: 'array', of: [{ type: 'string' }],
+      options: { layout: 'tags' },
+      hidden: ({ document }) => document?.scope !== 'building',
+      description: 'Ref-code prefixes of those buildings, e.g. L24, RM21, NBL — matched against the listing ref code.' }),
+    defineField({ name: 'postAs', title: 'Post as', type: 'string',
+      options: { list: [
+        { title: 'aquamx page', value: 'page' },
+        { title: 'Personal profile', value: 'personal' },
+      ] } }),
+    defineField({ name: 'repostDays', title: 'Days between posts of one listing', type: 'number',
+      description: 'Minimum days before the same listing may be posted here again. Empty = post once only.' }),
+    defineField({ name: 'needsApproval', title: 'Admin approves posts', type: 'boolean' }),
+    defineField({ name: 'captionRules', title: 'Caption rules', type: 'text', rows: 3,
+      description: 'What the group requires in a post, e.g. first line AGENT POST, English + Thai, no shared posts.' }),
+    defineField({ name: 'rulesCheckedAt', title: 'Rules last read', type: 'date' }),
     defineField({ name: 'note', title: 'Note · บันทึก', type: 'text', rows: 3 }),
   ],
 
@@ -86,13 +123,15 @@ export default defineType({
     select: {
       title: 'sourceName', members: 'members', ppd: 'postsPerDay',
       active: 'active', level: 'demandLevel', privacy: 'privacy',
+      code: 'shortCode', posting: 'postingActive', accepts: 'accepts',
     },
-    prepare: ({ title, members, ppd, active, level, privacy }) => ({
-      title: `${active ? '● ' : '○ '}${title}`,
+    prepare: ({ title, members, ppd, active, level, privacy, code, posting, accepts }) => ({
+      title: `${active ? '● ' : '○ '}${code ? code + ' · ' : ''}${title}`,
       subtitle: [
         members ? `${members.toLocaleString()} สมาชิก` : null,
         ppd != null ? `${ppd}/วัน` : null,
         level,
+        posting ? `post: ${(accepts || []).join('+') || '?'}` : 'no posting',
         privacy === 'private' ? 'ส่วนตัว — ห้ามเก็บ' : null,
       ].filter(Boolean).join(' · '),
     }),
