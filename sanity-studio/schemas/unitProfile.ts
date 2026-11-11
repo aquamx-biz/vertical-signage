@@ -138,6 +138,8 @@ export default defineType({
             options: { list: ['group post', 'reply to request', 'page post'] } }),
           defineField({ name: 'channel', title: 'Channel', type: 'reference', to: [{ type: 'demandSource' }] }),
           defineField({ name: 'group', title: 'Group name (legacy text)', type: 'string' }),
+          defineField({ name: 'person', title: 'Person replied to (legacy)', type: 'string',
+            description: 'Old reply entries only. New replies are logged on the lead (Bot & Team Log).' }),
           defineField({ name: 'url', title: 'Post link', type: 'url' }),
           defineField({ name: 'postedAt', title: 'Posted at', type: 'datetime' }),
           defineField({ name: 'status', title: 'Status', type: 'string',

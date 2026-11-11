@@ -165,10 +165,30 @@ export default defineType({
             { title: 'AI draft',  value: 'draft'   },
             { title: 'Handoff',   value: 'handoff' },
             { title: 'Team note', value: 'note'    },
+            { title: 'Team reply (outside the bot)', value: 'reply' },
           ] } }),
+          // Reply log — how we answered this person outside the LINE bot (Facebook comment, DM…).
+          // One entry per message sent; filled for every reply so nothing lives only in a work log.
+          defineField({ name: 'channel', title: 'Channel', type: 'string', options: { list: [
+            { title: 'Facebook comment', value: 'fbComment' },
+            { title: 'Facebook DM',      value: 'fbDm'      },
+            { title: 'LINE',             value: 'line'      },
+            { title: 'WhatsApp',         value: 'whatsapp'  },
+            { title: 'Phone',            value: 'phone'     },
+            { title: 'Email',            value: 'email'     },
+          ] } }),
+          defineField({ name: 'sentAs', title: 'Sent as', type: 'string', options: { list: [
+            { title: 'aquamx page',      value: 'page'     },
+            { title: 'Personal profile', value: 'personal' },
+            { title: 'LINE OA',          value: 'lineOa'   },
+          ] } }),
+          defineField({ name: 'replyUrl', title: 'Link to our reply', type: 'url',
+            description: 'Permalink of our comment, when there is one. DMs have none.' }),
+          defineField({ name: 'imageSent', title: 'Image sent', type: 'string',
+            description: 'Which image went with the message, e.g. "cover L24-U391 rent".' }),
           defineField({ name: 'room', title: 'Room', type: 'string',
-            description: 'Team note only: the room code the note is about (empty = about the customer in general).',
-            hidden: ({ parent }: any) => parent?.kind !== 'note' }),
+            description: 'Team note or reply: the room code(s) it is about (empty = about the customer in general).',
+            hidden: ({ parent }: any) => parent?.kind !== 'note' && parent?.kind !== 'reply' }),
           defineField({ name: 'at',       title: 'At',       type: 'datetime' }),
           defineField({ name: 'topic',    title: 'Topic',    type: 'string' }),
           defineField({ name: 'question', title: 'Customer message', type: 'text', rows: 2 }),
@@ -185,9 +205,11 @@ export default defineType({
           defineField({ name: 'endedAt',   title: 'Handoff ended', type: 'datetime' }),
         ],
         preview: {
-          select: { kind: 'kind', at: 'at', action: 'action', topic: 'topic', by: 'by', text: 'finalText', room: 'room' },
-          prepare: ({ kind, at, action, topic, by, text, room }: any) => ({
-            title: kind === 'note'
+          select: { kind: 'kind', at: 'at', action: 'action', topic: 'topic', by: 'by', text: 'finalText', room: 'room', channel: 'channel' },
+          prepare: ({ kind, at, action, topic, by, text, room, channel }: any) => ({
+            title: kind === 'reply'
+              ? `↩️ ${channel ?? 'reply'}${room ? ` · ${room}` : ''} · ${String(text ?? '').slice(0, 60)}`
+              : kind === 'note'
               ? `📝 ${room ? `${room} · ` : ''}${String(text ?? '').slice(0, 80)}`
               : `${kind === 'handoff' ? '🙋 Handoff' : '💬 AI draft'}${topic ? ` · ${topic}` : ''}${action ? ` → ${action}` : ''}`,
             subtitle: [at ? String(at).slice(0, 16).replace('T', ' ') : '', by].filter(Boolean).join(' · '),
@@ -208,6 +230,13 @@ export default defineType({
       hidden: ({ document }: any) => (document?.leadType ?? 'findCondo') !== 'findCondo' }),
     defineField({ group: 'request', name: 'moveIn', title: 'Move-in', type: 'string',
       description: 'As the person said it, e.g. "ต้นเดือนหน้า".',
+      hidden: ({ document }: any) => (document?.leadType ?? 'findCondo') !== 'findCondo' }),
+    defineField({ group: 'request', name: 'leaseTermMonths', title: 'Lease term (months)', type: 'string',
+      description: 'Number of months, or a range as stated, e.g. "3", "6-12", "12+".',
+      hidden: ({ document }: any) => (document?.leadType ?? 'findCondo') !== 'findCondo' }),
+    defineField({ group: 'request', name: 'specialNeeds', title: 'Special needs', type: 'array', of: [{ type: 'string' }],
+      options: { layout: 'tags' },
+      description: 'Anything that rules a unit in or out: pets, wheelchair access, small children, required floor, must-have facilities.',
       hidden: ({ document }: any) => (document?.leadType ?? 'findCondo') !== 'findCondo' }),
 
     defineField({ group: 'request', name: 'listingProject', title: 'Project', type: 'reference', to: [{ type: 'projectSite' }],
