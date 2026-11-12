@@ -668,16 +668,52 @@ body {
 .slot.cta-late:not(.cta-in) .cta .arrow,
 .slot.cta-late:not(.cta-in) .cta-primary::after,
 .slot.cta-late .cta-label { animation: none; }
+/* the flip waits 0.25s so the description (last line to rise) has cleared
+   the dock before the buttons turn in under it */
 .slot.cta-late.cta-in .cta {
-    animation: cta-flip 0.7s cubic-bezier(.3,0,.2,1) backwards,
-               cta-breathe 3s ease-in-out 1.2s infinite;
+    animation: cta-flip 0.7s cubic-bezier(.3,0,.2,1) 0.25s backwards,
+               cta-breathe 3s ease-in-out 1.45s infinite;
 }
 .slot.cta-late.cta-in .cta:nth-child(2) {
-    animation: cta-flip 0.7s cubic-bezier(.3,0,.2,1) 0.15s backwards,
-               cta-breathe 3s ease-in-out 1.35s infinite;
+    animation: cta-flip 0.7s cubic-bezier(.3,0,.2,1) 0.4s backwards,
+               cta-breathe 3s ease-in-out 1.6s infinite;
 }
 .slot.cta-late.cta-in .cta .arrow { animation: v6-arrow-nudge 1.9s ease-in-out 1.2s infinite; }
 .slot.cta-late.cta-in .cta-primary::after { animation: v6-cta-glow 2.8s ease-in-out 1.2s infinite; }
+/* ── TEXT EFFECTS on late-CTA slides ────────────────────────────────
+   A different entrance per showing (data-fx 1–4, picked in ctaLateArm, never
+   twice in a row) so the lobby doesn't see the same move all day; when the
+   CTA lands the block rises line by line (logo first, desc last) and the
+   logo flips once. Motion happens ONLY at these two
+   moments — settled text never loops. Transform/opacity only (+ a short
+   clip-path on fx 3); 3D only during the logo's turn, which ends flat.
+   No `to` keyframes on opacity: each line lands on its own settled opacity. */
+.slot.cta-late.active:not(.exiting) .slot-shop  { --fx-d: 0.35s; }
+.slot.cta-late.active:not(.exiting) .slot-title { --fx-d: 0.5s; }
+.slot.cta-late.active:not(.exiting) .slot-price { --fx-d: 0.65s; }
+.slot.cta-late.active:not(.exiting) .slot-sub   { --fx-d: 0.8s; }
+.slot.cta-late.active[data-fx="1"]:not(.exiting) :is(.slot-shop,.slot-title,.slot-price,.slot-sub) { animation: fx-rise 0.7s var(--ease-out) var(--fx-d) backwards; }
+.slot.cta-late.active[data-fx="2"]:not(.exiting) :is(.slot-shop,.slot-title,.slot-price,.slot-sub) { animation: fx-slide 0.7s var(--ease-out) var(--fx-d) backwards; }
+.slot.cta-late.active[data-fx="3"]:not(.exiting) :is(.slot-shop,.slot-title,.slot-price,.slot-sub) { animation: fx-curtain 0.8s var(--ease-out) var(--fx-d) backwards; }
+.slot.cta-late.active[data-fx="4"]:not(.exiting) :is(.slot-shop,.slot-title,.slot-price,.slot-sub) { animation: fx-pop 0.6s var(--ease-out) var(--fx-d) backwards; transform-origin: 0 50%; }
+/* the logo coin-flips on the two "lively" entrances */
+.slot.cta-late.active:is([data-fx="1"],[data-fx="2"]):not(.exiting) .slot-shop img { animation: fx-coin 0.8s cubic-bezier(.3,0,.2,1) 0.45s backwards; backface-visibility: hidden; }
+/* CTA lands: the block snaps to its final place and each line rises from
+   where it sat, TOP line first — bottom-first made the lower lines run
+   through the ones above them mid-move */
+.slot.cta-late.cta-in .slot-content { transition: none; }
+.slot.cta-late.active.cta-in:not(.exiting) :is(.slot-shop,.slot-title,.slot-price,.slot-sub) { animation: fx-push 0.55s cubic-bezier(.2,.8,.25,1) var(--fx-p) backwards; }
+.slot.cta-late.active.cta-in:not(.exiting) .slot-shop  { --fx-p: 0s; }
+.slot.cta-late.active.cta-in:not(.exiting) .slot-title { --fx-p: 0.07s; }
+.slot.cta-late.active.cta-in:not(.exiting) .slot-price { --fx-p: 0.14s; }
+.slot.cta-late.active.cta-in:not(.exiting) .slot-sub   { --fx-p: 0.21s; }
+.slot.cta-late.active.cta-in:not(.exiting) .slot-shop img { animation: fx-coin 0.8s cubic-bezier(.3,0,.2,1) 0.1s backwards; backface-visibility: hidden; }
+@keyframes fx-rise    { from { opacity: 0; transform: translateY(2.4vh); } }
+@keyframes fx-slide   { from { opacity: 0; transform: translateX(-6vh); } }
+@keyframes fx-curtain { from { opacity: 0; transform: translateY(1.2vh); clip-path: inset(100% 0 0 0); } to { clip-path: inset(0 0 0 0); } }
+@keyframes fx-pop     { 0% { opacity: 0; transform: scale(0.82); } 70% { transform: scale(1.04); } }
+@keyframes fx-coin    { 0% { transform: perspective(30vh) rotateY(-180deg); } 100% { transform: perspective(30vh) rotateY(0deg); } }
+@keyframes fx-push    { from { transform: translateY(var(--cta-drop, 0px)); } }
 @keyframes cta-flip {
     0%   { opacity: 0; transform: perspective(40vh) rotateX(-90deg); }
     60%  { opacity: 1; transform: perspective(40vh) rotateX(12deg); }
@@ -3905,7 +3941,9 @@ function showSlot(idx, isFirst = false) {
    screen (a 7s ad reveals at 3s) and nobody waits more than 10s for it.
    Measured once per showing. */
 const CTA_LATE_SHARE = 0.5, CTA_MIN_ON_MS = 4000, CTA_MAX_WAIT_MS = 10000, CTA_FLIP_MS = 700;
-let ctaLateTimer = null;
+let ctaLateTimer = null, lastFx = 0;
+const CTA_FX_COUNT = 4;
+const FX_FORCE = +(new URLSearchParams(location.search).get('fx') || 0);   // ?fx=N pins one effect for review
 function slotAirMs(s) {
     if (s.mediaType === 'web' && s.webUrl) return s.durationMs || 63000;
     if (s.mediaType === 'image' && Array.isArray(s.images) && s.images.length > 1) return (s.durationMs || 10000) * s.images.length;
@@ -3937,6 +3975,9 @@ function ctaLateArm(idx) {
         const drop = dock.offsetHeight + (parseFloat(cs.marginTop) || 0)
                    + (parseFloat(getComputedStyle(content).rowGap) || 0);
         el.style.setProperty('--cta-drop', drop + 'px');
+        // text entrance for this showing (see TEXT EFFECTS) — never the same twice running
+        let fx; do { fx = 1 + Math.floor(Math.random() * CTA_FX_COUNT); } while (fx === lastFx && CTA_FX_COUNT > 1);
+        lastFx = fx; el.dataset.fx = FX_FORCE || fx;
         ctaLateTimer = setTimeout(() => ctaRevealNow(idx), ctaRevealAt(s));
     }
     if (content) { void content.offsetWidth; content.style.transition = ''; }
@@ -4389,7 +4430,7 @@ document.addEventListener('keydown', e => {
         // unit boards keep the last-30% rhythm
         const slot = slots[idx];
         const at = slot && slot.classList.contains('cta-late')
-            ? ctaRevealAt(s) + CTA_FLIP_MS + 200
+            ? ctaRevealAt(s) + CTA_FLIP_MS + 450
             : airMs(s) * (1 - LATE_SHARE);
         showTimer = setTimeout(() => show(idx), at);
     };
