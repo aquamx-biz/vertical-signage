@@ -651,6 +651,39 @@ body {
 /* press feedback still wins while held */
 .cta:active { animation: none; transform: translateY(0) scale(0.98); }
 
+/* ── LATE CTA (image ads) ───────────────────────────────────────────
+   The first half of an ad belongs to the creative; the CTA arrives at the
+   half-way mark (never later than 4s before the end — ctaRevealAt) and owns
+   the rest. Until then the dock is OUT of the compositor (visibility hidden,
+   no loops) and the text block sits lower by the dock's measured height
+   (--cta-drop), so the floor is never empty; .cta-in lifts the block back up
+   while the buttons flip in once — the same turn as the top-right tent. 3D
+   lives only for the 0.7s turn (the flip ends at a flat transform), and the
+   label shimmer is dropped on these slides so the button carries one less loop.
+   A touch anywhere reveals it at once. Video / boards / notices are untouched. */
+.slot.cta-late .slot-content { transition: transform 0.6s var(--ease-out); }
+.slot.cta-late:not(.cta-in) .slot-content { transform: translateY(var(--cta-drop, 0px)); }
+.slot.cta-late:not(.cta-in) .cta-dock { visibility: hidden; }
+.slot.cta-late:not(.cta-in) .cta,
+.slot.cta-late:not(.cta-in) .cta .arrow,
+.slot.cta-late:not(.cta-in) .cta-primary::after,
+.slot.cta-late .cta-label { animation: none; }
+.slot.cta-late.cta-in .cta {
+    animation: cta-flip 0.7s cubic-bezier(.3,0,.2,1) backwards,
+               cta-breathe 3s ease-in-out 1.2s infinite;
+}
+.slot.cta-late.cta-in .cta:nth-child(2) {
+    animation: cta-flip 0.7s cubic-bezier(.3,0,.2,1) 0.15s backwards,
+               cta-breathe 3s ease-in-out 1.35s infinite;
+}
+.slot.cta-late.cta-in .cta .arrow { animation: v6-arrow-nudge 1.9s ease-in-out 1.2s infinite; }
+.slot.cta-late.cta-in .cta-primary::after { animation: v6-cta-glow 2.8s ease-in-out 1.2s infinite; }
+@keyframes cta-flip {
+    0%   { opacity: 0; transform: perspective(40vh) rotateX(-90deg); }
+    60%  { opacity: 1; transform: perspective(40vh) rotateX(12deg); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
 /* Stagger enter */
 .slot.active .cta:nth-child(1) {
     opacity: 1; transform: translateY(0);
@@ -1025,8 +1058,9 @@ body {
        for the ~1s turn: afterwards the tent is flat and the old face is
        display:none (kiosk GPU rule #1); the leaving face ends at opacity 0 (#4).
    (2) CTA HANDS: a translucent hand on EVERY CTA (2nd CTA moves differently)
-       for the last 30% of every ad's airtime; unit boards also walk a hand
-       from room card to room card (board-cards-v2 "aq-board-hint"). Never on
+       arriving with the late CTA (image ads) or for the last 30% of airtime
+       (unit boards, which also walk a hand
+       from room card to room card — board-cards-v2 "aq-board-hint"). Never on
        video, gone on first touch. Elements are created per showing and
        removed after, so nothing sits in the compositor between showings.
 ============================================================ */
@@ -2074,6 +2108,9 @@ html.lite .slot.active .cta .arrow,
 html.lite .slot.active .cta-primary::after,
 html.lite .slot.active .cta-label,
 html.lite .slot.active .cta,
+html.lite .slot.cta-late.cta-in .cta,
+html.lite .slot.cta-late.cta-in .cta .arrow,
+html.lite .slot.cta-late.cta-in .cta-primary::after,
 html.lite .menu-btn,
 html.lite .menu-btn::after,
 html.lite .menu-btn .hamburger span,
@@ -3830,7 +3867,6 @@ function showSlot(idx, isFirst = false) {
     if (devKind) devKind.textContent = SLOTS[idx].kind;
     if (devIdx) devIdx.textContent = idx + 1;
     if (window.__swipeHintOnSlide) window.__swipeHintOnSlide();   // periodic swipe-hint pacing
-    if (window.__ctaHintOnSlide) window.__ctaHintOnSlide(idx);    // hands on the CTAs, alternate slides
     uAir(SLOTS[idx].mediaId);   // one airing — the denominator for tap rate
 
     slots.forEach((el, i) => {
@@ -3838,6 +3874,8 @@ function showSlot(idx, isFirst = false) {
         if (i === idx) el.classList.add('entering');
         else if (el.classList.contains('active') || i === cur) el.classList.add('leaving');
     });
+    ctaLateArm(idx);   // before the hands: they time themselves off the CTA's arrival
+    if (window.__ctaHintOnSlide) window.__ctaHintOnSlide(idx);    // hands on the CTAs
 
     void stage.offsetWidth;
 
@@ -3860,6 +3898,58 @@ function showSlot(idx, isFirst = false) {
     currentVideoIndex = idx;
     manageSlotVideo(idx);
 }
+
+/* ── LATE CTA (see the .cta-late CSS) ──
+   Image ads only: video keeps its own end-card CTA, unit boards and notices
+   keep theirs. Arrival = half the airtime, but the CTA always gets ≥4s on
+   screen (a 7s ad reveals at 3s) and nobody waits more than 10s for it.
+   Measured once per showing. */
+const CTA_LATE_SHARE = 0.5, CTA_MIN_ON_MS = 4000, CTA_MAX_WAIT_MS = 10000, CTA_FLIP_MS = 700;
+let ctaLateTimer = null;
+function slotAirMs(s) {
+    if (s.mediaType === 'web' && s.webUrl) return s.durationMs || 63000;
+    if (s.mediaType === 'image' && Array.isArray(s.images) && s.images.length > 1) return (s.durationMs || 10000) * s.images.length;
+    if (s.kind === 'notice') return s.durationMs != null ? s.durationMs : DEFAULT_NOTICE_MS;
+    return s.durationMs != null ? s.durationMs : DEFAULT_IMAGE_MS;
+}
+function ctaLateEligible(el, s) {
+    return !!(el && s && el.querySelector('.cta-dock') && s.kind !== 'notice'
+        && !(s.mediaType === 'video' && s.video) && !(s.mediaType === 'web' && s.webUrl));
+}
+function ctaRevealAt(s) {
+    const air = slotAirMs(s);
+    // a long multi-image slideshow (3 × 15s) would otherwise hide it for 22s
+    return Math.max(0, Math.min(air * CTA_LATE_SHARE, air - CTA_MIN_ON_MS, CTA_MAX_WAIT_MS));
+}
+function ctaLateArm(idx) {
+    clearTimeout(ctaLateTimer);
+    const el = slots[idx], s = SLOTS[idx];
+    if (!el) return;
+    const content = el.querySelector('.slot-content');
+    // reset without animating: the slide is entering, the block just starts low
+    if (content) content.style.transition = 'none';
+    el.classList.remove('cta-in');
+    const late = ctaLateEligible(el, s);
+    el.classList.toggle('cta-late', late);
+    if (late && content) {
+        const dock = el.querySelector('.cta-dock');
+        const cs = getComputedStyle(dock);
+        const drop = dock.offsetHeight + (parseFloat(cs.marginTop) || 0)
+                   + (parseFloat(getComputedStyle(content).rowGap) || 0);
+        el.style.setProperty('--cta-drop', drop + 'px');
+        ctaLateTimer = setTimeout(() => ctaRevealNow(idx), ctaRevealAt(s));
+    }
+    if (content) { void content.offsetWidth; content.style.transition = ''; }
+}
+function ctaRevealNow(idx = cur) {
+    const el = slots[idx];
+    if (!el || idx !== cur || !el.classList.contains('cta-late')) return;
+    clearTimeout(ctaLateTimer);
+    el.classList.add('cta-in');
+}
+// someone touched the screen — the action button shows at once
+document.addEventListener('touchstart', () => ctaRevealNow(), { passive: true });
+document.addEventListener('mousedown', () => ctaRevealNow(), { passive: true });
 
 function preExitCurrent() {
     if (slots[cur]) slots[cur].classList.add('exiting');
@@ -4254,12 +4344,7 @@ document.addEventListener('keydown', e => {
         try { fr && fr.contentWindow && fr.contentWindow.postMessage({ type: 'aq-board-hint', on: !!on }, '*'); } catch (e) {}
     };
     // how long this slide airs — mirrors manageSlotVideo / dwellMs (video never gets hands)
-    function airMs(s) {
-        if (s.mediaType === 'web' && s.webUrl) return s.durationMs || 63000;
-        if (s.mediaType === 'image' && Array.isArray(s.images) && s.images.length > 1) return (s.durationMs || 10000) * s.images.length;
-        if (s.kind === 'notice') return s.durationMs != null ? s.durationMs : 16000;
-        return s.durationMs != null ? s.durationMs : 10000;
-    }
+    const airMs = s => slotAirMs(s);
     function clear() {
         clearTimeout(showTimer);
         boardHint(hintBoard, false); hintBoard = null;
@@ -4300,7 +4385,13 @@ document.addEventListener('keydown', e => {
         if (!s || (s.mediaType === 'video' && s.video)) return;    // video slides air clean
         const isBoard = s.mediaType === 'web' && /\/board-cards\//.test(s.webUrl || '');
         if (!(s.ctas || []).length && !isBoard) return;
-        showTimer = setTimeout(() => show(idx), airMs(s) * (1 - LATE_SHARE));
+        // a late CTA brings its hand with it (just after the flip lands);
+        // unit boards keep the last-30% rhythm
+        const slot = slots[idx];
+        const at = slot && slot.classList.contains('cta-late')
+            ? ctaRevealAt(s) + CTA_FLIP_MS + 200
+            : airMs(s) * (1 - LATE_SHARE);
+        showTimer = setTimeout(() => show(idx), at);
     };
     // someone is touching — get out of the way at once
     document.addEventListener('touchstart', clear, { passive: true });
