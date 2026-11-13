@@ -75,6 +75,19 @@ export default defineType({
       options: { hotspot: true },
       description: 'รูปด้านนอกหรือล็อบบี้ที่ดูออกว่าเป็นตึกไหน — แนวนอน กว้าง ≥1200px · ใช้เป็นรูปหน้าปกของโครงการนี้ทุกที่นอกจอ',
     }),
+    // The building's own logo — shown on aquamx.co.th / app unit cards and the Facebook covers.
+    defineField({
+      name: 'logo',
+      title: 'Logo',
+      type: 'image',
+      description: 'The building logo as received (any background).',
+    }),
+    defineField({
+      name: 'logoOnDark',
+      title: 'Logo (white, for dark backgrounds)',
+      type: 'image',
+      description: 'White logo on a transparent background (PNG) — used on dark cards such as the "Featured by aquamx" carousel. Leave empty and the card shows the project name instead.',
+    }),
     // Photos the juristic person attached on the LINE intake form (/m/site) —
     // lobby / exterior shots for the site visit; the first one also becomes heroImage
     defineField({
