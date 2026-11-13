@@ -3220,6 +3220,16 @@ function adaptPlaylistToSlots(pl) {
         if (item.ctaType2) {
             ctas.push({ kind: 'secondary', label: item.ctaLabel2 || ctaLabelFor(item.ctaType2, slotCat), icon: '↗', ctaType: item.ctaType2, url: item.ctaURL2 || '' });
         }
+        // Listing ad (/board-cards/ad/, baked by build.mjs): ONE slide fronting the
+        // rent AND the sale board offer. The dock carries one button per mode in
+        // place of the offer's own CTA; a press (or a tapped unit card) is routed to
+        // that mode's offer through adModeSlot(), so the popups stay the existing ones.
+        const adModes = (isWeb && item.adModes && typeof item.adModes === 'object') ? item.adModes : null;
+        if (adModes) {
+            ctas.length = 0;
+            if (adModes.rent) ctas.push({ kind: 'primary', label: uiLang === 'th' ? 'ห้องเช่า' : 'Rent units', icon: '→', ctaType: adModes.rent.ctaType || 'order', url: '', _mode: 'rent' });
+            if (adModes.sale) ctas.push({ kind: adModes.rent ? 'secondary' : 'primary', label: uiLang === 'th' ? 'ห้องขาย' : 'Sale units', icon: '→', ctaType: adModes.sale.ctaType || 'order', url: '', _mode: 'sale' });
+        }
         slots.push({
             kind: 'commercial',
             mediaId: item.mediaId || '',   // usage counters key on this — see the projection comment
@@ -3293,6 +3303,7 @@ function adaptPlaylistToSlots(pl) {
             // Per-CTA popup bodies (group B) + destinations + promo window.
             _menuItems: Array.isArray(item.menuItems) ? item.menuItems : [],
             _orderItems: Array.isArray(item.orderItems) ? item.orderItems : [],
+            _adModes: adModes,   // listing ad only — see adModeSlot()
             _fulfillment: Array.isArray(item.fulfillment) ? item.fulfillment : [],
             _payOnline: item.payOnline === true,
             // Shop schedule (open/close derived from Opening Hours text when blank)
@@ -6258,14 +6269,36 @@ stage.addEventListener('click', async e => {
     const s = SLOTS[idx];
     if (!s) return;
     uTouch(s.mediaId);
-    uUnitPick((/\/board-cards\/sale\//.test(src) ? 'sale' : 'rent') + '-' + hit.ref);   // the tap IS the room-interest signal
+    // the listing ad answers with the card's own mode (one page, both modes);
+    // a plain board's mode is in its path
+    const adMode = (hit.mode === 'rent' || hit.mode === 'sale') && s._adModes && s._adModes[hit.mode] ? hit.mode : null;
+    const mode = adMode || (/\/board-cards\/sale\//.test(src) ? 'sale' : 'rent');
+    const sm = adMode ? adModeSlot(s, adMode) : s;
+    uUnitPick(mode + '-' + hit.ref);   // the tap IS the room-interest signal
     boardHold(fr, true); _heldBoardFrame = fr;
-    const primary = (s.ctas || []).find(c => c.kind === 'primary') || (s.ctas || [])[0] || null;
+    const primary = (adMode && (s.ctas || []).find(c => c._mode === adMode))
+        || (s.ctas || []).find(c => c.kind === 'primary') || (s.ctas || [])[0] || null;
     setTimeout(() => {   // let the card's press show
-        if (hit.photos && openRoom(s._orderItems, hit.ref, 'board', s, primary)) return;   // owner photos → photos + details first
-        openDetail(Object.assign(slideDetailCtx(s, primary), { preselect: hit.ref }));
+        if (hit.photos && openRoom(sm._orderItems, hit.ref, 'board', sm, primary)) return;   // owner photos → photos + details first
+        openDetail(Object.assign(slideDetailCtx(sm, primary), { preselect: hit.ref }));
     }, 150);
 });
+
+/* Listing-ad slide → the slot as that mode's board offer would have built it
+   (room list, category, offer slug, title). Everything else — provider, contact,
+   handoff — is shared, so the copy is shallow. Not an ad slide / unknown mode → s. */
+function adModeSlot(s, mode) {
+    const m = s && s._adModes && s._adModes[mode];
+    if (!m) return s;
+    const t = (uiLang === 'th' ? (m.title_th || m.title_en) : (m.title_en || m.title_th)) || '';
+    return Object.assign({}, s, {
+        _orderItems: Array.isArray(m.orderItems) ? m.orderItems : [],
+        _category: m.category || s._category,
+        _offerSlug: m.offerSlug || s._offerSlug,
+        titleLines: [t], title: t,
+        eyebrow: '',   // slideDetailCtx falls back to the category label of the mode
+    });
+}
 
 /* Everything the popup needs from a commercial slide — shared by the CTA dock and
    the board-card tap, so both open the identical popup. */
@@ -6330,7 +6363,8 @@ stage.addEventListener('click', e => {
     // a "...more" tap is not a CTA choice — treat it as the slot's primary offer
     const tappedKind = btn.classList.contains('cta-secondary') ? 'secondary' : 'primary';
     const tappedCta = (s.ctas || []).find(c => c.kind === tappedKind) || (s.ctas || [])[0] || null;
-    openDetail(slideDetailCtx(s, tappedCta));
+    // listing ad: each dock button fronts its own offer (rent / sale)
+    openDetail(slideDetailCtx(tappedCta && tappedCta._mode ? adModeSlot(s, tappedCta._mode) : s, tappedCta));
 });
 
 /* Category card → detail of that listing (offer/provider/update).

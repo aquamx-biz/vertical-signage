@@ -140,6 +140,21 @@ const useCardsV2 = code => !CARDS_V1.has(code)
 // แล้ว rebuild (การ์ดไม่มีลูกศร/ข้อความ ไม่รับแตะ — แบบเดิม)
 const BOARD_TAP_OFF = new Set([])
 const cardsTemplateV2 = readFileSync(join(__dirname, 'board-cards-v2.html'), 'utf8')
+/* Listing ad (board-ad.html → /board-cards/ad/) — หน้าแรกแบบโฆษณา: รูปตึก + โลโก้ + การ์ดห้องที่มี
+   รูปจริงสลับกัน · ออกอากาศ "เพิ่ม" เป็นสไลด์หนึ่งใบหน้าบอร์ดเดิม (บอร์ดเดิมยังอยู่ครบ)
+   ตึกพร้อมเมื่อ (1) มีไฟล์ img/board-ad/<code>/hero.(jpg|webp|png) + logo.(png|svg|webp)
+   (2) ห้องบนบอร์ดที่เจ้าของเปิดรูป ≥ AD_MIN_UNITS (เช่า+ขายรวมกัน) — ไม่ครบ = ไม่ bake ไม่มีสไลด์
+   ปิดตึกไหน = ใส่ code ใน BOARD_AD_OFF แล้ว rebuild */
+const adTemplate = readFileSync(join(__dirname, 'board-ad.html'), 'utf8')
+const AD_MIN_UNITS = 3
+const AD_SECONDS = 32            // การ์ดเลื่อนทุก 4 วิ → 8 จังหวะต่อรอบ
+const BOARD_AD_OFF = new Set([])
+const adAssets = code => {
+  const dir = join(__dirname, 'img', 'board-ad', code)
+  const hero = ['hero.jpg', 'hero.webp', 'hero.png'].find(f => existsSync(join(dir, f)))
+  const logo = ['logo.png', 'logo.svg', 'logo.webp'].find(f => existsSync(join(dir, f)))
+  return hero && logo ? { dir, hero, logo } : null
+}
 
 // unitProfile.projectName is a free string from the scraping pipeline and does
 // not always equal project.title ("The Lumpini 24" vs "Lumpini 24") — map per
@@ -556,6 +571,7 @@ for (const project of projects) {
      อัปเดตมันตามบอร์ด (ค้างที่ 11 ส.ค. ทุกตึก) ห้องที่อนุมัติจาก LINE ขึ้นบอร์ดแต่ไม่ขึ้น popup
      (L24-U391, พบ 5 ต.ค. 2569) · ห้องเข้ามาทางไหนก็ตาม บอร์ดกับ popup เห็นชุดเดียวกันเสมอ */
   const boardItems = new Map()
+  const adUnits = []                  // ห้องมีรูป (เจ้าของเปิดให้แสดง) จากทุกโหมด → การ์ดบนหน้า listing ad
   for (const b of unitBoards ?? []) {
     const mode = b.mode === 'sale' ? 'sale' : 'rent'
     if (bakedBoardModes.has(mode)) {
@@ -621,6 +637,15 @@ for (const project of projects) {
         .sort((x, y) => (BED_RANK[x.bedType] ?? 9) - (BED_RANK[y.bedType] ?? 9)
           || floorKey(y) - floorKey(x) || (x.priceTHB ?? 0) - (y.priceTHB ?? 0))
       const toItem = p => boardOrderItem({ ...p, floorActual: FLOOR_BY_REF.get(p.refCode) }, mode)
+      for (const p of picked) {
+        const ph = roomPhotos(p)
+        if (!ph.length || p.dealStage === 'closed') continue   // ปิดดีลแล้วไม่ชวนดู
+        const r = profileToRow({ ...p, floorActual: FLOOR_BY_REF.get(p.refCode) })
+        // ห้องเดียวกันลงทั้งเช่าและขาย → ใบที่สองใช้รูปถัดไป ไม่ให้การ์ดติดกันเป็นรูปซ้ำ
+        const dup = adUnits.filter(u => u.ref === r.ref).length
+        adUnits.push({ ref: r.ref, mode, type: r.type, sqm: r.sqm, floorNo: r.floorNo, floor: r.floor, price: r.price,
+          photo: ph[Math.min(dup, ph.length - 1)], _since: String(p.onBoardFirstAt ?? ''), _checked: String(p.lastCheckedAt ?? '') })
+      }
       boardItems.set(`offer-board-${code}-${mode}`, picked.map(toItem))
       const byBed = {}
       for (const p of picked) (byBed[p.bedType] ??= []).push(p)
@@ -682,6 +707,45 @@ for (const project of projects) {
     console.log(`  board-cards[${mode}]${useCardsV2(code) ? ' (v2)' : ' (v1)'}: รวม ${rows.length} · แยกชนิด ${segsMade.join(' ') || '— (ไม่มีชนิดไหนถึง ' + SEG_MIN + ' ห้อง)'}`)
   }
 
+  // ── Listing ad → board-cards/ad/index.html (เฉพาะตึกที่พร้อม — ดูเงื่อนไขที่ adAssets) ──
+  let adModes = null
+  const adA = BOARD_AD_OFF.has(code) || BOARD_TAP_OFF.has(code) ? null : adAssets(code)
+  if (adA && adUnits.length >= AD_MIN_UNITS) {
+    // ห้องที่เข้าบอร์ดล่าสุดขึ้นก่อน · เพดาน 8 ใบ (ตรงกับเทมเพลต)
+    adUnits.sort((x, y) => y._since.localeCompare(x._since))
+    const adData = {
+      ad: true, project: title, hero: adA.hero, logo: adA.logo,
+      dataAsOf: adUnits.map(u => u._checked).filter(Boolean).sort().at(-1) ?? '',
+      tap: true,
+      units: adUnits.slice(0, 8).map(({ _since, _checked, ...u }) => u),
+    }
+    adData.rev = createHash('sha1').update(JSON.stringify(adData)).digest('hex').slice(0, 8)
+    const adDir = join(outDir, 'board-cards', 'ad')
+    mkdirSync(adDir, { recursive: true })
+    writeFileSync(join(adDir, 'index.html'), adTemplate.replace('</head>',
+      `<script>/* baked by build.mjs — rev ${adData.rev} */\nwindow.__BOARD__ = ${JSON.stringify(adData)};\n</script>\n</head>`), 'utf8')
+    copyFileSync(join(adA.dir, adA.hero), join(adDir, adA.hero))
+    copyFileSync(join(adA.dir, adA.logo), join(adDir, adA.logo))
+    bakedBoardPaths.add('/board-cards/ad/')
+    // ปุ่ม RENT UNITS / SALE UNITS + การ์ดที่แตะ เปิด popup ของ offer บอร์ดรวมของโหมดนั้น
+    const adOffers = await sanityFetch(
+      `*[_type == "offer" && _id in ${JSON.stringify(['rent', 'sale'].map(m => `offer-board-${code}-${m}`))} && status == true]{
+         _id, "slug": slug.current, title_th, title_en, ctaType }`)
+    adModes = {}
+    for (const m of ['rent', 'sale']) {
+      const id = `offer-board-${code}-${m}`
+      const o = (adOffers ?? []).find(x => x._id === id)
+      const items = boardItems.get(id)
+      if (!o || !items?.length) continue
+      adModes[m] = { offerSlug: o.slug ?? id, category: m === 'rent' ? 'forRent' : 'forSale',
+        title_th: o.title_th ?? null, title_en: o.title_en ?? null, ctaType: o.ctaType ?? 'order', orderItems: items }
+    }
+    if (!Object.keys(adModes).length) adModes = null
+    console.log(`  board-ad: ${adData.units.length} การ์ด (ห้องมีรูป ${adUnits.length}) · โหมด ${adModes ? Object.keys(adModes).join('+') : '— (ไม่มี offer บอร์ดรวม → ไม่ออกอากาศ)'}`)
+  } else if (adA) {
+    console.log(`  board-ad: ข้าม — ห้องมีรูป ${adUnits.length} (ต้อง ≥ ${AD_MIN_UNITS})`)
+  }
+
   // Web-board guard — a web slide may only air if the page it embeds was BAKED
   // by this very build (/board/{mode}/, /board-cards/{mode}/, /board-cards/{mode}/{seg}/).
   // Otherwise Netlify's `/* → /index.html` catch-all answers the slide's <iframe>
@@ -703,6 +767,30 @@ for (const project of projects) {
   ;(playlist ?? []).forEach(useBoardItems)
   ;(rawProviders ?? []).forEach(p => (p.offers ?? []).forEach(useBoardItems))
   if (boardItemSwaps) console.log(`  board offers: รายการห้องใน popup จากบอร์ด ${boardItemSwaps} จุด`)
+  /* สไลด์ listing ad — สร้างตอน build จากสไลด์บอร์ดใบแรกของตึก (ยืมร้าน/ช่องทางติดต่อ) ไม่ต้องมี
+     media/playlistItem ใน Sanity · วางไว้หน้าสไลด์บอร์ดใบนั้น · player อ่าน adModes → ปุ่มสองโหมด */
+  if (adModes && Array.isArray(playlist)) {
+    const at = playlist.findIndex(s => (s.mediaType ?? s.type) === 'web' && String(s?.offerId ?? '').startsWith(`offer-board-${code}-`))
+    const base = playlist[at]
+    let origin = ''
+    try { origin = new URL(base?.webUrl ?? base?.url).origin } catch {}
+    if (base && origin) {
+      const first = adModes.rent ?? adModes.sale
+      playlist.splice(at, 0, {
+        ...base,
+        title: `Listing ad — ${title}`, title_en: `Listing ad — ${title}`,
+        url: `${origin}/board-cards/ad/`,
+        mediaId: `media-board-${code}-ad`,
+        eyebrow: null, sub_th: null, sub_en: null,
+        offerId: null, offerSlug: first.offerSlug, orderItems: first.orderItems,
+        category: first.category, ctaType: first.ctaType, ctaLabel: null, ctaType2: null, ctaLabel2: null,
+        displayDuration: null, imageDurationOverride: null,
+        defaultDuration: AD_SECONDS, defaultImageDuration: AD_SECONDS,
+        adModes,
+      })
+      console.log(`  board-ad: สไลด์ออกอากาศ ${AD_SECONDS} วิ หน้า "${base.title ?? 'board'}"`)
+    }
+  }
   const airablePlaylist = (playlist ?? []).filter(s => {
     const href = s.webUrl ?? s.url
     if ((s.mediaType ?? s.type) !== 'web' || !href) return true
