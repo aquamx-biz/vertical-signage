@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1080">
+<title>aquamx listing ad</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anuphan:wght@600;700;800&family=IBM+Plex+Sans+Thai:wght@500;600;700&family=Noto+Sans+JP:wght@500;700&family=IBM+Plex+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+/* ══ Listing ad — หน้าแรกของบอร์ดห้องแบบ "โฆษณา" (13 พ.ย. 2569) ══
+   รูปตึกเต็มจอ + โลโก้โครงการ + "Looking to rent or buy in this building?" +
+   การ์ดห้องที่มีรูปจริง 3 ใบสลับกัน · bake โดย build.mjs ไปที่ /board-cards/ad/
+   เฉพาะตึกที่พร้อม (รูปตึก + โลโก้ + ห้องมีรูป ≥ 3) — ตึกอื่นใช้บอร์ดเดิม
+
+   หน้านี้ "แสดงอย่างเดียว" เหมือน board-cards-v2: player รับแตะแล้วถามผ่าน
+   aq-board-hit → ตอบ ref + mode ของการ์ดตรงนั้น → player เปิดหน้าดูห้อง (openRoom) เดิม
+   ปุ่ม RENT UNITS / SALE UNITS = CTA dock ของ player เอง (หน้านี้ไม่วาดปุ่มล่าง)
+
+   GPU envelope (CLAUDE.md): ขยับเฉพาะ transform/opacity · ไม่มี backdrop-filter ·
+   การ์ดที่ไม่อยู่ใน 3 ใบที่เห็น = visibility:hidden · ไม่มี will-change ค้าง */
+:root {
+  --stage:  #060B14;
+  --card:   #0E3361;
+  --line:   rgba(255,255,255,0.16);
+  --cyan:   #9BE8FF;
+  --bronze: #E09A55;
+}
+* { box-sizing: border-box; margin: 0; }
+html, body { width: 100%; height: 100%; overflow: hidden; background: var(--stage); }
+.stage {
+  position: fixed; top: 50%; left: 50%;
+  width: 1080px; height: 1686px;   /* ความสูงจริงมาจาก fitStage() */
+  transform: translate(-50%, -50%);
+  transform-origin: center center;
+  background: var(--stage);
+  color: #fff;
+  font-family: Anuphan, 'IBM Plex Sans Thai', 'Noto Sans JP', sans-serif;
+  overflow: hidden;
+}
+
+/* ── รูปตึกเต็มช่อง + เงาบน/ล่าง (เงาอยู่เพื่อให้ตัวหนังสือขาวอ่านออกเท่านั้น) ── */
+.hero { position: absolute; inset: 0; overflow: hidden; }
+.hero img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center top; transform-origin: 50% 30%; }
+body.live .hero img { animation: kb 18s ease-in-out infinite alternate; }
+@keyframes kb { from { transform: scale(1.02); } to { transform: scale(1.14) translateY(-2.5%); } }
+.scrim { position: absolute; inset: 0;
+  background: linear-gradient(180deg, rgba(6,11,20,0.8) 0%, rgba(6,11,20,0.62) 27%, rgba(6,11,20,0.06) 37%, rgba(6,11,20,0.06) 78%, rgba(6,11,20,0.72) 100%); }
+
+/* ── หัว: โลโก้โครงการ + คำถาม ── */
+.head { position: absolute; left: 0; right: 0; top: 0; text-align: center; padding: 0 40px; }   /* top จาก fitStage() */
+.plogo { display: block; height: 160px; max-width: 520px; object-fit: contain; margin: 0 auto; }
+h1 { font-size: 92px; line-height: 1.05; font-weight: 700; margin-top: 24px; }
+h1 span { display: block; }
+h1 b { font-weight: 700; }
+.w1 { color: var(--cyan); }
+.w2 { color: var(--bronze); }
+body.live .w1 { animation: wa 4s steps(1) infinite 1.6s; }
+body.live .w2 { animation: wb 4s steps(1) infinite 1.6s; }
+@keyframes wa { 0% { color: var(--cyan); } 50% { color: var(--bronze); } 100% { color: var(--cyan); } }
+@keyframes wb { 0% { color: var(--bronze); } 50% { color: var(--cyan); } 100% { color: var(--bronze); } }
+.sub { font-size: 38px; font-weight: 600; color: rgba(255,255,255,0.88); margin-top: 14px; white-space: nowrap; }
+
+/* ── การ์ดห้อง: เห็น 3 ใบ ใบกลางใหญ่ ── */
+.car { position: absolute; left: 0; right: 0; height: 640px; }   /* top จาก fitStage() */
+.cd {
+  position: absolute; left: 300px; top: 0; width: 480px; height: 640px;
+  border-radius: 30px; overflow: hidden; background: #0a2038; border: 2px solid var(--line);
+  transition: transform 0.9s cubic-bezier(.3,.7,.2,1), opacity 0.9s ease;
+  visibility: hidden; opacity: 0; transform: scale(0.6);
+}
+.cd img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.cd.p0 { visibility: visible; opacity: 1; transform: none; z-index: 3; border-color: rgba(155,232,255,0.7); }
+.cd.pl { visibility: visible; opacity: 0.85; transform: translateX(-390px) scale(0.8); z-index: 2; }
+.cd.pr { visibility: visible; opacity: 0.85; transform: translateX(390px) scale(0.8); z-index: 2; }
+.cd.tap { transform: scale(0.97); }
+.cap { position: absolute; left: 0; right: 0; bottom: 0; padding: 110px 28px 26px;
+  background: linear-gradient(180deg, rgba(6,11,20,0), rgba(6,11,20,0.92) 62%);
+  opacity: 0; transition: opacity 0.6s ease 0.3s; }
+.cd.p0 .cap { opacity: 1; }
+.tag { display: inline-block; font-family: 'IBM Plex Mono', monospace; font-weight: 700; font-size: 24px; letter-spacing: 0.14em;
+  color: #06121f; background: var(--cyan); border-radius: 8px; padding: 4px 12px; }
+.tag.s { background: #fff; }
+.cap .t { font-size: 44px; font-weight: 700; line-height: 1.15; margin-top: 12px; white-space: nowrap; }
+.cap .r { display: flex; align-items: baseline; justify-content: space-between; margin-top: 4px; }
+.cap .b { font-size: 27px; font-weight: 600; color: rgba(255,255,255,0.8); }
+.cap .p { font-family: 'IBM Plex Mono', monospace; font-weight: 700; font-size: 62px; color: var(--bronze); line-height: 1; }
+.cap .p small { font-family: Anuphan, 'IBM Plex Sans Thai', sans-serif; font-size: 26px; color: rgba(255,255,255,0.6); font-weight: 600; margin-left: 8px; }
+.go { margin-top: 16px; height: 80px; border-radius: 16px; background: #fff; color: #0B1B33; font-size: 34px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center; gap: 12px; }
+.go svg { width: 30px; height: 30px; stroke: #0B1B33; fill: none; stroke-width: 2.6; }
+body.live .cd.p0 .go svg { animation: nudge 1.2s ease-in-out infinite; }
+@keyframes nudge { 0%, 100% { transform: none; } 50% { transform: translateX(10px); } }
+
+.dots { position: absolute; left: 0; right: 0; display: flex; gap: 14px; justify-content: center; }   /* top จาก fitStage() */
+.dots i { width: 14px; height: 14px; border-radius: 7px; background: rgba(255,255,255,0.35); display: block; }
+.dots i.on { background: var(--cyan); }
+.upd { position: absolute; right: 46px; font-size: 22px; color: rgba(255,255,255,0.75); letter-spacing: 0.04em; }   /* top จาก fitStage() */
+
+@media (prefers-reduced-motion: reduce) {
+  body.live .hero img, body.live .w1, body.live .w2, body.live .cd.p0 .go svg { animation: none; }
+  .cd, .cap { transition: none; }
+}
+</style>
+</head>
+<body>
+<div class="stage" id="stage">
+  <div class="hero"><img id="heroImg" alt=""></div>
+  <div class="scrim"></div>
+  <div class="head" id="head">
+    <img class="plogo" id="plogo" alt="">
+    <h1><span>Looking to <b class="w1">rent</b> or <b class="w2">buy</b></span><span>in this building?</span></h1>
+    <div class="sub" id="sub"></div>
+  </div>
+  <div class="car" id="car"></div>
+  <div class="dots" id="dots"></div>
+  <div class="upd" id="upd"></div>
+</div>
+<script>
+/* ── ข้อมูล: window.__BOARD__ (bake โดย build.mjs) ──
+   { ad:true, project, hero, logo, dataAsOf, tap,
+     units:[{ ref, mode:'rent'|'sale', type:'1BED', sqm, floorNo, floor:'LOW'|'MID'|'HIGH', price, photo }] }
+   ไม่มีข้อมูล (เปิดไฟล์ตรง ๆ) → ตัวอย่างสำหรับดูหน้าตาเท่านั้น */
+const DEMO = { ad: true, project: "Demo Tower", hero: "", logo: "", dataAsOf: "2026-11-13", tap: true, units: [
+  { ref: "DM-U001", mode: "rent", type: "1BED", sqm: 38, floorNo: 17, price: 26000, photo: "" },
+  { ref: "DM-U002", mode: "rent", type: "2BED", sqm: 55, floorNo: 39, price: 42000, photo: "" },
+  { ref: "DM-U002", mode: "sale", type: "2BED", sqm: 55, floorNo: 39, price: 7900000, photo: "" } ] }
+const DATA = window.__BOARD__ || DEMO
+const UNITS = (DATA.units || []).slice(0, 8)   /* เพดาน 8 ใบ = งบหน่วยความจำรูปบนกล่อง */
+
+const LANGS = ["th", "en", "ja", "zh"]
+const L = {
+  th: { sub: "มองหาห้องเช่าหรือซื้อในตึกนี้อยู่หรือเปล่า", beds: { STUDIO: "สตูดิโอ", "1BED": "1 ห้องนอน", "2BED": "2 ห้องนอน", "3BED": "3 ห้องนอน", "4BED+": "4 ห้องนอน+" }, sqm: "ตร.ม.", floorWord: "ชั้น", zones: { LOW: "ชั้นล่าง", MID: "ชั้นกลาง", HIGH: "ชั้นสูง" }, rentU: "฿/เดือน", saleU: "฿", go: "ดูห้องนี้", upd: "อัปเดต %d" },
+  en: { sub: "มองหาห้องเช่าหรือซื้อในตึกนี้อยู่หรือเปล่า", beds: { STUDIO: "Studio", "1BED": "1 Bedroom", "2BED": "2 Bedroom", "3BED": "3 Bedroom", "4BED+": "4 Bed+" }, sqm: "sqm", floorWord: "Floor", zones: { LOW: "Low floor", MID: "Mid floor", HIGH: "High floor" }, rentU: "฿/mo", saleU: "฿", go: "See unit", upd: "Updated %d" },
+  ja: { sub: "このビルで賃貸・購入をお探しですか", beds: { STUDIO: "ワンルーム", "1BED": "1LDK", "2BED": "2LDK", "3BED": "3LDK", "4BED+": "4LDK+" }, sqm: "㎡", floorWord: "", floorSuffix: "階", zones: { LOW: "低層階", MID: "中層階", HIGH: "高層階" }, rentU: "฿/月", saleU: "฿", go: "この部屋を見る", upd: "更新 %d" },
+  zh: { sub: "想在这栋楼租房或买房吗？", beds: { STUDIO: "开间", "1BED": "一室", "2BED": "两室", "3BED": "三室", "4BED+": "四室以上" }, sqm: "㎡", floorWord: "", floorSuffix: "层", zones: { LOW: "低楼层", MID: "中楼层", HIGH: "高楼层" }, rentU: "฿/月", saleU: "฿", go: "查看此房", upd: "更新 %d" },
+}
+/* ภาษาของรอบนี้ = ถัดจากรอบก่อน (กติกาเดียวกับ board-cards-v2: หนึ่งรอบที่ขึ้นจอ = ภาษาเดียว) */
+function nextLang() {
+  const key = "aqBoardLang:" + location.pathname
+  try {
+    const prev = parseInt(localStorage.getItem(key), 10)
+    const n = Number.isInteger(prev) ? (prev + 1) % LANGS.length : 0
+    localStorage.setItem(key, String(n))
+    return n
+  } catch (e) { return 0 }
+}
+const QS = new URLSearchParams(location.search)
+const REC = QS.get("rec") === "1"
+const ql = LANGS.indexOf(QS.get("lang"))
+const lang = ql >= 0 ? ql : (REC ? 1 : nextLang())
+const T = L[LANGS[lang]]
+
+const $ = id => document.getElementById(id)
+const esc = v => String(v == null ? "" : v).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]))
+const fmtRentK = p => (p / 1e3).toFixed(1).replace(/\.0$/, "") + "K"
+const fmtSaleM = p => { let s = (p / 1e6).toFixed(1); if (s.length > 4) s = String(Math.round(p / 1e6)); return s.replace(/\.0$/, "") + "M" }
+const flOf = u => u.floorNo != null
+  ? (T.floorWord ? `${T.floorWord} ${u.floorNo}` : `${u.floorNo}${T.floorSuffix || "階"}`)
+  : (T.zones[u.floor] || "")
+/* รูปจาก Sanity CDN → ขอขนาดพอดีการ์ด (กล่อง RAM น้อย: ไม่โหลดรูปเต็ม) */
+const sized = (u, q) => !u ? "" : /cdn\.sanity\.io/.test(u) ? `${u}${u.includes("?") ? "&" : "?"}${q}` : u
+
+/* ── วาด ── */
+if (DATA.hero) $("heroImg").src = DATA.hero; else $("heroImg").remove()
+if (DATA.logo) $("plogo").src = DATA.logo; else $("plogo").remove()
+$("plogo") && ($("plogo").alt = DATA.project || "")
+$("sub").textContent = T.sub
+const MONTH = ["", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+const MONTH_TH = ["", "ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."]
+if (DATA.dataAsOf) {
+  const d = +DATA.dataAsOf.slice(8, 10), m = +DATA.dataAsOf.slice(5, 7), k = LANGS[lang]
+  $("upd").textContent = T.upd.replace("%d", k === "th" ? `${d} ${MONTH_TH[m]}` : k === "en" ? `${d} ${MONTH[m]}` : `${m}月${d}日`)
+}
+$("car").innerHTML = UNITS.map(u => {
+  const sale = u.mode === "sale"
+  return `<div class="cd" data-ref="${esc(u.ref)}" data-mode="${sale ? "sale" : "rent"}">
+    ${u.photo ? `<img alt="" decoding="async" src="${esc(sized(u.photo, "w=720&h=960&fit=crop&auto=format"))}">` : ""}
+    <div class="cap"><span class="tag${sale ? " s" : ""}">${sale ? "FOR SALE" : "FOR RENT"}</span>
+      <div class="t">${esc(u.sqm)} ${T.sqm} · ${esc(flOf(u))}</div>
+      <div class="r"><span class="b">${esc(T.beds[u.type] || u.type || "")}</span><span class="p">${sale ? fmtSaleM(u.price) : fmtRentK(u.price)}<small>${sale ? T.saleU : T.rentU}</small></span></div>
+      <div class="go">${T.go} <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></div>
+    </div></div>`
+}).join("")
+$("dots").innerHTML = UNITS.map(() => "<i></i>").join("")
+
+const cs = [...document.querySelectorAll("#car .cd")], ds = [...document.querySelectorAll("#dots i")], n = cs.length
+let cur = 0
+function lay() {
+  cs.forEach((c, i) => {
+    const d = ((i - cur) % n + n) % n   /* 0 = กลาง · 1 = ขวา · n-1 = ซ้าย · ที่เหลือซ่อน */
+    c.classList.remove("p0", "pl", "pr")
+    if (d === 0) c.classList.add("p0")
+    else if (d === 1 && n > 1) c.classList.add("pr")
+    else if (d === n - 1 && n > 2) c.classList.add("pl")
+  })
+  ds.forEach((d, i) => d.classList.toggle("on", i === cur))
+}
+lay()
+
+/* ── แตะ: player ถามผ่าน postMessage (กติกาเดียวกับ board-cards-v2) ──
+   ตอบ ref + mode ของการ์ดตรงนั้น · photos = true เสมอ (การ์ดบนหน้านี้มีรูปทุกใบ) */
+const TAP = !!DATA.tap
+window.__BOARD_TAP = TAP
+window.__boardHold = false
+window.addEventListener("message", e => {
+  if (e.source !== window.parent) return
+  const m = e.data || {}
+  if (m.type === "aq-board-hit") {
+    let ref = null, mode = null
+    if (TAP) {
+      const el = document.elementFromPoint(m.x, m.y)
+      const c = el && el.closest && el.closest("#car .cd[data-ref]")
+      if (c && (c.classList.contains("p0") || c.classList.contains("pl") || c.classList.contains("pr"))) {
+        ref = c.dataset.ref; mode = c.dataset.mode
+        c.classList.add("tap"); setTimeout(() => c.classList.remove("tap"), 160)
+      }
+    }
+    e.source.postMessage({ type: "aq-board-hit-result", id: m.id, tap: TAP, ref, mode, taken: false, photos: !!ref },
+      e.origin && e.origin !== "null" ? e.origin : "*")
+  } else if (m.type === "aq-board-hold") {
+    window.__boardHold = !!m.hold
+  }
+})
+
+/* ── เต็มกล่องที่ได้จริง (สูตรเดียวกับ board-cards-v2) ──
+   ช่องสไลด์ของ player = ใต้แถบ navy ถึงเหนือ ticker · ปุ่ม CTA ของ player ลอยทับตั้งแต่ 88.8% ของช่อง */
+const stageEl = $("stage")
+function fitStage() {
+  let h = Math.round(innerHeight * 1080 / innerWidth)
+  h = Math.max(1400, Math.min(2100, h))
+  const s = Math.min(innerWidth / 1080, innerHeight / h)
+  stageEl.style.height = h + "px"
+  stageEl.style.transform = `translate(-50%, -50%) scale(${s})`
+  const headTop = Math.round(h * 0.03)
+  $("head").style.top = headTop + "px"
+  const dockTop = h * 0.888                       /* ปุ่ม CTA ของ player เริ่มตรงนี้ */
+  const dotsTop = Math.round(dockTop - 46)
+  const carTop = Math.max(headTop + 520, dotsTop - 30 - 640)
+  $("car").style.top = carTop + "px"
+  $("dots").style.top = dotsTop + "px"
+  $("upd").style.top = (dotsTop - 6) + "px"
+}
+fitStage()
+addEventListener("resize", fitStage)
+
+/* ── เดิน: การ์ดเลื่อนทุก 4 วิ · หยุดเมื่อ player ถือไว้ (หน้าดูห้องเปิดอยู่) ── */
+const STEP_MS = 4000
+if (!REC) {
+  document.body.classList.add("live")
+  if (n > 1) setInterval(() => { if (window.__boardHold) return; cur = (cur + 1) % n; lay() }, STEP_MS)
+} else {
+  /* โหมดอัดวิดีโอ (?rec=1): เดินเวลาจากภายนอก */
+  const style = document.createElement("style"); style.textContent = "* { transition: none !important; animation: none !important; }"
+  document.head.appendChild(style)
+  window.__totalMs = Math.max(1, n) * STEP_MS
+  window.__paintAt = t => { cur = Math.floor((t % window.__totalMs) / STEP_MS) % Math.max(1, n); lay() }
+}
+</script>
+</body>
+</html>
