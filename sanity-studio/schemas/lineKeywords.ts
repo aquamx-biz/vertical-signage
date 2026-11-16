@@ -1,6 +1,7 @@
 import { defineField, defineType } from 'sanity'
 
-// Singleton — _id is always "line-keywords". Shown as "LINE Bot Rules": the
+// Singleton — _id is always "line-keywords". Shown as "Bot Rules" (the type
+// name stays lineKeywords: the LINE bot reads it by that name). LINE tabs: the
 // words people type (Commands) and, below them, what the AI assistant may say
 // (AI Assistant) — one place to review the whole bot, not two schemas.
 //
@@ -50,12 +51,13 @@ const TOPICS = [
 
 export default defineType({
   name: 'lineKeywords',
-  title: 'LINE Bot Rules',
+  title: 'Bot Rules',
   type: 'document',
   groups: [
-    { name: 'commands', title: 'Commands', default: true },
-    { name: 'ai',       title: 'AI Assistant' },
-    { name: 'groups',   title: 'Team Groups' },
+    { name: 'commands', title: 'LINE · Commands', default: true },
+    { name: 'ai',       title: 'LINE · AI Assistant' },
+    { name: 'groups',   title: 'LINE · Team Groups' },
+    { name: 'facebook', title: 'Facebook Outreach' },
   ],
   fields: [
     defineField({
@@ -244,6 +246,72 @@ export default defineType({
           initialValue: ['ไหม', 'มั้ย', 'มั๊ย', 'หรือเปล่า', 'รึเปล่า', 'หรือยัง', 'รึยัง', 'ปะ', 'เท่าไหร่', 'เท่าไร', 'ยังไง', 'อย่างไร', 'ได้มั้ย', 'กี่', 'ที่ไหน', 'เมื่อไหร่', 'ทำไม', 'อะไร', 'ขอ', 'ช่วย', 'do you', 'is there', 'are there', 'available', 'how much', 'how many', 'how long', 'can i', 'can you', 'could you', 'when', 'where', 'which', 'what', 'why', 'please'] }),
       ],
     }),
+    // ── Facebook Outreach — owners / agents who post a unit and welcome agents ──
+    // Read by the scheduled Claude tasks at the start of every run (listing
+    // watch → first message → replies → unit goes live → link sent back).
+    // Nothing in the LINE bot code reads this field. Edit and publish: the next
+    // run follows the new rules. Each person's own history stays in their lead.
+    defineField({
+      name: 'fbOutreach', group: 'facebook', title: 'Facebook Outreach', type: 'object',
+      options: { collapsible: false },
+      description: 'Rules for contacting owners and agents who post a unit on Facebook and welcome agents. The scheduled tasks read these before every run.',
+      fields: [
+        defineField({ name: 'mode', title: 'Mode', type: 'string', initialValue: 'draft',
+          description: 'Auto: messages that follow the rules below go out without waiting. Draft: every message waits for approval. Off: read and record only.',
+          options: { layout: 'radio', list: [
+            { title: 'Auto — send by the rules below',   value: 'auto'  },
+            { title: 'Draft — wait for approval',        value: 'draft' },
+            { title: 'Off — read and record only',       value: 'off'   },
+          ] } }),
+        defineField({ name: 'areas', title: 'Areas', type: 'array', of: [{ type: 'string' }], options: { layout: 'tags' } }),
+        defineField({ name: 'minRentTHB', title: 'Minimum rent (THB / month)', type: 'number',
+          description: 'Rental posts below this are skipped. Sale posts are not limited.' }),
+        defineField({ name: 'contactWhen', title: 'Contact when the post says', type: 'array', of: [{ type: 'string' }], options: { layout: 'tags' },
+          description: 'Words that show agents are welcome or the owner posted it.' }),
+        defineField({ name: 'skipWhen', title: 'Never contact when', type: 'array', of: [{ type: 'string' }], options: { layout: 'tags' },
+          description: 'Words in the post, or situations, that mean do not contact.' }),
+        defineField({ name: 'sendAs', title: 'Send as', type: 'string', initialValue: 'pageThenPersonal',
+          options: { layout: 'radio', list: [
+            { title: 'aquamx page; personal profile only when the page cannot', value: 'pageThenPersonal' },
+            { title: 'aquamx page only',                                        value: 'page' },
+          ] } }),
+        defineField({ name: 'commentAfterMessage', title: 'Comment on the post after messaging', type: 'boolean', initialValue: true }),
+        defineField({ name: 'commentTh', title: 'Comment — Thai', type: 'string' }),
+        defineField({ name: 'commentEn', title: 'Comment — English', type: 'string' }),
+        defineField({ name: 'maxPerDay', title: 'Max first messages per day', type: 'number', initialValue: 10,
+          validation: Rule => Rule.min(0).max(30) }),
+        defineField({ name: 'firstMessageTh', title: 'First message — Thai', type: 'text', rows: 10,
+          description: 'Placeholders in {braces} are filled from the post: {name} {saleOrRent} {project} {floor} {sqm} {price} {group}. {screenSentence} is added only for buildings with an aquamx screen.' }),
+        defineField({ name: 'firstMessageEn', title: 'First message — English', type: 'text', rows: 10 }),
+        defineField({ name: 'screenSentenceTh', title: 'Lobby screen sentence — Thai', type: 'text', rows: 2 }),
+        defineField({ name: 'screenSentenceEn', title: 'Lobby screen sentence — English', type: 'text', rows: 2 }),
+        defineField({ name: 'attachSampleCover', title: 'Attach one sample cover', type: 'boolean', initialValue: true,
+          description: 'A cover of a unit we already market — same building and same rent / sale side when there is one.' }),
+        defineField({ name: 'wording', title: 'Wording rules', type: 'array', of: [{ type: 'string' }],
+          description: 'Apply to every message sent to an owner or agent.' }),
+        defineField({ name: 'replyRules', title: 'When they reply', type: 'array',
+          of: [{ type: 'object', name: 'replyRule', title: 'Reply rule', fields: [
+            defineField({ name: 'situation', title: 'Situation', type: 'string', validation: Rule => Rule.required() }),
+            defineField({ name: 'action', title: 'Action', type: 'string', validation: Rule => Rule.required(),
+              options: { list: [
+                { title: 'Put the unit on the website, then send the link', value: 'listAndSendLink' },
+                { title: 'Send the reply below',                            value: 'reply' },
+                { title: 'Note it in the lead — no reply',                  value: 'noteOnly' },
+                { title: 'Close the lead — no reply',                       value: 'close' },
+                { title: 'Do not reply — draft and report to Sakchai',      value: 'report' },
+              ] } }),
+            defineField({ name: 'replyTh', title: 'Reply — Thai', type: 'text', rows: 3 }),
+            defineField({ name: 'replyEn', title: 'Reply — English', type: 'text', rows: 3 }),
+          ], preview: { select: { title: 'situation', subtitle: 'action' } } }] }),
+        defineField({ name: 'listingChecklist', title: 'Before a unit goes live', type: 'array', of: [{ type: 'string' }],
+          description: 'Every line must be true before the unit is published.' }),
+        defineField({ name: 'linkMessageTh', title: 'Link message — Thai', type: 'text', rows: 3,
+          description: 'Sent in the same chat once the unit is live. {url} is the unit page.' }),
+        defineField({ name: 'linkMessageEn', title: 'Link message — English', type: 'text', rows: 3 }),
+        defineField({ name: 'stopAndReport', title: 'Stop and report when', type: 'array', of: [{ type: 'string' }] }),
+        defineField({ name: 'record', title: 'What to record', type: 'array', of: [{ type: 'string' }] }),
+      ],
+    }),
   ],
-  preview: { prepare: () => ({ title: 'LINE Bot Rules' }) },
+  preview: { prepare: () => ({ title: 'Bot Rules' }) },
 })
