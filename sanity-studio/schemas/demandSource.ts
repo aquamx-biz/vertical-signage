@@ -38,7 +38,15 @@ export default defineType({
         { title: 'Public · สาธารณะ',  value: 'public' },
         { title: 'Private · ส่วนตัว', value: 'private' },
       ] },
-      description: 'กลุ่มส่วนตัวห้ามเก็บ — ตั้ง active = false',
+      description: 'Private groups can be read only by an account that is a member — see "Member as". Scan every group we are a member of (Sakchai, 16 Nov 2026).',
+    }),
+    defineField({
+      name: 'joinedAs', title: 'Member as', type: 'array', of: [{ type: 'string' }],
+      options: { list: [
+        { title: 'Page aquamx', value: 'page' },
+        { title: 'Personal (The-ake Delon)', value: 'personal' },
+      ], layout: 'grid' },
+      description: 'Which of our Facebook accounts is a member of this group. Private groups: only a member can read the feed or comment.',
     }),
 
     // ── ขนาดและกิจกรรม (จากหน้า "เกี่ยวกับ" ของกลุ่มเอง) ────────────────────
@@ -125,16 +133,17 @@ export default defineType({
     select: {
       title: 'sourceName', members: 'members', ppd: 'postsPerDay',
       active: 'active', level: 'demandLevel', privacy: 'privacy',
-      code: 'shortCode', posting: 'postingActive', accepts: 'accepts',
+      code: 'shortCode', posting: 'postingActive', accepts: 'accepts', joined: 'joinedAs',
     },
-    prepare: ({ title, members, ppd, active, level, privacy, code, posting, accepts }) => ({
+    prepare: ({ title, members, ppd, active, level, privacy, code, posting, accepts, joined }) => ({
       title: `${active ? '● ' : '○ '}${code ? code + ' · ' : ''}${title}`,
       subtitle: [
         members ? `${members.toLocaleString()} สมาชิก` : null,
         ppd != null ? `${ppd}/วัน` : null,
         level,
         posting ? `post: ${(accepts || []).join('+') || '?'}` : 'no posting',
-        privacy === 'private' ? 'ส่วนตัว — ห้ามเก็บ' : null,
+        privacy === 'private' ? 'private' : null,
+        joined?.length ? `member: ${joined.join('+')}` : null,
       ].filter(Boolean).join(' · '),
     }),
   },
