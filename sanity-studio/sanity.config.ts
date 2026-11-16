@@ -343,13 +343,13 @@ export default defineConfig([{
               ),
             // a new type id is in nobody's allowlist yet — same rule as aquamx Contact
             (can('lineKeywords') || can('categoryConfig')) && S.listItem()
-              .title('LINE Bot Rules')
+              .title('Bot Rules')
               .id('line-keywords')
               .child(
                 S.document()
                   .schemaType('lineKeywords')
                   .documentId('line-keywords')
-                  .title('LINE Bot Rules')
+                  .title('Bot Rules')
               ),
             can('categoryConfig') && S.listItem()
               .title('Global Category Config')
