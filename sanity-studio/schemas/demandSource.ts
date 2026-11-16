@@ -79,6 +79,8 @@ export default defineType({
       description: 'ปิดไว้ก่อนเป็นค่าตั้งต้น — เปิดเฉพาะแหล่งที่ยืนยันแล้วว่ามีของ',
     }),
     defineField({ name: 'lastChecked', title: 'Last checked · สำรวจล่าสุด', type: 'date' }),
+    defineField({ name: 'seekerScannedAt', title: 'Seeker scan · last read', type: 'datetime', readOnly: true,
+      description: 'Written by the seeker-watch task each time it finishes reading this group for people looking for a condo. Nothing to fill in.' }),
 
     // ── Posting — where we may post our own listings (11 Nov 2026) ─────────────
     // One registry for both jobs: reading demand (active) and posting listings (postingActive).
