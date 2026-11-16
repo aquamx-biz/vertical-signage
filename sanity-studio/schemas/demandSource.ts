@@ -46,7 +46,7 @@ export default defineType({
         { title: 'Page aquamx', value: 'page' },
         { title: 'Personal (The-ake Delon)', value: 'personal' },
       ], layout: 'grid' },
-      description: 'Which of our Facebook accounts is a member of this group. Private groups: only a member can read the feed or comment.',
+      description: 'Which of our Facebook accounts is a member of this group. Private groups: only a member can read the feed or comment. Replying to anyone in this group: if Page aquamx is a member, reply as the Page only — never as the personal profile (Sakchai, 16 Nov 2026).',
     }),
 
     // ── ขนาดและกิจกรรม (จากหน้า "เกี่ยวกับ" ของกลุ่มเอง) ────────────────────
