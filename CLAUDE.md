@@ -17,6 +17,10 @@ This project has impeccable design context. **Read these before designing or cha
 
 Run `/impeccable` (no args) for the next-step menu, or `/impeccable live` for in-browser iteration (already configured in `.impeccable/live/config.json`).
 
+## Facebook workflow
+
+Scheduled Facebook scan/reply/post tasks, the three Chrome profiles, and the Sanity fields they use (`fbPosts`, `sourcePosts`, `demandSource.joinedAs`, `lead.aiReplies`) are described in **`FACEBOOK-WORKFLOW.md`**. Read it before adding a task, changing a task prompt, or touching those schemas, and update it in the same change — do not build a parallel version.
+
 ## Kiosk GPU envelope — read before adding slides, layers, or effects
 
 The players run on weak Android boxes (ZC-H358S ≈ 1080p Mali, Chrome 109 WebView),
