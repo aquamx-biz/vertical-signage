@@ -13,7 +13,7 @@ anything below — extend what exists.
 | Scan01_Page | Page aquamx | daily 00:01 | Reads every group the page is a member of for condo seekers and owner/agent listings (no time or post cap). |
 | Scan02_Personal | The-ake Delon | daily 00:01 | Same, for the 2 private groups the page cannot join + Marketplace search. Moves to Aquamx Live once both groups approve it. |
 | Reply01_Page | Page aquamx | hourly :41 (reads inbound in even hours) | Comments as the page; reads page inbox, comments on our posts, IG. |
-| Reply02_Personal | The-ake Delon | even hours :46 | DMs and follow-ups in The-ake chats. Existing chats stay on The-ake. |
+| Reply02_Personal | The-ake Delon | even hours :46 | Follow-ups in chats that were already started on The-ake only (existing chats stay there). No new contacts from The-ake — see section 2a. |
 | Post01 | Page → Aquamx Live → The-ake | hourly :26 (posting 09:00–20:59) | (a) lists accepted units on the web + makes covers; (b) page posts: groups ≤10/day, page feed ≤3, IG ≤3; (c) personal: 3 personal-only groups as **Aquamx Live** ≤2/day, Marketplace as **The-ake** ≤1/day. |
 | Post02.1_SendLink_Page | Page aquamx | odd hours :56 | Sends the web link to owners who accepted in the page inbox. |
 | Post02.2_SendLink_Personal | The-ake Delon | even hours :56 | Sends the web link to owners who accepted in The-ake chats (stays on The-ake). |
@@ -32,8 +32,16 @@ The task table also lives in Sakchai's artifact "แผนยุบงานต�
 - Never switch Facebook profiles inside a Chrome; use the Chrome already logged in.
 - One task per Chrome at a time: localStorage keys `aqmx_lock` / `aqmx_want` = `{"task","at"}` in a facebook.com tab; lock older than 20 min = free; delete your own lock when done.
 - 03:15–03:55 the LivingInsider task uses the The-ake Chrome without the queue — keep off it.
-- Aquamx Live: no DMs to anyone during warm-up; Marketplace stays on The-ake until Sakchai says otherwise.
+- Aquamx Live is the fallback account when Page aquamx cannot be used (section 2a). Marketplace posting stays on The-ake until Sakchai says otherwise.
 - In any group where Page aquamx is a member, reply as the page only.
+
+## 2a. Contacting owners / agents / seekers (Sakchai, 18 Nov 2026)
+
+1. **Always comment as Page aquamx first**, under the post, so the person sees and follows the page. Never DM first.
+2. **If the page cannot be used** (page not a member of the group, page cannot comment there, Marketplace listing): use **Aquamx Live** — comment as Aquamx Live; send a private message from Aquamx Live only when commenting is not possible.
+3. **Never use The-ake Delon for new contacts.** The-ake only continues chats that were already started there.
+4. Record in `lead.aiReplies` which account was used and, if not the page, why.
+5. The same rule is in Sanity Bot Rules (`line-keywords.fbOutreach`: `wording`, `record`, `commentTh/En`, `commentAfterMessage=false`). Keep both in step.
 
 ## 3. Sanity data (project awjj9g8u, dataset production)
 
