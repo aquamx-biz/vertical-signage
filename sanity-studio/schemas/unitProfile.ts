@@ -128,8 +128,8 @@ export default defineType({
       ],
     }),
     defineField({
-      name: 'fbPosts', title: 'Facebook posts', type: 'array',
-      description: 'Every post or reply made for this listing. The poster checks this list before posting, so a listing is not posted twice in one channel.',
+      name: 'fbPosts', title: 'Social media posts', type: 'array',
+      description: 'Where WE posted this listing (output): Facebook groups, the aquamx page feed, Instagram, Marketplace. The poster checks this list before posting, so a listing is not posted twice in one channel. Posts by the owner or other agents go in Source posts, not here.',
       of: [{
         type: 'object',
         name: 'fbPost',
@@ -151,6 +151,36 @@ export default defineType({
           prepare: ({ kind, group, ch, code, at, status }) => ({
             title: `${code ? code + ' · ' : ''}${ch || group || '—'}`,
             subtitle: [kind, (at || '').slice(0, 10), status].filter(Boolean).join(' · '),
+          }),
+        },
+      }],
+    }),
+    // Source posts (input) - where the owner or another agent posted this unit. Kept apart from
+    // fbPosts (our own posts). The poster skips every group listed here, so we never post a unit
+    // into a group where its owner already has it (Sakchai, 18 Nov 2026).
+    defineField({
+      name: 'sourcePosts', title: 'Source posts', type: 'array',
+      description: 'Where the owner or another agent posted this unit (input) - including the post we got the unit from. The poster never posts this unit into any group listed here.',
+      of: [{
+        type: 'object',
+        name: 'sourcePost',
+        fields: [
+          defineField({ name: 'channel', title: 'Group', type: 'reference', to: [{ type: 'demandSource' }],
+            description: 'Empty for Marketplace listings.' }),
+          defineField({ name: 'url', title: 'Post link', type: 'url' }),
+          defineField({ name: 'postedBy', title: 'Posted by', type: 'string', description: 'Name exactly as shown on the post.' }),
+          defineField({ name: 'posterType', title: 'Owner or agent', type: 'string',
+            options: { list: [{ title: 'Owner', value: 'owner' }, { title: 'Agent', value: 'agent' }], layout: 'radio' } }),
+          defineField({ name: 'isOrigin', title: 'We got this unit from this post', type: 'boolean' }),
+          defineField({ name: 'lead', title: 'Lead', type: 'reference', to: [{ type: 'lead' }] }),
+          defineField({ name: 'seenAt', title: 'Seen at', type: 'datetime' }),
+          defineField({ name: 'note', title: 'Note', type: 'string' }),
+        ],
+        preview: {
+          select: { ch: 'channel.sourceName', code: 'channel.shortCode', by: 'postedBy', type: 'posterType', origin: 'isOrigin', url: 'url' },
+          prepare: ({ ch, code, by, type, origin, url }) => ({
+            title: `${code ? code + ' · ' : ''}${ch || ((url || '').includes('marketplace') ? 'Facebook Marketplace' : '—')}`,
+            subtitle: [by, type, origin ? 'origin' : ''].filter(Boolean).join(' · '),
           }),
         },
       }],
