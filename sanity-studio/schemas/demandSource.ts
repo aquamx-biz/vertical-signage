@@ -45,8 +45,9 @@ export default defineType({
       options: { list: [
         { title: 'Page aquamx', value: 'page' },
         { title: 'Personal (The-ake Delon)', value: 'personal' },
+        { title: 'Personal (Aquamx Live)', value: 'aquamxLive' },
       ], layout: 'grid' },
-      description: 'Which of our Facebook accounts is a member of this group. Private groups: only a member can read the feed or comment. Replying to anyone in this group: if Page aquamx is a member, reply as the Page only — never as the personal profile (Sakchai, 16 Nov 2026).',
+      description: 'Which of our Facebook accounts is a member of this group. Private groups: only a member can read the feed or comment. Replying to anyone in this group: if Page aquamx is a member, reply as the Page only — never as a personal profile (Sakchai, 16 Nov 2026). Aquamx Live is the new personal profile that takes over from The-ake Delon (18 Nov 2026).',
     }),
 
     // ── ขนาดและกิจกรรม (จากหน้า "เกี่ยวกับ" ของกลุ่มเอง) ────────────────────
