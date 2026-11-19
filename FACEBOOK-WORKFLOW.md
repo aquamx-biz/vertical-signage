@@ -32,6 +32,8 @@ The task table also lives in Sakchai's artifact "แผนยุบงานต�
 - Never switch Facebook profiles inside a Chrome; use the Chrome already logged in.
 - One task per Chrome at a time: localStorage keys `aqmx_lock` / `aqmx_want` = `{"task","at"}` in a facebook.com tab; lock older than 20 min = free; delete your own lock when done.
 - 03:15–03:55 the LivingInsider task uses the The-ake Chrome without the queue — keep off it.
+- Never delete or edit another task's `aqmx_want` or `aqmx_lock`. A long task (Scan01/Scan02) yields by deleting only its own lock, then waits until the `aqmx_want` disappears and the lock is free.
+- Chrome disconnects (19 Nov 2026: all three extensions dropped ~02:10–08:27, Scan01 stopped mid-scan): Scan01 retries the deviceId select every 2 min for 30 min at start, and every 10 min for up to 8 h mid-scan, then restarts the interrupted group from step 1. Select Chrome by deviceId only — the "Browser 1/2/3" names shuffle. Windows logs for that night show no sleep, restart or Wi-Fi drop, so the cause was the extension link itself; keep the PC on and all three Chromes open overnight.
 - Aquamx Live is the fallback account when Page aquamx cannot be used (section 2a). Marketplace posting stays on The-ake until Sakchai says otherwise.
 - In any group where Page aquamx is a member, reply as the page only.
 
