@@ -10,7 +10,7 @@ anything below — extend what exists.
 
 | Task | Chrome / account | Schedule | What it does |
 |---|---|---|---|
-| Scan01_Page | Page aquamx | daily 00:01 | Reads every group the page is a member of for condo seekers and owner/agent listings (no time or post cap). |
+| Scan01_Page | Scan (page aquamx, own Chrome) | daily 00:01 | Reads every group the page is a member of for condo seekers and owner/agent listings (no time or post cap). |
 | Scan02_Personal | The-ake Delon | daily 00:01 | Same, for the 2 private groups the page cannot join + Marketplace search. Moves to Aquamx Live once both groups approve it. |
 | Reply01_Page | Page aquamx | hourly :41 (reads inbound in even hours) | Comments as the page; reads page inbox, comments on our posts, IG. |
 | Reply02_Personal | The-ake Delon | even hours :46 | Follow-ups in chats that were already started on The-ake only (existing chats stay there). No new contacts from The-ake — see section 2a. |
@@ -25,14 +25,16 @@ The task table also lives in Sakchai's artifact "แผนยุบงานต�
 
 | Account | deviceId | /me must land on |
 |---|---|---|
-| Page aquamx | 62dbca05-3a90-4b59-ab79-5ca5e7cbc8f4 | /aquamx.biz/ |
+| Page aquamx (short tasks: Reply01, Post01, Post02.1) | 62dbca05-3a90-4b59-ab79-5ca5e7cbc8f4 | /aquamx.biz/ |
+| Scan — page aquamx, Scan01 only (Chrome profile "Scan", Facebook login The-ake Delon → page, Thai UI) | fe3e5eb2-f3d0-436e-8555-e9a49d146008 | /aquamx.biz/ |
 | The-ake Delon (personal, old) | c5238c64-ee4c-42ec-8984-a96a6df52ef0 | /akebangplad/ |
 | Aquamx Live (personal, new, warming up since 18 Nov 2026) | 6a92bf02-2f2f-4197-bd66-74d91b8a1415 | /profile.php?id=61596482469599 |
 
 - Never switch Facebook profiles inside a Chrome; use the Chrome already logged in.
 - One task per Chrome at a time: localStorage keys `aqmx_lock` / `aqmx_want` = `{"task","at"}` in a facebook.com tab; lock older than 20 min = free; delete your own lock when done.
 - 03:15–03:55 the LivingInsider task uses the The-ake Chrome without the queue — keep off it.
-- Never delete or edit another task's `aqmx_want` or `aqmx_lock`. A long task (Scan01/Scan02) yields by deleting only its own lock, then waits until the `aqmx_want` disappears and the lock is free.
+- Never delete or edit another task's `aqmx_want` or `aqmx_lock`. Scan02 (long) yields by deleting only its own lock, then waits until the `aqmx_want` disappears and the lock is free.
+- Scan01 has its own Chrome (Scan) since 19 Nov 2026 — it stopped mid-scan after yielding the shared page Chrome to the hourly short tasks. It uses no queue and never yields; it guards against double runs with localStorage `aqmx_scan` = `{"at"}` in that Chrome. No other task may use the Scan Chrome. Its post collector needs Facebook in Thai: an English UI (e.g. logged in via Aquamx Live) renders a feed without post ids or dates.
 - Chrome disconnects (19 Nov 2026: all three extensions dropped ~02:10–08:27, Scan01 stopped mid-scan): Scan01 retries the deviceId select every 2 min for 30 min at start, and every 10 min for up to 8 h mid-scan, then restarts the interrupted group from step 1. Select Chrome by deviceId only — the "Browser 1/2/3" names shuffle. Windows logs for that night show no sleep, restart or Wi-Fi drop, so the cause was the extension link itself; keep the PC on and all three Chromes open overnight.
 - Aquamx Live is the fallback account when Page aquamx cannot be used (section 2a). Marketplace posting stays on The-ake until Sakchai says otherwise.
 - In any group where Page aquamx is a member, reply as the page only.
