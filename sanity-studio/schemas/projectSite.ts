@@ -135,6 +135,10 @@ export default defineType({
     defineField({ name: 'completionYear', title: 'Completion Year', type: 'number', components: { input: CompletionYrInput } }),
     defineField({ name: 'percentSold',               title: '% Sold',                      type: 'number' }),
     defineField({ name: 'ownerOccupiedRented',       title: 'Owner Occupied & Rented',     type: 'string' }),
+    // Pet rule of the building (juristic person). Offer a unit to a pet seeker only if BOTH this and the unit's ownerPetPolicy are 'allowed'.
+    defineField({ name: 'petPolicy', title: 'Pets allowed in building', type: 'string', initialValue: 'unknown',
+      options: { list: [{ title: 'Allowed', value: 'allowed' }, { title: 'Not allowed', value: 'notAllowed' }, { title: 'Unknown', value: 'unknown' }], layout: 'radio', direction: 'horizontal' } }),
+    defineField({ name: 'petPolicyNote', title: 'Pet rule note', type: 'string', description: 'e.g. "small dogs/cats only, max 2, pet floor 8-10" + source' }),
     defineField({ name: 'competitionAtSite',         title: 'Competition at Site',         type: 'text',   rows: 2 }),
     defineField({ name: 'contactPerson',             title: 'Contact Person',              type: 'string' }),
     defineField({ name: 'telephone', title: 'Telephone', type: 'string', components: { input: TelephoneInput } }),
