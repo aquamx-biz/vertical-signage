@@ -54,6 +54,10 @@ export default defineType({
       description: 'Only these photos may show on the public unit page (/u/<ref>) and screens.' }),
     defineField({ name: 'photosSource', title: 'Photos source', type: 'string' }),
     defineField({ name: 'photosCount', title: 'Photos count', type: 'number' }),
+    // Owner's own pet permission for this unit (building rule is projectSite.petPolicy). Unknown = do not offer to pet seekers; ask the owner.
+    defineField({ name: 'ownerPetPolicy', title: 'Owner allows pets', type: 'string', initialValue: 'unknown',
+      options: { list: [{ title: 'Allowed', value: 'allowed' }, { title: 'Not allowed', value: 'notAllowed' }, { title: 'Unknown', value: 'unknown' }], layout: 'radio', direction: 'horizontal' } }),
+    defineField({ name: 'ownerPetNote', title: 'Owner pet note', type: 'string', description: 'e.g. "cat only, extra deposit" + source' }),
     defineField({
       name: 'status', title: 'Status', type: 'string', initialValue: 'candidate',
       options: { list: ['candidate', 'verified', 'published', 'taken', 'expired'] },
