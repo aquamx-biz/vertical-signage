@@ -139,6 +139,20 @@ export default defineType({
     defineField({ name: 'petPolicy', title: 'Pets allowed in building', type: 'string', initialValue: 'unknown',
       options: { list: [{ title: 'Allowed', value: 'allowed' }, { title: 'Not allowed', value: 'notAllowed' }, { title: 'Unknown', value: 'unknown' }], layout: 'radio', direction: 'horizontal' } }),
     defineField({ name: 'petPolicyNote', title: 'Pet rule note', type: 'string', description: 'e.g. "small dogs/cats only, max 2, pet floor 8-10" + source' }),
+    // Building facilities shown as icons at the bottom right of the public building page photo
+    // (pet friendly comes from petPolicy == 'allowed'). Tick only what a source confirms.
+    defineField({
+      name: 'facilities', title: 'Facilities (icons on the building page)', type: 'array', of: [{ type: 'string' }],
+      options: { list: [
+        { title: 'EV charger', value: 'evCharger' },
+        { title: 'Pool', value: 'pool' },
+        { title: 'Gym', value: 'gym' },
+        { title: 'Co-working', value: 'coworking' },
+        { title: 'Wheelchair access', value: 'wheelchair' },
+      ], layout: 'grid' },
+      description: 'Each ticked item shows as an icon on the building page. Tick only what a source confirms and write the source below.',
+    }),
+    defineField({ name: 'facilitiesSource', title: 'Facilities source', type: 'text', rows: 2, description: 'Where the facilities and pet rule came from (URL + date checked).' }),
     defineField({ name: 'competitionAtSite',         title: 'Competition at Site',         type: 'text',   rows: 2 }),
     defineField({ name: 'contactPerson',             title: 'Contact Person',              type: 'string' }),
     defineField({ name: 'telephone', title: 'Telephone', type: 'string', components: { input: TelephoneInput } }),
