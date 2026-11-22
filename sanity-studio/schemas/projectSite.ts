@@ -138,6 +138,7 @@ export default defineType({
             { title: 'Park',                    value: 'park' },
             { title: 'Office building',         value: 'office' },
             { title: 'MICHELIN-starred restaurant', value: 'michelin' },
+            { title: 'Nightlife (bars & pubs)', value: 'nightlife' },
             { title: 'Other',                   value: 'other' },
           ] } },
           { name: 'distanceM', title: 'Distance (m, straight line)', type: 'number' },
