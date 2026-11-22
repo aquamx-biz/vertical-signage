@@ -140,6 +140,8 @@ export default defineType({
           ] } },
           { name: 'distanceM', title: 'Distance (m, straight line)', type: 'number' },
           { name: 'source',    title: 'Source', type: 'string' },
+          { name: 'fbPageName', title: 'Facebook page to tag (exact page name)', type: 'string',
+            description: 'Official Facebook page of this place, exactly as the @ suggestions show it. Empty = never tag this place.' },
         ],
         preview: {
           select: { title: 'name', category: 'category', distanceM: 'distanceM' },
