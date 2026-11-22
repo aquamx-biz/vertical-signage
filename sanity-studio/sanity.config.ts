@@ -437,7 +437,6 @@ export default defineConfig([{
           (can('projectSite') || can('contract') || can('serviceContract') || can('installation')) &&
           group('projects', 'Projects', '🏗', [
             can('projectSite')        && S.documentTypeListItem('projectSite').title('Project Sites'),
-            can('projectSite')        && S.documentTypeListItem('nearbyPlace').title('Nearby Places'),
             can('contract')           && S.listItem()
               .id('rent-space')
               .title('Rent Space')
