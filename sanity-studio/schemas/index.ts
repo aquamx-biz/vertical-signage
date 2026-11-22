@@ -8,6 +8,7 @@ import offer              from './offer'
 import media              from './media'
 import playlistItem       from './playlistItem'
 import projectSite        from './projectSite'
+import nearbyPlace        from './nearbyPlace'
 import contractType       from './processSetup'
 import contract           from './rentSpace'
 import approvalPosition   from './approvalPosition'
@@ -61,6 +62,7 @@ export const schemaTypes = [
   media,
   playlistItem,
   projectSite,
+  nearbyPlace,
   contractType,
   contract,
   installation,
