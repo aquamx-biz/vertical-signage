@@ -118,6 +118,24 @@ export default defineType({
 
     defineField({
       group:       'overview',
+      name:        'fbUserId',
+      title:       'Facebook User ID (poster)',
+      type:        'string',
+      description: 'Numeric Facebook id of the person who wrote the post (from the author link …/groups/<group>/user/<id>/). The key for recognising the same person across groups — names are not reliable. Empty for anonymous posts.',
+      hidden:      ({ document }: any) => !document?.fbUserId && document?.source !== 'facebook',
+    }),
+
+    defineField({
+      group:       'overview',
+      name:        'fbProfileUrl',
+      title:       'Facebook Profile (poster)',
+      type:        'url',
+      description: 'Profile link of the person who wrote the post.',
+      hidden:      ({ document }: any) => !document?.fbProfileUrl && document?.source !== 'facebook',
+    }),
+
+    defineField({
+      group:       'overview',
       name:        'party',
       title:       'Linked Party',
       type:        'reference',
