@@ -90,6 +90,9 @@ export default defineType({
     defineField({ name: 'lastChecked', title: 'Last checked · สำรวจล่าสุด', type: 'date' }),
     defineField({ name: 'seekerScannedAt', title: 'Seeker scan · last read', type: 'datetime', readOnly: true,
       description: 'Written by the seeker-watch task each time it finishes reading this group for people looking for a condo. Nothing to fill in.' }),
+    defineField({ name: 'scanSet', title: 'Scan set (1–12)', type: 'number',
+      description: 'Which Scan01_Page round reads this group. One set every 2 hours, Bangkok time: set 1 at 00:01, set 2 at 02:01 … set 12 at 22:01. Each group is read once a day. Empty = Scan01_Page does not read it.',
+      validation: R => R.integer().min(1).max(12) }),
 
     // ── Posting — where we may post our own listings (11 Nov 2026) ─────────────
     // One registry for both jobs: reading demand (active) and posting listings (postingActive).
