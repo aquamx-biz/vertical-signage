@@ -120,6 +120,48 @@ export default defineType({
       description: 'Pin of the building for the public building page map (with the nearest BTS/MRT stations). '
         + 'Drop the pin on the building itself; Google Maps → right-click the building → the first line is "lat, lng".',
     }),
+    defineField({
+      name: 'nearbyPlaces', title: 'Nearby places', type: 'array',
+      description: 'Well-known places near the building (mall, supermarket, hospital, international school, park). '
+        + 'Used in listing captions, the website and bot answers, so every channel says the same thing. '
+        + 'Distance is a straight line from the Map location, in metres.',
+      of: [{
+        type: 'object', name: 'nearbyPlace',
+        fields: [
+          { name: 'name',      title: 'Name (English)', type: 'string', validation: (R: any) => R.required() },
+          { name: 'nameTh',    title: 'Name (Thai)',    type: 'string' },
+          { name: 'category',  title: 'Category',       type: 'string', options: { list: [
+            { title: 'Mall / department store', value: 'mall' },
+            { title: 'Supermarket',             value: 'supermarket' },
+            { title: 'Hospital',                value: 'hospital' },
+            { title: 'International school',    value: 'school' },
+            { title: 'Park',                    value: 'park' },
+            { title: 'Other',                   value: 'other' },
+          ] } },
+          { name: 'distanceM', title: 'Distance (m, straight line)', type: 'number' },
+          { name: 'source',    title: 'Source', type: 'string' },
+        ],
+        preview: {
+          select: { title: 'name', category: 'category', distanceM: 'distanceM' },
+          prepare: ({ title, category, distanceM }: any) => ({
+            title,
+            subtitle: [category, distanceM != null ? distanceM + ' m' : null].filter(Boolean).join(' · '),
+          }),
+        },
+      }],
+    }),
+    defineField({
+      name: 'fbCheckinPlace', title: 'Facebook check-in place', type: 'object',
+      description: 'The Facebook place to tag when aquamx posts a unit of this building on the page. '
+        + 'Must be the building itself, never another agent\'s page. Empty = post without a check-in.',
+      fields: [
+        { name: 'name',      title: 'Place name (exactly as Facebook shows it)', type: 'string' },
+        { name: 'address',   title: 'Address line shown under the name',         type: 'string' },
+        { name: 'url',       title: 'Facebook place URL',                        type: 'url' },
+        { name: 'checkedAt', title: 'Checked on',                                type: 'date' },
+        { name: 'note',      title: 'Note',                                      type: 'string' },
+      ],
+    }),
     defineField({ name: 'totalUnits',        title: 'Total Units',    type: 'number', components: { input: TotalUnitsInput } }),
     defineField({ name: 'numberOfBuildings', title: 'No. of Buildings', type: 'number' }),
     defineField({
